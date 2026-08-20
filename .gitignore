@@ -44,6 +44,11 @@ next-env.d.ts
 # generated database client
 /src/generated/prisma/
 
+# test output
+/coverage/
+/playwright-report/
+/test-results/
+
 # local agent state
 .codex-log/
 CLAUDE.local.md
