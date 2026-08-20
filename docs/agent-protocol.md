@@ -103,6 +103,12 @@ pnpm test:unit -- src/agent-orchestration
 pnpm agent:route --result tests/fixtures/agent-runs/rate-limit.json
 ```
 
+After the approved Anthropic sandbox credential is configured, dispatch
+`Agent orchestration` with `simulate_codex_usage_limit` enabled to exercise the
+complete Claude handoff without waiting for a real account limit. This switch is
+manual-only, visible in the run inputs, and never converts authentication or
+policy failures into fallback.
+
 Provider-backed workflow execution and secret creation are external/cost actions
 and require the repository owner to configure approved sandbox credentials.
 

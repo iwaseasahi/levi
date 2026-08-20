@@ -50,5 +50,9 @@ PR publication job receives no provider secret. PRs created by the workflow
 still run the protected `Quality`, `Database`, `E2E`, and `Security` checks;
 their pre-publication gate is not a substitute for protected CI.
 
+The manual `simulate_codex_usage_limit` input skips the Codex call and creates a
+synthetic normalized usage-limit result. Use it only to rehearse the full Claude
+handoff path; ordinary runs leave it disabled.
+
 See `docs/agent-protocol.md` for retry/fallback rules, checkpoint format,
 single-writer ownership, review findings, staged rollout, and measured metrics.
