@@ -15,3 +15,13 @@ function parseNodeEnvironment(value: string | undefined): NodeEnvironment {
 export const env = Object.freeze({
   nodeEnv: parseNodeEnvironment(process.env.NODE_ENV),
 });
+
+export function getDatabaseUrl(): string {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required for database access");
+  }
+
+  return databaseUrl;
+}

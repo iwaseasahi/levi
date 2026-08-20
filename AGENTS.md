@@ -23,7 +23,9 @@ defined in [`docs/governance/autonomy.md`](docs/governance/autonomy.md).
 - `docs/migration/`: Ginmaku 2 parity and migration evidence (Issue #11).
 - `src/app/`: Next.js routes, layouts, and composition.
 - `src/config/`: validated runtime configuration.
-- Database and test directories are introduced by Issues #7 and #8.
+- `src/infrastructure/database/`: the only application-level Prisma client.
+- `prisma/`: schema, immutable migrations, deterministic seed, and DB bootstrap.
+- Test directories are introduced by Issue #8.
 
 ## Canonical commands
 
@@ -34,6 +36,9 @@ defined in [`docs/governance/autonomy.md`](docs/governance/autonomy.md).
 - `pnpm typecheck`: generate Next.js route types and run TypeScript.
 - `pnpm build`: create the production build.
 - `pnpm check`: run every currently required check above.
+- `pnpm db:up`: start local development and test PostgreSQL instances.
+- `pnpm db:check`: apply migrations, detect drift, seed, and verify connectivity.
+- `pnpm db:down`: stop the repository's local PostgreSQL instances.
 - `git diff --check`: validate patch whitespace.
 
 `pnpm test`, `pnpm test:integration`, and `pnpm test:e2e` are planned by Issue #8
@@ -52,6 +57,9 @@ exist.
 - Pin runtime and package-manager versions and commit the lockfile.
 - Treat database migrations, authentication, authorization, external I/O, and
   data deletion as high-risk changes requiring focused tests and review.
+- Read `docs/architecture/database-conventions.md` before schema or migration
+  work. Never edit a merged migration; add a forward migration instead.
+- Never bypass Prisma's explicit consent requirement for destructive AI actions.
 - Never put real production data or secrets in code, fixtures, prompts, logs,
   screenshots, traces, Issues, or pull requests.
 - Fix root causes. Do not weaken types, tests, lint rules, or security controls to

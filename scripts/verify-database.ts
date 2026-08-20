@@ -1,0 +1,22 @@
+import "dotenv/config";
+
+import { prisma } from "../src/infrastructure/database/client.js";
+
+try {
+  const setting = await prisma.systemSetting.findUnique({
+    where: { key: "foundation.version" },
+  });
+
+  if (setting?.id !== "00000000-0000-4000-8000-000000000001") {
+    throw new Error("Deterministic foundation seed is missing");
+  }
+
+  const result = await prisma.$queryRaw<
+    Array<{ result: number }>
+  >`SELECT 1 AS result`;
+  if (result[0]?.result !== 1) {
+    throw new Error("Database connectivity check returned an unexpected value");
+  }
+} finally {
+  await prisma.$disconnect();
+}

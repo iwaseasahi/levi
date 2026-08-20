@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: levi
+      POSTGRES_PASSWORD: levi
+      POSTGRES_USER: levi
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U levi -d levi"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - levi-postgres:/var/lib/postgresql
+      - ./prisma/docker-init:/docker-entrypoint-initdb.d:ro
+
+  postgres-test:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: levi_test
+      POSTGRES_PASSWORD: levi
+      POSTGRES_USER: levi
+    ports:
+      - "127.0.0.1:55433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U levi -d levi_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    tmpfs:
+      - /var/lib/postgresql
+    volumes:
+      - ./prisma/docker-init:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  levi-postgres:
