@@ -78,6 +78,8 @@ human consent when an AI agent invokes a reset. Never bypass that safeguard.
 - [`PLANS.md`](PLANS.md): execution-plan rules and template.
 - [`docs/governance/autonomy.md`](docs/governance/autonomy.md): permissions,
   approval boundaries, and Definition of Done.
+- [`docs/governance/agent-execution-protocol.md`](docs/governance/agent-execution-protocol.md):
+  Issue readiness, execution, PR sizing, and handoff protocol.
 
 ## Verify instruction discovery
 

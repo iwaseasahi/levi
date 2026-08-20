@@ -1,0 +1,80 @@
+name: Feature or change
+description: Define an observable outcome for an agent to implement.
+title: "feat: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the outcome, not a predetermined patch. Do not include secrets,
+        production data, personal information, or confidential reference assets.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What observable capability or state must exist when this is done?
+      placeholder: A user or operator can...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why is this needed, and which current behavior, paths, ADRs, or prior Issues matter?
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: State compatibility, safety, architecture, data, performance, and rollout boundaries. Write "None known" when applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List independently verifiable completion conditions as Markdown checkboxes.
+      placeholder: |
+        - [ ] Given ..., when ..., then ...
+        - [ ] Relevant automated checks pass
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: Explicitly list adjacent work that this Issue must not absorb.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Name commands, observable behaviors, migration rehearsals, or artifacts that will prove completion.
+    validations:
+      required: true
+  - type: dropdown
+    id: ui_change
+    attributes:
+      label: UI impact
+      description: Does this change visible UI or interaction behavior?
+      options:
+        - No UI change
+        - UI change
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Design requirements and references
+      description: For UI work, give states, responsive behavior, accessibility needs, and attached/reference images. Explain ownership and permitted use. Write "N/A" otherwise.
+    validations:
+      required: true
+  - type: checkboxes
+    id: data_safety
+    attributes:
+      label: Data safety
+      options:
+        - label: This Issue and its references contain no secrets, production data, or unapproved personal/confidential information.
+          required: true
