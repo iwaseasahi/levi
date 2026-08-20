@@ -1,10 +1,10 @@
-import { prisma } from "@/infrastructure/database/client";
+import { checkDatabaseReadiness } from "@/infrastructure/database/readiness";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await prisma.$queryRaw`SELECT 1`;
+    await checkDatabaseReadiness();
     return Response.json(
       { database: "ok", service: "levi", status: "ok" },
       { headers: { "Cache-Control": "no-store" } },

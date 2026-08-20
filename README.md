@@ -26,8 +26,9 @@ pnpm dev
 ```
 
 Open <http://localhost:3000> for the application shell and
-<http://localhost:3000/api/health> for the process health endpoint, and
-<http://localhost:3000/api/health/database> for database connectivity.
+<http://localhost:3000/api/health> for process liveness,
+<http://localhost:3000/api/ready> for traffic readiness, and
+<http://localhost:3000/api/health/database> for focused database diagnostics.
 
 ## Canonical commands
 
@@ -42,6 +43,8 @@ pnpm check        # all currently available required checks
 pnpm db:up        # start development and test PostgreSQL instances
 pnpm db:check     # migrate, detect drift, seed, and query the configured DB
 pnpm db:down      # stop the local PostgreSQL instances
+pnpm security:check  # production dependency and license gates
+pnpm backup:rehearse # local disposable backup/restore proof
 ```
 
 Install the pinned Chromium build once with `pnpm test:e2e:install`. Run database
@@ -51,6 +54,9 @@ artifacts, coverage, and flake policy.
 
 Pull requests run the same commands in GitHub Actions. See
 [`docs/ci.md`](docs/ci.md) for required checks, artifacts, and branch protection.
+
+Security and operations start at [`docs/security/threat-model.md`](docs/security/threat-model.md)
+and [`docs/operations/observability.md`](docs/operations/observability.md).
 
 ## Database workflow
 
