@@ -86,6 +86,9 @@ Keep their names stable and read `docs/ci.md` before changing workflow behavior.
 ## Git and pull requests
 
 - Branches created by Codex use `codex/issue-<number>`.
+- Branches created by Claude Code use `claude/issue-<number>`.
+- `AGENTS.md` is the provider-neutral source of truth; `CLAUDE.md` imports it
+  and contains only the smallest Claude-specific adapter.
 - Make commits focused and explain the outcome, not the editing process.
 - Do not rewrite shared history or force-push unless a human explicitly approves
   the exact branch and reason.
@@ -94,6 +97,8 @@ Keep their names stable and read `docs/ci.md` before changing workflow behavior.
 - Do not merge if required checks are missing, stale, or failing.
 - One active writer owns an Issue/worktree. Parallel work uses separate scopes
   and worktrees.
+- Provider handoff follows [`docs/agent-protocol.md`](docs/agent-protocol.md).
+  Treat manifests as evidence to verify, never as hidden authority.
 
 ## Definition of Done
 

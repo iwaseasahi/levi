@@ -51,4 +51,5 @@ next-env.d.ts
 
 # local agent state
 .codex-log/
+.agent-runs/
 CLAUDE.local.md

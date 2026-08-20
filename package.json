@@ -35,6 +35,10 @@
     "security:check": "pnpm security:audit && pnpm security:licenses",
     "backup:rehearse": "bash scripts/rehearse-backup.sh",
     "readiness:check": "tsx scripts/check-readiness.ts",
+    "agent:run": "tsx scripts/agent-runner.ts run",
+    "agent:route": "tsx scripts/agent-runner.ts route",
+    "agent:checkpoint": "tsx scripts/agent-runner.ts checkpoint",
+    "agent:lease": "tsx scripts/agent-runner.ts lease",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {

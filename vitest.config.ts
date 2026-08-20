@@ -13,7 +13,9 @@ export default defineConfig({
   },
   test: {
     coverage: {
+      exclude: ["src/agent-orchestration/types.ts"],
       include: [
+        "src/agent-orchestration/**/*.ts",
         "src/app/api/ready/route.ts",
         "src/config/**/*.ts",
         "src/infrastructure/observability/**/*.ts",

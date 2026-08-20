@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/iwaseasahi/levi/blob/main/docs/schemas/handoff.schema.json",
+  "title": "Levi agent handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "issue",
+    "run_id",
+    "provider",
+    "model",
+    "base_sha",
+    "branch",
+    "worktree",
+    "created_at",
+    "completed_steps",
+    "changed_files",
+    "verification",
+    "remaining_work",
+    "blocker",
+    "switch_reason",
+    "retry_after",
+    "patch_sha256"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "issue": { "type": "integer", "minimum": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "provider": { "enum": ["codex", "claude"] },
+    "model": { "type": ["string", "null"] },
+    "base_sha": { "type": "string", "minLength": 7 },
+    "branch": { "type": "string", "minLength": 1 },
+    "worktree": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "completed_steps": { "type": "array", "items": { "type": "string" } },
+    "changed_files": { "type": "array", "items": { "type": "string" } },
+    "verification": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "status", "summary"],
+        "properties": {
+          "command": { "type": "string" },
+          "status": { "enum": ["passed", "failed", "not_run"] },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    "remaining_work": { "type": "array", "items": { "type": "string" } },
+    "blocker": {
+      "type": ["string", "null"],
+      "enum": [
+        "rate_limited_transient",
+        "usage_limit_reached",
+        "authentication_failed",
+        "permission_blocked",
+        "policy_blocked",
+        "verification_failed",
+        "agent_failed",
+        "infrastructure_failed",
+        "needs_human_decision",
+        null
+      ]
+    },
+    "switch_reason": { "type": ["string", "null"] },
+    "retry_after": { "type": ["string", "null"], "format": "date-time" },
+    "patch_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

@@ -54,6 +54,8 @@ artifacts, coverage, and flake policy.
 
 Pull requests run the same commands in GitHub Actions. See
 [`docs/ci.md`](docs/ci.md) for required checks, artifacts, and branch protection.
+Provider handoff and the manually dispatched Codex/Claude workflow are described
+in [`docs/agent-protocol.md`](docs/agent-protocol.md).
 
 Security and operations start at [`docs/security/threat-model.md`](docs/security/threat-model.md)
 and [`docs/operations/observability.md`](docs/operations/observability.md).
