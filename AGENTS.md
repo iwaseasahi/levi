@@ -47,6 +47,9 @@ defined in [`docs/governance/autonomy.md`](docs/governance/autonomy.md).
 Read `docs/testing.md` before changing tests, retries, isolation, coverage, or
 artifact behavior.
 
+GitHub branch protection requires the `Quality`, `Database`, and `E2E` jobs.
+Keep their names stable and read `docs/ci.md` before changing workflow behavior.
+
 ## Engineering rules
 
 - Follow accepted ADRs. If none covers a material choice, write or update an ADR
