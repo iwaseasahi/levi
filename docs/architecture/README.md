@@ -22,6 +22,9 @@ them in implementation code.
 | [0004](0004-authentication-selection-gate.md) | proposed | Authentication selection gate                    |
 | [0005](0005-deployment-selection-gate.md)     | proposed | Portable deployment and selection gate           |
 
+Implementation-level data rules are documented in
+[`database-conventions.md`](database-conventions.md).
+
 Open product and operational decisions are tracked in
 [`open-decisions.md`](open-decisions.md).
 

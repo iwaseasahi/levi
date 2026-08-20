@@ -41,6 +41,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# generated database client
+/src/generated/prisma/
+
 # local agent state
 .codex-log/
 CLAUDE.local.md
