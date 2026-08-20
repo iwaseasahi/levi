@@ -22,7 +22,7 @@
     "db:seed": "prisma db seed",
     "db:reset": "tsx scripts/reset-database.ts",
     "db:schema:check": "prisma validate && prisma format --check && prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --exit-code && prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code",
-    "db:check": "pnpm db:migrate && pnpm db:schema:check && pnpm db:seed && tsx scripts/verify-database.ts",
+    "db:check": "prisma generate && pnpm db:migrate && pnpm db:schema:check && pnpm db:seed && tsx scripts/verify-database.ts",
     "test": "pnpm test:unit && pnpm test:component",
     "test:unit": "vitest run --config vitest.config.ts",
     "test:unit:coverage": "vitest run --config vitest.config.ts --coverage",

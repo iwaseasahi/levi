@@ -49,6 +49,9 @@ integration tests with `pnpm test:integration` and the browser walking skeleton
 with `pnpm test:e2e`. See [`docs/testing.md`](docs/testing.md) for isolation,
 artifacts, coverage, and flake policy.
 
+Pull requests run the same commands in GitHub Actions. See
+[`docs/ci.md`](docs/ci.md) for required checks, artifacts, and branch protection.
+
 ## Database workflow
 
 The development database listens only on `127.0.0.1:55432`; the ephemeral test
