@@ -1,0 +1,87 @@
+name: Bug report
+description: Provide reproducible evidence and define the corrected outcome.
+title: "fix: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use synthetic or redacted evidence only. Never paste credentials,
+        production records, personal information, or confidential screenshots.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What observable behavior must be restored or corrected?
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: What happened, including exact errors and frequency?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should happen under the same conditions?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Give the smallest deterministic sequence, environment, and synthetic fixture needed to reproduce the defect.
+      placeholder: |
+        1. Given ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and evidence
+      description: Link relevant code, logs, reports, screenshots, regressions, ADRs, or prior Issues. Redact sensitive material.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: State compatibility, safety, architecture, data, and rollout boundaries. Write "None known" when applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Include a regression test and independently verifiable corrected behavior.
+      placeholder: |
+        - [ ] A regression test fails before and passes after the fix
+        - [ ] Given ..., when ..., then ...
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: List refactors or adjacent defects excluded from this fix.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Name the regression test, canonical commands, and any runtime checks or artifacts required.
+    validations:
+      required: true
+  - type: checkboxes
+    id: data_safety
+    attributes:
+      label: Data safety
+      options:
+        - label: This report and its evidence contain no secrets, production data, or unapproved personal/confidential information.
+          required: true

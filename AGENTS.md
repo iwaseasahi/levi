@@ -15,6 +15,9 @@ defined in [`docs/governance/autonomy.md`](docs/governance/autonomy.md).
 4. For multi-step work, create or update an execution plan using `PLANS.md`.
 5. Work on one Issue in one dedicated branch/worktree.
 
+Follow [`docs/governance/agent-execution-protocol.md`](docs/governance/agent-execution-protocol.md)
+from Issue intake through handoff and merge.
+
 ## Repository layout
 
 - `docs/governance/`: autonomy, approvals, and Definition of Done.
