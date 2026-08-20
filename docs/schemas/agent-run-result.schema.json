@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/iwaseasahi/levi/blob/main/docs/schemas/agent-run-result.schema.json",
+  "title": "Levi agent run result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "issue",
+    "run_id",
+    "provider",
+    "status",
+    "attempts",
+    "started_at",
+    "finished_at",
+    "retry_after",
+    "exit_code",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "issue": { "type": "integer", "minimum": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "provider": { "enum": ["codex", "claude"] },
+    "status": {
+      "enum": [
+        "succeeded",
+        "rate_limited_transient",
+        "usage_limit_reached",
+        "authentication_failed",
+        "permission_blocked",
+        "policy_blocked",
+        "verification_failed",
+        "agent_failed",
+        "infrastructure_failed",
+        "needs_human_decision"
+      ]
+    },
+    "attempts": { "type": "integer", "minimum": 1 },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "retry_after": { "type": ["string", "null"], "format": "date-time" },
+    "exit_code": { "type": ["integer", "null"] },
+    "summary": { "type": "string" }
+  }
+}
