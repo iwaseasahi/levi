@@ -12,6 +12,11 @@ on:
         required: true
         default: "20"
         type: string
+      simulate_codex_usage_limit:
+        description: Skip Codex and rehearse the Claude fallback path
+        required: true
+        default: false
+        type: boolean
 
 concurrency:
   group: agent-issue-${{ inputs.issue }}
@@ -84,8 +89,10 @@ jobs:
           path: agent-artifacts
       - run: pnpm install --frozen-lockfile
       - name: Install pinned Codex CLI
+        if: inputs.simulate_codex_usage_limit == false
         run: pnpm add --global "@openai/codex@${CODEX_CLI_VERSION}"
       - name: Run Codex with bounded retries
+        if: inputs.simulate_codex_usage_limit == false
         run: >-
           pnpm agent:run
           --provider codex
@@ -96,6 +103,18 @@ jobs:
           --result agent-artifacts/codex-result.json
           --max-attempts 3
           --timeout-ms 2700000
+      - name: Create synthetic usage-limit result
+        if: inputs.simulate_codex_usage_limit == true
+        env:
+          ISSUE: ${{ inputs.issue }}
+        run: |
+          timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          jq -n \
+            --argjson issue "$ISSUE" \
+            --arg run_id "$RUN_ID-codex" \
+            --arg timestamp "$timestamp" \
+            '{schema_version: 1, issue: $issue, run_id: $run_id, provider: "codex", status: "usage_limit_reached", attempts: 1, started_at: $timestamp, finished_at: $timestamp, retry_after: null, exit_code: 1, summary: "Synthetic usage limit for fallback rehearsal."}' \
+            > agent-artifacts/codex-result.json
       - id: route
         name: Normalize result and decide fallback
         run: >-
