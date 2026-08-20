@@ -5,3 +5,5 @@ allowBuilds:
   sharp: false
   unrs-resolver: false
 engineStrict: true
+overrides:
+  deepmerge-ts: 8.0.1

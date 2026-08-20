@@ -40,6 +40,8 @@ from Issue intake through handoff and merge.
 - `pnpm test`: run unit and component tests.
 - `pnpm test:integration`: start/migrate the test DB and run integration tests.
 - `pnpm test:e2e`: run the Chromium walking skeleton.
+- `pnpm security:check`: audit production dependencies and license inventory.
+- `pnpm backup:rehearse`: restore and reconcile a local disposable backup.
 - `pnpm build`: create the production build.
 - `pnpm check`: run every currently required check above.
 - `pnpm db:up`: start local development and test PostgreSQL instances.
@@ -53,7 +55,8 @@ artifact behavior.
 Before replacement or migration work, read `docs/migration/README.md` and update
 the parity matrix with pinned evidence. Never use production data as a fixture.
 
-GitHub branch protection requires the `Quality`, `Database`, and `E2E` jobs.
+GitHub branch protection requires the `Quality`, `Database`, `E2E`, and
+`Security` jobs.
 Keep their names stable and read `docs/ci.md` before changing workflow behavior.
 
 ## Engineering rules
@@ -71,6 +74,8 @@ Keep their names stable and read `docs/ci.md` before changing workflow behavior.
 - Read `docs/architecture/database-conventions.md` before schema or migration
   work. Never edit a merged migration; add a forward migration instead.
 - Never bypass Prisma's explicit consent requirement for destructive AI actions.
+- Follow `docs/security/` and `docs/operations/`; use structured logs and never
+  place Restricted/Confidential values in logs, prompts, fixtures, or artifacts.
 - Never put real production data or secrets in code, fixtures, prompts, logs,
   screenshots, traces, Issues, or pull requests.
 - Fix root causes. Do not weaken types, tests, lint rules, or security controls to

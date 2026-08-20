@@ -1,6 +1,6 @@
 # Continuous integration
 
-The `CI` workflow runs for every pull request and push to `main`. It has three
+The `CI` workflow runs for every pull request and push to `main`. It has four
 stable required-check names:
 
 - `Quality`: frozen install plus the repository-owned `pnpm check` and coverage
@@ -9,6 +9,8 @@ stable required-check names:
   seed, and PostgreSQL integration tests.
 - `E2E`: the Chromium walking skeleton, accessibility scan, and browser runtime
   error guard.
+- `Security`: production dependency audit, license inventory, Git-history secret
+  scan, and pull-request dependency review.
 
 The workflow only composes canonical package scripts; test behavior does not live
 in GitHub Actions. Dependency caches are keyed by the pnpm lockfile. A newer run
@@ -21,8 +23,8 @@ fails.
 Configure `main` with the following repository rule:
 
 1. Require a pull request before merging, with zero required human approvals.
-2. Require `Quality`, `Database`, and `E2E`, including branches being up to date
-   before merge.
+2. Require `Quality`, `Database`, `E2E`, and `Security`, including branches being
+   up to date before merge.
 3. Block force pushes and branch deletion.
 4. Do not permit bypass for coding-agent credentials.
 
