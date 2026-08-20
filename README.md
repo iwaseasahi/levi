@@ -36,6 +36,7 @@ pnpm dev          # development server
 pnpm format:check # formatting verification
 pnpm lint         # ESLint
 pnpm typecheck    # Next.js route types and TypeScript
+pnpm test         # unit and component tests
 pnpm build        # production build
 pnpm check        # all currently available required checks
 pnpm db:up        # start development and test PostgreSQL instances
@@ -43,7 +44,10 @@ pnpm db:check     # migrate, detect drift, seed, and query the configured DB
 pnpm db:down      # stop the local PostgreSQL instances
 ```
 
-Test commands are introduced by Issue #8 and are not part of `pnpm check` yet.
+Install the pinned Chromium build once with `pnpm test:e2e:install`. Run database
+integration tests with `pnpm test:integration` and the browser walking skeleton
+with `pnpm test:e2e`. See [`docs/testing.md`](docs/testing.md) for isolation,
+artifacts, coverage, and flake policy.
 
 ## Database workflow
 

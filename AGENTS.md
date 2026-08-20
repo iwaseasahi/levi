@@ -25,7 +25,7 @@ defined in [`docs/governance/autonomy.md`](docs/governance/autonomy.md).
 - `src/config/`: validated runtime configuration.
 - `src/infrastructure/database/`: the only application-level Prisma client.
 - `prisma/`: schema, immutable migrations, deterministic seed, and DB bootstrap.
-- Test directories are introduced by Issue #8.
+- `tests/`: integration/E2E suites, helpers, and test setup.
 
 ## Canonical commands
 
@@ -34,6 +34,9 @@ defined in [`docs/governance/autonomy.md`](docs/governance/autonomy.md).
 - `pnpm format:check`: verify formatting.
 - `pnpm lint`: run ESLint.
 - `pnpm typecheck`: generate Next.js route types and run TypeScript.
+- `pnpm test`: run unit and component tests.
+- `pnpm test:integration`: start/migrate the test DB and run integration tests.
+- `pnpm test:e2e`: run the Chromium walking skeleton.
 - `pnpm build`: create the production build.
 - `pnpm check`: run every currently required check above.
 - `pnpm db:up`: start local development and test PostgreSQL instances.
@@ -41,9 +44,8 @@ defined in [`docs/governance/autonomy.md`](docs/governance/autonomy.md).
 - `pnpm db:down`: stop the repository's local PostgreSQL instances.
 - `git diff --check`: validate patch whitespace.
 
-`pnpm test`, `pnpm test:integration`, and `pnpm test:e2e` are planned by Issue #8
-but are not available yet. Do not report them as executed until their scripts
-exist.
+Read `docs/testing.md` before changing tests, retries, isolation, coverage, or
+artifact behavior.
 
 ## Engineering rules
 

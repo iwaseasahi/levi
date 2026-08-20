@@ -2,7 +2,9 @@ const nodeEnvironments = ["development", "test", "production"] as const;
 
 type NodeEnvironment = (typeof nodeEnvironments)[number];
 
-function parseNodeEnvironment(value: string | undefined): NodeEnvironment {
+export function parseNodeEnvironment(
+  value: string | undefined,
+): NodeEnvironment {
   const candidate = value ?? "development";
 
   if (nodeEnvironments.some((environment) => environment === candidate)) {
