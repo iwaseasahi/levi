@@ -80,6 +80,8 @@ human consent when an AI agent invokes a reset. Never bypass that safeguard.
   approval boundaries, and Definition of Done.
 - [`docs/governance/agent-execution-protocol.md`](docs/governance/agent-execution-protocol.md):
   Issue readiness, execution, PR sizing, and handoff protocol.
+- [`docs/migration/README.md`](docs/migration/README.md): pinned Ginmaku evidence,
+  parity matrix, migration rehearsal, and vertical-slice selection.
 
 ## Verify instruction discovery
 

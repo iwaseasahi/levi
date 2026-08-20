@@ -50,6 +50,9 @@ from Issue intake through handoff and merge.
 Read `docs/testing.md` before changing tests, retries, isolation, coverage, or
 artifact behavior.
 
+Before replacement or migration work, read `docs/migration/README.md` and update
+the parity matrix with pinned evidence. Never use production data as a fixture.
+
 GitHub branch protection requires the `Quality`, `Database`, and `E2E` jobs.
 Keep their names stable and read `docs/ci.md` before changing workflow behavior.
 
