@@ -28,6 +28,7 @@ function run(args: string[], env = process.env) {
 if (process.env.CI !== "true") {
   run(["db:up"]);
 }
+run(["exec", "prisma", "generate"], testEnvironment);
 run(["exec", "prisma", "migrate", "deploy"], testEnvironment);
 run(
   ["exec", "vitest", "run", "--config", "vitest.integration.config.ts"],
