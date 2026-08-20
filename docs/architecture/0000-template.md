@@ -47,4 +47,3 @@ Avoid embedding a transient version unless the version itself is the decision.
 ## References
 
 - Authoritative documentation or research.
-

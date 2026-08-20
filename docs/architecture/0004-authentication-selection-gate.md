@@ -81,4 +81,3 @@ gates.
 ## References
 
 - [Next.js authentication guide](https://nextjs.org/docs/app/guides/authentication)
-

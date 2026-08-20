@@ -14,13 +14,13 @@ them in implementation code.
 
 ## Index
 
-| ADR | Status | Decision |
-| --- | --- | --- |
-| [0001](0001-full-stack-typescript.md) | accepted | Next.js App Router, React, and strict TypeScript |
-| [0002](0002-prisma-postgresql.md) | accepted | Prisma ORM and PostgreSQL |
-| [0003](0003-pnpm-and-version-policy.md) | accepted | pnpm and explicit version pinning |
-| [0004](0004-authentication-selection-gate.md) | proposed | Authentication selection gate |
-| [0005](0005-deployment-selection-gate.md) | proposed | Portable deployment and selection gate |
+| ADR                                           | Status   | Decision                                         |
+| --------------------------------------------- | -------- | ------------------------------------------------ |
+| [0001](0001-full-stack-typescript.md)         | accepted | Next.js App Router, React, and strict TypeScript |
+| [0002](0002-prisma-postgresql.md)             | accepted | Prisma ORM and PostgreSQL                        |
+| [0003](0003-pnpm-and-version-policy.md)       | accepted | pnpm and explicit version pinning                |
+| [0004](0004-authentication-selection-gate.md) | proposed | Authentication selection gate                    |
+| [0005](0005-deployment-selection-gate.md)     | proposed | Portable deployment and selection gate           |
 
 Open product and operational decisions are tracked in
 [`open-decisions.md`](open-decisions.md).
@@ -35,4 +35,3 @@ Open product and operational decisions are tracked in
 5. Update this index in the same pull request.
 
 Changing an accepted decision requires a new ADR that supersedes the old one.
-

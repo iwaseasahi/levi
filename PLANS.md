@@ -89,4 +89,3 @@ evidence discovered during investigation.
 Complete this section at the end with the merged outcome, verification evidence,
 remaining risks, and follow-up Issues.
 ```
-

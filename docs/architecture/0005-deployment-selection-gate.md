@@ -80,4 +80,3 @@ production migration controls, and the project's observability requirements.
 
 - [Next.js self-hosting guidance](https://nextjs.org/docs/app/guides/self-hosting)
 - [Prisma with Next.js and Vercel](https://www.prisma.io/docs/guides/frameworks/nextjs)
-

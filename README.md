@@ -4,11 +4,38 @@ Levi is the replacement for Ginmaku 2, a web-based worship presentation system.
 The repository is being built with coding agents as the primary implementers and
 with reproducible validation as the basis for accepting changes.
 
-## Current status
+## Requirements
 
-The repository is in its foundation phase. Application and package-manager
-scaffolding have not been added yet. Follow the child Issues under
-[foundation Issue #1](https://github.com/iwaseasahi/levi/issues/1) for progress.
+- Node.js 24.19.0 (see `.node-version`)
+- pnpm 11.19.0 (see `package.json`)
+
+Use a version manager that reads `.node-version`, then enable or install the
+pinned pnpm release. Do not substitute npm or regenerate the pnpm lockfile with a
+different package manager.
+
+## Setup
+
+```bash
+pnpm install --frozen-lockfile
+cp .env.example .env.local
+pnpm dev
+```
+
+Open <http://localhost:3000> for the application shell and
+<http://localhost:3000/api/health> for the health endpoint.
+
+## Canonical commands
+
+```bash
+pnpm dev          # development server
+pnpm format:check # formatting verification
+pnpm lint         # ESLint
+pnpm typecheck    # Next.js route types and TypeScript
+pnpm build        # production build
+pnpm check        # all currently available required checks
+```
+
+Test commands are introduced by Issue #8 and are not part of `pnpm check` yet.
 
 ## Agent documentation
 
@@ -28,9 +55,8 @@ Do not modify files.
 ```
 
 The response must identify the root `AGENTS.md`, reference the governance policy,
-and distinguish `git diff --check` from the planned but not-yet-implemented pnpm
-commands. Codex rebuilds the instruction chain at the start of a run, so use a
-new session after changing instruction files.
+and list the canonical pnpm commands above. Codex rebuilds the instruction chain
+at the start of a run, so use a new session after changing instruction files.
 
 ## Contributing workflow
 

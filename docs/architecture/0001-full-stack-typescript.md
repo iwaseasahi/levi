@@ -99,4 +99,3 @@ external API consumers, or organizational ownership require separate services.
 - [Next.js App Router](https://nextjs.org/docs/app)
 - [Next.js TypeScript configuration](https://nextjs.org/docs/app/api-reference/config/typescript)
 - [Next.js guide for AI coding agents](https://nextjs.org/docs/app/guides/ai-agents)
-

@@ -21,36 +21,31 @@ defined in [`docs/governance/autonomy.md`](docs/governance/autonomy.md).
 - `docs/architecture/`: architecture index and ADRs (introduced by Issue #5).
 - `docs/product/`: product scope and glossary (introduced by Issue #5).
 - `docs/migration/`: Ginmaku 2 parity and migration evidence (Issue #11).
-- Application, database, and test directories do not exist yet. Update this
-  section when their scaffolding is merged.
+- `src/app/`: Next.js routes, layouts, and composition.
+- `src/config/`: validated runtime configuration.
+- Database and test directories are introduced by Issues #7 and #8.
 
 ## Canonical commands
 
-The application toolchain has not been scaffolded yet. At this stage, use:
+- `pnpm install --frozen-lockfile`: reproducible dependency installation.
+- `pnpm dev`: run the development server.
+- `pnpm format:check`: verify formatting.
+- `pnpm lint`: run ESLint.
+- `pnpm typecheck`: generate Next.js route types and run TypeScript.
+- `pnpm build`: create the production build.
+- `pnpm check`: run every currently required check above.
+- `git diff --check`: validate patch whitespace.
 
-- `git diff --check`: validate whitespace and patch formatting.
-
-The following commands are planned but **not available yet**. Do not report them
-as executed until the corresponding package scripts exist:
-
-- `pnpm install --frozen-lockfile`
-- `pnpm dev`
-- `pnpm format:check`
-- `pnpm lint`
-- `pnpm typecheck`
-- `pnpm test`
-- `pnpm test:integration`
-- `pnpm test:e2e`
-- `pnpm build`
-- `pnpm check`
-
-When adding the toolchain, make these scripts the single source of truth for
-local and CI verification, then replace this planned list with exact commands.
+`pnpm test`, `pnpm test:integration`, and `pnpm test:e2e` are planned by Issue #8
+but are not available yet. Do not report them as executed until their scripts
+exist.
 
 ## Engineering rules
 
 - Follow accepted ADRs. If none covers a material choice, write or update an ADR
   before committing to the choice.
+- Before Next.js work, read the relevant version-matched documentation under
+  `node_modules/next/dist/docs/`.
 - Keep framework code at the edges and domain rules independent where practical.
 - Do not introduce a production dependency without documenting why the standard
   library or an existing dependency is insufficient.
@@ -102,3 +97,12 @@ these instructions but must not relax governance or approval boundaries.
 When the same agent mistake occurs repeatedly, add the narrowest enforceable
 guard: test or static check first, then instruction, skill, or hook as appropriate.
 
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
