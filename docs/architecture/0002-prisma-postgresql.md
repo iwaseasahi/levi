@@ -95,4 +95,3 @@ explicit.
 - [Prisma with Next.js](https://www.prisma.io/docs/guides/frameworks/nextjs)
 - [Prisma supported databases](https://www.prisma.io/docs/orm/reference/supported-databases)
 - [PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/)
-

@@ -74,4 +74,3 @@ choice provides no demonstrated benefit for the initial stack.
 
 - [pnpm documentation](https://pnpm.io/)
 - [Prisma ORM system requirements](https://docs.prisma.io/docs/orm/reference/system-requirements)
-

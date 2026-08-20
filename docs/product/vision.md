@@ -35,4 +35,3 @@ result, data behavior, failure behavior, and automated verification.
 
 This document intentionally does not claim which legacy features are required.
 That decision belongs in the migration parity work and product Issues.
-
