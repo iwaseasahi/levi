@@ -35,3 +35,20 @@ the repository is never left with a silently missing gate.
 Production deployment is intentionally absent from `ci.yml`. A future deployment
 workflow must use a protected GitHub Environment, minimal deployment-specific
 permissions, and the explicit production approval defined by governance.
+
+## Agent orchestration workflow
+
+`.github/workflows/agent-orchestration.yml` is a manually dispatched, staged
+workflow for a trusted Issue. It is intentionally not triggered by Issue or PR
+text. It separates task preparation, Codex writing, Claude fallback, the common
+quality gate, opposite-provider review, and PR publication into distinct jobs.
+
+The repository owner must explicitly configure revocable sandbox
+`CODEX_API_KEY` and `ANTHROPIC_API_KEY` secrets before provider-backed use. Each
+provider job receives only its own secret and read-only GitHub permission. The
+PR publication job receives no provider secret. PRs created by the workflow
+still run the protected `Quality`, `Database`, `E2E`, and `Security` checks;
+their pre-publication gate is not a substitute for protected CI.
+
+See `docs/agent-protocol.md` for retry/fallback rules, checkpoint format,
+single-writer ownership, review findings, staged rollout, and measured metrics.
