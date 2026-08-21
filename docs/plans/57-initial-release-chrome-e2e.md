@@ -51,6 +51,11 @@ folders/bookmarks.
 - 2026-08-21 20:15 JST — Repeated the complete Chromium suite twice at 9/9,
   reviewed the passing artifact set (JUnit and HTML only), and passed format,
   lint, typecheck, 138 unit, 23 component, and production build checks.
+- 2026-08-21 20:18 JST — First exact-commit CI passed Quality, Database, and
+  Security; E2E passed 8/9 but the complete scripture flow exhausted the
+  default 30-second test budget on the two-core runner without an assertion
+  failure. Raised only that scenario budget to 60 seconds; retained retries 0,
+  no sleeps, and observable state waits.
 
 ## Decisions
 

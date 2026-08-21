@@ -32,4 +32,7 @@ used.
 
 Failures are synchronized on URL, focus, status text, DOM state, popup events,
 computed style, and scroll position. The suite contains no explicit sleep and
-the Playwright configuration keeps `retries: 0`.
+the Playwright configuration keeps `retries: 0`. The complete scripture flow
+has a 60-second scenario budget because it intentionally covers three searches,
+multiple popup lifecycles, and the full saved-content lifecycle on the two-core
+CI runner; individual assertions still use observable state waits.

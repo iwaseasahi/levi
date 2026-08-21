@@ -33,6 +33,7 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   context,
   page,
 }) => {
+  test.setTimeout(60_000);
   await login(page);
 
   const foreignFolder = await page.request.get(
