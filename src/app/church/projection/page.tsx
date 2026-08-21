@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import {
@@ -6,6 +5,7 @@ import {
   ScriptureSearchError,
 } from "@/domain/scripture/search";
 import { getChurchAccess } from "@/infrastructure/auth/church-session";
+import { ProjectionController } from "./projection-controller";
 
 export default async function ProjectionHandoffPage({
   searchParams,
@@ -31,24 +31,5 @@ export default async function ProjectionHandoffPage({
     throw error;
   }
 
-  return (
-    <main className="shell">
-      <section className="card projection-handoff">
-        <p className="eyebrow">Projection</p>
-        <h1>投影の準備ができました</h1>
-        <p>
-          {selection.book} {selection.chapter}:{selection.startVerse}–
-          {selection.endVerse}（
-          {selection.language === "ja"
-            ? "日本語"
-            : selection.language === "en"
-              ? "英語"
-              : "日本語と英語"}
-          ）
-        </p>
-        <p>操作画面と会衆向け画面は次の実装段階で接続します。</p>
-        <Link href="/church">検索画面へ戻る</Link>
-      </section>
-    </main>
-  );
+  return <ProjectionController selection={selection} />;
 }

@@ -22,12 +22,14 @@ const E2E_SCRIPTURE_BOOK_ID = "00000000-0000-4000-8000-000000004350";
 
 export async function clearScriptureFixture() {
   await prisma.bibleVerse.deleteMany({
-    where: { book: { canonicalCode: "TST" } },
+    where: { book: { canonicalCode: { in: ["GEN", "TST"] } } },
   });
   await prisma.bibleBookName.deleteMany({
-    where: { book: { canonicalCode: "TST" } },
+    where: { book: { canonicalCode: { in: ["GEN", "TST"] } } },
   });
-  await prisma.bibleBook.deleteMany({ where: { canonicalCode: "TST" } });
+  await prisma.bibleBook.deleteMany({
+    where: { canonicalCode: { in: ["GEN", "TST"] } },
+  });
   await prisma.bibleTranslation.updateMany({
     where: { code: { in: ["JSS3", "NKJV"] } },
     data: {
@@ -78,7 +80,7 @@ export async function seedScriptureFixture() {
   ]);
   await prisma.bibleBook.create({
     data: {
-      canonicalCode: "TST",
+      canonicalCode: "GEN",
       canonicalOrder: 1,
       id: E2E_SCRIPTURE_BOOK_ID,
       testament: "NEW",
@@ -88,12 +90,12 @@ export async function seedScriptureFixture() {
     data: [
       {
         bookId: E2E_SCRIPTURE_BOOK_ID,
-        name: "架空書",
+        name: "創世記",
         translationId: japanese.id,
       },
       {
         bookId: E2E_SCRIPTURE_BOOK_ID,
-        name: "Synthetic Book",
+        name: "Genesis",
         translationId: english.id,
       },
     ],
@@ -103,14 +105,20 @@ export async function seedScriptureFixture() {
       {
         bookId: E2E_SCRIPTURE_BOOK_ID,
         chapterNumber: 1,
-        text: `架空の日本語本文 ${verse}`,
+        text:
+          verse === 1
+            ? "初めに、神が天と地を創造した。"
+            : `E2E用日本語本文 ${verse}`,
         translationId: japanese.id,
         verseNumber: verse,
       },
       {
         bookId: E2E_SCRIPTURE_BOOK_ID,
         chapterNumber: 1,
-        text: `Synthetic English text ${verse}`,
+        text:
+          verse === 1
+            ? "In the beginning God created the heavens and the earth."
+            : `E2E English test text ${verse}`,
         translationId: english.id,
         verseNumber: verse,
       },
