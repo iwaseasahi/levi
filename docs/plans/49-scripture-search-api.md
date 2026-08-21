@@ -36,13 +36,13 @@ items with explicit validation and catalog-integrity errors.
 
 ## Plan
 
-1. [ ] Define runtime input parsing, language mode, result contract, and domain
+1. [x] Define runtime input parsing, language mode, result contract, and domain
        errors with golden unit cases.
-2. [ ] Implement one-query Prisma catalog reader and deterministic pairing with
+2. [x] Implement one-query Prisma catalog reader and deterministic pairing with
        synthetic PostgreSQL cases for all modes and integrity failures.
-3. [ ] Add authenticated GET route behavior and unit tests for auth/input/domain
+3. [x] Add authenticated GET route behavior and unit tests for auth/input/domain
        response boundaries and no-store responses.
-4. [ ] Capture representative `EXPLAIN` evidence and update parity/docs.
+4. [x] Capture representative `EXPLAIN` evidence and update parity/docs.
 5. [ ] Run local and exact-commit CI gates, then merge.
 
 ## Progress
@@ -50,6 +50,10 @@ items with explicit validation and catalog-integrity errors.
 - 2026-08-21 17:00 JST — Started from merged Issue #48; updated the stale KJV
   acceptance wording to NKJV, acquired the writer lease, and read the pinned
   Next.js 16 route-handler documentation.
+- 2026-08-21 17:10 JST — Added strict range parsing, deterministic one-item-per-
+  location assembly, authenticated no-store HTTP responses, and a single
+  parameterized PostgreSQL catalog statement. All 81 unit and 51 integration
+  tests pass; the representative plan selects a Bible location index.
 
 ## Decisions
 
@@ -58,6 +62,14 @@ items with explicit validation and catalog-integrity errors.
     has a natural URL representation.
   - Alternative: POST JSON; rejected because no mutation or unbounded payload is
     involved.
+- 2026-08-21 — Keep domain, one-query repository, and thin HTTP adapter in one
+  vertical-slice PR.
+  - Reason: the public error/result contract is proven across all three layers,
+    there is no database migration, and rollback is a single code revert.
+    Splitting would leave an unused domain or an undocumented private query
+    without an independently observable user outcome.
+  - Alternative: merge domain/repository before the route; rejected because the
+    intermediate state does not satisfy Issue #49 and repeats CI/handoff work.
 
 ## Risks and mitigations
 
@@ -69,22 +81,23 @@ items with explicit validation and catalog-integrity errors.
 
 ## Verification
 
-- [ ] golden unit cases
-- [ ] PostgreSQL integration cases
-- [ ] representative `EXPLAIN` uses catalog indexes
-- [ ] `pnpm db:check`
-- [ ] `pnpm check`
-- [ ] `pnpm test:integration`
-- [ ] `pnpm security:check`
-- [ ] `git diff --check`
+- [x] golden unit cases — 81 unit tests passed
+- [x] PostgreSQL integration cases — 51 integration tests passed
+- [x] representative `EXPLAIN` uses catalog indexes
+- [x] `pnpm db:check`
+- [x] `pnpm check` — 81 unit, 10 component, production build
+- [x] `pnpm test:integration` — 51 passed
+- [x] `pnpm security:check` — audit and 314 approved licenses
+- [x] `git diff --check`
 
 ## Handoff or blockers
 
-- Completed: intake, corrected NKJV contract, framework review, plan.
-- Remaining: implementation, evidence, CI, merge.
+- Completed: domain, repository, API, contract, and focused verification.
+- Remaining: exact-commit CI and merge.
 - Blocker: none.
-- Resume with: implement the framework-independent parser and result assembler.
+- Resume with: run complete local quality/database/security gates.
 
 ## Result
 
-Pending implementation.
+Implementation and local verification are complete. Draft PR #72 remains
+unmerged until its final commit passes all four required GitHub jobs.
