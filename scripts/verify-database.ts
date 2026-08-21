@@ -12,7 +12,7 @@ try {
   }
 
   const translations = await prisma.bibleTranslation.findMany({
-    where: { code: { in: ["JSS3", "KJV"] } },
+    where: { code: { in: ["JSS3", "NKJV"] } },
     orderBy: { displayOrder: "asc" },
     select: { code: true, rightsStatus: true },
   });
@@ -20,7 +20,7 @@ try {
     JSON.stringify(translations) !==
     JSON.stringify([
       { code: "JSS3", rightsStatus: "PENDING" },
-      { code: "KJV", rightsStatus: "PENDING" },
+      { code: "NKJV", rightsStatus: "PENDING" },
     ])
   ) {
     throw new Error("Deterministic pending Bible translation seed is missing");

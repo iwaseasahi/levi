@@ -10,7 +10,7 @@
 
 Levi stores translations, canonical books, translation-specific names, and
 verses in a normalized shared catalog whose identity and navigation never rely
-on legacy or physical row IDs. PostgreSQL enforces stable metadata, positive and
+on legacy or physical row IDs. PostgreSQL enforces stable metadata, valid and
 unique locations, restrictive master relationships, and the content-rights
 gate metadata required by ADR 0007.
 
@@ -19,7 +19,7 @@ gate metadata required by ADR 0007.
 1. [x] Map ADR 0007 enums and four catalog models in Prisma.
 2. [x] Implement an immutable migration with named checks, unique keys,
        navigation index, and restrictive foreign keys.
-3. [x] Seed only deterministic JSS3/KJV `PENDING` metadata and prove that the
+3. [x] Seed only deterministic JSS3/English `PENDING` metadata and prove that the
        seed contains no Bible text.
 4. [x] Test allowed and rejected synthetic metadata, names, locations, deletion,
        raw constraints, and indexes against PostgreSQL.
@@ -59,6 +59,11 @@ gate metadata required by ADR 0007.
 
 The shared catalog now has explicit translation rights state, translation-
 independent canonical books, translation-specific names, and ID-independent
-verse locations. PostgreSQL rejects invalid metadata, duplicate or non-positive
-locations, missing parents, and destructive master deletion. Only JSS3/KJV
+verse locations. PostgreSQL rejects invalid metadata, duplicate or out-of-range
+locations, missing parents, and destructive master deletion. Only JSS3/English
 `PENDING` metadata is seeded; no real Bible text or rights material is included.
+
+The initial KJV identity assumption was superseded by the approved production
+profile and product-owner NKJV decision in Issue #47.
+The same profile proved that 116 source rows use verse zero, so Issue #47 adds a
+forward migration that permits non-negative verse numbers without changing data.

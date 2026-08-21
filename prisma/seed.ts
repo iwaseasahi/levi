@@ -4,7 +4,7 @@ import { prisma } from "../src/infrastructure/database/client.js";
 
 const FOUNDATION_SETTING_ID = "00000000-0000-4000-8000-000000000001";
 const JSS3_TRANSLATION_ID = "00000000-0000-4000-8000-000000000101";
-const KJV_TRANSLATION_ID = "00000000-0000-4000-8000-000000000102";
+const NKJV_TRANSLATION_ID = "00000000-0000-4000-8000-000000000102";
 
 async function seed() {
   await prisma.$transaction([
@@ -30,12 +30,12 @@ async function seed() {
       },
     }),
     prisma.bibleTranslation.upsert({
-      where: { code: "KJV" },
+      where: { code: "NKJV" },
       update: {},
       create: {
-        id: KJV_TRANSLATION_ID,
-        code: "KJV",
-        name: "King James Version",
+        id: NKJV_TRANSLATION_ID,
+        code: "NKJV",
+        name: "New King James Version",
         languageTag: "en",
         displayOrder: 2,
         rightsStatus: "PENDING",
