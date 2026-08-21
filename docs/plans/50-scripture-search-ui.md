@@ -47,7 +47,7 @@ selection to the projection workflow.
        separate-window behavior owned by Issue #51.
 4. [x] Cover the component with keyboard/accessibility tests and the complete
        latest-Chrome flow with synthetic E2E data.
-5. [ ] Update parity and contracts, run local and exact-commit CI gates, then
+5. [x] Update parity and contracts, run local and exact-commit CI gates, then
        merge.
 
 ## Progress
@@ -59,6 +59,10 @@ selection to the projection workflow.
   complete UI state model, canonical projection handoff, and synthetic browser
   evidence. All local quality, integration, E2E, database, and security gates
   pass.
+- 2026-08-21 18:40 JST — Corrected the E2E fixture to provision translation
+  masters on a migration-only database, reproduced all nine browser scenarios
+  from a fresh disposable database, and passed all four required GitHub jobs on
+  commit `43e7647`.
 
 ## Decisions
 
@@ -91,4 +95,12 @@ selection to the projection workflow.
 ## Handoff or blockers
 
 - Blocker: none.
-- Resume with: run exact-commit GitHub CI and merge after all required jobs pass.
+- Resume with: implement the controller/audience window workflow in Issue #51.
+
+## Result
+
+Issue #50 is complete. The church screen now prevents known-invalid candidate
+combinations, renders every required interaction state, shows synthetic-tested
+JSS3/NKJV results accessibly, and hands only canonical coordinates to the
+projection route. The separate audience window remains intentionally scoped to
+Issue #51.
