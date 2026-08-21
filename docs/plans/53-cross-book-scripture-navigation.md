@@ -27,7 +27,7 @@ preserving bilingual location integrity and stable whole-corpus edges.
        testament-boundary, corpus-edge, and translation-gap cases in PostgreSQL.
 3. [x] Extend the Genesis-based two-window Chrome E2E into the next canonical
        book and back.
-4. [ ] Update contracts/parity, pass local and exact-commit CI gates, merge, and
+4. [x] Update contracts/parity, pass local and exact-commit CI gates, merge, and
        update parent Issue #38.
 
 ## Progress
@@ -37,6 +37,9 @@ preserving bilingual location integrity and stable whole-corpus edges.
 - 2026-08-21 18:56 JST — Implemented canonical-book and testament traversal
   with per-book indexed lateral lookup. Local unit (118), component (20),
   integration (60), and Chrome E2E (9) tests pass with build.
+- 2026-08-21 19:03 JST — Final implementation commit `a48fbd8` passed Quality,
+  Database, E2E, and Security. The E2E gate now permits only an exact,
+  test-local expected 401 console message for intentional session rejection.
 
 ## Decisions
 
@@ -52,10 +55,10 @@ preserving bilingual location integrity and stable whole-corpus edges.
 - [x] domain boundary tests
 - [x] PostgreSQL book/testament/corpus boundary integration
 - [x] two-page latest-Chrome E2E
-- [ ] repository gates and exact-commit GitHub CI
+- [x] repository gates and exact-commit GitHub CI
 
 ## Handoff or blockers
 
 - Blocker: none.
-- Resume with: complete database/security gates, open the pull request, and wait
-  for exact-commit CI before merge.
+- Resume with: verify the evidence-only final commit in CI, merge pull request
+  #76, release the lease, and update parent Issue #38.
