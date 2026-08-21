@@ -1,0 +1,64 @@
+name: Publish production images
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Exact 40-character commit SHA already merged to main with successful CI
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  checks: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish immutable images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.commit_sha }}
+      - name: Verify exact commit and CI
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
+          git fetch --quiet origin main
+          git merge-base --is-ancestor "$COMMIT_SHA" origin/main
+          for required in Quality Database E2E Security; do
+            result="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT_SHA}/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$required\")] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv")"
+            [[ "$result" == $'completed\tsuccess' ]] || { echo "Latest ${required} check is not successful for ${COMMIT_SHA}" >&2; exit 1; }
+          done
+      - name: Login to GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+      - name: Build and publish exact images
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          docker buildx build --platform linux/amd64 --build-arg "VCS_REF=$COMMIT_SHA" \
+            --file Dockerfile --tag "ghcr.io/iwaseasahi/levi:$COMMIT_SHA" \
+            --metadata-file application-metadata.json --push .
+          docker buildx build --platform linux/amd64 --build-arg "VCS_REF=$COMMIT_SHA" \
+            --file Dockerfile.migrate --tag "ghcr.io/iwaseasahi/levi-migrate:$COMMIT_SHA" \
+            --metadata-file migration-metadata.json --push .
+          application_digest="$(jq -r '."containerimage.digest"' application-metadata.json)"
+          migration_digest="$(jq -r '."containerimage.digest"' migration-metadata.json)"
+          [[ "$application_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$migration_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          {
+            echo '## Immutable production images'
+            echo
+            echo "- commit: \`$COMMIT_SHA\`"
+            echo "- application: \`ghcr.io/iwaseasahi/levi@$application_digest\`"
+            echo "- migration: \`ghcr.io/iwaseasahi/levi-migrate@$migration_digest\`"
+          } >> "$GITHUB_STEP_SUMMARY"

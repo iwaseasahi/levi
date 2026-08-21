@@ -9,6 +9,8 @@
 - `production.env.example`: シークレットを含まない設定例
 - `backup.env.example`: root 管理のバックアップ設定例
 - `systemd/`: hourly 48時間、daily 14日の暗号化バックアップと監視 timer
+- `monitoring.env.example`: readiness、DB、容量、5xx、backup age の監視設定例
+- `journald-levi.conf`: 圧縮、200 MB、14日間の journal retention
 
 ## 設定検証
 
@@ -41,3 +43,4 @@ sudo docker compose \
 
 ホスト側の SSH、UFW、更新設定は [WebARENA Indigo ホスト初期構築・堅牢化手順](../../docs/operations/webarena-host-hardening.md) を参照してください。
 バックアップ、隔離復元、全セッション失効、承認済み切替は [Backup, restore, and logical recovery](../../docs/operations/backup-restore.md) を参照してください。
+exact commit／digestの公開・手動デプロイは [Manual production image publication and deployment](../../docs/operations/manual-production-deploy.md)、監視とincident routingは [Production monitoring, logs, and incident routing](../../docs/operations/production-monitoring.md) を参照してください。

@@ -50,7 +50,7 @@ sudo systemctl reload ssh
 ```bash
 sudo apt update
 sudo apt full-upgrade -y
-sudo apt install -y ca-certificates curl unattended-upgrades ufw
+sudo apt install -y ca-certificates curl git jq openssl unattended-upgrades ufw
 sudo dpkg-reconfigure -plow unattended-upgrades
 sudo ufw default deny incoming
 sudo ufw default allow outgoing

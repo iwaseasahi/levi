@@ -21,8 +21,9 @@ cleanup() {
 trap cleanup EXIT
 
 cleanup
-compose build app
+compose --profile migration build app migrate
 compose up --detach --wait postgres app
+compose --profile migration run --rm migrate
 
 compose exec --no-TTY app node -e \
   "if(process.getuid?.()!==1000)throw new Error('app is not running as uid 1000')"
@@ -44,5 +45,13 @@ if [[ "$application_role_flags" != "false:false:false" ]]; then
   echo "Application database role has elevated privileges: ${application_role_flags}" >&2
   exit 1
 fi
+application_table_access="$(compose exec --no-TTY postgres psql \
+  -At --no-psqlrc -U levi_admin -d levi \
+  -c "SET ROLE levi_app; SELECT count(*) FROM users;")"
+application_table_access="${application_table_access//[[:space:]]/}"
+if [[ "$application_table_access" != "SET0" ]]; then
+  echo "Application database role cannot read migrated tables: ${application_table_access}" >&2
+  exit 1
+fi
 
-echo "Production application and least-privilege PostgreSQL rehearsal passed."
+echo "Production application, migration, and least-privilege PostgreSQL rehearsal passed."
