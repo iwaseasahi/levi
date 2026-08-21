@@ -58,6 +58,9 @@ successful run with all downstream jobs skipped.
    - [x] Merge the native-install correction and repeat the rehearsal.
    - [ ] Supply the repository's non-secret CI database URLs to the agent quality
          gate, then repeat the rehearsal after its `pnpm check` failure.
+   - [ ] Preserve newly created repository files in checkpoints while excluding
+         `agent-artifacts/`, then repeat the rehearsal after the missing-file
+         quality-gate failure.
 
 ## Progress
 
@@ -79,6 +82,11 @@ installed`; the API key had not yet been used.
   The later quality gate failed because it did not inherit the non-secret
   `DATABASE_URL` and `SHADOW_DATABASE_URL` values used by the authoritative CI
   workflow. Added the same values only to the quality-gate job.
+- 2026-08-21 10:52 JST — PR #32 merged and rehearsal run `32437003141`
+  confirmed the database fix, then failed typechecking because Claude created
+  `src/agent-orchestration/metrics.ts` as an untracked file and the checkpoint
+  only contained `git diff HEAD`. Updated patch creation to include untracked
+  repository files while explicitly excluding runtime artifacts.
 
 ## Decisions
 

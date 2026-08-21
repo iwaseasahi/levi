@@ -1,8 +1,60 @@
 import { createHash } from "node:crypto";
+import { execFile as execFileCallback } from "node:child_process";
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import type { HandoffManifest } from "./types";
+
+const execFile = promisify(execFileCallback);
+
+export async function createWorkspacePatch(workspace: string): Promise<{
+  patch: string;
+  changedFiles: string[];
+}> {
+  const { stdout: untrackedOutput } = await execFile(
+    "git",
+    ["ls-files", "--others", "--exclude-standard", "-z"],
+    { cwd: workspace, encoding: "buffer" },
+  );
+  const untrackedFiles = untrackedOutput
+    .toString("utf8")
+    .split("\0")
+    .filter(
+      (file) =>
+        file.length > 0 &&
+        file !== "agent-artifacts" &&
+        !file.startsWith("agent-artifacts/"),
+    );
+
+  if (untrackedFiles.length > 0) {
+    await execFile("git", ["add", "--intent-to-add", "--", ...untrackedFiles], {
+      cwd: workspace,
+      maxBuffer: 50 * 1024 * 1024,
+    });
+  }
+
+  try {
+    const [{ stdout: patch }, { stdout: files }] = await Promise.all([
+      execFile("git", ["diff", "--binary", "HEAD"], {
+        cwd: workspace,
+        maxBuffer: 50 * 1024 * 1024,
+      }),
+      execFile("git", ["diff", "--name-only", "HEAD"], { cwd: workspace }),
+    ]);
+    return {
+      patch,
+      changedFiles: files.trim() ? files.trim().split("\n") : [],
+    };
+  } finally {
+    if (untrackedFiles.length > 0) {
+      await execFile("git", ["reset", "--quiet", "--", ...untrackedFiles], {
+        cwd: workspace,
+        maxBuffer: 50 * 1024 * 1024,
+      });
+    }
+  }
+}
 
 export async function writeCheckpoint(
   directory: string,

@@ -1,12 +1,13 @@
-import { execFile as execFileCallback } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
-import { promisify } from "node:util";
 
 import {
   classifyAgentFailure,
   shouldFallback,
 } from "../src/agent-orchestration/classify";
-import { writeCheckpoint } from "../src/agent-orchestration/checkpoint";
+import {
+  createWorkspacePatch,
+  writeCheckpoint,
+} from "../src/agent-orchestration/checkpoint";
 import { acquireLease, releaseLease } from "../src/agent-orchestration/lease";
 import { runAgent } from "../src/agent-orchestration/runner";
 import type {
@@ -15,8 +16,6 @@ import type {
   Provider,
   VerificationRecord,
 } from "../src/agent-orchestration/types";
-
-const execFile = promisify(execFileCallback);
 
 function parseArgs(values: string[]) {
   const parsed = new Map<string, string>();
@@ -144,13 +143,7 @@ async function normalize(args: Map<string, string>) {
 
 async function checkpoint(args: Map<string, string>) {
   const workspace = required(args, "workspace");
-  const [{ stdout: patch }, { stdout: files }] = await Promise.all([
-    execFile("git", ["diff", "--binary", "HEAD"], {
-      cwd: workspace,
-      maxBuffer: 50 * 1024 * 1024,
-    }),
-    execFile("git", ["diff", "--name-only", "HEAD"], { cwd: workspace }),
-  ]);
+  const { patch, changedFiles } = await createWorkspacePatch(workspace);
   const verification = args.get("verification-file")
     ? (JSON.parse(
         await readFile(required(args, "verification-file"), "utf8"),
@@ -170,7 +163,7 @@ async function checkpoint(args: Map<string, string>) {
       worktree: workspace,
       created_at: new Date().toISOString(),
       completed_steps: [],
-      changed_files: files.trim() ? files.trim().split("\n") : [],
+      changed_files: changedFiles,
       verification,
       remaining_work: [],
       blocker:
