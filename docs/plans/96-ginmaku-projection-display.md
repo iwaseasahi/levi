@@ -41,6 +41,8 @@
 
 - 2026-08-21 11:20 JST — Issue #96、parent #38、governance、projection protocol、現行実装とテスト、固定済みGinmaku実装を確認した。
 - 2026-08-21 23:45 JST — 通常タブ、protocol v2、Ginmaku DOM/CSS、自動縮小を実装。unit 142件、component 24件、latest-Chromium E2E 9件、typecheck、lint、diff checkが成功した。
+- 2026-08-21 23:49 JST — CI相当の合成HTTPS originで`pnpm check`が成功。専用test DBでintegration 72件、security audit/license checkが成功した。
+- 2026-08-21 23:51 JST — 誤って開発DBへ向いたintegration初回実行がfixture対象3書巻を削除したため、承認済みdumpから対象だけをtransaction復元。66書巻・132名称・62,325節、full/sample fingerprint一致を確認した。
 
 ## Decisions
 
@@ -63,19 +65,19 @@
 - [x] `pnpm test:unit` — 142 passed
 - [x] `pnpm test:component` — 24 passed
 - [x] `pnpm test:e2e` — 9 passed
-- [ ] `pnpm check`
-- [ ] `pnpm test:integration`
-- [ ] `pnpm security:check`
+- [x] `pnpm check` — passed with CI-equivalent synthetic HTTPS auth origins
+- [x] `pnpm test:integration` — 72 passed against explicit test DB port 55433
+- [x] `pnpm security:check` — no known vulnerability; 314 approved licenses
 - [x] `git diff --check`
 - [ ] exact-head required CI
-- [ ] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
+- [x] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
 
 ## Handoff or blockers
 
-- Completed: 実装、unit/component/latest-Chromium E2E、typecheck、lint。
-- Remaining: canonical full check、PR、exact-head CI、merge。
+- Completed: 実装、全local checks、draft PR #97、開発DBの復元・fingerprint照合。
+- Remaining: exact-head CI、ready化、merge。
 - Blocker: none。
-- Resume with: diff review後のcommitとPR作成。
+- Resume with: final documentation commitをpushしてexact-head CIを確認する。
 
 ## Result
 
