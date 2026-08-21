@@ -49,4 +49,32 @@ describe("agent workflow credential scope", () => {
       'shell_environment_policy.filters={CODEX_API_KEY="exclude",OPENAI_API_KEY="exclude",ANTHROPIC_API_KEY="exclude"}',
     );
   });
+
+  it("classifies failures portably, redacts diagnostics, and fails closed", async () => {
+    const workflow = await readFile(
+      path.join(process.cwd(), ".github/workflows/agent-orchestration.yml"),
+      "utf8",
+    );
+
+    expect(workflow).not.toContain("if rg -q");
+    expect(workflow.match(/grep -Eqi/g)).toHaveLength(4);
+    expect(workflow.match(/::stop-commands::%s/g)).toHaveLength(2);
+    expect(workflow.match(/\[REDACTED_PROVIDER_SECRET\]/g)).toHaveLength(2);
+
+    const codexUpload = workflow.indexOf("- name: Upload Codex checkpoint");
+    const codexEnforcement = workflow.indexOf(
+      "- name: Enforce terminal Codex result",
+    );
+    const claudeUpload = workflow.indexOf("- name: Upload Claude checkpoint");
+    const claudeEnforcement = workflow.indexOf(
+      "- name: Enforce successful Claude result",
+    );
+
+    expect(codexEnforcement).toBeGreaterThan(codexUpload);
+    expect(claudeEnforcement).toBeGreaterThan(claudeUpload);
+    expect(workflow).toContain("if: steps.route.outputs.fallback != 'true'");
+    expect(workflow).toContain(
+      'run: test "${{ steps.route.outputs.status }}" = succeeded',
+    );
+  });
 });

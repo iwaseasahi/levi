@@ -58,6 +58,15 @@ bare mode to disable repository/user hooks and plugin/MCP auto-discovery. Claude
 credential-bearing steps do not expose the Bash tool; command-based verification
 runs later in a credential-free job.
 
+Failed provider invocations write only a bounded stderr diagnostic to the GitHub
+log. The workflow replaces the exact provider secret and common provider-token
+and bearer-token shapes before output, disables workflow-command interpretation
+while printing the diagnostic, and never uploads raw provider logs as artifacts.
+Checkpoint upload happens before terminal result enforcement: a rate-limit result
+can still route to the documented fallback, while authentication, permission,
+policy, infrastructure, and unclassified agent failures make the workflow fail
+instead of appearing successful with its downstream jobs skipped.
+
 The manual `simulate_codex_usage_limit` input skips the Codex call and creates a
 synthetic normalized usage-limit result. Use it only to rehearse the full Claude
 handoff path; ordinary runs leave it disabled.
