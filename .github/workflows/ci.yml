@@ -83,6 +83,8 @@ jobs:
         run: docker exec ${{ job.services.postgres.id }} createdb -U levi levi_shadow
       - run: pnpm db:check
       - run: pnpm test:integration
+        env:
+          REHEARSAL_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
       - name: Upload integration reports
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

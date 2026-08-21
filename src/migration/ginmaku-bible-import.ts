@@ -40,21 +40,36 @@ export type ValidatedBibleDump = {
 };
 
 export type SourceReport = {
-  formatVersion: 1;
+  formatVersion: 2;
   input: { basename: string; bytes: number; sha256: string };
   schema: { charset: string | null; collation: string | null; newline: string };
   counts: {
+    books: number;
     bookNames: number;
+    chapters: number;
     verses: number;
     byTranslation: Record<string, number>;
+    chaptersByTranslation: Record<string, number>;
     emptyText: number;
+    emptyTextByTranslation: Record<string, number>;
+    textWithNewline: number;
     zeroVerse: number;
+    zeroVerseByTranslation: Record<string, number>;
+    pairedLocations: number;
+    unpairedLocationsByTranslation: Record<string, number>;
+  };
+  validation: {
+    duplicateLocations: 0;
+    invalidKeys: 0;
+    nullValues: 0;
+    verseGaps: 0;
   };
   integrity: {
     bookFingerprint: string;
     nameFingerprint: string;
     locationFingerprint: string;
     contentFingerprint: string;
+    sampleFingerprint: string;
   };
 };
 
@@ -78,6 +93,20 @@ function integer(value: string | null, code: string) {
 
 function fingerprint(records: string[]) {
   return sha256(records.sort().join("\n"));
+}
+
+function sampleFingerprint(records: string[]) {
+  const sorted = [...records].sort();
+  const indexes = new Set([
+    0,
+    Math.floor((sorted.length - 1) / 2),
+    sorted.length - 1,
+  ]);
+  return fingerprint(
+    [...indexes]
+      .filter((index) => index >= 0 && index < sorted.length)
+      .map((index) => sorted[index]!),
+  );
 }
 
 export async function validateGinmakuBibleDump(path: string) {
@@ -182,6 +211,36 @@ export async function validateGinmakuBibleDump(path: string) {
       verses.filter(({ translationCode }) => translationCode === code).length,
     ]),
   );
+  const chapterSets = Object.fromEntries(
+    Object.values(GINMAKU_TRANSLATION_MAPPING).map((code) => [
+      code,
+      new Set(
+        verses
+          .filter(({ translationCode }) => translationCode === code)
+          .map(({ canonicalCode, chapterNumber }) =>
+            [canonicalCode, chapterNumber].join("\0"),
+          ),
+      ),
+    ]),
+  );
+  const locationSets = Object.fromEntries(
+    Object.values(GINMAKU_TRANSLATION_MAPPING).map((code) => [
+      code,
+      new Set(
+        verses
+          .filter(({ translationCode }) => translationCode === code)
+          .map(({ canonicalCode, chapterNumber, verseNumber }) =>
+            [canonicalCode, chapterNumber, verseNumber].join("\0"),
+          ),
+      ),
+    ]),
+  );
+  const translationCodes = Object.values(GINMAKU_TRANSLATION_MAPPING);
+  const firstLocations = locationSets[translationCodes[0]!]!;
+  const secondLocations = locationSets[translationCodes[1]!]!;
+  const pairedLocations = [...firstLocations].filter((location) =>
+    secondLocations.has(location),
+  ).length;
   const locationRecords = verses.map(
     ({ translationCode, canonicalCode, chapterNumber, verseNumber }) =>
       [translationCode, canonicalCode, chapterNumber, verseNumber].join("\0"),
@@ -197,7 +256,7 @@ export async function validateGinmakuBibleDump(path: string) {
     names,
     verses,
     report: {
-      formatVersion: 1,
+      formatVersion: 2,
       input: {
         basename: dump.basename,
         bytes: dump.bytes,
@@ -209,11 +268,53 @@ export async function validateGinmakuBibleDump(path: string) {
         newline: dump.newline,
       },
       counts: {
+        books: names.length,
         bookNames: names.length,
+        chapters: Object.values(chapterSets).reduce(
+          (sum, values) => sum + values.size,
+          0,
+        ),
         verses: verses.length,
         byTranslation,
+        chaptersByTranslation: Object.fromEntries(
+          Object.entries(chapterSets).map(([code, values]) => [
+            code,
+            values.size,
+          ]),
+        ),
         emptyText: verses.filter(({ text }) => text.trim() === "").length,
+        emptyTextByTranslation: Object.fromEntries(
+          translationCodes.map((code) => [
+            code,
+            verses.filter(
+              ({ text, translationCode }) =>
+                translationCode === code && text.trim() === "",
+            ).length,
+          ]),
+        ),
+        textWithNewline: verses.filter(({ text }) => /[\r\n]/.test(text))
+          .length,
         zeroVerse: verses.filter(({ verseNumber }) => verseNumber === 0).length,
+        zeroVerseByTranslation: Object.fromEntries(
+          translationCodes.map((code) => [
+            code,
+            verses.filter(
+              ({ translationCode, verseNumber }) =>
+                translationCode === code && verseNumber === 0,
+            ).length,
+          ]),
+        ),
+        pairedLocations,
+        unpairedLocationsByTranslation: {
+          [translationCodes[0]!]: firstLocations.size - pairedLocations,
+          [translationCodes[1]!]: secondLocations.size - pairedLocations,
+        },
+      },
+      validation: {
+        duplicateLocations: 0,
+        invalidKeys: 0,
+        nullValues: 0,
+        verseGaps: 0,
       },
       integrity: {
         bookFingerprint: fingerprint(
@@ -237,6 +338,7 @@ export async function validateGinmakuBibleDump(path: string) {
         ),
         locationFingerprint: fingerprint(locationRecords),
         contentFingerprint: fingerprint(contentRecords),
+        sampleFingerprint: sampleFingerprint(contentRecords),
       },
     },
   } satisfies ValidatedBibleDump;
@@ -312,6 +414,7 @@ async function targetState(client: DbClient, source: ValidatedBibleDump) {
     ),
     locationFingerprint: fingerprint(locationRecords),
     contentFingerprint: fingerprint(contentRecords),
+    sampleFingerprint: sampleFingerprint(contentRecords),
   };
 }
 
@@ -329,6 +432,8 @@ export async function reconcileGinmakuBible(
     target.locationFingerprint ===
       source.report.integrity.locationFingerprint &&
     target.contentFingerprint === source.report.integrity.contentFingerprint;
+  const sampleExact =
+    target.sampleFingerprint === source.report.integrity.sampleFingerprint;
   return {
     source: source.report,
     target: {
@@ -340,8 +445,10 @@ export async function reconcileGinmakuBible(
       nameFingerprint: target.nameFingerprint,
       locationFingerprint: target.locationFingerprint,
       contentFingerprint: target.contentFingerprint,
+      sampleFingerprint: target.sampleFingerprint,
     },
-    exact,
+    exact: exact && sampleExact,
+    sampleExact,
   };
 }
 
@@ -366,7 +473,10 @@ export async function dryRunGinmakuBible(
       target.locationFingerprint ===
         source.report.integrity.locationFingerprint &&
       target.contentFingerprint === source.report.integrity.contentFingerprint;
-    if (!exact) throw new BibleImportError("IMPORT_TARGET_CONTENT_MISMATCH");
+    const sampleExact =
+      target.sampleFingerprint === source.report.integrity.sampleFingerprint;
+    if (!exact || !sampleExact)
+      throw new BibleImportError("IMPORT_TARGET_CONTENT_MISMATCH");
     return { action: "unchanged" as const, source: source.report };
   }
   const expectedMappings = GINMAKU_BOOK_MAPPING.filter(({ legacyBookNameId }) =>
@@ -424,7 +534,9 @@ export async function importGinmakuBible(
           before.locationFingerprint ===
             source.report.integrity.locationFingerprint &&
           before.contentFingerprint ===
-            source.report.integrity.contentFingerprint;
+            source.report.integrity.contentFingerprint &&
+          before.sampleFingerprint ===
+            source.report.integrity.sampleFingerprint;
         if (!exact)
           throw new BibleImportError("IMPORT_TARGET_CONTENT_MISMATCH");
         return {
