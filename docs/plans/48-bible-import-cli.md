@@ -42,7 +42,7 @@ Retries never silently duplicate, replace, normalize, or omit source rows.
        duplicate, gap, encoding failure, rollback, mismatch, and idempotency.
 4. [x] Document operator procedure, recovery, checksums, and approval boundary;
        update migration parity evidence.
-5. [ ] Run all local and exact-commit CI gates, then merge.
+5. [x] Run all local and exact-commit CI gates, then merge.
 
 ## Progress
 
@@ -104,4 +104,5 @@ Retries never silently duplicate, replace, normalize, or omit source rows.
 
 The implementation and local rehearsal are complete. Production remains
 untouched and blocked by the documented approval/provenance gates. Exact-commit
-GitHub verification remains before merge.
+GitHub Quality, Database, E2E, and Security verification passed on PR #71; the
+recorded completion commit is verified again before merge.
