@@ -32,6 +32,11 @@ The local application scaffold and CI are not blocked. Production infrastructure
 credentials, and deploy workflows are blocked until this ADR is accepted or
 superseded.
 
+Issue [#81](https://github.com/iwaseasahi/levi/issues/81) is the explicit human
+decision record for the provider, region, managed PostgreSQL, backup/PITR,
+secret store, monitoring, cost ceiling, and operational ownership. Preparing
+repository runbooks does not resolve that Issue or authorize production work.
+
 ## Consequences
 
 ### Positive

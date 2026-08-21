@@ -7,6 +7,7 @@
 - Technical owner:
 - Affected environment/users/workflow:
 - Start/detection time and request IDs:
+- RPO loss-window start and RTO recovery-clock start:
 - Data classification involved:
 
 ## Detect and triage
@@ -32,6 +33,8 @@
 - Backup/restore identifier and approval (if applicable):
 - Commands/runbook references:
 - Data reconciliation:
+- Restored-session invalidation evidence:
+- Account/password/temporary-credential state assessment:
 - Readiness and critical E2E evidence:
 
 ## Communicate
@@ -46,6 +49,7 @@ GitHub workflow without the required human approval.
 ## Close and learn
 
 - End time and duration:
+- RPO/RTO result and any breach:
 - Root cause and contributing controls:
 - Detection/response/recovery gaps:
 - Follow-up Issues with owners and due dates:

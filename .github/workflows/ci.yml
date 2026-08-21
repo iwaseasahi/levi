@@ -38,6 +38,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
+      - run: pnpm release:checklist:dry-run
       - run: pnpm test:unit:coverage
       - name: Upload quality reports
         if: always()

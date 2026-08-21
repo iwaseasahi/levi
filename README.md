@@ -45,6 +45,7 @@ pnpm db:check     # migrate, detect drift, seed, and query the configured DB
 pnpm db:down      # stop the local PostgreSQL instances
 pnpm security:check  # production dependency and license gates
 pnpm backup:rehearse # local disposable backup/restore proof
+pnpm release:checklist:dry-run # validate and print the gated synthetic cutover walkthrough
 pnpm agent:checkpoint        # save a local Codex pause/resume checkpoint
 pnpm agent:checkpoint:verify # verify a saved checkpoint
 pnpm agent:lease             # acquire or release an Issue writer lease

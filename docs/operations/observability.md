@@ -39,3 +39,10 @@ data-processing/privacy review, configure server-side filtering and environment
 separation, set bounded retention, verify source-map access, and send a synthetic
 error containing canary fake secrets/personal fields to prove scrubbing. Provider
 credentials belong only to the protected deployment environment.
+
+The initial-release signal thresholds, stop conditions, named human roles, and
+stabilization responsibilities are defined in
+[`initial-release-cutover.md`](initial-release-cutover.md). Issue
+[#81](https://github.com/iwaseasahi/levi/issues/81) must select routing and
+ownership and prove redaction with disposable canary data before production
+events are sent to a monitoring provider.

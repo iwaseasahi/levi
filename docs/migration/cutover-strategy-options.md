@@ -29,3 +29,14 @@ volume/change rate, downtime tolerance, and rollback constraints are known.
 - Define one source of truth at every phase and reject ambiguous dual writes.
 - Record exact stop/go thresholds, monitoring, rollback/forward-recovery steps,
   and the human approval for the specific production action.
+
+## Initial-release candidate
+
+The repository prepares a single cutover because only the static Bible catalog
+migrates and Ginmaku does not need to receive new Levi account, folder, or
+bookmark writes. This remains a candidate pending the downtime/topology and
+provider decision in Issue
+[#81](https://github.com/iwaseasahi/levi/issues/81); it is not production
+approval. The ordered compatibility window, source-of-truth boundary, stop
+conditions, and recovery choices are in
+[`../operations/initial-release-cutover.md`](../operations/initial-release-cutover.md).
