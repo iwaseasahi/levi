@@ -52,7 +52,7 @@ preventing invalid actor, tenant, credential, lifecycle, and deletion states.
 3. [x] Rehearse the immutable migration, seed, drift checks, and integration
        suite on newly created local disposable databases without resetting existing
        data.
-4. [ ] Run all canonical checks, inspect the final diff, and record verification
+4. [x] Run all canonical checks, inspect the final diff, and record verification
        on a pull request before merging the exact passing commit.
 
 ## Progress
@@ -77,6 +77,11 @@ preventing invalid actor, tenant, credential, lifecycle, and deletion states.
 - 2026-08-21 14:36 JST — Final migration review found and fixed subtype
   reassignment validation; the deferred trigger now checks both old and new User
   IDs. Empty/previous-schema rehearsals and 14 integration tests passed again.
+- 2026-08-21 14:42 JST — PR #65 passed Quality, Database, E2E, and Security on
+  head `6c5bdc4`. Gitleaks exceptions contain only the two exact fingerprints for
+  synthetic test fixture literals retained in the branch history; current
+  fixtures construct low-entropy placeholders and the default rules remain
+  enabled.
 
 ## Decisions
 
@@ -118,11 +123,17 @@ preventing invalid actor, tenant, credential, lifecycle, and deletion states.
 
 - Completed: dependencies, exact installed-version schema alignment, migration,
   ADR/dictionary amendment, runtime configuration, unit/integration coverage,
-  empty/previous-schema rehearsal, and canonical local checks.
-- Remaining: final diff review, pull request, exact-head CI, and merge.
+  empty/previous-schema rehearsal, canonical local checks, final review, and PR
+  verification.
+- Remaining: protected merge of PR #65 after exact-head CI.
 - Blocker: none.
 - Resume with: review the complete patch and create the pull request.
 
 ## Result
 
-Pending.
+Issue #42's database and configuration foundation is complete in PR #65. The
+repository schema matches Better Auth 1.7.1's required issuer and rate-limit
+contract, invalid identity/tenant states are rejected by PostgreSQL and tested,
+and both empty-database and previous-schema migration rehearsals pass. Production
+migration, provisioning, login/logout, and password-reset workflows remain in
+their separately gated follow-up Issues.
