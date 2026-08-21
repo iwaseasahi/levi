@@ -47,4 +47,5 @@ book/chapter/range/language coordinates and never contains verse text.
 
 Navigation outside the initial result range and across chapter boundaries uses
 the [scripture navigation contract](scripture-navigation-contract.md) without
-changing this protocol envelope. Issue #53 extends it across book boundaries.
+changing this protocol envelope. Canonical book and testament boundaries use
+the same current-item-only message flow.

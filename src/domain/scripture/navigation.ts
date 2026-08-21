@@ -56,13 +56,13 @@ export function parseScriptureNavigation(searchParams: URLSearchParams) {
 
 export function assembleNavigatedItem(
   navigation: ScriptureNavigation,
-  location: { chapter: number; verse: number },
+  location: { book: string; chapter: number; verse: number },
   rows: ScriptureRow[],
 ) {
   if (rows.length === 0)
     throw new ScriptureSearchError("TRANSLATION_NOT_AVAILABLE");
   const search = {
-    book: navigation.book,
+    book: location.book,
     chapter: location.chapter,
     startVerse: location.verse,
     endVerse: location.verse,

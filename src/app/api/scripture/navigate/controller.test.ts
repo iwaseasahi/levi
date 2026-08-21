@@ -14,6 +14,7 @@ const authorized = {
 describe("scripture navigation HTTP handler", () => {
   it("returns a no-store adjacent item", async () => {
     const navigate = vi.fn().mockResolvedValue({
+      crossedBook: false,
       crossedChapter: true,
       edge: null,
       item: { location: { book: "GEN", chapter: 2, verse: 1 }, texts: {} },

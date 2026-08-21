@@ -70,7 +70,7 @@ describe("scripture navigation domain", () => {
           direction: "next",
           language: "both",
         },
-        { chapter: 2, verse: 1 },
+        { book: "GEN", chapter: 2, verse: 1 },
         rows,
       ).location,
     ).toEqual({ book: "GEN", chapter: 2, verse: 1 });
@@ -86,7 +86,7 @@ describe("scripture navigation domain", () => {
           direction: "next",
           language: "ja",
         },
-        { chapter: 2, verse: 1 },
+        { book: "GEN", chapter: 2, verse: 1 },
         [],
       ),
     ).toThrow(
@@ -94,5 +94,29 @@ describe("scripture navigation domain", () => {
         code: "TRANSLATION_NOT_AVAILABLE",
       }),
     );
+  });
+
+  it("assembles a location in the adjacent canonical book", () => {
+    const item = assembleNavigatedItem(
+      {
+        book: "MAL",
+        chapter: 4,
+        verse: 6,
+        direction: "next",
+        language: "en",
+      },
+      { book: "MAT", chapter: 1, verse: 1 },
+      [
+        {
+          bookCode: "MAT",
+          bookName: "Matthew",
+          chapter: 1,
+          verse: 1,
+          translation: "NKJV",
+          text: "Test text",
+        },
+      ],
+    );
+    expect(item.location).toEqual({ book: "MAT", chapter: 1, verse: 1 });
   });
 });

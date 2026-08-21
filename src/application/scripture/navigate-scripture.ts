@@ -13,7 +13,7 @@ export type ScriptureNavigationSnapshot = {
   approvedTranslations: string[];
   bookExists: boolean;
   currentExists: boolean;
-  location: { chapter: number; verse: number } | null;
+  location: { book: string; chapter: number; verse: number } | null;
   rows: ScriptureRow[];
 };
 
@@ -41,10 +41,13 @@ export async function navigateScripture(
   if (!snapshot.location) {
     const edge: ScriptureNavigationEdge =
       navigation.direction === "next" ? "book-end" : "book-start";
-    return { crossedChapter: false, edge, item: null };
+    return { crossedBook: false, crossedChapter: false, edge, item: null };
   }
   return {
-    crossedChapter: snapshot.location.chapter !== navigation.chapter,
+    crossedBook: snapshot.location.book !== navigation.book,
+    crossedChapter:
+      snapshot.location.book !== navigation.book ||
+      snapshot.location.chapter !== navigation.chapter,
     edge: null,
     item: assembleNavigatedItem(navigation, snapshot.location, snapshot.rows),
   };

@@ -128,6 +128,7 @@ describe("PostgreSQL scripture search", () => {
         language: "both",
       });
       expect(result).toMatchObject({
+        crossedBook: false,
         crossedChapter,
         edge: null,
         item: {
@@ -152,6 +153,7 @@ describe("PostgreSQL scripture search", () => {
         language: "both",
       }),
     ).resolves.toEqual({
+      crossedBook: false,
       crossedChapter: false,
       edge: "book-start",
       item: null,
@@ -164,7 +166,118 @@ describe("PostgreSQL scripture search", () => {
         direction: "next",
         language: "both",
       }),
-    ).resolves.toEqual({ crossedChapter: false, edge: "book-end", item: null });
+    ).resolves.toEqual({
+      crossedBook: false,
+      crossedChapter: false,
+      edge: "book-end",
+      item: null,
+    });
+  });
+
+  it("crosses the Old/New Testament boundary by canonical book order", async () => {
+    const [jss3, nkjv] = await Promise.all([
+      prisma.bibleTranslation.findUniqueOrThrow({ where: { code: "JSS3" } }),
+      prisma.bibleTranslation.findUniqueOrThrow({ where: { code: "NKJV" } }),
+    ]);
+    const malachi = await prisma.bibleBook.create({
+      data: { canonicalCode: "MAL", canonicalOrder: 39, testament: "OLD" },
+    });
+    const matthew = await prisma.bibleBook.create({
+      data: { canonicalCode: "MAT", canonicalOrder: 40, testament: "NEW" },
+    });
+    try {
+      await prisma.bibleBookName.createMany({
+        data: [
+          { bookId: malachi.id, translationId: jss3.id, name: "架空マラキ" },
+          {
+            bookId: malachi.id,
+            translationId: nkjv.id,
+            name: "Synthetic Malachi",
+          },
+          { bookId: matthew.id, translationId: jss3.id, name: "架空マタイ" },
+          {
+            bookId: matthew.id,
+            translationId: nkjv.id,
+            name: "Synthetic Matthew",
+          },
+        ],
+      });
+      await prisma.bibleVerse.createMany({
+        data: [jss3, nkjv].flatMap(({ id: translationId }) => [
+          {
+            bookId: malachi.id,
+            chapterNumber: 4,
+            text: "Synthetic boundary text",
+            translationId,
+            verseNumber: 6,
+          },
+          {
+            bookId: matthew.id,
+            chapterNumber: 1,
+            text: "Synthetic boundary text",
+            translationId,
+            verseNumber: 1,
+          },
+        ]),
+      });
+
+      await expect(
+        navigateScripture(scriptureNavigationRepository, {
+          book: "MAL",
+          chapter: 4,
+          verse: 6,
+          direction: "next",
+          language: "both",
+        }),
+      ).resolves.toMatchObject({
+        crossedBook: true,
+        crossedChapter: true,
+        edge: null,
+        item: { location: { book: "MAT", chapter: 1, verse: 1 } },
+      });
+      await expect(
+        navigateScripture(scriptureNavigationRepository, {
+          book: "MAT",
+          chapter: 1,
+          verse: 1,
+          direction: "previous",
+          language: "both",
+        }),
+      ).resolves.toMatchObject({
+        crossedBook: true,
+        item: { location: { book: "MAL", chapter: 4, verse: 6 } },
+      });
+
+      await prisma.bibleVerse.delete({
+        where: {
+          translationId_bookId_chapterNumber_verseNumber: {
+            translationId: nkjv.id,
+            bookId: matthew.id,
+            chapterNumber: 1,
+            verseNumber: 1,
+          },
+        },
+      });
+      await expect(
+        navigateScripture(scriptureNavigationRepository, {
+          book: "MAL",
+          chapter: 4,
+          verse: 6,
+          direction: "next",
+          language: "both",
+        }),
+      ).rejects.toMatchObject({ code: "TRANSLATION_NOT_AVAILABLE" });
+    } finally {
+      await prisma.bibleVerse.deleteMany({
+        where: { bookId: { in: [malachi.id, matthew.id] } },
+      });
+      await prisma.bibleBookName.deleteMany({
+        where: { bookId: { in: [malachi.id, matthew.id] } },
+      });
+      await prisma.bibleBook.deleteMany({
+        where: { id: { in: [malachi.id, matthew.id] } },
+      });
+    }
   });
 
   it("does not skip an adjacent location with a missing requested translation", async () => {
