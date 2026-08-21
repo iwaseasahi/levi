@@ -6,12 +6,16 @@ const approvedLicenses = new Set([
   "Apache-2.0",
   "BSD-2-Clause",
   "BSD-3-Clause",
+  "BlueOak-1.0.0",
   "CC-BY-4.0",
+  "CC0-1.0",
   "EPL-2.0",
   "ISC",
   "LGPL-3.0-or-later",
   "MIT",
+  "MIT-0",
   "MIT and ISC",
+  "MPL-2.0",
   "Unlicense",
 ]);
 

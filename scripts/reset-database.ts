@@ -1,25 +1,10 @@
 import { spawnSync } from "node:child_process";
 
+import { assertLocalResetTarget } from "../src/infrastructure/database/reset-guard.js";
+
 const databaseUrl = process.env.DATABASE_URL;
 
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required");
-}
-
-const parsedUrl = new URL(databaseUrl);
-const localHosts = new Set(["127.0.0.1", "localhost", "::1"]);
-const allowedDatabases = new Set(["levi", "levi_test"]);
-const databaseName = parsedUrl.pathname.replace(/^\//, "");
-
-if (
-  process.env.NODE_ENV === "production" ||
-  !localHosts.has(parsedUrl.hostname) ||
-  !allowedDatabases.has(databaseName)
-) {
-  throw new Error(
-    `Refusing to reset non-local or unrecognized database: ${parsedUrl.hostname}/${databaseName}`,
-  );
-}
+assertLocalResetTarget(databaseUrl, process.env.NODE_ENV);
 
 const result = spawnSync(
   "pnpm",

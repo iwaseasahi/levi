@@ -11,11 +11,17 @@
   review. Avoid install scripts unless explicitly allowlisted.
 
 The current production dependency license groups reviewed by the automated gate
-are: 0BSD, Apache-2.0, BSD-2-Clause, BSD-3-Clause, CC-BY-4.0, EPL-2.0, ISC,
-LGPL-3.0-or-later, MIT, `MIT and ISC`, and Unlicense. This is an inventory gate,
-not legal advice or blanket approval for a new direct dependency. EPL/LGPL and
-content licenses require impact review when packaging, modifying, or
-redistributing the relevant work changes.
+are: 0BSD, Apache-2.0, BSD-2-Clause, BSD-3-Clause, BlueOak-1.0.0, CC-BY-4.0,
+CC0-1.0, EPL-2.0, ISC, LGPL-3.0-or-later, MIT, MIT-0, `MIT and ISC`, MPL-2.0,
+and Unlicense. This is an inventory gate, not legal advice or blanket approval
+for a new direct dependency. EPL/LGPL/MPL and content licenses require impact
+review when packaging, modifying, or redistributing the relevant work changes.
+
+Better Auth 1.7.1 resolves the newly reviewed groups only through its installed
+peer dependency graph: MIT-0 CSS helpers, MPL-2.0 Lightning CSS, BlueOak-1.0.0
+`lru-cache`, and CC0-1.0 MDN data. Levi does not modify or redistribute those
+packages separately. A dependency update that changes this inventory must fail
+the gate for another deliberate review.
 
 `pnpm security:licenses` produces a minimized report containing dependency name,
 version, and declared license. Any new license expression fails until this file
