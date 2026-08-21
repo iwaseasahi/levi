@@ -79,9 +79,19 @@ describe("Ginmaku Bible import", () => {
     await approveSyntheticImport();
     const source = await validateGinmakuBibleDump(fixture);
     expect(source.report.counts).toMatchObject({
+      books: 1,
+      chapters: 2,
       verses: 4,
       emptyText: 1,
+      pairedLocations: 2,
+      textWithNewline: 1,
       zeroVerse: 2,
+    });
+    expect(source.report.validation).toEqual({
+      duplicateLocations: 0,
+      invalidKeys: 0,
+      nullValues: 0,
+      verseGaps: 0,
     });
     await expect(dryRunGinmakuBible(prisma, source)).resolves.toMatchObject({
       action: "import",

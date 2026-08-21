@@ -3,8 +3,9 @@
 `pnpm backup:rehearse` verifies the mechanics against the repository's local
 Compose PostgreSQL only. It creates a custom-format dump of `levi`, restores it
 to the explicitly named disposable database `levi_restore_rehearsal`, compares
-foundation and completed-migration counts, prints a SHA-256 for the transient
-archive, then drops the rehearsal database and removes the archive.
+an anonymous signature of critical row counts and ordered Bible content hashes,
+prints a SHA-256 for the transient archive, then drops the rehearsal database
+and removes the archive. Neither Bible text nor credentials are emitted.
 
 ## Local rehearsal
 
@@ -21,15 +22,15 @@ Success requires:
 
 - `pg_dump` and `pg_restore --list` complete without error;
 - restore into an empty disposable database completes with `--exit-on-error`;
-- source and restored `system_settings` and completed Prisma migration counts
-  match exactly;
+- source and restored critical-table counts, completed migrations, and Bible
+  content fingerprints match exactly;
 - the archive never leaves the temporary directory and is removed;
 - the source database is never dropped or mutated by the rehearsal.
 
-As product tables appear, extend reconciliation to every critical entity,
-foreign keys, content hashes, soft-deleted rows, and representative application
-queries. Run the rehearsal in a scheduled disposable environment in a later
-Issue; this baseline does not grant cloud or production access.
+The signature covers identity, tenant, Bible catalog, folder, and bookmark
+tables. Continue extending it when new critical entities appear. Run the
+rehearsal in a scheduled disposable environment in a later Issue; this baseline
+does not grant cloud or production access.
 
 ## Production decision gate
 

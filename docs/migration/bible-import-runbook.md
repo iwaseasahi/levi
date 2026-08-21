@@ -35,10 +35,38 @@ pnpm migration:bible import /approved/path/ginmaku.sql \
 pnpm migration:bible reconcile /approved/path/ginmaku.sql
 ```
 
+## Disposable rehearsal
+
+Before requesting a production change, run the complete workflow against the
+fixed local Compose databases. The command rejects non-local hosts, unexpected
+ports, usernames other than `levi`, and database names without the
+`_rehearsal` suffix. It creates and removes only
+`levi_bible_migration_rehearsal` and `levi_bible_restore_rehearsal`.
+
+```bash
+pnpm db:up
+pnpm migration:bible:rehearse /approved/path/ginmaku.sql \
+  > /operator-controlled/rehearsal-report.json
+```
+
+The report is text-free and records the source/tool/schema versions, anonymous
+source and target counts, validation results, aggregate and deterministic
+sample fingerprints, an injected mid-import failure and rollback, exact retry,
+backup archive fingerprint, restored counts, and restored reconciliation. Keep
+the source dump and full transient report outside the repository. Commit only a
+reviewed anonymous summary and the report SHA-256.
+
 Before production import, record the target/environment, backup and restore
 test, exact checksum, expected anonymous counts/fingerprints, translation
 `APPROVED` provenance metadata, human approval, maintenance/locking window, and
 post-import reconciliation. Do not bypass `IMPORT_TRANSLATION_RIGHTS_NOT_APPROVED`.
+
+Production import requires a human to approve all of the following immediately
+before execution: the exact source SHA-256, translation rights metadata, target
+database identity, fresh backup and successful restore rehearsal, maintenance
+window, execution operator, rollback/forward-recovery choice, and post-import
+reconciliation owner. The rehearsal report's `productionExecuted: false` must
+never be treated as cutover approval.
 
 ## Failure recovery
 
@@ -47,6 +75,15 @@ transaction. Preserve the anonymous error code, correct the source/metadata or
 restore the target as approved, rerun `dry-run`, and then restart from the first
 batch. Never delete or overwrite mismatching target rows through this CLI.
 
+If a production import fails before commit, retain the stable error code, prove
+that the target still matches its pre-import anonymous signature, correct the
+cause, rerun `dry-run`, and restart from the first batch. If reconciliation
+fails after a committed change, stop reads from the affected catalog and have
+the approved human choose either restoration of the verified pre-import backup
+or a separately reviewed forward fix. Reconcile the chosen recovery against
+the approved source before reopening access.
+
 The synthetic integration rehearsal covers initial import, before/after
 reconciliation, exact retry, content mismatch, duplicate, gap, invalid UTF-8,
-empty/newline/verse-zero preservation, and injected mid-batch rollback.
+empty/newline/verse-zero preservation, injected mid-batch rollback, backup
+restore, and post-restore exact/sample-fingerprint reconciliation.
