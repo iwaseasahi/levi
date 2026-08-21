@@ -1,6 +1,4 @@
 export default function Home() {
-  const intentionalTypeFailure: string = 1;
-
   return (
     <main className="shell">
       <section className="card" aria-labelledby="page-title">
