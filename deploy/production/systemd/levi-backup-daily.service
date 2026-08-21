@@ -1,0 +1,17 @@
+[Unit]
+Description=Create an encrypted daily Levi PostgreSQL backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/levi/backup.env
+ExecStart=/opt/levi/scripts/production-backup.sh daily
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/levi
+UMask=0077

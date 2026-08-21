@@ -36,5 +36,13 @@ if compose exec --no-TTY app node -e \
 fi
 compose exec --no-TTY app node -e \
   "fetch('http://127.0.0.1:3000/api/ready').then(async response=>{if(!response.ok)throw new Error(await response.text());console.log(await response.text())})"
+application_role_flags="$(compose exec --no-TTY postgres psql \
+  -At --no-psqlrc -U levi_admin -d levi \
+  -c "SELECT rolsuper::text || ':' || rolcreatedb::text || ':' || rolcreaterole::text FROM pg_roles WHERE rolname = 'levi_app';")"
+application_role_flags="${application_role_flags//[[:space:]]/}"
+if [[ "$application_role_flags" != "false:false:false" ]]; then
+  echo "Application database role has elevated privileges: ${application_role_flags}" >&2
+  exit 1
+fi
 
-echo "Production application and PostgreSQL rehearsal passed."
+echo "Production application and least-privilege PostgreSQL rehearsal passed."

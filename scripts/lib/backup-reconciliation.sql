@@ -1,0 +1,18 @@
+SELECT concat_ws(':',
+  (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL),
+  (SELECT count(*) FROM system_settings),
+  (SELECT count(*) FROM users),
+  (SELECT count(*) FROM accounts),
+  (SELECT count(*) FROM sessions),
+  (SELECT count(*) FROM churches),
+  (SELECT count(*) FROM church_memberships),
+  (SELECT count(*) FROM platform_operators),
+  (SELECT count(*) FROM bible_translations),
+  (SELECT count(*) FROM bible_books),
+  (SELECT count(*) FROM bible_book_names),
+  (SELECT count(*) FROM bible_verses),
+  (SELECT count(*) FROM folders),
+  (SELECT count(*) FROM bookmarks),
+  (SELECT count(*) FROM scripture_bookmarks),
+  (SELECT md5(coalesce(string_agg(id::text || ':' || md5(text), ',' ORDER BY id), '')) FROM bible_verses)
+);

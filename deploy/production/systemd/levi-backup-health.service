@@ -1,0 +1,13 @@
+[Unit]
+Description=Check Levi backup freshness, capacity, and restore proof
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/levi/backup.env
+ExecStart=/opt/levi/scripts/check-production-backups.sh
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict

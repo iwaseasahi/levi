@@ -1,52 +1,85 @@
 #!/usr/bin/env bash
 set -euo pipefail
+umask 077
 
-readonly restore_database="levi_restore_rehearsal"
-archive_path="$(mktemp "${TMPDIR:-/tmp}/levi-backup.XXXXXX")"
+readonly repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+readonly rehearsal_id="$$"
+readonly source_database="levi_backup_source_${rehearsal_id}"
+readonly restore_database="levi_restore_rehearsal_${rehearsal_id}"
+backup_root="$(mktemp -d "${TMPDIR:-/tmp}/levi-backup-rehearsal.XXXXXX")"
+readonly certificate_path="${backup_root}/recipient.crt"
+readonly private_key_path="${backup_root}/recipient.key"
 
 cleanup() {
-  docker compose exec -T postgres dropdb --if-exists -U levi "$restore_database" >/dev/null 2>&1 || true
-  rm -f "$archive_path"
+  docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+    dropdb --if-exists --force -U levi "$restore_database" >/dev/null 2>&1 || true
+  docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+    dropdb --if-exists --force -U levi "$source_database" >/dev/null 2>&1 || true
+  if [[ "$backup_root" == "${TMPDIR:-/tmp}/levi-backup-rehearsal."* ]]; then
+    rm -rf -- "$backup_root"
+  fi
 }
 trap cleanup EXIT
 
-docker compose up -d --wait postgres
-docker compose exec -T postgres pg_dump -U levi -d levi --format=custom >"$archive_path"
-docker compose exec -T postgres pg_restore --list <"$archive_path" >/dev/null
+docker compose --file "${repository_root}/compose.yaml" up -d --wait postgres-test
+docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+  createdb -U levi "$source_database"
 
-docker compose exec -T postgres dropdb --if-exists -U levi "$restore_database"
-docker compose exec -T postgres createdb -U levi "$restore_database"
-docker compose exec -T postgres pg_restore \
-  --exit-on-error \
-  --no-owner \
-  -U levi \
-  -d "$restore_database" <"$archive_path"
+export DATABASE_URL="postgresql://levi:levi@127.0.0.1:55433/${source_database}?schema=public"
+export SHADOW_DATABASE_URL="postgresql://levi:levi@127.0.0.1:55433/levi_shadow?schema=public"
+export NODE_ENV=test
+pnpm db:migrate >/dev/null
+pnpm db:seed >/dev/null
 
-readonly reconciliation_query="SELECT concat_ws(':',
-  (SELECT count(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL),
-  (SELECT count(*) FROM system_settings),
-  (SELECT count(*) FROM users),
-  (SELECT count(*) FROM accounts),
-  (SELECT count(*) FROM sessions),
-  (SELECT count(*) FROM churches),
-  (SELECT count(*) FROM church_memberships),
-  (SELECT count(*) FROM platform_operators),
-  (SELECT count(*) FROM bible_translations),
-  (SELECT count(*) FROM bible_books),
-  (SELECT count(*) FROM bible_book_names),
-  (SELECT count(*) FROM bible_verses),
-  (SELECT count(*) FROM folders),
-  (SELECT count(*) FROM bookmarks),
-  (SELECT count(*) FROM scripture_bookmarks),
-  (SELECT md5(coalesce(string_agg(id::text || ':' || md5(text), ',' ORDER BY id), '')) FROM bible_verses)
-);"
-source_signature="$(docker compose exec -T postgres psql -At -U levi -d levi -c "$reconciliation_query")"
-restore_signature="$(docker compose exec -T postgres psql -At -U levi -d "$restore_database" -c "$reconciliation_query")"
+docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+  psql --no-psqlrc --set ON_ERROR_STOP=1 -U levi -d "$source_database" >/dev/null <<'SQL'
+INSERT INTO users (id, name, email, email_verified, actor_state, must_change_password)
+VALUES ('00000000-0000-4000-8000-000000000086', 'Restore rehearsal', 'restore-rehearsal@example.invalid', true, 'PENDING', false);
+INSERT INTO sessions (id, user_id, token, expires_at)
+VALUES ('00000000-0000-4000-8000-000000000186', '00000000-0000-4000-8000-000000000086', 'restore-rehearsal-session', now() + interval '30 days');
+SQL
 
-if [[ "$source_signature" != "$restore_signature" ]]; then
-  echo "Backup reconciliation failed: anonymous signatures differ" >&2
+openssl req -x509 -newkey rsa:3072 -nodes -days 2 \
+  -subj "/CN=Levi backup rehearsal" \
+  -keyout "$private_key_path" -out "$certificate_path" >/dev/null 2>&1
+chmod 600 "$private_key_path"
+
+export LEVI_ALLOW_NON_ROOT_FOR_REHEARSAL=true
+export LEVI_BACKUP_ROOT="$backup_root"
+export LEVI_BACKUP_CERTIFICATE="$certificate_path"
+export LEVI_BACKUP_PRIVATE_KEY="$private_key_path"
+export LEVI_COMPOSE_FILE="${repository_root}/compose.yaml"
+export LEVI_ENV_FILE=""
+export LEVI_DATABASE_SERVICE=postgres-test
+export LEVI_DATABASE_NAME="$source_database"
+export LEVI_DATABASE_USER=levi
+export LEVI_RESTORE_DATABASE="$restore_database"
+export LEVI_ENFORCE_RECOVERY_OBJECTIVES=true
+
+started_epoch="$(date -u +%s)"
+"${repository_root}/scripts/production-backup.sh" hourly
+archive_path="$(find "${backup_root}/hourly" -type f -name '*.tar.cms' -print -quit)"
+if [[ -z "$archive_path" ]]; then
+  echo "Rehearsal did not create an encrypted archive." >&2
   exit 1
 fi
 
-archive_hash="$(shasum -a 256 "$archive_path" | cut -d ' ' -f 1)"
-echo "Backup restore rehearsal passed: anonymous_signature=$source_signature archive_sha256=$archive_hash"
+"${repository_root}/scripts/production-restore.sh" "$archive_path"
+"${repository_root}/scripts/check-production-backups.sh"
+
+source_sessions="$(docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+  psql -At --no-psqlrc -U levi -d "$source_database" -c 'SELECT count(*) FROM sessions;')"
+restored_sessions="$(docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+  psql -At --no-psqlrc -U levi -d "$restore_database" -c 'SELECT count(*) FROM sessions;')"
+if [[ "${source_sessions//[[:space:]]/}" != "1" || "${restored_sessions//[[:space:]]/}" != "0" ]]; then
+  echo "Session invalidation rehearsal failed." >&2
+  exit 1
+fi
+
+elapsed_seconds="$(( $(date -u +%s) - started_epoch ))"
+if (( elapsed_seconds > 7200 )); then
+  echo "Backup and restore rehearsal exceeded the 120-minute RTO." >&2
+  exit 1
+fi
+
+echo "Encrypted backup rehearsal passed: rto_seconds=${elapsed_seconds} source_sessions=1 restored_sessions=0"

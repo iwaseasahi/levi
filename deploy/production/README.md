@@ -7,6 +7,8 @@
 - `compose.yaml`: Caddy、Levi、PostgreSQL の実行定義
 - `Caddyfile`: TLS 自動取得、リバースプロキシ、セキュリティヘッダー
 - `production.env.example`: シークレットを含まない設定例
+- `backup.env.example`: root 管理のバックアップ設定例
+- `systemd/`: hourly 48時間、daily 14日の暗号化バックアップと監視 timer
 
 ## 設定検証
 
@@ -38,3 +40,4 @@ sudo docker compose \
 実際の起動には、VPS 契約・課金、本番シークレット、ドメイン、DNS 変更が必要です。これらは Issue #88 と #89 の人間承認ゲートを通過するまで実行しません。起動、DB migration、初回データ投入、切り戻しは後続 Issue の runbook に従います。
 
 ホスト側の SSH、UFW、更新設定は [WebARENA Indigo ホスト初期構築・堅牢化手順](../../docs/operations/webarena-host-hardening.md) を参照してください。
+バックアップ、隔離復元、全セッション失効、承認済み切替は [Backup, restore, and logical recovery](../../docs/operations/backup-restore.md) を参照してください。

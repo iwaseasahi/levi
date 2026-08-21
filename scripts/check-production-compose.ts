@@ -7,6 +7,7 @@ interface ComposeService {
   cap_drop?: string[];
   healthcheck?: unknown;
   image?: string;
+  environment?: Record<string, string>;
   networks?: Record<string, unknown>;
   ports?: unknown[];
   read_only?: boolean;
@@ -36,6 +37,22 @@ const exampleEnvironment = path.join(
   "production",
   "production.env.example",
 );
+const composeEnvironment = { ...process.env };
+for (const variable of [
+  "ACME_EMAIL",
+  "BETTER_AUTH_BASE_URL",
+  "BETTER_AUTH_SECRET",
+  "BETTER_AUTH_TRUSTED_ORIGINS",
+  "DATABASE_URL",
+  "LEVI_APP_DATABASE_PASSWORD",
+  "LEVI_DOMAIN",
+  "LEVI_IMAGE",
+  "POSTGRES_DB",
+  "POSTGRES_PASSWORD",
+  "POSTGRES_USER",
+]) {
+  delete composeEnvironment[variable];
+}
 
 const result = spawnSync(
   "docker",
@@ -49,7 +66,7 @@ const result = spawnSync(
     "--format",
     "json",
   ],
-  { cwd: repositoryRoot, encoding: "utf8" },
+  { cwd: repositoryRoot, encoding: "utf8", env: composeEnvironment },
 );
 
 if (result.status !== 0) {
@@ -82,6 +99,9 @@ assert.equal(app.read_only, true);
 assert(app.cap_drop?.includes("ALL"));
 assert.deepEqual(Object.keys(app.networks ?? {}), ["private"]);
 assert(app.healthcheck, "app must define a readiness healthcheck");
+assert.match(app.environment?.DATABASE_URL ?? "", /^postgresql:\/\/levi_app:/);
+assert.equal(app.environment?.POSTGRES_PASSWORD, undefined);
+assert.equal(app.environment?.MIGRATION_DATABASE_URL, undefined);
 
 const postgres = config.services.postgres!;
 assert.equal(postgres.read_only, true);
@@ -90,6 +110,8 @@ assert(postgres.healthcheck, "PostgreSQL must define a healthcheck");
 assert.equal(postgres.ports, undefined, "PostgreSQL must not publish a port");
 assert.deepEqual(Object.keys(postgres.networks ?? {}), ["private"]);
 assert.equal(config.networks.private?.internal, true);
+assert.equal(postgres.environment?.POSTGRES_USER, "levi_admin");
+assert(postgres.environment?.LEVI_APP_DATABASE_PASSWORD);
 
 const proxy = config.services.proxy!;
 assert.equal(proxy.read_only, true);
