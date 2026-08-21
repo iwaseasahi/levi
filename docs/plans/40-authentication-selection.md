@@ -9,8 +9,8 @@
 ## Outcome
 
 The authentication selection gate is replaced by an accepted, testable decision
-covering identity, tenancy, credentials, sessions, recovery, abuse prevention,
-and transactional email boundaries.
+covering identity, tenancy, credentials, sessions, administrator-managed
+recovery, and abuse prevention without an outbound email dependency.
 
 ## Context
 
@@ -25,15 +25,15 @@ and transactional email boundaries.
 ## Constraints
 
 - Authentication must be self-hosted and must not use model-provider APIs.
-- Production services, domains, secrets, email, deployment, and migrations are
-  not authorized by this Issue.
+- Production services, domains, secrets, deployment, and migrations are not
+  authorized by this Issue.
 - Tenant authorization remains a Levi domain responsibility.
 - The accepted solution must work with pinned Next.js, Prisma, and PostgreSQL.
 
 ## Non-goals
 
 - Installing or integrating Better Auth
-- Creating a Resend account, credential, or sending domain
+- Integrating an outbound email service
 - Creating production users or data
 
 ## Plan
@@ -58,6 +58,14 @@ and transactional email boundaries.
   credential boundaries, open decisions, and Issues #41 through #45 with ADR 0006.
 - 2026-08-21 13:39 JST — Local quality, integration, E2E, and security checks
   passed; the change is ready for PR verification and merge.
+- 2026-08-21 13:41 JST — Product owner removed email-based self-service reset
+  before merge. Revised ADR 0006 and dependent artifacts to use
+  platform-operator reset, one-time temporary passwords, session revocation, and
+  forced user password change without an external email service.
+- 2026-08-21 13:42 JST — Product owner changed the rolling session lifetime from
+  seven to 30 days; immediate revocation events remain unchanged.
+- 2026-08-21 13:47 JST — Re-ran every local check after both product changes;
+  quality, integration, Chromium E2E, and security checks passed.
 
 ## Decisions
 
@@ -67,12 +75,26 @@ and transactional email boundaries.
     weakening tenant boundaries.
   - Alternatives: Auth.js Credentials, hosted identity, custom auth.
   - ADR: `docs/architecture/0006-better-auth-database-sessions.md`
-- 2026-08-21 — Decision: use revocable DB sessions with no cookie cache initially.
+- 2026-08-21 — Decision: use 30-day revocable rolling DB sessions, refreshed at
+  most once per day, with no cookie cache initially.
   - Reason: suspension and reset must take effect on the next protected request.
 - 2026-08-21 — Decision: keep email provider-neutral and use Resend Free as the
   approved initial production candidate.
   - Reason: low initial cost and simpler operations; no external account or paid
     overage is authorized here.
+  - Superseded: later on 2026-08-21 by the no-email administrator-reset decision
+    below, before the ADR was merged.
+- 2026-08-21 — Decision: use platform-operator-managed reset and no outbound
+  email provider in the initial release.
+  - Reason: product owner chose administrator involvement over adding an external
+    email service and its credential/cost/operations.
+  - Behavior: generate and display a temporary password once, revoke existing
+    sessions, force the church user to set a new password at next login, and
+    never persist/log/send the plaintext through Levi.
+- 2026-08-21 — Decision: retain login for 30 days rather than seven days.
+  - Reason: explicit product-owner requirement after the initial ADR draft.
+  - Safety boundary: logout, administrator reset, account suspension, and
+    revoke-all still invalidate sessions immediately.
 
 ## Risks and mitigations
 
@@ -85,6 +107,10 @@ and transactional email boundaries.
 - Risk: account provisioning spans auth and tenant concerns.
   - Mitigation: require Issue #43 to prove atomicity or a safe inactive pending
     state and compensation.
+- Risk: the platform operator sees a temporary password during recovery.
+  - Mitigation: server-generated secret displayed once, no plaintext persistence
+    or logs, immediate session revocation, forced change, and documented
+    out-of-band handoff.
 
 ## Verification
 
@@ -108,8 +134,8 @@ and transactional email boundaries.
 
 ## Result
 
-ADR 0006 accepts Better Auth with revocable PostgreSQL sessions and a
-provider-neutral transactional-email port, with Resend Free as the approved
-initial production candidate. Security and dependent planning artifacts match
-the decision. No dependency, account, credential, domain, email, production
-system, or production data was created or changed.
+ADR 0006 accepts Better Auth with revocable PostgreSQL sessions and
+platform-operator-managed recovery without outbound email. Security and
+dependent planning artifacts match the decision. No dependency, account,
+credential, domain, email service, production system, or production data was
+created or changed.

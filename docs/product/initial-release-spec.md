@@ -41,9 +41,9 @@ The first complete operator flow is:
 5. The user moves through verses and controls the audience display.
 6. The user may save and reopen the search through folders and bookmarks.
 
-The release includes login, logout, email-based self-service password reset,
+The release includes login, logout, platform-operator-managed password reset,
 tenant isolation, Bible data migration, search, projection, and Bible-search
-bookmarks and folders.
+bookmarks and folders. It does not require an outbound email service.
 
 ## Bible catalog and migration
 
@@ -146,13 +146,23 @@ failure must not reveal whether an email address exists. Logout, expiry,
 revocation, account suspension, and password reset invalidate access to protected
 routes.
 
-A password-reset request returns the same visible result whether or not the
-address exists. A reset link is short-lived and single-use; the database stores
-only a hash of its secret token. Successful reset invalidates existing sessions.
-The authentication library, session lifetime, reset lifetime, email provider,
-and delivery retry policy are selected through
-[Issue #40](https://github.com/iwaseasahi/levi/issues/40), not by this product
-specification.
+An ordinary authenticated session remains valid for 30 days after its last
+eligible refresh and refreshes at most once per day. Logout, platform-operator
+reset, account suspension, and explicit revocation take effect immediately even
+within that period.
+
+A church user cannot request an email reset. A platform operator resets the
+account from the protected administration UI. Reset revokes all existing
+sessions, issues a generated one-time temporary password that is displayed only
+once to the platform operator, and requires the church user to choose a new
+password at the next login. Until that change succeeds, the user may access only
+the password-change and logout operations. The temporary password is never
+stored or logged in plaintext, and Levi does not transmit it by email; the
+platform operator communicates it through an approved out-of-band method.
+
+The authentication library, session lifetime, administrator reset behavior, and
+temporary-password safeguards are selected through
+[Issue #40](https://github.com/iwaseasahi/levi/issues/40).
 
 ## UI state and accessibility requirements
 

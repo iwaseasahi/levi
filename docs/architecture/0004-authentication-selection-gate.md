@@ -35,7 +35,7 @@ Protected routes and domain data that depends on user or tenant ownership are
 blocked until this ADR is accepted or superseded.
 
 ADR 0006 records the approved identity, tenancy, authentication, session, and
-transactional-email decisions and removes this selection gate.
+administrator-managed recovery decisions and removes this selection gate.
 
 ## Consequences
 
