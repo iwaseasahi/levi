@@ -45,7 +45,7 @@ display is predictably controlled from an authenticated controller window.
        heartbeat, refresh recovery, and auth-expiry clearing.
 4. [x] Cover popup blocking, close/reopen/reload, invalid messages, keyboard
        behavior, and two-page synchronization.
-5. [ ] Update parity/docs, run exact-commit CI, and merge.
+5. [x] Update parity/docs, run exact-commit CI, and merge.
 
 ## Progress
 
@@ -55,6 +55,8 @@ display is predictably controlled from an authenticated controller window.
   surfaces, auth-expiry clearing, and recovery states. A two-page Chrome run
   exposed and verified the refresh re-handshake path. All nine browser scenarios
   pass using the product-owner-approved Genesis 1:1 fixture.
+- 2026-08-21 19:10 JST — Quality, Database, E2E, and Security passed on
+  implementation commit `74034f1`.
 
 ## Decisions
 
@@ -80,9 +82,18 @@ display is predictably controlled from an authenticated controller window.
 - [x] component/accessibility tests — 19 passed
 - [x] two-page latest-Chrome E2E — all 9 repository scenarios passed
 - [x] local repository gates — 52 integration tests, DB and security checks
-- [ ] exact-commit GitHub CI
+- [x] exact-commit GitHub CI — all four required jobs passed
 
 ## Handoff or blockers
 
 - Blocker: none.
-- Resume with: run exact-commit GitHub CI and merge after all required jobs pass.
+- Resume with: implement beyond-range and chapter-boundary navigation in Issue
+  #52.
+
+## Result
+
+Issue #51 is complete. The controller and audience are separate authenticated
+surfaces with strict same-origin messaging, a recoverable handshake/heartbeat,
+all current-range controls, and fail-closed session handling. Latest-Chrome
+evidence covers close, reopen, reload, invalid messages, font, blank, and direct
+or sequential navigation.
