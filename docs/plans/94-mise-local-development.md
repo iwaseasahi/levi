@@ -43,7 +43,7 @@ development service without assembling commands by hand.
 3. [x] Add automated drift/idempotency checks and concise README instructions.
 4. [x] Run setup twice, start the application, verify health/readiness, and run
        all canonical checks.
-5. [ ] Perform a separate diff review, open a PR, and merge only after all four
+5. [x] Perform a separate diff review, open a PR, and merge only after all four
        required exact-head checks pass.
 
 ## Progress
@@ -70,6 +70,8 @@ development service without assembling commands by hand.
   CI and exceeded Vitest's generic 5-second limit. Kept retries at zero and all
   assertions intact; assigned the long-running rehearsal an explicit 30-second
   upper bound before repeating local and exact-head verification.
+- 2026-08-21 22:30 JST — PR #95 passed exact-head Quality, Database, E2E, and
+  Security on implementation commit `3ede635` after the bounded rehearsal fix.
 
 ## Decisions
 
@@ -119,17 +121,22 @@ development service without assembling commands by hand.
 - [x] `pnpm test:e2e`
 - [x] `pnpm security:check`
 - [x] `git diff --check`
-- [ ] Exact-head `Quality`, `Database`, `E2E`, and `Security`
+- [x] Exact-head `Quality`, `Database`, `E2E`, and `Security`
 - [x] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
 
 ## Handoff or blockers
 
 - Completed: implementation, repeated setup, local runtime smoke, canonical
-  checks, integration, E2E, and security verification.
-- Remaining: final review, commit, PR, exact-head CI, and merge.
+  checks, integration, E2E, security verification, review, PR, and exact-head
+  CI.
+- Remaining: merge after this completion record repeats exact-head CI.
 - Blocker: none.
-- Resume with: review and commit the complete Issue #94 diff.
+- Resume with: merge PR #95 after the completion commit passes all four checks.
 
 ## Result
 
-Pending.
+PR #95 delivers the repository-owned mise runtime and local workflow. A new
+clone can prepare, start, smoke-check, quality-check, and stop Levi without
+manually assembling setup commands. Existing `.env` values and development data
+are preserved, test environments remain isolated, and local/CI verification is
+recorded above.
