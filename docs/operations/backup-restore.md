@@ -1,69 +1,101 @@
-# Backup, restore, and disaster recovery
+# Backup, restore, and logical recovery
 
-`pnpm backup:rehearse` verifies the mechanics against the repository's local
-Compose PostgreSQL only. It creates a custom-format dump of `levi`, restores it
-to the explicitly named disposable database `levi_restore_rehearsal`, compares
-an anonymous signature of critical row counts and ordered Bible content hashes,
-prints a SHA-256 for the transient archive, then drops the rehearsal database
-and removes the archive. Neither Bible text nor credentials are emitted.
+## Scope and objectives
 
-## Local rehearsal
+This workflow protects against operator error and logical database corruption while the single WebARENA Indigo VPS and its disk remain available.
+
+- encrypted hourly archives are retained for 48 hours;
+- encrypted daily archives are retained for 14 days;
+- backup freshness target (logical RPO) is 60 minutes;
+- isolated restore and approved promotion target (logical RTO) is 120 minutes;
+- every restored database session is deleted before traffic can return.
+
+VPS loss, disk loss, provider-wide loss, and Tokyo-region loss have no recovery objective. Archives are stored on the same VPS and are not disaster recovery. WebARENA operational backups are not user restore points.
+
+## Encryption and access boundary
+
+Archives use OpenSSL CMS AuthEnvelopedData with AES-256-GCM and an RSA 3072-bit recipient certificate; the content key is wrapped with RSA-OAEP. Generate the certificate and encrypted private key on an operator-controlled machine. Copy only the public certificate to `/etc/levi/backup-recipient.crt` on the VPS. Keep the private key offline; place it temporarily on the VPS with `600 root:root` only during an immediately approved restore, then remove it through the operator's secure process.
 
 ```bash
-cp .env.example .env
-pnpm db:up
-pnpm db:migrate
-pnpm db:seed
-pnpm backup:rehearse
-pnpm db:down
+openssl req -x509 -newkey rsa:3072 -sha256 -days 3650 \
+  -subj '/CN=Levi PostgreSQL backup/' \
+  -keyout levi-backup-private.pem \
+  -out levi-backup-recipient.crt
 ```
 
-Success requires:
+The application container does not mount `/var/backups/levi`. The backup root and all archives are `700`/`600` and owned by root. The application identity therefore cannot read, modify, or delete archives. Root access remains able to do so, which is an accepted limitation of an on-host backup.
 
-- `pg_dump` and `pg_restore --list` complete without error;
-- restore into an empty disposable database completes with `--exit-on-error`;
-- source and restored critical-table counts, completed migrations, and Bible
-  content fingerprints match exactly;
-- the archive never leaves the temporary directory and is removed;
-- the source database is never dropped or mutated by the rehearsal.
+PostgreSQL initialization also separates `levi_admin` from `levi_app`. Compose injects only `DATABASE_URL` for `levi_app` into the application. Migrations, backup, restore, and promotion use the admin identity through an operator-only environment file; the application never receives that URL or password.
 
-The signature covers identity, tenant, Bible catalog, folder, and bookmark
-tables. Continue extending it when new critical entities appear. Run the
-rehearsal in a scheduled disposable environment in a later Issue; this baseline
-does not grant cloud or production access.
+Do not commit either certificate or key. Do not paste archive content, private keys, database text, or credentials into Issues, logs, or CI artifacts.
 
-## Production decision gate
+## Installation
 
-ADR 0005 selects one WebARENA Indigo 4 GB VPS in Tokyo. Issue #86 must prove
-encryption and key ownership, access/audit policy, retention/deletion, restore
-environment, storage limits, and operational ownership. The release-entry
-objectives are RPO no greater than 60 minutes and RTO no greater than 120
-minutes for logical error while that VPS and disk remain available. Hourly
-on-host archives are retained for 48 hours and daily archives for 14 days; the
-application identity must not be able to modify or delete them.
+Install the checked-in scripts and systemd units below `/opt/levi`, then create the protected configuration.
 
-VPS loss, disk loss, provider-wide loss, and Tokyo-region loss have no recovery
-objective. On-host archives are not disaster recovery and provider operational
-backups are not user restore points. This accepted limitation must be visible in
-release and incident decisions.
+```bash
+sudo install -d -m 700 -o root -g root /var/backups/levi
+sudo install -m 600 -o root -g root \
+  deploy/production/backup.env.example /etc/levi/backup.env
+sudo install -m 644 -o root -g root \
+  levi-backup-recipient.crt /etc/levi/backup-recipient.crt
+sudo install -m 644 -o root -g root \
+  deploy/production/systemd/levi-backup-* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now \
+  levi-backup-hourly.timer \
+  levi-backup-daily.timer \
+  levi-backup-health.timer
+```
 
-Complete an isolated restore before first release and at least quarterly. Alert
-when the newest usable recovery point is older than 60 minutes or the newest
-successful restore proof is older than 90 days. A production restore requires
-the exact backup, target, impact, loss window, rollback/forward-recovery choice,
-and immediate human approval defined by governance. The selected VPS has no
-managed PITR; Issue #86 must implement and measure the archive workflow rather
-than implying provider recovery.
+Before enabling timers, confirm `/etc/levi/backup.env` points to the intended Compose file, production environment file, backup root, and public certificate. `production-backup.sh` uses a single-writer lock, validates the custom-format dump, records an anonymous reconciliation signature, encrypts atomically, writes a SHA-256 sidecar, prunes retention, and fails if backup filesystem use reaches 80%.
 
-Disaster recovery succeeds only when a clean environment can restore an approved
-backup within RTO, reconcile data to the expected recovery point, pass migration
-status/readiness and critical E2E, and record timings/evidence without exposing
-Restricted data. “Backup job succeeded” alone is not restore evidence.
+The health timer fails when no hourly archive is newer than 60 minutes, storage reaches the limit, or no isolated restore proof is newer than 90 days. Issue #87 connects these systemd failures to the operational alert path.
 
-Before restored traffic returns, invalidate every restored database session and
-verify platform-operator and Church membership state. If the recovery point
-predates an account creation, password change/reset, or temporary-password
-consumption, identify the affected accounts without exposing credentials and
-have the platform operator remediate them through the UI. See the
-[`initial-release-cutover.md`](initial-release-cutover.md) runbook for the exact
-cutover and recovery gates.
+```bash
+sudo systemctl list-timers 'levi-backup-*'
+sudo systemctl status levi-backup-hourly.service
+sudo journalctl -u levi-backup-hourly.service --since today
+sudo /opt/levi/scripts/check-production-backups.sh
+```
+
+## Local disposable rehearsal
+
+`pnpm backup:rehearse` resets only the local `levi_test` database, inserts one synthetic session, creates an ephemeral RSA certificate, runs the production backup and isolated-restore scripts, reconciles all critical tables and Bible hashes, proves that the restored session count is zero while the source remains one, and reports elapsed RTO. Temporary archives, key material, and the isolated database are removed on exit.
+
+```bash
+pnpm backup:rehearse
+```
+
+Run this before first release and at least quarterly. Success is restore evidence; a successful backup job by itself is not.
+
+## Production isolated restore
+
+A production restore is a high-impact action. Before copying the private key or running a command, record the exact archive, target, incident impact, expected loss window, forward-recovery/rollback choice, and receive immediate human approval under the governance policy.
+
+Confirm the encrypted archive's checksum and temporarily install the approved private key as `600 root:root`. Do not pass a private-key value in the shell command or environment—only its filesystem path.
+
+```bash
+sudo LEVI_BACKUP_PRIVATE_KEY=/etc/levi/temporary-backup-private.pem \
+  /opt/levi/scripts/production-restore.sh \
+  /var/backups/levi/hourly/levi-hourly-YYYYMMDDTHHMMSSZ.tar.cms
+```
+
+The script decrypts into a root-only temporary directory, restores to a new `levi_restore_*` database, compares the stored critical-table/Bible signature, deletes every restored session, verifies zero sessions, and records RPO/RTO evidence. It does not stop the application, rename the live database, or switch traffic. If verification fails, it drops the isolated database and leaves production untouched.
+
+Check account and membership state against the incident recovery point. If the backup predates an account creation, password change/reset, or temporary-password consumption, identify affected account IDs without exposing credentials and remediate them through the operator UI.
+
+## Approved promotion and rollback
+
+Promotion requires a second, immediate approval comment whose URL names the already verified restore database. Set that exact URL and database name only for the command invocation.
+
+```bash
+sudo \
+  LEVI_RESTORE_DATABASE=levi_restore_yyyymmddthhmmssz \
+  LEVI_RESTORE_APPROVAL_REFERENCE='https://github.com/iwaseasahi/levi/issues/NN#issuecomment-NN' \
+  /opt/levi/scripts/production-promote-restore.sh
+```
+
+The script refuses unverified naming or a non-Levi approval URL, rechecks that the restore has zero sessions, stops Caddy and the application, retains the old database as `levi_rollback_*`, renames the verified database to `levi`, deletes sessions again, and waits for application readiness. Keep the rollback database until the post-restore checks and a full Sunday use cycle succeed.
+
+If promotion does not become ready, do not improvise or delete either database. Keep traffic stopped, capture `docker compose ps` and non-sensitive logs, obtain a new approval, rename the failed `levi` aside, rename the printed `levi_rollback_*` database back to `levi`, delete sessions, and start the application. Every user must sign in again after either promotion or rollback.
