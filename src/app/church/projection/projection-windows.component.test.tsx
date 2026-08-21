@@ -60,7 +60,7 @@ afterEach(() => {
 });
 
 describe("projection windows", () => {
-  it("renders accessible controls and reports a blocked popup", async () => {
+  it("opens an ordinary tab and reports when the new tab is blocked", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => Promise.resolve(Response.json({ items }))),
@@ -71,8 +71,11 @@ describe("projection windows", () => {
     );
     await screen.findByRole("heading", { name: "投影操作" });
     await userEvent.click(
-      screen.getByRole("button", { name: "会衆向け画面を開く" }),
+      screen.getByRole("button", {
+        name: "会衆向け画面を新しいタブで開く",
+      }),
     );
+    expect(window.open).toHaveBeenCalledWith("/church/audience", "_blank");
     expect(screen.getByRole("status")).toHaveTextContent("ブロックされました");
     const results = await axe.run(container, {
       rules: { "color-contrast": { enabled: false } },
@@ -94,7 +97,9 @@ describe("projection windows", () => {
     render(<ProjectionController selection={selection} />);
     await screen.findByRole("heading", { name: "投影操作" });
     await userEvent.click(
-      screen.getByRole("button", { name: "会衆向け画面を開く" }),
+      screen.getByRole("button", {
+        name: "会衆向け画面を新しいタブで開く",
+      }),
     );
     act(() => {
       window.dispatchEvent(
@@ -116,12 +121,18 @@ describe("projection windows", () => {
       expect(popupPostMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           payload: expect.objectContaining({
-            reference: "創世記 1:1",
-            translations: expect.arrayContaining([
-              expect.objectContaining({
+            heading: "新改訳聖書第3版 創世記 / Genesis : 1",
+            translations: [
+              {
+                language: "ja",
                 text: "初めに、神が天と地を創造した。",
-              }),
-            ]),
+              },
+              {
+                language: "en",
+                text: "In the beginning God created the heavens and the earth.",
+              },
+            ],
+            verseNumber: 1,
           }),
           type: "STATE",
         }),
@@ -194,7 +205,58 @@ describe("projection windows", () => {
     expect(screen.queryByText("初めに、神が天と地を創造した。")).toBeNull();
   });
 
-  it("ignores invalid messages, scrolls once, and clears text on auth loss", async () => {
+  it("renders only the selected translation for a single-language state", async () => {
+    const opener = { postMessage: vi.fn() } as unknown as Window;
+    Object.defineProperty(window, "opener", {
+      configurable: true,
+      value: opener,
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(new Response(null, { status: 200 }))),
+    );
+    render(<AudienceDisplay />);
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            schema: projectionSchema,
+            type: "STATE",
+            version: projectionVersion,
+            payload: {
+              blank: false,
+              fontScale: 1,
+              heading: "新改訳聖書第3版 Genesis : 1",
+              revision: 1,
+              scrollDirection: null,
+              scrollRevision: 0,
+              sessionId: "00000000-0000-4000-8000-000000000052",
+              verseNumber: 1,
+              translations: [
+                {
+                  language: "en",
+                  text: "In the beginning God created the heavens and the earth.",
+                },
+              ],
+            },
+          } satisfies ControllerProjectionMessage,
+          origin: window.location.origin,
+          source: opener,
+        }),
+      );
+    });
+
+    expect(
+      await screen.findByText(
+        "In the beginning God created the heavens and the earth.",
+      ),
+    ).toHaveAttribute("lang", "en");
+    expect(document.querySelectorAll(".audience-book-word")).toHaveLength(1);
+    expect(screen.queryByText("初めに、神が天と地を創造した。")).toBeNull();
+  });
+
+  it("renders Ginmaku markup in Japanese-English order and clears text on auth loss", async () => {
     const opener = { postMessage: vi.fn() } as unknown as Window;
     Object.defineProperty(window, "opener", {
       configurable: true,
@@ -219,16 +281,20 @@ describe("projection windows", () => {
       payload: {
         blank: false,
         fontScale: 1,
-        reference: "創世記 1:1",
+        heading: "新改訳聖書第3版 創世記 / Genesis : 1",
         revision: 1,
         scrollDirection: "down",
         scrollRevision: 1,
         sessionId: "00000000-0000-4000-8000-000000000051",
+        verseNumber: 1,
         translations: [
           {
             language: "ja",
-            name: "新改訳聖書第3版（JSS3）",
             text: "初めに、神が天と地を創造した。",
+          },
+          {
+            language: "en",
+            text: "In the beginning God created the heavens and the earth.",
           },
         ],
       },
@@ -245,6 +311,18 @@ describe("projection windows", () => {
     expect(
       await screen.findByText("初めに、神が天と地を創造した。"),
     ).toBeVisible();
+    expect(
+      screen.getByRole("heading", {
+        name: "新改訳聖書第3版 創世記 / Genesis : 1",
+      }),
+    ).toHaveClass("audience-book-name");
+    const lines = document.querySelectorAll(".audience-book-word");
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toHaveAttribute("lang", "ja");
+    expect(lines[1]).toHaveAttribute("lang", "en");
+    expect(lines[0]).toHaveClass("audience-shadow");
+    expect(document.querySelectorAll(".audience-verse-number")).toHaveLength(2);
+    expect(document.querySelector(".audience-translation")).toBeNull();
     expect(scrollBy).toHaveBeenCalledTimes(1);
 
     act(() => {

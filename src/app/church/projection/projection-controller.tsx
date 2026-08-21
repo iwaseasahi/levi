@@ -25,7 +25,7 @@ type LoadState =
   | { kind: "ready"; items: ScriptureSearchItem[] };
 
 const connectionLabels: Record<AudienceConnection, string> = {
-  blocked: "会衆向け画面がポップアップでブロックされました。",
+  blocked: "会衆向け画面の新しいタブがブロックされました。",
   closed: "会衆向け画面は閉じています。",
   connected: "会衆向け画面と接続しています。",
   disconnected: "会衆向け画面との通信が途切れています。再表示してください。",
@@ -35,6 +35,14 @@ const connectionLabels: Record<AudienceConnection, string> = {
 function reference(item: ScriptureSearchItem) {
   const text = item.texts.japanese ?? item.texts.english;
   return `${text?.bookName ?? item.location.book} ${item.location.chapter}:${item.location.verse}`;
+}
+
+function audienceHeading(item: ScriptureSearchItem) {
+  const bookNames = [
+    item.texts.japanese?.bookName,
+    item.texts.english?.bookName,
+  ].filter((bookName): bookName is string => Boolean(bookName));
+  return `新改訳聖書第3版 ${bookNames.join(" / ")} : ${item.location.chapter}`;
 }
 
 export function ProjectionController({
@@ -201,17 +209,17 @@ export function ProjectionController({
       payload: {
         blank: control.blank,
         fontScale: control.fontScale,
-        reference: reference(item),
+        heading: audienceHeading(item),
         revision: revision.current,
         scrollDirection: control.scrollDirection,
         scrollRevision: control.scrollRevision,
         sessionId: sessionId.current,
+        verseNumber: item.location.verse,
         translations: [
           ...(item.texts.japanese
             ? [
                 {
                   language: "ja" as const,
-                  name: "新改訳聖書第3版（JSS3）",
                   text: item.texts.japanese.text,
                 },
               ]
@@ -220,7 +228,6 @@ export function ProjectionController({
             ? [
                 {
                   language: "en" as const,
-                  name: "New King James Version (NKJV)",
                   text: item.texts.english.text,
                 },
               ]
@@ -307,11 +314,7 @@ export function ProjectionController({
   }
 
   function openAudience() {
-    const target = window.open(
-      "/church/audience",
-      "levi-audience",
-      "popup,width=1280,height=720",
-    );
+    const target = window.open("/church/audience", "_blank");
     if (!target) {
       setConnection((state) => reduceAudienceConnection(state, "blocked"));
       return;
@@ -370,8 +373,8 @@ export function ProjectionController({
       <section className="controller-actions" aria-label="投影操作">
         <button className="primary-button" type="button" onClick={openAudience}>
           {connection === "closed" || connection === "blocked"
-            ? "会衆向け画面を開く"
-            : "会衆向け画面を再表示"}
+            ? "会衆向け画面を新しいタブで開く"
+            : "会衆向け画面を新しいタブで再表示"}
         </button>
         <div className="button-group">
           <button

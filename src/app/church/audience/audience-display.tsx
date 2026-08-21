@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   isTrustedProjectionEvent,
   parseControllerProjectionMessage,
@@ -15,6 +15,7 @@ export function AudienceDisplay() {
   const [authorized, setAuthorized] = useState(true);
   const opener = useRef<Window | null>(null);
   const displayRef = useRef<HTMLDivElement>(null);
+  const verseRef = useRef<HTMLDivElement>(null);
   const authorizedRef = useRef(true);
   const lastRevision = useRef(-1);
   const lastScrollRevision = useRef(-1);
@@ -111,6 +112,37 @@ export function AudienceDisplay() {
     });
   }, [display]);
 
+  useLayoutEffect(() => {
+    const screen = displayRef.current;
+    const verse = verseRef.current;
+    if (!display || display.blank || !screen || !verse) return;
+
+    function fitVerse(screenElement: HTMLElement, verseElement: HTMLElement) {
+      screenElement.style.setProperty("--audience-fit-scale", "1");
+      const headingHeight =
+        screenElement.querySelector<HTMLElement>(".audience-book-name")
+          ?.offsetHeight ?? 26;
+      const availableHeight = Math.max(
+        1,
+        screenElement.clientHeight - headingHeight * 2,
+      );
+      let scale = 1;
+      while (
+        (verseElement.scrollHeight > availableHeight ||
+          verseElement.scrollWidth > screenElement.clientWidth) &&
+        scale > 0.2
+      ) {
+        scale *= 0.95;
+        screenElement.style.setProperty("--audience-fit-scale", String(scale));
+      }
+    }
+
+    const fitCurrentVerse = () => fitVerse(screen, verse);
+    fitCurrentVerse();
+    window.addEventListener("resize", fitCurrentVerse);
+    return () => window.removeEventListener("resize", fitCurrentVerse);
+  }, [display]);
+
   if (!authorized)
     return (
       <main className="audience-screen audience-waiting">
@@ -132,16 +164,29 @@ export function AudienceDisplay() {
     <main
       className="audience-screen"
       ref={displayRef}
-      style={{ "--audience-scale": display.fontScale } as React.CSSProperties}
+      style={
+        {
+          "--audience-fit-scale": 1,
+          "--audience-scale": display.fontScale,
+        } as React.CSSProperties
+      }
     >
+      <h1 className="audience-book-name">{display.heading}</h1>
       <article className="audience-content">
-        <h1>{display.reference}</h1>
-        {display.translations.map((translation) => (
-          <section key={translation.language} lang={translation.language}>
-            <p className="audience-translation">{translation.name}</p>
-            <p className="audience-text">{translation.text}</p>
-          </section>
-        ))}
+        <div className="audience-verse" ref={verseRef}>
+          {display.translations.map((translation) => (
+            <p
+              className="audience-book-word audience-shadow"
+              key={translation.language}
+              lang={translation.language}
+            >
+              <span className="audience-verse-number">
+                {display.verseNumber}:
+              </span>{" "}
+              {translation.text}
+            </p>
+          ))}
+        </div>
       </article>
     </main>
   );

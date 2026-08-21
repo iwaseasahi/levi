@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const projectionSchema = "levi.projection" as const;
-export const projectionVersion = 1 as const;
+export const projectionVersion = 2 as const;
 
 export type ProjectionControlState = {
   blank: boolean;
@@ -91,17 +91,17 @@ const audienceStateSchema = z
   .object({
     blank: z.boolean(),
     fontScale: z.number().min(0.6).max(2.2),
-    reference: z.string().min(1).max(200),
+    heading: z.string().min(1).max(300),
     revision: z.number().int().nonnegative(),
     scrollDirection: z.enum(["up", "down"]).nullable(),
     scrollRevision: z.number().int().nonnegative(),
     sessionId: z.uuid(),
+    verseNumber: z.number().int().positive(),
     translations: z
       .array(
         z
           .object({
             language: z.enum(["ja", "en"]),
-            name: z.string().min(1).max(200),
             text: z.string(),
           })
           .strict(),

@@ -2,8 +2,9 @@
 
 ## Topology
 
-The authenticated controller opens or reuses the named same-origin window
-`levi-audience` at `/church/audience`. The controller retains its keyboard focus.
+The authenticated controller opens `/church/audience` in a new, ordinary Chrome
+tab without popup window features. It retains the returned same-origin `Window`
+reference for communication.
 The audience contains no controls, account identifiers, or full search result
 set.
 
@@ -15,7 +16,7 @@ Messages use direct `window.postMessage` between the controller's retained
 - `event.origin === window.location.origin`;
 - `event.source` to be the exact expected window;
 - `schema === "levi.projection"`;
-- `version === 1`;
+- `version === 2`;
 - a recognized message type; and
 - a runtime-validated payload with no unknown fields.
 
@@ -24,8 +25,10 @@ Untrusted, malformed, stale-revision, and wrong-session messages are ignored.
 ## Messages
 
 - Audience → controller `READY`: sent on initial load and every refresh.
-- Controller → audience `STATE`: the current reference, one or two translation
-  texts, font scale, blank state, and monotonic scroll/revision counters.
+- Controller → audience `STATE`: the current chapter heading, verse number, one
+  or two translation texts, font scale, blank state, and monotonic
+  scroll/revision counters. When both translations are present their order is
+  Japanese then English.
 - Controller → audience `PING` and audience → controller `PONG`: detect a lost
   connection without treating a temporarily open window as healthy.
 - Controller → audience `CLEAR`: reserved for explicit protected-state removal.
@@ -35,7 +38,7 @@ book/chapter/range/language coordinates and never contains verse text.
 
 ## Recovery and authorization
 
-- A null result from `window.open` is shown as popup blocking.
+- A null result from `window.open` is shown as new-tab blocking.
 - A closed window is detected and can be reopened with the same control.
 - Refresh emits a new `READY`, causing the complete current state to be resent.
 - Heartbeat loss is visible as disconnected and the user can re-display the
