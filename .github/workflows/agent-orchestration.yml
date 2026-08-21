@@ -110,12 +110,20 @@ jobs:
               2> agent-artifacts/provider-stderr.log
             exit_code="$?"
             test "$exit_code" -eq 0 && break
-            if rg -q -i 'usage limit|quota (has been )?exceeded|credit balance|monthly limit' agent-artifacts/provider-stdout.log agent-artifacts/provider-stderr.log; then break; fi
-            if ! rg -q -i '(^|[^0-9])429([^0-9]|$)|rate[ _-]?limit|too many requests|overloaded|temporarily unavailable' agent-artifacts/provider-stdout.log agent-artifacts/provider-stderr.log; then break; fi
+            if grep -Eqi 'usage limit|quota (has been )?exceeded|credit balance|monthly limit' agent-artifacts/provider-stdout.log agent-artifacts/provider-stderr.log; then break; fi
+            if ! grep -Eqi '(^|[^0-9])429([^0-9]|$)|rate[ _-]?limit|too many requests|overloaded|temporarily unavailable' agent-artifacts/provider-stdout.log agent-artifacts/provider-stderr.log; then break; fi
             test "$attempt" -ge 3 && break
             sleep "$((2 ** attempt + RANDOM % 2))"
             attempt="$((attempt + 1))"
           done
+          if test "$exit_code" -ne 0; then
+            diagnostic="$(sed -n '1,80p' agent-artifacts/provider-stderr.log | head -c 4096 | sed -E 's/sk-[[:alnum:]_-]{12,}/[REDACTED_PROVIDER_TOKEN]/g; s/(Bearer )[[:alnum:]._-]+/\1[REDACTED_BEARER_TOKEN]/g')"
+            if test -n "${CODEX_API_KEY:-}"; then diagnostic="${diagnostic//"$CODEX_API_KEY"/[REDACTED_PROVIDER_SECRET]}"; fi
+            stop_marker="$(tr -d '-' < /proc/sys/kernel/random/uuid)"
+            printf '::stop-commands::%s\n' "$stop_marker"
+            printf 'Codex failure diagnostic (stderr, redacted, max 4096 bytes):\n%s\n' "$diagnostic"
+            printf '::%s::\n' "$stop_marker"
+          fi
           set -e
           printf '%s\n' "$exit_code" > agent-artifacts/provider-exit-code.txt
           printf '%s\n' "$attempt" > agent-artifacts/provider-attempts.txt
@@ -167,6 +175,9 @@ jobs:
           name: codex-checkpoint
           path: agent-artifacts/codex-checkpoint/
           retention-days: 14
+      - name: Enforce terminal Codex result
+        if: steps.route.outputs.fallback != 'true'
+        run: test "${{ steps.route.outputs.status }}" = succeeded
 
   claude_fallback:
     name: Claude fallback writer
@@ -224,12 +235,20 @@ jobs:
               2> agent-artifacts/provider-stderr.log
             exit_code="$?"
             test "$exit_code" -eq 0 && break
-            if rg -q -i 'usage limit|quota (has been )?exceeded|credit balance|monthly limit' agent-artifacts/provider-stdout.log agent-artifacts/provider-stderr.log; then break; fi
-            if ! rg -q -i '(^|[^0-9])429([^0-9]|$)|rate[ _-]?limit|too many requests|overloaded|temporarily unavailable' agent-artifacts/provider-stdout.log agent-artifacts/provider-stderr.log; then break; fi
+            if grep -Eqi 'usage limit|quota (has been )?exceeded|credit balance|monthly limit' agent-artifacts/provider-stdout.log agent-artifacts/provider-stderr.log; then break; fi
+            if ! grep -Eqi '(^|[^0-9])429([^0-9]|$)|rate[ _-]?limit|too many requests|overloaded|temporarily unavailable' agent-artifacts/provider-stdout.log agent-artifacts/provider-stderr.log; then break; fi
             test "$attempt" -ge 3 && break
             sleep "$((2 ** attempt + RANDOM % 2))"
             attempt="$((attempt + 1))"
           done
+          if test "$exit_code" -ne 0; then
+            diagnostic="$(sed -n '1,80p' agent-artifacts/provider-stderr.log | head -c 4096 | sed -E 's/sk-[[:alnum:]_-]{12,}/[REDACTED_PROVIDER_TOKEN]/g; s/(Bearer )[[:alnum:]._-]+/\1[REDACTED_BEARER_TOKEN]/g')"
+            if test -n "${ANTHROPIC_API_KEY:-}"; then diagnostic="${diagnostic//"$ANTHROPIC_API_KEY"/[REDACTED_PROVIDER_SECRET]}"; fi
+            stop_marker="$(tr -d '-' < /proc/sys/kernel/random/uuid)"
+            printf '::stop-commands::%s\n' "$stop_marker"
+            printf 'Claude failure diagnostic (stderr, redacted, max 4096 bytes):\n%s\n' "$diagnostic"
+            printf '::%s::\n' "$stop_marker"
+          fi
           set -e
           printf '%s\n' "$exit_code" > agent-artifacts/provider-exit-code.txt
           printf '%s\n' "$attempt" > agent-artifacts/provider-attempts.txt
@@ -268,6 +287,8 @@ jobs:
           name: claude-checkpoint
           path: agent-artifacts/claude-checkpoint/
           retention-days: 14
+      - name: Enforce successful Claude result
+        run: test "${{ steps.route.outputs.status }}" = succeeded
 
   quality_gate:
     name: Agent quality gate
