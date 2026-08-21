@@ -41,17 +41,35 @@ export async function clearScriptureFixture() {
 export async function seedScriptureFixture() {
   await clearScriptureFixture();
   const [japanese, english] = await Promise.all([
-    prisma.bibleTranslation.update({
+    prisma.bibleTranslation.upsert({
       where: { code: "JSS3" },
-      data: {
+      update: {
+        rightsNotice: "synthetic E2E fixture only",
+        rightsStatus: "APPROVED",
+        sourceReference: "synthetic E2E fixture",
+      },
+      create: {
+        code: "JSS3",
+        displayOrder: 1,
+        languageTag: "ja",
+        name: "Synthetic Japanese translation",
         rightsNotice: "synthetic E2E fixture only",
         rightsStatus: "APPROVED",
         sourceReference: "synthetic E2E fixture",
       },
     }),
-    prisma.bibleTranslation.update({
+    prisma.bibleTranslation.upsert({
       where: { code: "NKJV" },
-      data: {
+      update: {
+        rightsNotice: "synthetic E2E fixture only",
+        rightsStatus: "APPROVED",
+        sourceReference: "synthetic E2E fixture",
+      },
+      create: {
+        code: "NKJV",
+        displayOrder: 2,
+        languageTag: "en",
+        name: "Synthetic English translation",
         rightsNotice: "synthetic E2E fixture only",
         rightsStatus: "APPROVED",
         sourceReference: "synthetic E2E fixture",
