@@ -42,7 +42,7 @@ the same book, beyond the searched range and across chapter boundaries.
 3. [x] Add the authenticated navigation API and serial controller navigation.
 4. [x] Extend the real-passage two-window Chrome E2E beyond the ending verse and
        across both chapter directions.
-5. [ ] Update parity/docs, pass exact-commit CI, and merge.
+5. [x] Update parity/docs, pass exact-commit CI, and merge.
 
 ## Progress
 
@@ -52,6 +52,9 @@ the same book, beyond the searched range and across chapter boundaries.
   PostgreSQL navigation, serialized controller actions, and two-window Genesis
   1:1 E2E. Local unit (114), component (20), integration (59), and Chrome E2E
   (9) tests pass with build, database, and security gates.
+- 2026-08-21 18:45 JST — Pull request #75 passed Quality, Database, E2E, and
+  Security on implementation commit `a087405`; recorded final evidence before
+  the required exact-final-commit CI rerun and merge.
 
 ## Decisions
 
@@ -75,10 +78,10 @@ the same book, beyond the searched range and across chapter boundaries.
 - [x] boundary-table unit tests
 - [x] PostgreSQL integration and EXPLAIN
 - [x] two-page latest-Chrome E2E
-- [ ] repository gates and exact-commit GitHub CI
+- [x] repository gates and exact-commit GitHub CI
 
 ## Handoff or blockers
 
 - Blocker: none.
-- Resume with: open the pull request, wait for exact-commit CI, then merge and
-  update parent Issue #38.
+- Resume with: verify the evidence-only final commit in CI, merge pull request
+  #75, release the lease, and update parent Issue #38.
