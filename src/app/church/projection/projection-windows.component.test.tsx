@@ -84,10 +84,18 @@ describe("projection windows", () => {
   });
 
   it("handshakes with the expected window and sends only the current item", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(() => Promise.resolve(Response.json({ items }))),
+    const fetcher = vi.fn((input: RequestInfo | URL) =>
+      String(input).includes("/api/scripture/navigate")
+        ? Promise.resolve(
+            Response.json({
+              crossedChapter: false,
+              edge: null,
+              item: items[1],
+            }),
+          )
+        : Promise.resolve(Response.json({ items })),
     );
+    vi.stubGlobal("fetch", fetcher);
     const popupPostMessage = vi.fn();
     const popup = {
       closed: false,
@@ -142,6 +150,64 @@ describe("projection windows", () => {
     expect(JSON.stringify(popupPostMessage.mock.calls)).not.toContain(
       "E2E用日本語本文 2",
     );
+    const stateMessage = popupPostMessage.mock.calls.find(
+      ([message]) => (message as ControllerProjectionMessage).type === "STATE",
+    )?.[0] as Extract<ControllerProjectionMessage, { type: "STATE" }>;
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            direction: "next",
+            schema: projectionSchema,
+            sessionId: stateMessage.payload.sessionId,
+            type: "NAVIGATE",
+            version: projectionVersion,
+          },
+          origin: window.location.origin,
+          source: popup,
+        }),
+      );
+    });
+    await screen.findByRole("heading", { name: "創世記 1:2" });
+    expect(
+      fetcher.mock.calls.filter(([input]) =>
+        String(input).includes("/api/scripture/navigate"),
+      ),
+    ).toHaveLength(1);
+
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            direction: "previous",
+            schema: projectionSchema,
+            sessionId: stateMessage.payload.sessionId,
+            type: "NAVIGATE",
+            version: projectionVersion,
+          },
+          origin: "https://invalid.example",
+          source: popup,
+        }),
+      );
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            direction: "previous",
+            schema: projectionSchema,
+            sessionId: "00000000-0000-4000-8000-000000000099",
+            type: "NAVIGATE",
+            version: projectionVersion,
+          },
+          origin: window.location.origin,
+          source: popup,
+        }),
+      );
+    });
+    expect(
+      fetcher.mock.calls.filter(([input]) =>
+        String(input).includes("/api/scripture/navigate"),
+      ),
+    ).toHaveLength(1);
   });
 
   it("processes rapid navigation actions serially in input order", async () => {
@@ -206,7 +272,8 @@ describe("projection windows", () => {
   });
 
   it("renders only the selected translation for a single-language state", async () => {
-    const opener = { postMessage: vi.fn() } as unknown as Window;
+    const postMessage = vi.fn();
+    const opener = { postMessage } as unknown as Window;
     Object.defineProperty(window, "opener", {
       configurable: true,
       value: opener,
@@ -254,10 +321,48 @@ describe("projection windows", () => {
     ).toHaveAttribute("lang", "en");
     expect(document.querySelectorAll(".audience-book-word")).toHaveLength(1);
     expect(screen.queryByText("初めに、神が天と地を創造した。")).toBeNull();
+
+    const initialMessages = postMessage.mock.calls.length;
+    const down = new KeyboardEvent("keydown", {
+      cancelable: true,
+      key: "ArrowDown",
+    });
+    act(() => window.dispatchEvent(down));
+    expect(down.defaultPrevented).toBe(true);
+    expect(postMessage).toHaveBeenLastCalledWith(
+      {
+        direction: "next",
+        schema: projectionSchema,
+        sessionId: "00000000-0000-4000-8000-000000000052",
+        type: "NAVIGATE",
+        version: projectionVersion,
+      },
+      window.location.origin,
+    );
+
+    const up = new KeyboardEvent("keydown", {
+      cancelable: true,
+      key: "ArrowUp",
+    });
+    act(() => window.dispatchEvent(up));
+    expect(up.defaultPrevented).toBe(true);
+    expect(postMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({ direction: "previous", type: "NAVIGATE" }),
+      window.location.origin,
+    );
+
+    const other = new KeyboardEvent("keydown", {
+      cancelable: true,
+      key: "ArrowLeft",
+    });
+    act(() => window.dispatchEvent(other));
+    expect(other.defaultPrevented).toBe(false);
+    expect(postMessage).toHaveBeenCalledTimes(initialMessages + 2);
   });
 
   it("renders Ginmaku markup in Japanese-English order and clears text on auth loss", async () => {
-    const opener = { postMessage: vi.fn() } as unknown as Window;
+    const postMessage = vi.fn();
+    const opener = { postMessage } as unknown as Window;
     Object.defineProperty(window, "opener", {
       configurable: true,
       value: opener,
@@ -343,6 +448,14 @@ describe("projection windows", () => {
       ),
     ).toBeVisible();
     expect(screen.queryByText("初めに、神が天と地を創造した。")).toBeNull();
+    const messagesBeforeKey = postMessage.mock.calls.length;
+    const downAfterAuthLoss = new KeyboardEvent("keydown", {
+      cancelable: true,
+      key: "ArrowDown",
+    });
+    act(() => window.dispatchEvent(downAfterAuthLoss));
+    expect(downAfterAuthLoss.defaultPrevented).toBe(false);
+    expect(postMessage).toHaveBeenCalledTimes(messagesBeforeKey);
     act(() => {
       window.dispatchEvent(
         new MessageEvent("message", {

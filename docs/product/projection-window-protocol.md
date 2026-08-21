@@ -16,7 +16,7 @@ Messages use direct `window.postMessage` between the controller's retained
 - `event.origin === window.location.origin`;
 - `event.source` to be the exact expected window;
 - `schema === "levi.projection"`;
-- `version === 2`;
+- `version === 3`;
 - a recognized message type; and
 - a runtime-validated payload with no unknown fields.
 
@@ -25,6 +25,9 @@ Untrusted, malformed, stale-revision, and wrong-session messages are ignored.
 ## Messages
 
 - Audience → controller `READY`: sent on initial load and every refresh.
+- Audience → controller `NAVIGATE`: sends `previous` for `ArrowUp` and `next`
+  for `ArrowDown`, together with the active projection session ID. The
+  controller passes trusted requests through its serial navigation queue.
 - Controller → audience `STATE`: the current chapter heading, verse number, one
   or two translation texts, font scale, blank state, and monotonic
   scroll/revision counters. When both translations are present their order is
