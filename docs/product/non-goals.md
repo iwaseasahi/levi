@@ -4,14 +4,22 @@ These boundaries prevent the foundation phase from turning assumptions into
 product scope. They may be changed only by an explicit product decision and, when
 durable, an ADR.
 
-## Foundation phase
+## Initial replacement release
 
 Levi is not currently attempting to:
 
-- Reimplement every Ginmaku 2 feature before validating the development harness.
+- Reimplement every Ginmaku 2 feature in the initial release.
 - Claim feature parity without legacy evidence or an approved replacement
   decision.
-- Select authentication from a login demo before identity and tenancy are known.
+- Add praise songs or song PDFs. Praise songs may be reconsidered later.
+- Add message slides to the initial release. Slides are mandatory follow-up work,
+  use physical deletion, and do not retain edit history.
+- Support multiple accounts or roles inside one church initially.
+- Migrate legacy data other than the Bible corpus.
+- Guarantee browsers other than the latest stable Chrome.
+- Guarantee full offline operation.
+- Select authentication from a login demo before the accepted identity and
+  tenancy ADR.
 - Select production hosting before reliability, region, data, cost, and
   operational ownership requirements are known.
 - Provide unattended production deployment or production database migration.

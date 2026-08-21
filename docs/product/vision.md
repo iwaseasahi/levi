@@ -10,6 +10,11 @@ during a worship service with predictable behavior, clear controls, and
 recoverable data. Replacement work should preserve required real-world workflows
 while removing accidental constraints of the legacy implementation.
 
+The approved first replacement release is defined in
+[`initial-release-spec.md`](initial-release-spec.md). Its first complete flow is
+Bible search followed by synchronized controller/audience-window projection and
+page operation, with authenticated church isolation and reusable bookmarks.
+
 ## Product principles
 
 - **Service reliability first:** an ordinary software fault should not create
