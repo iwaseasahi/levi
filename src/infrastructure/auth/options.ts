@@ -48,7 +48,7 @@ export function buildAuthOptions(config: AuthRuntimeConfig) {
       storage: "database",
       modelName: "rateLimit",
       customRules: {
-        "/sign-in/email": { window: 60, max: 5 },
+        "/sign-in/email": { window: 60, max: 10 },
       },
     },
     advanced: {

@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { LogoutButton } from "@/app/church/logout-button";
 import { getChurchAccess } from "@/infrastructure/auth/church-session";
+import { changePasswordAction } from "./actions";
+import { ChangePasswordForm } from "./change-password-form";
 export default async function ChangePasswordPage() {
   const access = await getChurchAccess(await headers());
   if (access.status === "unauthenticated") redirect("/login");
@@ -13,9 +15,9 @@ export default async function ChangePasswordPage() {
         <p className="eyebrow">初回ログイン</p>
         <h1>パスワードの変更が必要です</h1>
         <p>
-          パスワード変更機能は Issue #45
-          で実装します。それまでは教会用機能を利用できません。
+          一時パスワードを、本人だけが知る新しいパスワードへ変更してください。
         </p>
+        <ChangePasswordForm action={changePasswordAction} />
         <LogoutButton />
       </section>
     </main>

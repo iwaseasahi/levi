@@ -15,7 +15,6 @@ export function LogoutButton() {
           await authClient.signOut();
         } finally {
           router.replace("/login");
-          router.refresh();
         }
       }}
       type="button"

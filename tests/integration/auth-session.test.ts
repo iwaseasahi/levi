@@ -133,7 +133,7 @@ describe("Church authentication session lifecycle", () => {
 
   it("rate limits repeated email login failures in PostgreSQL", async () => {
     const statuses: number[] = [];
-    for (let attempt = 0; attempt < 7; attempt += 1) {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
       const response = await POST(
         new Request("http://localhost:3000/api/auth/sign-in/email", {
           body: JSON.stringify({
@@ -151,7 +151,7 @@ describe("Church authentication session lifecycle", () => {
     }
     const firstLimitedAttempt = statuses.indexOf(429);
     expect(firstLimitedAttempt).toBeGreaterThan(0);
-    expect(firstLimitedAttempt).toBeLessThanOrEqual(5);
+    expect(firstLimitedAttempt).toBeLessThanOrEqual(10);
     expect(
       statuses.slice(firstLimitedAttempt).every((status) => status === 429),
     ).toBe(true);

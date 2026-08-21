@@ -30,3 +30,11 @@ export function getChurchAccess(headers: Headers) {
     },
   });
 }
+
+export async function getForcedPasswordChangeSession(headers: Headers) {
+  const session = await auth.api.getSession({ headers });
+  if (!session) return null;
+  const access = await getChurchAccess(headers);
+  if (access.status !== "authorized" || !access.mustChangePassword) return null;
+  return { sessionId: session.session.id, userId: access.userId };
+}

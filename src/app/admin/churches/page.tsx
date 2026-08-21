@@ -4,6 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { getOperatorAccess } from "@/infrastructure/auth/operator-session";
 import { provisionChurchAction } from "./actions";
 import { ProvisionChurchForm } from "./provision-church-form";
+import { prisma } from "@/infrastructure/database/client";
+import { resetPasswordAction } from "./reset-actions";
+import { ResetPasswordForm } from "./reset-password-form";
 
 export default async function ChurchAdministrationPage() {
   const access = await getOperatorAccess(await headers());
@@ -14,6 +17,11 @@ export default async function ChurchAdministrationPage() {
   if (access.status !== "authorized") {
     notFound();
   }
+  const churches = await prisma.church.findMany({
+    where: { status: "ACTIVE", membership: { isNot: null } },
+    orderBy: [{ name: "asc" }, { id: "asc" }],
+    select: { id: true, name: true },
+  });
 
   return (
     <main className="admin-shell">
@@ -26,6 +34,7 @@ export default async function ChurchAdministrationPage() {
         </p>
       </header>
       <ProvisionChurchForm action={provisionChurchAction} />
+      <ResetPasswordForm action={resetPasswordAction} churches={churches} />
     </main>
   );
 }
