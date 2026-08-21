@@ -1,6 +1,15 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/infrastructure/database/client";
+import {
+  createBookmark as createBookmarkUseCase,
+  createFolder as createFolderUseCase,
+  openBookmark,
+  reorderFolders,
+  selectFolder,
+  updateFolder,
+} from "@/application/saved-content/manage-saved-content";
+import { savedContentRepository } from "@/infrastructure/database/saved-content-repository";
 
 const codes = ["T54J", "T54E"];
 
@@ -143,6 +152,105 @@ describe("saved-content database contract", () => {
         title: "Valid typed bookmark",
       }),
     ).resolves.toMatchObject({ title: "Valid typed bookmark" });
+  });
+
+  it("enforces tenant scope through repository and use-case operations", async () => {
+    const fixture = await createFixture();
+    const translations = await Promise.all(
+      (["JSS3", "NKJV"] as const).map((code, index) =>
+        prisma.bibleTranslation.upsert({
+          where: { code },
+          update: {
+            rightsNotice: "synthetic fixture only",
+            rightsStatus: "APPROVED",
+            sourceReference: "saved-content repository fixture",
+          },
+          create: {
+            code,
+            displayOrder: index + 1,
+            languageTag: index === 0 ? "ja" : "en",
+            name: `Synthetic ${code}`,
+            rightsNotice: "synthetic fixture only",
+            rightsStatus: "APPROVED",
+            sourceReference: "saved-content repository fixture",
+          },
+        }),
+      ),
+    );
+    await prisma.bibleVerse.createMany({
+      data: translations.flatMap(({ id: translationId }) =>
+        [1, 2, 3].map((verseNumber) => ({
+          bookId: fixture.book.id,
+          chapterNumber: 1,
+          text: `Synthetic repository text ${verseNumber}`,
+          translationId,
+          verseNumber,
+        })),
+      ),
+    });
+
+    const first = await createFolderUseCase(
+      savedContentRepository,
+      fixture.firstChurch.id,
+      "First folder",
+    );
+    const second = await createFolderUseCase(
+      savedContentRepository,
+      fixture.firstChurch.id,
+      "Second folder",
+    );
+    const foreign = await createFolderUseCase(
+      savedContentRepository,
+      fixture.secondChurch.id,
+      "Foreign folder",
+    );
+    await expect(
+      updateFolder(savedContentRepository, fixture.secondChurch.id, first.id, {
+        isPinned: true,
+      }),
+    ).rejects.toMatchObject({ code: "SAVED_CONTENT_NOT_FOUND" });
+    await expect(
+      savedContentRepository.selectFolder(fixture.secondChurch.id, first.id),
+    ).resolves.toBeNull();
+    await expect(
+      reorderFolders(savedContentRepository, fixture.firstChurch.id, [
+        second.id,
+      ]),
+    ).rejects.toMatchObject({ code: "SAVED_CONTENT_CONFLICT" });
+    await reorderFolders(savedContentRepository, fixture.firstChurch.id, [
+      second.id,
+      first.id,
+    ]);
+
+    const bookmark = await createBookmarkUseCase(
+      savedContentRepository,
+      fixture.firstChurch.id,
+      first.id,
+      {
+        title: "Saved range",
+        book: "T54",
+        chapter: 1,
+        startVerse: 1,
+        endVerse: 3,
+        language: "both",
+      },
+    );
+    await expect(
+      savedContentRepository.openBookmark(fixture.secondChurch.id, bookmark.id),
+    ).resolves.toBeNull();
+    await expect(
+      openBookmark(savedContentRepository, fixture.firstChurch.id, bookmark.id),
+    ).resolves.toMatchObject({ search: { book: "T54", language: "both" } });
+    const selected = await selectFolder(
+      savedContentRepository,
+      fixture.firstChurch.id,
+      first.id,
+    );
+    expect(selected.folder.lastUsedAt).not.toBeNull();
+    expect(selected.bookmarks).toHaveLength(1);
+    await expect(
+      savedContentRepository.listFolders(fixture.secondChurch.id),
+    ).resolves.toEqual([expect.objectContaining({ id: foreign.id })]);
   });
 
   it("rejects cross-tenant folder ownership and invalid endpoints", async () => {

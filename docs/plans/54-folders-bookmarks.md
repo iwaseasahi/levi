@@ -27,9 +27,9 @@ or folders without affecting Bible masters or another church.
 
 1. [x] Add Folder, Bookmark, and ScriptureBookmark schema, raw constraints,
        indexes, deferred triggers, and database integrity tests.
-2. [ ] Implement tenant-scoped repositories/use cases for list/create/rename,
+2. [x] Implement tenant-scoped repositories/use cases for list/create/rename,
        pin/recent, save/reopen, reorder, and physical deletion.
-3. [ ] Add authenticated strict APIs with denied cross-tenant cases at route,
+3. [x] Add authenticated strict APIs with denied cross-tenant cases at route,
        use-case, and repository boundaries.
 4. [ ] Add accessible folder/bookmark UI to scripture search with complete
        loading/empty/error/success/disabled/focus/confirmation behavior.
@@ -44,6 +44,10 @@ or folders without affecting Bible masters or another church.
   contract. All 64 integration tests pass, including deferred uniqueness,
   required subtype, cross-tenant ownership, endpoint restriction, and cascade
   scope.
+- 2026-08-21 19:18 JST — Added all tenant-scoped repository/use-case operations
+  and a strict authenticated command/query API. Unit tests (132) and integration
+  tests (65) pass; route input cannot supply `churchId`, and foreign UUIDs are
+  rejected below the route as not-found/conflict outcomes.
 
 ## Verification
 
@@ -56,5 +60,5 @@ or folders without affecting Bible masters or another church.
 ## Handoff or blockers
 
 - Blocker: none.
-- Resume with: commit the database foundation, open a Draft PR, then implement
-  tenant-scoped repositories and use cases.
+- Resume with: integrate the folder/bookmark workspace into scripture search and
+  add component accessibility coverage.
