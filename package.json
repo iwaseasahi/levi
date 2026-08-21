@@ -35,6 +35,7 @@
     "security:check": "pnpm security:audit && pnpm security:licenses",
     "backup:rehearse": "bash scripts/rehearse-backup.sh",
     "backup:config:check": "tsx scripts/check-backup-configuration.ts",
+    "deployment:config:check": "tsx scripts/check-deployment-configuration.ts",
     "production:config:check": "tsx scripts/check-production-compose.ts",
     "production:rehearse": "bash scripts/rehearse-production-compose.sh",
     "readiness:check": "tsx scripts/check-readiness.ts",
@@ -45,7 +46,7 @@
     "agent:checkpoint": "tsx scripts/agent-handoff.ts checkpoint",
     "agent:checkpoint:verify": "tsx scripts/agent-handoff.ts verify",
     "agent:lease": "tsx scripts/agent-handoff.ts lease",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm production:config:check && pnpm backup:config:check && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm production:config:check && pnpm backup:config:check && pnpm deployment:config:check && pnpm build"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "1.7.1",

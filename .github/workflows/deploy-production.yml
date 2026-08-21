@@ -1,0 +1,91 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Exact 40-character commit SHA already merged to main
+        required: true
+        type: string
+      application_image:
+        description: Immutable ghcr.io/iwaseasahi/levi@sha256 digest
+        required: true
+        type: string
+      migration_image:
+        description: Immutable ghcr.io/iwaseasahi/levi-migrate@sha256 digest
+        required: true
+        type: string
+      approval_comment:
+        description: Immediate approval comment URL on a Levi Issue
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  checks: read
+
+jobs:
+  verify:
+    name: Verify immutable release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.commit_sha }}
+      - name: Fail closed on Sunday and validate release inputs
+        env:
+          APPROVAL_COMMENT: ${{ inputs.approval_comment }}
+          APPLICATION_IMAGE: ${{ inputs.application_image }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          MIGRATION_IMAGE: ${{ inputs.migration_image }}
+        run: |
+          set -euo pipefail
+          [[ "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$APPLICATION_IMAGE" =~ ^ghcr\.io/iwaseasahi/levi@sha256:[a-f0-9]{64}$ ]]
+          [[ "$MIGRATION_IMAGE" =~ ^ghcr\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$ ]]
+          [[ "$APPROVAL_COMMENT" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]
+          [[ "$(TZ=Asia/Tokyo date +%u)" != "7" ]]
+          git fetch --quiet origin main
+          git merge-base --is-ancestor "$COMMIT_SHA" origin/main
+      - name: Require successful CI for the exact commit
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for required in Quality Database E2E Security; do
+            result="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT_SHA}/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$required\")] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv")"
+            [[ "$result" == $'completed\tsuccess' ]] || { echo "Latest ${required} check is not successful for ${COMMIT_SHA}" >&2; exit 1; }
+          done
+
+  deploy:
+    name: Deploy approved digest
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          install -m 600 /dev/null ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Deploy exact approved release
+        env:
+          APPROVAL_COMMENT: ${{ inputs.approval_comment }}
+          APPLICATION_IMAGE: ${{ inputs.application_image }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          MIGRATION_IMAGE: ${{ inputs.migration_image }}
+          SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes "$SSH_USER@$SSH_HOST" \
+            "sudo git -C /opt/levi fetch --quiet origin main && sudo git -C /opt/levi switch --detach '$COMMIT_SHA' && sudo env LEVI_DEPLOY_COMMIT='$COMMIT_SHA' LEVI_IMAGE='$APPLICATION_IMAGE' LEVI_MIGRATION_IMAGE='$MIGRATION_IMAGE' LEVI_DEPLOY_APPROVAL_REFERENCE='$APPROVAL_COMMENT' /opt/levi/scripts/production-deploy.sh"

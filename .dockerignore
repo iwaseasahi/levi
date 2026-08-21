@@ -6,6 +6,7 @@
 .env*
 !.env.example
 coverage
+deploy
 docs
 node_modules
 playwright-report

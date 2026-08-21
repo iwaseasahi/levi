@@ -47,6 +47,9 @@ for (const variable of [
   "LEVI_APP_DATABASE_PASSWORD",
   "LEVI_DOMAIN",
   "LEVI_IMAGE",
+  "LEVI_MIGRATION_IMAGE",
+  "MIGRATION_DATABASE_URL",
+  "MIGRATION_SHADOW_DATABASE_URL",
   "POSTGRES_DB",
   "POSTGRES_PASSWORD",
   "POSTGRES_USER",
@@ -62,6 +65,8 @@ const result = spawnSync(
     exampleEnvironment,
     "-f",
     composeFile,
+    "--profile",
+    "migration",
     "config",
     "--format",
     "json",
@@ -112,6 +117,20 @@ assert.deepEqual(Object.keys(postgres.networks ?? {}), ["private"]);
 assert.equal(config.networks.private?.internal, true);
 assert.equal(postgres.environment?.POSTGRES_USER, "levi_admin");
 assert(postgres.environment?.LEVI_APP_DATABASE_PASSWORD);
+
+const migrate = config.services.migrate!;
+assert(migrate, "Missing migration service");
+assert.equal(migrate.user, "1000:1000");
+assert.equal(migrate.read_only, true);
+assert(migrate.cap_drop?.includes("ALL"));
+assert.match(
+  migrate.environment?.DATABASE_URL ?? "",
+  /^postgresql:\/\/levi_admin:/,
+);
+assert.match(
+  migrate.environment?.SHADOW_DATABASE_URL ?? "",
+  /\/levi_shadow\?schema=public$/,
+);
 
 const proxy = config.services.proxy!;
 assert.equal(proxy.read_only, true);

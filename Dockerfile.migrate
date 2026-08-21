@@ -1,0 +1,18 @@
+# syntax=docker/dockerfile:1.7
+
+FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491f4857e25e35a36ba7995 AS dependencies
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable && corepack prepare pnpm@11.19.0 --activate
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
+FROM dependencies AS migrator
+ARG VCS_REF=unknown
+ENV NODE_ENV=production
+LABEL org.opencontainers.image.revision=$VCS_REF
+COPY --chown=node:node prisma ./prisma
+COPY --chown=node:node prisma.config.ts ./prisma.config.ts
+USER node
+ENTRYPOINT ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]

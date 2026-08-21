@@ -82,6 +82,34 @@ services:
     mem_limit: 768m
     pids_limit: 256
 
+  migrate:
+    <<: *common
+    profiles:
+      - migration
+    image: ${LEVI_MIGRATION_IMAGE:-levi-migration:local}
+    build:
+      context: ../..
+      dockerfile: Dockerfile.migrate
+    user: "1000:1000"
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is required}
+      NODE_ENV: production
+      SHADOW_DATABASE_URL: ${MIGRATION_SHADOW_DATABASE_URL:?MIGRATION_SHADOW_DATABASE_URL is required}
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777,uid=1000,gid=1000
+    cap_drop:
+      - ALL
+    networks:
+      - private
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    cpus: 1.00
+    mem_limit: 512m
+    pids_limit: 128
+
   postgres:
     <<: *common
     image: postgres:18.1-alpine3.23@sha256:aa6eb304ddb6dd26df23d05db4e5cb05af8951cda3e0dc57731b771e0ef4ab29

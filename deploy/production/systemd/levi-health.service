@@ -1,0 +1,15 @@
+[Unit]
+Description=Check Levi readiness, database, host capacity, backups, and 5xx rate
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/levi/monitoring.env
+ExecStart=/opt/levi/scripts/check-production-health.sh
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
