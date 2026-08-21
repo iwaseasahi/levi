@@ -16,9 +16,10 @@ catalog, and church-owned folders/bookmarks while preventing invalid state in
 PostgreSQL itself.
 
 ADR 0006 selects Better Auth with revocable database sessions. Better Auth owns
-its User, Account, Session, and Verification storage contract; Levi owns actor
-classification, church membership, tenant authorization, forced-password-change
-state, shared scripture masters, and prepared church content.
+its User, Account, Session, Verification, and database RateLimit storage
+contracts; Levi owns actor classification, church membership, tenant
+authorization, forced-password-change state, shared scripture masters, and
+prepared church content.
 
 The initial product permits one church user per church, but later multiple users
 must not require replacing identities or re-owning church content. Slides are
@@ -38,19 +39,25 @@ of this decision.
 
 ### Identity and actor boundaries
 
-- Preserve Better Auth's four core Prisma models and logical fields: `User`,
-  `Account`, `Session`, and `Verification`. Map physical tables/columns with
-  Prisma `@@map`/`@map`; do not rename the adapter-facing models.
+- Preserve Better Auth's adapter-facing Prisma models and logical fields:
+  `User`, `Account`, `Session`, `Verification`, and database-backed `RateLimit`.
+  Map physical tables/columns with Prisma `@@map`/`@map`; do not rename the
+  adapter-facing models.
 - Configure `advanced.database.generateId: "uuid"` so Better Auth and its
   PostgreSQL schema agree on UUID IDs for every core model.
 - Store normalized email as PostgreSQL `citext`, enforce global uniqueness, and
   add a CHECK requiring the stored form to equal `lower(btrim(email::text))`.
 - Extend `User` with server-owned `mustChangePassword`. Better Auth input cannot
   set it and public responses do not return it.
-- Initial `Account` rows are credential-only. A named CHECK requires provider
-  `credential`, a password hash, and null OAuth token fields. Enabling OAuth
-  requires a new migration and ADR review rather than silently relaxing the
-  constraint.
+- Better Auth 1.7 scopes account identity by required `issuer` plus `accountId`.
+  Initial `Account` rows are credential-only. A named CHECK requires provider
+  `credential`, issuer `local:credential`, an account ID equal to the User ID,
+  a Better Auth 1.7.1 default-scrypt encoded password hash, and null OAuth token
+  fields. Enabling OAuth or changing the password hash implementation requires
+  a new migration and ADR review rather than silently relaxing the constraint.
+- Store Better Auth rate-limit counters in PostgreSQL through the `RateLimit`
+  model so login throttling is shared across application processes. The model
+  and its fields remain part of the pinned-version schema review contract.
 - A `PlatformOperator` and a `ChurchMembership` are explicit subtype tables.
   A deferred PostgreSQL constraint trigger locks the User row and rejects a User
   present in both tables, including concurrent transactions.

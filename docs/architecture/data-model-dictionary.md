@@ -59,6 +59,7 @@ Better Auth configuration maps logical `user` fields to this table and declares
 | `user_id`                  | `uuid`         | no   | FK to `users.id`                               |
 | `account_id`               | `varchar(255)` | no   | Better Auth credential account ID              |
 | `provider_id`              | `varchar(64)`  | no   | initially exactly `credential`                 |
+| `issuer`                   | `varchar(255)` | no   | initially exactly `local:credential`           |
 | `access_token`             | `text`         | yes  | Better Auth core OAuth field; must remain null |
 | `refresh_token`            | `text`         | yes  | Better Auth core OAuth field; must remain null |
 | `access_token_expires_at`  | `timestamptz`  | yes  | Better Auth core OAuth field; must remain null |
@@ -72,13 +73,17 @@ Better Auth configuration maps logical `user` fields to this table and declares
 Constraints and indexes:
 
 - `accounts_user_fk`: `user_id -> users.id ON DELETE CASCADE`.
-- `accounts_provider_account_uk`: unique `(provider_id, account_id)` for Better
-  Auth lookup.
+- `accounts_issuer_account_uk`: unique `(issuer, account_id)` for Better Auth
+  1.7 account identity lookup.
 - `accounts_user_provider_uk`: unique `(user_id, provider_id)`; one credential
   account per User.
-- `accounts_credential_only_ck`: provider is `credential`, `account_id` equals
-  `user_id::text`, `password IS NOT NULL`, and every OAuth token/scope/expiry
-  field is null.
+- `accounts_credential_only_ck`: provider is `credential`, issuer is
+  `local:credential`, `account_id` equals `user_id::text`, password is non-null,
+  and every OAuth token/scope/expiry field is null.
+- `accounts_password_hash_format_ck`: password matches Better Auth 1.7.1's
+  default encoded scrypt shape, 16-byte lowercase-hex salt, a colon, and a
+  64-byte lowercase-hex derived key. Dependency upgrades must review this
+  compatibility check before changing the hash implementation.
 
 `password` remains nullable in the Prisma mapping because Better Auth's core
 adapter contract marks it optional; the database CHECK makes it mandatory for
@@ -126,6 +131,26 @@ email verification/reset workflow and must leave this table unused. It remains
 separate so a future approved library workflow cannot mix its values with
 password hashes or session tokens.
 
+### `rate_limits` — Better Auth shared abuse-prevention counters
+
+| Column         | Type           | Null | Contract                                     |
+| -------------- | -------------- | ---- | -------------------------------------------- |
+| `id`           | `uuid`         | no   | PK; Better Auth generated ID                 |
+| `key`          | `varchar(255)` | no   | unique Better Auth limiter bucket key        |
+| `count`        | `integer`      | no   | non-negative request count                   |
+| `last_request` | `bigint`       | no   | non-negative Better Auth request time marker |
+
+Constraints and indexes:
+
+- `rate_limits_key_uk`: unique bucket lookup.
+- `rate_limits_count_ck`: `count >= 0`.
+- `rate_limits_last_request_ck`: `last_request >= 0`.
+- `rate_limits_last_request_idx`: expiry/cleanup scan by oldest marker.
+
+The table contains no password, session token, verification value, IP address,
+or email address. Better Auth owns the key format; application code must not
+parse it as an authorization or tenant identifier.
+
 ### `churches`
 
 | Column         | Type           | Null | Default   | Contract                     |
@@ -166,9 +191,11 @@ constraint removed when multiple users per church is approved.
 
 `actor_assignment_ck` is implemented as deferred constraint triggers on User,
 PlatformOperator, and ChurchMembership changes. The trigger locks the User row
-before counting assignments, which makes concurrent inserts serialize. It
-rejects dual subtype rows, active unassigned users, and pending assigned users.
-On cascade deletion it returns successfully when the User row no longer exists.
+before counting assignments, which makes concurrent inserts serialize. Updates
+validate both the old and new User IDs so subtype reassignment cannot orphan the
+source User. It rejects dual subtype rows, active unassigned users, and pending
+assigned users. On cascade deletion it returns successfully when the User row no
+longer exists.
 
 ## Shared Bible catalog columns
 

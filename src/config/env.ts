@@ -2,6 +2,13 @@ const nodeEnvironments = ["development", "test", "production"] as const;
 
 type NodeEnvironment = (typeof nodeEnvironments)[number];
 
+export interface AuthRuntimeConfig {
+  secret: string;
+  baseURL: string;
+  trustedOrigins: string[];
+  nodeEnvironment: NodeEnvironment;
+}
+
 export function parseNodeEnvironment(
   value: string | undefined,
 ): NodeEnvironment {
@@ -26,4 +33,90 @@ export function getDatabaseUrl(): string {
   }
 
   return databaseUrl;
+}
+
+function parseExactOrigin(value: string, label: string): string {
+  if (value.includes("*")) {
+    throw new Error(`${label} must not contain a wildcard`);
+  }
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${label} must be an absolute URL origin`);
+  }
+
+  if (
+    !["http:", "https:"].includes(url.protocol) ||
+    url.username ||
+    url.password ||
+    (url.pathname !== "/" && url.pathname !== "") ||
+    url.search ||
+    url.hash
+  ) {
+    throw new Error(`${label} must be an exact HTTP(S) origin`);
+  }
+
+  return url.origin;
+}
+
+export function parseAuthRuntimeConfig(
+  values: {
+    secret: string | undefined;
+    baseURL: string | undefined;
+    trustedOrigins: string | undefined;
+  },
+  nodeEnvironment: NodeEnvironment,
+): AuthRuntimeConfig {
+  if (!values.secret || values.secret.length < 32) {
+    throw new Error("BETTER_AUTH_SECRET must contain at least 32 characters");
+  }
+  if (!values.baseURL) {
+    throw new Error("BETTER_AUTH_BASE_URL is required");
+  }
+
+  const baseURL = parseExactOrigin(
+    values.baseURL.trim(),
+    "BETTER_AUTH_BASE_URL",
+  );
+  const trustedOrigins = (values.trustedOrigins ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin, index) =>
+      parseExactOrigin(origin, `BETTER_AUTH_TRUSTED_ORIGINS[${index}]`),
+    );
+
+  if (trustedOrigins.length === 0 || !trustedOrigins.includes(baseURL)) {
+    throw new Error(
+      "BETTER_AUTH_TRUSTED_ORIGINS must include BETTER_AUTH_BASE_URL",
+    );
+  }
+  if (
+    nodeEnvironment === "production" &&
+    [baseURL, ...trustedOrigins].some(
+      (origin) => new URL(origin).protocol !== "https:",
+    )
+  ) {
+    throw new Error("Production Better Auth origins must use HTTPS");
+  }
+
+  return {
+    secret: values.secret,
+    baseURL,
+    trustedOrigins: [...new Set(trustedOrigins)],
+    nodeEnvironment,
+  };
+}
+
+export function getAuthRuntimeConfig(): AuthRuntimeConfig {
+  return parseAuthRuntimeConfig(
+    {
+      secret: process.env.BETTER_AUTH_SECRET,
+      baseURL: process.env.BETTER_AUTH_BASE_URL,
+      trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS,
+    },
+    env.nodeEnv,
+  );
 }
