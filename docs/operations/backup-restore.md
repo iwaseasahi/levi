@@ -34,13 +34,30 @@ does not grant cloud or production access.
 
 ## Production decision gate
 
-Before production, humans must approve backup provider/location, encryption and
-key ownership, access/audit policy, retention/deletion, immutable/offsite copy,
-frequency, RPO, RTO, restore environment, and cost. A production restore drill
-requires the exact backup, target, impact, rollback/forward recovery, and
-immediate human approval defined by governance.
+Issue [#81](https://github.com/iwaseasahi/levi/issues/81) must select and prove
+the provider/location, encryption and key ownership, access/audit policy,
+retention/deletion, immutable copy, restore environment, and cost. The proposed
+release-entry objectives are RPO no greater than 60 minutes and RTO no greater
+than 120 minutes. The selected service must provide continuous PITR or at least
+hourly recovery points, an encrypted daily recovery point retained for at least
+35 days, and an immutable or separately administered copy. These are pending
+acceptance requirements, not claims about an unselected provider.
+
+Complete an isolated restore before first release and at least quarterly. Alert
+when the newest usable recovery point is older than 60 minutes or the newest
+successful restore proof is older than 90 days. A production restore requires
+the exact backup, target, impact, loss window, rollback/forward-recovery choice,
+and immediate human approval defined by governance.
 
 Disaster recovery succeeds only when a clean environment can restore an approved
 backup within RTO, reconcile data to the expected recovery point, pass migration
 status/readiness and critical E2E, and record timings/evidence without exposing
 Restricted data. “Backup job succeeded” alone is not restore evidence.
+
+Before restored traffic returns, invalidate every restored database session and
+verify platform-operator and Church membership state. If the recovery point
+predates an account creation, password change/reset, or temporary-password
+consumption, identify the affected accounts without exposing credentials and
+have the platform operator remediate them through the UI. See the
+[`initial-release-cutover.md`](initial-release-cutover.md) runbook for the exact
+cutover and recovery gates.

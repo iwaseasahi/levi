@@ -1,0 +1,115 @@
+{
+  "formatVersion": 1,
+  "productionExecuted": false,
+  "strategy": {
+    "candidate": "single-cutover",
+    "status": "pending-human-approval",
+    "decisionIssue": "https://github.com/iwaseasahi/levi/issues/81"
+  },
+  "objectives": {
+    "rpoMinutes": 60,
+    "rtoMinutes": 120,
+    "status": "pending-human-approval"
+  },
+  "humanGates": [
+    {
+      "id": "deployment-selection",
+      "status": "pending",
+      "issue": 81,
+      "requiredBefore": "production infrastructure or credentials"
+    },
+    {
+      "id": "release-window",
+      "status": "pending",
+      "issue": 58,
+      "requiredBefore": "user notification or write freeze"
+    },
+    {
+      "id": "backup-restore",
+      "status": "pending",
+      "issue": 58,
+      "requiredBefore": "production schema migration"
+    },
+    {
+      "id": "production-secrets",
+      "status": "pending",
+      "issue": 81,
+      "requiredBefore": "secret creation or rotation"
+    },
+    {
+      "id": "production-migration",
+      "status": "pending",
+      "issue": 58,
+      "requiredBefore": "schema migration or Bible import"
+    },
+    {
+      "id": "traffic-cutover",
+      "status": "pending",
+      "issue": 58,
+      "requiredBefore": "production traffic enablement"
+    },
+    {
+      "id": "external-communication",
+      "status": "pending",
+      "issue": 58,
+      "requiredBefore": "sending user communication"
+    }
+  ],
+  "steps": [
+    "confirm-target-and-approvals",
+    "announce-maintenance-window",
+    "freeze-approved-source",
+    "capture-production-backup",
+    "prove-backup-restore",
+    "apply-schema-migrations",
+    "stage-application-without-traffic",
+    "import-and-reconcile-bible",
+    "provision-approved-operators-and-churches",
+    "run-smoke-and-readiness",
+    "approve-and-enable-traffic",
+    "observe-stabilization-window",
+    "send-completion-notice"
+  ],
+  "stopConditions": [
+    "approval-or-target-mismatch",
+    "backup-or-restore-proof-failed",
+    "source-fingerprint-or-rights-mismatch",
+    "schema-migration-failed",
+    "bible-reconciliation-not-exact",
+    "readiness-or-smoke-failed",
+    "restricted-data-in-logs-or-artifacts",
+    "unowned-critical-alert"
+  ],
+  "smokeChecks": [
+    "liveness",
+    "database-readiness",
+    "operator-login",
+    "church-login",
+    "japanese-english-bilingual-search",
+    "audience-window-sync",
+    "boundary-navigation",
+    "bookmark-save-reopen-delete",
+    "tenant-denial"
+  ],
+  "monitoringSignals": [
+    "readiness-failure",
+    "http-5xx-rate",
+    "login-failure-rate",
+    "database-connectivity",
+    "bible-query-failure",
+    "saved-content-mutation-failure",
+    "backup-age",
+    "restore-rehearsal-age"
+  ],
+  "communications": {
+    "beforeTemplate": "Leviの初回リリース作業を実施します。作業中は利用を停止し、完了連絡まで最新版Chromeでアクセスしないでください。開始・終了予定は承認済みの時間を記載します。",
+    "afterTemplate": "Leviの初回リリース作業と動作確認が完了しました。最新版Chromeでログインし、問題がある場合は承認済みの連絡先へ発生時刻と画面名をお知らせください。認証情報や聖書本文は送らないでください。"
+  },
+  "localEvidence": [
+    "pnpm backup:rehearse",
+    "pnpm migration:bible:rehearse <approved-local-dump>",
+    "pnpm test:e2e",
+    "pnpm check",
+    "pnpm security:check"
+  ]
+}
