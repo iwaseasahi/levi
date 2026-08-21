@@ -23,6 +23,12 @@ peer dependency graph: MIT-0 CSS helpers, MPL-2.0 Lightning CSS, BlueOak-1.0.0
 packages separately. A dependency update that changes this inventory must fail
 the gate for another deliberate review.
 
+Zod 4.3.6 is a direct, exact-pinned dependency for shared untrusted-input
+validation at server mutation boundaries and accessible form feedback. Browser
+constraints alone do not protect Server Actions, the standard library has no
+equivalent email/schema validator, and Better Auth already uses the same pinned
+major/version contract.
+
 `pnpm security:licenses` produces a minimized report containing dependency name,
 version, and declared license. Any new license expression fails until this file
 and the checker are deliberately updated.

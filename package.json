@@ -28,7 +28,7 @@
     "test:unit:coverage": "vitest run --config vitest.config.ts --coverage",
     "test:component": "vitest run --config vitest.component.config.ts",
     "test:integration": "tsx scripts/run-integration-tests.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "tsx scripts/run-e2e-tests.ts",
     "test:e2e:install": "playwright install chromium",
     "security:audit": "pnpm audit --prod --audit-level high",
     "security:licenses": "tsx scripts/check-licenses.ts",
@@ -48,7 +48,8 @@
     "next": "16.3.1",
     "pg": "8.23.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
