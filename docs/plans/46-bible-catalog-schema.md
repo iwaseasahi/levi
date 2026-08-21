@@ -23,7 +23,7 @@ gate metadata required by ADR 0007.
        seed contains no Bible text.
 4. [x] Test allowed and rejected synthetic metadata, names, locations, deletion,
        raw constraints, and indexes against PostgreSQL.
-5. [ ] Run canonical checks and merge only the exact commit passing all four
+5. [x] Run canonical checks and merge only the exact commit passing all four
        required GitHub jobs.
 
 ## Decisions
@@ -52,6 +52,8 @@ gate metadata required by ADR 0007.
 - 2026-08-21 16:05 JST — Canonical quality/build and security checks pass: 51
   unit, 10 component, and 38 PostgreSQL integration tests. The schema migration
   is ready for exact-commit CI verification.
+- 2026-08-21 16:07 JST — PR #69 passes Quality, Database, E2E, and Security on
+  the implementation commit. Recorded the completed gate before merge.
 
 ## Result
 
