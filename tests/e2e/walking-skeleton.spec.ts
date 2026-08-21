@@ -8,7 +8,7 @@ test("home and health endpoint form a working skeleton", async ({ page }) => {
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "Intentional E2E failure probe",
+      name: "Levi is ready for its first vertical slice.",
     }),
   ).toBeVisible();
   const healthLink = page.getByRole("link", { name: "View health status" });

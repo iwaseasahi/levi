@@ -35,9 +35,9 @@ and the successful final CI run.
 
 1. [x] Audit child Issues, merged PR evidence, branch protection, and current
        repository contracts.
-2. [ ] Run isolated CI probes for lint, typecheck, unit, migration, and E2E;
+2. [x] Run isolated CI probes for lint, typecheck, unit, migration, and E2E;
        record run URLs and observed failing steps.
-3. [ ] Restore the valid tree and add the final completion evidence matrix.
+3. [x] Restore the valid tree and add the final completion evidence matrix.
 4. [ ] Run the full local gates, pass protected CI, merge, and close #1.
 
 ## Progress
@@ -48,6 +48,9 @@ and the successful final CI run.
 - 2026-08-21 12:50 JST — Mapped the nine parent completion criteria to existing
   repository files and PR evidence. Identified negative lint/type/unit/migration
   probes as the only missing direct CI evidence.
+- 2026-08-21 13:05 JST — Observed isolated lint, typecheck, unit, migration, and
+  E2E defects fail in their intended GitHub Actions jobs. Restored every probe
+  and added the durable completion matrix with run URLs.
 
 ## Decisions
 
@@ -69,24 +72,24 @@ and the successful final CI run.
 ## Verification
 
 - [ ] Clean install and `pnpm check`
-- [ ] `pnpm test:unit:coverage`
-- [ ] `pnpm test:integration`
-- [ ] `pnpm test:e2e`
-- [ ] `pnpm security:check`
-- [ ] `git diff --check`
-- [ ] Deliberate lint failure observed in CI
-- [ ] Deliberate typecheck failure observed in CI
-- [ ] Deliberate unit-test failure observed in CI
-- [ ] Deliberate migration failure observed in CI
-- [ ] Deliberate E2E failure observed in CI
+- [x] `pnpm test:unit:coverage`
+- [x] `pnpm test:integration`
+- [x] `pnpm test:e2e`
+- [x] `pnpm security:check`
+- [x] `git diff --check`
+- [x] Deliberate lint failure observed in CI
+- [x] Deliberate typecheck failure observed in CI
+- [x] Deliberate unit-test failure observed in CI
+- [x] Deliberate migration failure observed in CI
+- [x] Deliberate E2E failure observed in CI
 - [ ] Final protected CI succeeds on the restored head
 
 ## Handoff or blockers
 
-- Completed: foundation and GitHub configuration audit.
-- Remaining: negative probes, final evidence, PR, CI, merge, and Issue closure.
+- Completed: foundation audit, negative probes, restoration, and evidence matrix.
+- Remaining: clean-checkout/local verification, final CI, merge, and Issue closure.
 - Blocker: none.
-- Resume with: create the audit PR and run the lint negative probe.
+- Resume with: verify a clean checkout and run the final gates.
 
 ## Result
 
