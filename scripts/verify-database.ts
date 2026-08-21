@@ -11,6 +11,21 @@ try {
     throw new Error("Deterministic foundation seed is missing");
   }
 
+  const translations = await prisma.bibleTranslation.findMany({
+    where: { code: { in: ["JSS3", "KJV"] } },
+    orderBy: { displayOrder: "asc" },
+    select: { code: true, rightsStatus: true },
+  });
+  if (
+    JSON.stringify(translations) !==
+    JSON.stringify([
+      { code: "JSS3", rightsStatus: "PENDING" },
+      { code: "KJV", rightsStatus: "PENDING" },
+    ])
+  ) {
+    throw new Error("Deterministic pending Bible translation seed is missing");
+  }
+
   const result = await prisma.$queryRaw<
     Array<{ result: number }>
   >`SELECT 1 AS result`;
