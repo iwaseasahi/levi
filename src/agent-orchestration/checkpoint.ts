@@ -20,12 +20,7 @@ export async function createWorkspacePatch(workspace: string): Promise<{
   const untrackedFiles = untrackedOutput
     .toString("utf8")
     .split("\0")
-    .filter(
-      (file) =>
-        file.length > 0 &&
-        file !== "agent-artifacts" &&
-        !file.startsWith("agent-artifacts/"),
-    );
+    .filter((file) => file.length > 0);
 
   if (untrackedFiles.length > 0) {
     await execFile("git", ["add", "--intent-to-add", "--", ...untrackedFiles], {
@@ -95,4 +90,12 @@ export async function verifyCheckpoint(directory: string): Promise<boolean> {
     ? createHash("sha256").update(patch).digest("hex")
     : null;
   return manifest.schema_version === 1 && manifest.patch_sha256 === actual;
+}
+
+export async function readCheckpoint(
+  directory: string,
+): Promise<HandoffManifest> {
+  return JSON.parse(
+    await readFile(path.join(directory, "handoff.json"), "utf8"),
+  ) as HandoffManifest;
 }

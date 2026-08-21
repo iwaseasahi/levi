@@ -45,6 +45,9 @@ pnpm db:check     # migrate, detect drift, seed, and query the configured DB
 pnpm db:down      # stop the local PostgreSQL instances
 pnpm security:check  # production dependency and license gates
 pnpm backup:rehearse # local disposable backup/restore proof
+pnpm agent:checkpoint        # save a local cross-client handoff
+pnpm agent:checkpoint:verify # verify a received handoff
+pnpm agent:lease             # acquire or release an Issue writer lease
 ```
 
 Install the pinned Chromium build once with `pnpm test:e2e:install`. Run database
@@ -54,8 +57,10 @@ artifacts, coverage, and flake policy.
 
 Pull requests run the same commands in GitHub Actions. See
 [`docs/ci.md`](docs/ci.md) for required checks, artifacts, and branch protection.
-Provider handoff and the manually dispatched Codex/Claude workflow are described
-in [`docs/agent-protocol.md`](docs/agent-protocol.md).
+Codex and Claude Code run locally with subscription login; GitHub Actions never
+invokes either provider. Setup, handoff, and cross-review are described in
+[`docs/local-agent-development.md`](docs/local-agent-development.md) and
+[`docs/agent-protocol.md`](docs/agent-protocol.md).
 
 Security and operations start at [`docs/security/threat-model.md`](docs/security/threat-model.md)
 and [`docs/operations/observability.md`](docs/operations/observability.md).

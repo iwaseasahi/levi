@@ -1,4 +1,4 @@
-import { mkdtemp } from "node:fs/promises";
+import { access, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -32,6 +32,12 @@ describe("writer lease", () => {
       lease("second", "2026-08-21T04:00:00.000Z"),
       new Date("2026-08-21T03:00:00.000Z"),
     );
+    await expect(releaseLease(directory, 2, "first")).rejects.toBeInstanceOf(
+      ActiveLeaseError,
+    );
     await releaseLease(directory, 2, "second");
+    await expect(
+      access(path.join(directory, "issue-2.json")),
+    ).rejects.toThrow();
   });
 });

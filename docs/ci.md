@@ -12,9 +12,9 @@ stable required-check names:
 - `Security`: production dependency audit, license inventory, Git-history secret
   scan, and pull-request dependency review.
 
-The workflow only composes canonical package scripts; test behavior does not live
-in GitHub Actions. Dependency caches are keyed by the pnpm lockfile. A newer run
-for the same pull request or branch cancels its predecessor. Every job has a
+The workflow only composes canonical package scripts; test behavior does not
+live in GitHub Actions. Dependency caches are keyed by the pnpm lockfile. A newer
+run for the same pull request or branch cancels its predecessor. Every job has a
 timeout and uploads its available reports for 14 days even when a prior step
 fails.
 
@@ -29,53 +29,21 @@ Configure `main` with the following repository rule:
 4. Do not permit bypass for coding-agent credentials.
 
 Confirm the exact check names from a successful workflow run before changing the
-rule. If a job name changes, update the rule in the same administrative change so
-the repository is never left with a silently missing gate.
+rule. If a job name changes, update the rule in the same administrative change
+so the repository is never left with a silently missing gate.
 
 Production deployment is intentionally absent from `ci.yml`. A future deployment
 workflow must use a protected GitHub Environment, minimal deployment-specific
 permissions, and the explicit production approval defined by governance.
 
-## Agent orchestration workflow
+## CI cost boundary
 
-`.github/workflows/agent-orchestration.yml` is a manually dispatched, staged
-workflow for a trusted Issue. It is intentionally not triggered by Issue or PR
-text. It separates task preparation, Codex writing, Claude fallback, the common
-quality gate, opposite-provider review, and PR publication into distinct jobs.
+GitHub Actions is only a deterministic verification and merge gate. Workflows do
+not invoke Codex, Claude Code, or another model provider, and do not consume
+provider API keys. Implementation, handoff, and cross-review run from the local
+subscription-authenticated clients described in
+[`docs/agent-protocol.md`](agent-protocol.md).
 
-The repository owner must explicitly configure revocable sandbox
-`CODEX_API_KEY` and `ANTHROPIC_API_KEY` secrets before provider-backed use. Each
-provider job receives only its own secret and read-only GitHub permission. The
-PR publication job receives no provider secret. PRs created by the workflow
-still run the protected `Quality`, `Database`, `E2E`, and `Security` checks;
-their pre-publication gate is not a substitute for protected CI.
-
-Provider credentials are scoped to the single CLI invocation step, not the job.
-Checkout, package installation, repository scripts, routing, checkpointing,
-artifact upload, quality checks, and PR publication do not receive them. Codex
-also excludes provider-key variables from shell subprocesses, and Claude uses
-bare mode to disable repository/user hooks and plugin/MCP auto-discovery. Claude
-credential-bearing steps do not expose the Bash tool; command-based verification
-runs later in a credential-free job.
-
-Claude jobs use Anthropic's official native installer with the repository-pinned
-CLI version. Installation has a bounded three-attempt retry and must verify both
-the expected executable path and `claude --version` before a provider credential
-is injected into a later step. This avoids package-manager-specific optional
-dependency layouts silently leaving only the npm wrapper installed.
-
-Failed provider invocations write only a bounded stderr diagnostic to the GitHub
-log. The workflow replaces the exact provider secret and common provider-token
-and bearer-token shapes before output, disables workflow-command interpretation
-while printing the diagnostic, and never uploads raw provider logs as artifacts.
-Checkpoint upload happens before terminal result enforcement: a rate-limit result
-can still route to the documented fallback, while authentication, permission,
-policy, infrastructure, and unclassified agent failures make the workflow fail
-instead of appearing successful with its downstream jobs skipped.
-
-The manual `simulate_codex_usage_limit` input skips the Codex call and creates a
-synthetic normalized usage-limit result. Use it only to rehearse the full Claude
-handoff path; ordinary runs leave it disabled.
-
-See `docs/agent-protocol.md` for retry/fallback rules, checkpoint format,
-single-writer ownership, review findings, staged rollout, and measured metrics.
+PRs produced by local agents must still pass all protected checks. A local agent
+review or successful local quality gate is useful evidence but is not a
+substitute for protected CI.

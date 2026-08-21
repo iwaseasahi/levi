@@ -20,20 +20,6 @@ export interface VerificationRecord {
   summary: string;
 }
 
-export interface AgentRunResult {
-  schema_version: 1;
-  issue: number;
-  run_id: string;
-  provider: Provider;
-  status: AgentStatus;
-  attempts: number;
-  started_at: string;
-  finished_at: string;
-  retry_after: string | null;
-  exit_code: number | null;
-  summary: string;
-}
-
 export interface HandoffManifest {
   schema_version: 1;
   issue: number;
