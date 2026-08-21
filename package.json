@@ -35,11 +35,9 @@
     "security:check": "pnpm security:audit && pnpm security:licenses",
     "backup:rehearse": "bash scripts/rehearse-backup.sh",
     "readiness:check": "tsx scripts/check-readiness.ts",
-    "agent:run": "tsx scripts/agent-runner.ts run",
-    "agent:normalize": "tsx scripts/agent-runner.ts normalize",
-    "agent:route": "tsx scripts/agent-runner.ts route",
-    "agent:checkpoint": "tsx scripts/agent-runner.ts checkpoint",
-    "agent:lease": "tsx scripts/agent-runner.ts lease",
+    "agent:checkpoint": "tsx scripts/agent-handoff.ts checkpoint",
+    "agent:checkpoint:verify": "tsx scripts/agent-handoff.ts verify",
+    "agent:lease": "tsx scripts/agent-handoff.ts lease",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {

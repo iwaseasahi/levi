@@ -47,6 +47,10 @@ from Issue intake through handoff and merge.
 - `pnpm db:up`: start local development and test PostgreSQL instances.
 - `pnpm db:check`: apply migrations, detect drift, seed, and verify connectivity.
 - `pnpm db:down`: stop the repository's local PostgreSQL instances.
+- `pnpm agent:checkpoint`: save a local cross-client handoff under
+  `.agent-runs/`.
+- `pnpm agent:checkpoint:verify`: verify a handoff's Issue, base SHA, and patch.
+- `pnpm agent:lease`: acquire or release the single writer lease for an Issue.
 - `git diff --check`: validate patch whitespace.
 
 Read `docs/testing.md` before changing tests, retries, isolation, coverage, or
@@ -78,6 +82,8 @@ Keep their names stable and read `docs/ci.md` before changing workflow behavior.
   place Restricted/Confidential values in logs, prompts, fixtures, or artifacts.
 - Never put real production data or secrets in code, fixtures, prompts, logs,
   screenshots, traces, Issues, or pull requests.
+- Codex and Claude Code must use their local subscription login. Do not use API
+  keys, API-key login, cloud-provider routing, or GitHub Actions model calls.
 - Fix root causes. Do not weaken types, tests, lint rules, or security controls to
   make a check pass.
 - Keep changes scoped to the assigned Issue. Record unrelated findings in a

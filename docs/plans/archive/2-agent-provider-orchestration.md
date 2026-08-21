@@ -1,4 +1,8 @@
-# Establish provider-neutral agent orchestration
+# Archived: establish provider-neutral agent orchestration
+
+> Historical record only. The provider-API workflow was removed on 2026-08-21.
+> Do not execute its commands or credential instructions. Follow
+> `docs/agent-protocol.md` instead.
 
 ## Issue
 

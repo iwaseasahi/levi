@@ -126,7 +126,8 @@ ambiguity would materially change the outcome, risk, cost, or product behavior.
 - Tests and migration rehearsals must use synthetic or approved anonymized data.
 - Agent jobs that generate code should be separated from jobs that hold GitHub
   write permissions whenever practical.
-- Provider credentials must be scoped to the provider job that needs them.
+- Local model-provider login state must remain outside the repository and CI;
+  GitHub Actions must not invoke a model provider.
 
 If sensitive data may have been exposed, stop work, avoid copying the value
 again, preserve only non-sensitive evidence, and notify a human.

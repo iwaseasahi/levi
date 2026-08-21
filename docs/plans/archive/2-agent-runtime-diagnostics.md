@@ -1,4 +1,8 @@
-# Make provider failures observable and fail closed
+# Archived: make provider failures observable and fail closed
+
+> Historical record only. The provider-API workflow was removed on 2026-08-21.
+> Do not execute its commands or credential instructions. Follow
+> `docs/agent-protocol.md` instead.
 
 ## Issue
 
