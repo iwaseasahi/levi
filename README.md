@@ -45,8 +45,8 @@ pnpm db:check     # migrate, detect drift, seed, and query the configured DB
 pnpm db:down      # stop the local PostgreSQL instances
 pnpm security:check  # production dependency and license gates
 pnpm backup:rehearse # local disposable backup/restore proof
-pnpm agent:checkpoint        # save a local cross-client handoff
-pnpm agent:checkpoint:verify # verify a received handoff
+pnpm agent:checkpoint        # save a local Codex pause/resume checkpoint
+pnpm agent:checkpoint:verify # verify a saved checkpoint
 pnpm agent:lease             # acquire or release an Issue writer lease
 ```
 
@@ -57,8 +57,9 @@ artifacts, coverage, and flake policy.
 
 Pull requests run the same commands in GitHub Actions. See
 [`docs/ci.md`](docs/ci.md) for required checks, artifacts, and branch protection.
-Codex and Claude Code run locally with subscription login; GitHub Actions never
-invokes either provider. Setup, handoff, and cross-review are described in
+Codex is the sole coding agent and runs locally with ChatGPT subscription login;
+GitHub Actions never invokes a model provider. Setup, pause/resume, and review
+are described in
 [`docs/local-agent-development.md`](docs/local-agent-development.md) and
 [`docs/agent-protocol.md`](docs/agent-protocol.md).
 

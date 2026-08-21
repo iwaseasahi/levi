@@ -47,8 +47,7 @@ function positiveNumber(value: string, label: string): number {
 }
 
 function provider(value: string): Provider {
-  if (value !== "codex" && value !== "claude")
-    throw new Error("provider must be codex or claude");
+  if (value !== "codex") throw new Error("provider must be codex");
   return value;
 }
 

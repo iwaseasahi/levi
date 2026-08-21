@@ -27,7 +27,7 @@
     "schema_version": { "const": 1 },
     "issue": { "type": "integer", "minimum": 1 },
     "run_id": { "type": "string", "minLength": 1 },
-    "provider": { "enum": ["codex", "claude"] },
+    "provider": { "const": "codex" },
     "model": { "type": ["string", "null"] },
     "base_sha": { "type": "string", "minLength": 7 },
     "branch": { "type": "string", "minLength": 1 },

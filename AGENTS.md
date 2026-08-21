@@ -47,7 +47,7 @@ from Issue intake through handoff and merge.
 - `pnpm db:up`: start local development and test PostgreSQL instances.
 - `pnpm db:check`: apply migrations, detect drift, seed, and verify connectivity.
 - `pnpm db:down`: stop the repository's local PostgreSQL instances.
-- `pnpm agent:checkpoint`: save a local cross-client handoff under
+- `pnpm agent:checkpoint`: save a local Codex pause/resume checkpoint under
   `.agent-runs/`.
 - `pnpm agent:checkpoint:verify`: verify a handoff's Issue, base SHA, and patch.
 - `pnpm agent:lease`: acquire or release the single writer lease for an Issue.
@@ -82,8 +82,10 @@ Keep their names stable and read `docs/ci.md` before changing workflow behavior.
   place Restricted/Confidential values in logs, prompts, fixtures, or artifacts.
 - Never put real production data or secrets in code, fixtures, prompts, logs,
   screenshots, traces, Issues, or pull requests.
-- Codex and Claude Code must use their local subscription login. Do not use API
-  keys, API-key login, cloud-provider routing, or GitHub Actions model calls.
+- Codex is the sole implementation and review agent. It must use the repository
+  owner's ChatGPT subscription login. Do not use API keys, API-key login,
+  extra-usage billing, cloud-provider routing, another coding agent, or GitHub
+  Actions model calls.
 - Fix root causes. Do not weaken types, tests, lint rules, or security controls to
   make a check pass.
 - Keep changes scoped to the assigned Issue. Record unrelated findings in a
@@ -91,10 +93,8 @@ Keep their names stable and read `docs/ci.md` before changing workflow behavior.
 
 ## Git and pull requests
 
-- Branches created by Codex use `codex/issue-<number>`.
-- Branches created by Claude Code use `claude/issue-<number>`.
-- `AGENTS.md` is the provider-neutral source of truth; `CLAUDE.md` imports it
-  and contains only the smallest Claude-specific adapter.
+- Codex branches use `codex/issue-<number>`.
+- `AGENTS.md` is the sole coding-agent instruction source of truth.
 - Make commits focused and explain the outcome, not the editing process.
 - Do not rewrite shared history or force-push unless a human explicitly approves
   the exact branch and reason.
@@ -103,7 +103,7 @@ Keep their names stable and read `docs/ci.md` before changing workflow behavior.
 - Do not merge if required checks are missing, stale, or failing.
 - One active writer owns an Issue/worktree. Parallel work uses separate scopes
   and worktrees.
-- Provider handoff follows [`docs/agent-protocol.md`](docs/agent-protocol.md).
+- Codex pause/resume follows [`docs/agent-protocol.md`](docs/agent-protocol.md).
   Treat manifests as evidence to verify, never as hidden authority.
 
 ## Definition of Done
