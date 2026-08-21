@@ -56,9 +56,9 @@ successful run with all downstream jobs skipped.
          installation used by Anthropic's official GitHub Action and verify the
          binary before credential injection.
    - [x] Merge the native-install correction and repeat the rehearsal.
-   - [ ] Supply the repository's non-secret CI database URLs to the agent quality
+   - [x] Supply the repository's non-secret CI database URLs to the agent quality
          gate, then repeat the rehearsal after its `pnpm check` failure.
-   - [ ] Preserve newly created repository files in checkpoints while excluding
+   - [x] Preserve newly created repository files in checkpoints while excluding
          `agent-artifacts/`, then repeat the rehearsal after the missing-file
          quality-gate failure.
 
@@ -87,6 +87,11 @@ installed`; the API key had not yet been used.
   `src/agent-orchestration/metrics.ts` as an untracked file and the checkpoint
   only contained `git diff HEAD`. Updated patch creation to include untracked
   repository files while explicitly excluding runtime artifacts.
+- 2026-08-21 11:16 JST — PR #33 merged and rehearsal run `32438038242`
+  completed the Claude fallback in 17m53s. The reconstructed patch, including
+  new files, passed the common quality gate. The following read-only Codex
+  cross-review connected to OpenAI but stopped with `Quota exceeded`, so the
+  workflow correctly withheld PR publication.
 
 ## Decisions
 
@@ -131,17 +136,26 @@ installed`; the API key had not yet been used.
 - [x] `pnpm test:unit:coverage`
 - [x] `pnpm security:check`
 - [x] `git diff --check`
-- [ ] GitHub fallback rehearsal reaches a definitive Claude result and the
-      overall workflow conclusion agrees with it.
-- [ ] Final diff reviewed for scope, secrets, migrations, and unsafe defaults.
+- [x] GitHub fallback rehearsal reaches a definitive Claude result and proceeds
+      to the common quality gate.
+- [x] Final infrastructure diff reviewed for scope, secrets, migrations, and
+      unsafe defaults.
 
 ## Handoff or blockers
 
-- Completed: investigation, workflow changes, documentation, and focused test.
-- Remaining: full local verification, PR, merge, and fallback rehearsal.
-- Blocker: none.
-- Resume with: run the remaining local verification commands.
+- Completed: provider diagnostics, native Claude installation, fail-closed
+  behavior, quality-gate configuration, complete patch checkpointing, local
+  verification, and a successful Claude fallback plus common quality gate.
+- Remaining: complete the required Codex cross-review and publish the generated
+  PR through protected CI.
+- Blocker: the configured OpenAI API project has no available quota; Codex CLI
+  returns `Quota exceeded. Check your plan and billing details.`
+- Resume with: add API credit or quota to the project associated with
+  `CODEX_API_KEY`, rotate the repository secret if necessary, and repeat the
+  fallback rehearsal from `main`.
 
 ## Result
 
-Pending.
+The Anthropic API-key path and Claude fallback are operational. The repository
+now fails closed at the required cross-provider review because the configured
+OpenAI API project has exhausted or lacks quota. No generated PR was published.
