@@ -18,7 +18,7 @@ describe("parseNodeEnvironment", () => {
   });
 
   it("accepts a supported environment", () => {
-    expect(parseNodeEnvironment("production")).toBe("development");
+    expect(parseNodeEnvironment("production")).toBe("production");
   });
 
   it("rejects an unsupported environment", () => {
