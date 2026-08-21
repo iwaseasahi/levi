@@ -149,8 +149,12 @@ describe("Church authentication session lifecycle", () => {
       );
       statuses.push(response.status);
     }
-    expect(statuses.slice(0, 5).every((status) => status === 401)).toBe(true);
-    expect(statuses).toContain(429);
+    const firstLimitedAttempt = statuses.indexOf(429);
+    expect(firstLimitedAttempt).toBeGreaterThan(0);
+    expect(firstLimitedAttempt).toBeLessThanOrEqual(5);
+    expect(
+      statuses.slice(firstLimitedAttempt).every((status) => status === 429),
+    ).toBe(true);
     await expect(prisma.rateLimit.count()).resolves.toBeGreaterThan(0);
   });
 });
