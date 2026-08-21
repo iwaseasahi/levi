@@ -28,7 +28,7 @@ without creating a billed resource or production credential.
 3. [x] Define operator-error RPO/RTO and explicitly exclude VPS/disk loss.
 4. [x] Align open decisions, architecture index, cutover, backup, and security
        documentation with the accepted tradeoff.
-5. [ ] Run local quality and exact-head CI before merge.
+5. [x] Run local quality and exact-head CI before merge.
 
 ## Decisions
 
@@ -46,7 +46,10 @@ without creating a billed resource or production credential.
 - [x] `pnpm format:check`
 - [x] `pnpm lint`
 - [x] `pnpm release:checklist:dry-run`
-- [ ] exact-head `Quality`, `Database`, `E2E`, `Security`
+- [x] exact-head `Quality`, `Database`, `E2E`, `Security`
+
+PR #90 passed all four required checks on implementation commit `1109986`.
+The documentation-only completion commit repeats the same checks before merge.
 
 ## Handoff or blockers
 
