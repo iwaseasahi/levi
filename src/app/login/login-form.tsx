@@ -29,7 +29,6 @@ export function LoginForm() {
       });
       if (result.error) throw new Error("rejected");
       router.replace("/church");
-      router.refresh();
     } catch {
       setError(genericError);
     } finally {

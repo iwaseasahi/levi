@@ -81,7 +81,6 @@ export function ChangePasswordForm({
             className="primary-button"
             onClick={() => {
               router.replace("/church");
-              router.refresh();
             }}
             type="button"
           >

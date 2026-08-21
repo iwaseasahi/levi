@@ -5,7 +5,8 @@ import "@testing-library/jest-dom/vitest";
 import axe from "axe-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { replace, signIn } = vi.hoisted(() => ({
+const { refresh, replace, signIn } = vi.hoisted(() => ({
+  refresh: vi.fn(),
   replace: vi.fn(),
   signIn: vi.fn(),
 }));
@@ -13,13 +14,14 @@ vi.mock("@/infrastructure/auth/client", () => ({
   authClient: { signIn: { email: signIn } },
 }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ refresh: vi.fn(), replace }),
+  useRouter: () => ({ refresh, replace }),
 }));
 import { LoginForm } from "./login-form";
 
 describe("LoginForm", () => {
   beforeEach(() => {
     signIn.mockReset();
+    refresh.mockReset();
     replace.mockReset();
   });
 
@@ -34,6 +36,7 @@ describe("LoginForm", () => {
     await user.type(screen.getByLabelText("パスワード"), "p".repeat(16));
     await user.click(screen.getByRole("button", { name: "ログイン" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/church"));
+    expect(refresh).not.toHaveBeenCalled();
     expect(signIn).toHaveBeenCalledWith(
       expect.objectContaining({ email: "member@example.invalid" }),
     );

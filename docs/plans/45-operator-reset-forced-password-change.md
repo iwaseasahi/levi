@@ -51,6 +51,10 @@ clears the forced-change gate, and revokes every other session.
 - 2026-08-21 15:49 JST — Completed implementation and local verification: 51
   unit, 10 component, 32 PostgreSQL integration, and 8 latest-Chromium E2E
   tests pass. Database, canonical, security, formatting, and diff checks pass.
+- 2026-08-21 15:54 JST — PR #68 exposed a slow-run navigation race between
+  `router.replace` and an immediate `router.refresh`. Removed the redundant
+  refresh from login, password-change completion, and logout; the CI-equivalent
+  browser suite passes locally before the replacement commit.
 
 ## Result
 
