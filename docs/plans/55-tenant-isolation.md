@@ -63,6 +63,9 @@ PostgreSQL, logs, and latest Chrome.
   exhausted the existing database-backed login limit under parallel execution.
   Removed those extra logins and integrated the denied case into an existing
   authenticated flow; no retry or rate-limit weakening was introduced.
+- 2026-08-21 19:45 JST — Complete local gates pass: 132 unit, 23 component,
+  71 integration, and 10 latest-Chrome tests; production build, schema/drift,
+  seed verification, dependency audit, and 314-license review also pass.
 
 ## Decisions
 
@@ -87,9 +90,9 @@ PostgreSQL, logs, and latest Chrome.
 
 - [x] `pnpm test:unit` and `pnpm test:integration`
 - [x] `pnpm test:e2e` denied tenant scenarios
-- [ ] `pnpm security:check` and `pnpm check`
+- [x] `pnpm security:check` and `pnpm check`
 - [ ] Exact-head `Quality`, `Database`, `E2E`, and `Security` CI
-- [ ] Final diff reviewed for scope, secrets, logs, and unsafe defaults
+- [x] Final diff reviewed for scope, secrets, logs, and unsafe defaults
 
 ## Handoff or blockers
 
