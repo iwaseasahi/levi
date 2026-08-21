@@ -30,6 +30,8 @@ function response(body: unknown, status = 200) {
 function successfulFetcher() {
   return vi.fn<typeof fetch>((input) => {
     const url = new URL(String(input), "https://levi.example");
+    if (url.pathname.endsWith("/saved-content"))
+      return response({ folders: [], orderIds: [] });
     if (url.pathname.endsWith("/catalog")) {
       const book = url.searchParams.get("book");
       const chapter = url.searchParams.get("chapter");
@@ -52,6 +54,19 @@ function successfulFetcher() {
   });
 }
 
+const savedContentFetcher = vi.fn<typeof fetch>(() =>
+  response({ folders: [], orderIds: [] }),
+);
+
+function renderSearch(fetcher: typeof fetch) {
+  return render(
+    <ScriptureSearch
+      fetcher={fetcher}
+      savedContentFetcher={savedContentFetcher}
+    />,
+  );
+}
+
 async function chooseRange(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole("option", { name: "架空ヨハネ" });
   await user.selectOptions(screen.getByLabelText("書巻"), "JHN");
@@ -64,9 +79,7 @@ async function chooseRange(user: ReturnType<typeof userEvent.setup>) {
 
 describe("ScriptureSearch", () => {
   it("supports keyboard navigation and has no detectable accessibility violations", async () => {
-    const { container } = render(
-      <ScriptureSearch fetcher={successfulFetcher()} />,
-    );
+    const { container } = renderSearch(successfulFetcher());
     await screen.findByRole("option", { name: "架空ヨハネ" });
     const user = userEvent.setup();
     await user.tab();
@@ -81,7 +94,7 @@ describe("ScriptureSearch", () => {
 
   it("cascades valid candidates, prevents a reversed range, and renders results", async () => {
     const fetcher = successfulFetcher();
-    render(<ScriptureSearch fetcher={fetcher} />);
+    renderSearch(fetcher);
     const user = userEvent.setup();
     await chooseRange(user);
 
@@ -104,7 +117,7 @@ describe("ScriptureSearch", () => {
   });
 
   it("announces and focuses validation feedback", async () => {
-    render(<ScriptureSearch fetcher={successfulFetcher()} />);
+    renderSearch(successfulFetcher());
     await screen.findByRole("option", { name: "架空ヨハネ" });
     await userEvent.click(screen.getByRole("button", { name: "御言葉を検索" }));
     const alert = await screen.findByRole("alert");
@@ -118,7 +131,7 @@ describe("ScriptureSearch", () => {
     fetcher.mockImplementationOnce(() =>
       response({ books, chapters: [], verses: [] }),
     );
-    render(<ScriptureSearch fetcher={fetcher} />);
+    renderSearch(fetcher);
     const user = userEvent.setup();
     await chooseRange(user);
     fetcher.mockImplementationOnce(
@@ -138,7 +151,7 @@ describe("ScriptureSearch", () => {
 
   it("shows recoverable catalog and search server errors", async () => {
     const catalogFailure = vi.fn<typeof fetch>(() => response({}, 500));
-    const { unmount } = render(<ScriptureSearch fetcher={catalogFailure} />);
+    const { unmount } = renderSearch(catalogFailure);
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "検索候補を読み込めません",
     );
@@ -146,7 +159,7 @@ describe("ScriptureSearch", () => {
     unmount();
 
     const fetcher = successfulFetcher();
-    render(<ScriptureSearch fetcher={fetcher} />);
+    renderSearch(fetcher);
     const user = userEvent.setup();
     await chooseRange(user);
     fetcher.mockImplementationOnce(() =>

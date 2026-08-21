@@ -8,6 +8,7 @@ import type {
   ScriptureLanguage,
   ScriptureSearchItem,
 } from "@/domain/scripture/search";
+import { SavedContentPanel } from "./saved-content-panel";
 
 type SearchResponse = {
   items: ScriptureSearchItem[];
@@ -92,8 +93,10 @@ function contiguousEndVerses(verses: number[], startVerse: string) {
 
 export function ScriptureSearch({
   fetcher = fetch,
+  savedContentFetcher = fetcher,
 }: {
   fetcher?: typeof fetch;
+  savedContentFetcher?: typeof fetch;
 }) {
   const [selection, setSelection] = useState(initialSelection);
   const [books, setBooks] = useState<ScriptureCatalogBook[]>([]);
@@ -200,29 +203,15 @@ export function ScriptureSearch({
     setStatus({ kind: "idle" });
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (
-      !selection.book ||
-      !selection.chapter ||
-      !selection.startVerse ||
-      !selection.endVerse
-    ) {
-      setStatus({
-        kind: "error",
-        message: "書巻、章、開始節、終了節をすべて選択してください。",
-      });
-      return;
-    }
-
+  async function performSearch(next: Selection) {
     setStatus({ kind: "loading", message: "御言葉を検索しています。" });
     try {
       const query = new URLSearchParams({
-        book: selection.book,
-        chapter: selection.chapter,
-        startVerse: selection.startVerse,
-        endVerse: selection.endVerse,
-        language: selection.language,
+        book: next.book,
+        chapter: next.chapter,
+        startVerse: next.startVerse,
+        endVerse: next.endVerse,
+        language: next.language,
       });
       const response = await fetcher(`/api/scripture/search?${query}`, {
         cache: "no-store",
@@ -250,6 +239,35 @@ export function ScriptureSearch({
     }
   }
 
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (
+      !selection.book ||
+      !selection.chapter ||
+      !selection.startVerse ||
+      !selection.endVerse
+    ) {
+      setStatus({
+        kind: "error",
+        message: "書巻、章、開始節、終了節をすべて選択してください。",
+      });
+      return;
+    }
+    await performSearch(selection);
+  }
+
+  async function reopenBookmark(search: SearchResponse["search"]) {
+    const next: Selection = {
+      book: search.book,
+      chapter: String(search.chapter),
+      startVerse: String(search.startVerse),
+      endVerse: String(search.endVerse),
+      language: search.language,
+    };
+    setSelection(next);
+    await Promise.all([loadCatalog(next), performSearch(next)]);
+  }
+
   const pending = catalogLoading || status.kind === "loading";
   const validEndVerses = contiguousEndVerses(verses, selection.startVerse);
 
@@ -258,143 +276,156 @@ export function ScriptureSearch({
       className="scripture-workspace"
       aria-labelledby="scripture-search-title"
     >
-      <form className="scripture-search-form" onSubmit={submit}>
-        <div className="section-heading">
-          <p className="eyebrow">Scripture search</p>
-          <h2 id="scripture-search-title">御言葉を検索</h2>
-          <p>書巻と範囲を選び、会衆へ投影する内容を確認します。</p>
-        </div>
-
-        <fieldset disabled={pending || Boolean(catalogError)}>
-          <legend className="sr-only">御言葉の検索条件</legend>
-          <label htmlFor="scripture-language">表示言語</label>
-          <select
-            id="scripture-language"
-            value={selection.language}
-            onChange={(event) =>
-              updateLanguage(event.target.value as ScriptureLanguage)
-            }
-          >
-            <option value="ja">日本語（新改訳聖書第3版）</option>
-            <option value="en">英語（NKJV）</option>
-            <option value="both">日本語と英語</option>
-          </select>
-
-          <label htmlFor="scripture-book">書巻</label>
-          <select
-            id="scripture-book"
-            value={selection.book}
-            onChange={(event) => updateBook(event.target.value)}
-          >
-            <option value="">書巻を選択</option>
-            {books.map((book) => (
-              <option key={book.code} value={book.code}>
-                {book.name}
-              </option>
-            ))}
-          </select>
-
-          <label htmlFor="scripture-chapter">章</label>
-          <select
-            id="scripture-chapter"
-            disabled={!selection.book || catalogLoading}
-            value={selection.chapter}
-            onChange={(event) => updateChapter(event.target.value)}
-          >
-            <option value="">章を選択</option>
-            {chapters.map((chapter) => (
-              <option key={chapter} value={chapter}>
-                {chapter}章
-              </option>
-            ))}
-          </select>
-
-          <div className="verse-range">
-            <div>
-              <label htmlFor="scripture-start-verse">開始節</label>
-              <select
-                id="scripture-start-verse"
-                disabled={!selection.chapter || catalogLoading}
-                value={selection.startVerse}
-                onChange={(event) => updateStartVerse(event.target.value)}
-              >
-                <option value="">開始節を選択</option>
-                {verses.map((verse) => (
-                  <option key={verse} value={verse}>
-                    {verse}節
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="scripture-end-verse">終了節</label>
-              <select
-                id="scripture-end-verse"
-                disabled={!selection.startVerse || catalogLoading}
-                value={selection.endVerse}
-                onChange={(event) => {
-                  setSelection({ ...selection, endVerse: event.target.value });
-                  setStatus({ kind: "idle" });
-                }}
-              >
-                <option value="">終了節を選択</option>
-                {validEndVerses.map((verse) => (
-                  <option key={verse} value={verse}>
-                    {verse}節
-                  </option>
-                ))}
-              </select>
-            </div>
+      <div className="scripture-tools">
+        <form className="scripture-search-form" onSubmit={submit}>
+          <div className="section-heading">
+            <p className="eyebrow">Scripture search</p>
+            <h2 id="scripture-search-title">御言葉を検索</h2>
+            <p>書巻と範囲を選び、会衆へ投影する内容を確認します。</p>
           </div>
-        </fieldset>
 
-        <button
-          className="primary-button"
-          disabled={pending || Boolean(catalogError)}
-          type="submit"
-        >
-          {status.kind === "loading" ? "検索中…" : "御言葉を検索"}
-        </button>
-
-        <div className="search-feedback" aria-live="polite">
-          {catalogLoading ? (
-            <p role="status">検索候補を読み込んでいます。</p>
-          ) : null}
-          {catalogError ? (
-            <div
-              className="notice notice-error"
-              role="alert"
-              tabIndex={-1}
-              ref={feedbackRef}
+          <fieldset disabled={pending || Boolean(catalogError)}>
+            <legend className="sr-only">御言葉の検索条件</legend>
+            <label htmlFor="scripture-language">表示言語</label>
+            <select
+              id="scripture-language"
+              value={selection.language}
+              onChange={(event) =>
+                updateLanguage(event.target.value as ScriptureLanguage)
+              }
             >
-              <p>{catalogError}</p>
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => void loadCatalog(selection)}
+              <option value="ja">日本語（新改訳聖書第3版）</option>
+              <option value="en">英語（NKJV）</option>
+              <option value="both">日本語と英語</option>
+            </select>
+
+            <label htmlFor="scripture-book">書巻</label>
+            <select
+              id="scripture-book"
+              value={selection.book}
+              onChange={(event) => updateBook(event.target.value)}
+            >
+              <option value="">書巻を選択</option>
+              {books.map((book) => (
+                <option key={book.code} value={book.code}>
+                  {book.name}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="scripture-chapter">章</label>
+            <select
+              id="scripture-chapter"
+              disabled={!selection.book || catalogLoading}
+              value={selection.chapter}
+              onChange={(event) => updateChapter(event.target.value)}
+            >
+              <option value="">章を選択</option>
+              {chapters.map((chapter) => (
+                <option key={chapter} value={chapter}>
+                  {chapter}章
+                </option>
+              ))}
+            </select>
+
+            <div className="verse-range">
+              <div>
+                <label htmlFor="scripture-start-verse">開始節</label>
+                <select
+                  id="scripture-start-verse"
+                  disabled={!selection.chapter || catalogLoading}
+                  value={selection.startVerse}
+                  onChange={(event) => updateStartVerse(event.target.value)}
+                >
+                  <option value="">開始節を選択</option>
+                  {verses.map((verse) => (
+                    <option key={verse} value={verse}>
+                      {verse}節
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="scripture-end-verse">終了節</label>
+                <select
+                  id="scripture-end-verse"
+                  disabled={!selection.startVerse || catalogLoading}
+                  value={selection.endVerse}
+                  onChange={(event) => {
+                    setSelection({
+                      ...selection,
+                      endVerse: event.target.value,
+                    });
+                    setStatus({ kind: "idle" });
+                  }}
+                >
+                  <option value="">終了節を選択</option>
+                  {validEndVerses.map((verse) => (
+                    <option key={verse} value={verse}>
+                      {verse}節
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <button
+            className="primary-button"
+            disabled={pending || Boolean(catalogError)}
+            type="submit"
+          >
+            {status.kind === "loading" ? "検索中…" : "御言葉を検索"}
+          </button>
+
+          <div className="search-feedback" aria-live="polite">
+            {catalogLoading ? (
+              <p role="status">検索候補を読み込んでいます。</p>
+            ) : null}
+            {catalogError ? (
+              <div
+                className="notice notice-error"
+                role="alert"
+                tabIndex={-1}
+                ref={feedbackRef}
               >
-                再読み込み
-              </button>
-            </div>
-          ) : null}
-          {!catalogLoading && !catalogError && books.length === 0 ? (
-            <p role="status">利用できる聖書データがありません。</p>
-          ) : null}
-          {status.kind === "error" || status.kind === "empty" ? (
-            <div
-              className={`notice ${status.kind === "error" ? "notice-error" : ""}`}
-              role={status.kind === "error" ? "alert" : "status"}
-              tabIndex={-1}
-              ref={feedbackRef}
-            >
-              <p>{status.message}</p>
-            </div>
-          ) : null}
-          {status.kind === "loading" ? (
-            <p role="status">{status.message}</p>
-          ) : null}
-        </div>
-      </form>
+                <p>{catalogError}</p>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => void loadCatalog(selection)}
+                >
+                  再読み込み
+                </button>
+              </div>
+            ) : null}
+            {!catalogLoading && !catalogError && books.length === 0 ? (
+              <p role="status">利用できる聖書データがありません。</p>
+            ) : null}
+            {status.kind === "error" || status.kind === "empty" ? (
+              <div
+                className={`notice ${status.kind === "error" ? "notice-error" : ""}`}
+                role={status.kind === "error" ? "alert" : "status"}
+                tabIndex={-1}
+                ref={feedbackRef}
+              >
+                <p>{status.message}</p>
+              </div>
+            ) : null}
+            {status.kind === "loading" ? (
+              <p role="status">{status.message}</p>
+            ) : null}
+          </div>
+        </form>
+
+        <SavedContentPanel
+          currentSearch={
+            status.kind === "success" ? status.result.search : null
+          }
+          fetcher={savedContentFetcher}
+          onOpen={reopenBookmark}
+        />
+      </div>
 
       <div className="scripture-results" aria-busy={status.kind === "loading"}>
         {status.kind === "success" ? (

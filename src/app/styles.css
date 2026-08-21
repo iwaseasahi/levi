@@ -302,12 +302,142 @@ select:focus-visible,
   align-items: start;
 }
 
+.scripture-tools {
+  display: grid;
+  gap: 1.5rem;
+}
+
 .scripture-search-form,
-.scripture-results {
+.scripture-results,
+.saved-content {
   border: 1px solid #d3cec0;
   border-radius: 1.25rem;
   background: #fffdf8;
   box-shadow: 0 1rem 3rem rgb(42 51 45 / 8%);
+}
+
+.saved-content {
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.saved-content .section-heading h2 {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+}
+
+.compact-form {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.compact-form label {
+  font-weight: 750;
+}
+
+.compact-form input {
+  min-width: 0;
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #8f9e95;
+  border-radius: 0.65rem;
+  font: inherit;
+}
+
+.inline-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.folder-list,
+.bookmark-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.folder-list > li,
+.bookmark-list > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.folder-list > li > button,
+.bookmark-open {
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #bac5bd;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.folder-list .selected-folder {
+  border-color: #1d5b3a;
+  background: #edf7f0;
+  font-weight: 750;
+}
+
+.order-actions,
+.folder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.order-actions button {
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  border: 1px solid #bac5bd;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: inherit;
+}
+
+.selected-content {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #d3cec0;
+}
+
+.selected-content h3 {
+  margin: 0;
+}
+
+.folder-actions {
+  margin-top: 0.75rem;
+}
+
+.danger-button {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid #9e342d;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: #81251f;
+  font: inherit;
+  font-weight: 750;
+}
+
+.empty-copy,
+.hint,
+.saved-feedback {
+  font-size: 0.9rem;
+}
+
+.hint {
+  margin: 0;
+}
+
+.saved-feedback {
+  min-height: 1.5rem;
 }
 
 .scripture-search-form {

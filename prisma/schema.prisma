@@ -122,6 +122,7 @@ model Church {
   createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
   membership  ChurchMembership?
+  folders     Folder[]
 
   @@map("churches")
 }
@@ -155,30 +156,33 @@ model SystemSetting {
 }
 
 model BibleTranslation {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  code            String            @unique(map: "bible_translations_code_uk") @db.VarChar(16)
-  name            String            @db.VarChar(200)
-  languageTag     String            @map("language_tag") @db.VarChar(35)
-  displayOrder    Int               @unique(map: "bible_translations_display_order_uk") @map("display_order") @db.SmallInt
-  rightsStatus    BibleRightsStatus @map("rights_status")
-  sourceReference String?           @map("source_reference") @db.Text
-  rightsNotice    String?           @map("rights_notice") @db.Text
-  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
-  bookNames       BibleBookName[]
-  verses          BibleVerse[]
+  id                          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                        String              @unique(map: "bible_translations_code_uk") @db.VarChar(16)
+  name                        String              @db.VarChar(200)
+  languageTag                 String              @map("language_tag") @db.VarChar(35)
+  displayOrder                Int                 @unique(map: "bible_translations_display_order_uk") @map("display_order") @db.SmallInt
+  rightsStatus                BibleRightsStatus   @map("rights_status")
+  sourceReference             String?             @map("source_reference") @db.Text
+  rightsNotice                String?             @map("rights_notice") @db.Text
+  createdAt                   DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                   DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  bookNames                   BibleBookName[]
+  verses                      BibleVerse[]
+  primaryScriptureBookmarks   ScriptureBookmark[] @relation("ScriptureBookmarkPrimaryTranslation")
+  secondaryScriptureBookmarks ScriptureBookmark[] @relation("ScriptureBookmarkSecondaryTranslation")
 
   @@map("bible_translations")
 }
 
 model BibleBook {
-  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  canonicalCode  String          @unique(map: "bible_books_canonical_code_uk") @map("canonical_code") @db.VarChar(16)
-  canonicalOrder Int             @unique(map: "bible_books_canonical_order_uk") @map("canonical_order") @db.SmallInt
-  testament      BibleTestament
-  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
-  names          BibleBookName[]
-  verses         BibleVerse[]
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  canonicalCode      String              @unique(map: "bible_books_canonical_code_uk") @map("canonical_code") @db.VarChar(16)
+  canonicalOrder     Int                 @unique(map: "bible_books_canonical_order_uk") @map("canonical_order") @db.SmallInt
+  testament          BibleTestament
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  names              BibleBookName[]
+  verses             BibleVerse[]
+  scriptureBookmarks ScriptureBookmark[]
 
   @@map("bible_books")
 }
@@ -198,17 +202,76 @@ model BibleBookName {
 }
 
 model BibleVerse {
-  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  translationId String           @map("translation_id") @db.Uuid
-  bookId        String           @map("book_id") @db.Uuid
-  chapterNumber Int              @map("chapter_number") @db.SmallInt
-  verseNumber   Int              @map("verse_number") @db.SmallInt
-  text          String           @db.Text
-  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  translation   BibleTranslation @relation(fields: [translationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bible_verses_translation_fk")
-  book          BibleBook        @relation(fields: [bookId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bible_verses_book_fk")
+  id                      String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  translationId           String              @map("translation_id") @db.Uuid
+  bookId                  String              @map("book_id") @db.Uuid
+  chapterNumber           Int                 @map("chapter_number") @db.SmallInt
+  verseNumber             Int                 @map("verse_number") @db.SmallInt
+  text                    String              @db.Text
+  createdAt               DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  translation             BibleTranslation    @relation(fields: [translationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bible_verses_translation_fk")
+  book                    BibleBook           @relation(fields: [bookId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bible_verses_book_fk")
+  primaryStartBookmarks   ScriptureBookmark[] @relation("ScriptureBookmarkPrimaryStart")
+  primaryEndBookmarks     ScriptureBookmark[] @relation("ScriptureBookmarkPrimaryEnd")
+  secondaryStartBookmarks ScriptureBookmark[] @relation("ScriptureBookmarkSecondaryStart")
+  secondaryEndBookmarks   ScriptureBookmark[] @relation("ScriptureBookmarkSecondaryEnd")
 
   @@unique([translationId, bookId, chapterNumber, verseNumber], map: "bible_verses_location_uk")
   @@index([bookId, chapterNumber, verseNumber, translationId], map: "bible_verses_navigation_idx")
   @@map("bible_verses")
+}
+
+model Folder {
+  id         String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  churchId   String     @map("church_id") @db.Uuid
+  name       String     @db.VarChar(200)
+  isPinned   Boolean    @default(false) @map("is_pinned")
+  position   Int
+  lastUsedAt DateTime?  @map("last_used_at") @db.Timestamptz(3)
+  createdAt  DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  church     Church     @relation(fields: [churchId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "folders_church_fk")
+  bookmarks  Bookmark[]
+
+  @@unique([id, churchId], map: "folders_id_church_uk")
+  @@unique([churchId, position], map: "folders_church_position_uk")
+  @@index([churchId, isPinned(sort: Desc), position, id], map: "folders_pinned_idx")
+  @@index([churchId, lastUsedAt(sort: Desc), position, id], map: "folders_recent_idx")
+  @@map("folders")
+}
+
+model Bookmark {
+  id        String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  churchId  String             @map("church_id") @db.Uuid
+  folderId  String             @map("folder_id") @db.Uuid
+  title     String             @db.VarChar(200)
+  position  Int
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  folder    Folder             @relation(fields: [folderId, churchId], references: [id, churchId], onDelete: Cascade, onUpdate: NoAction, map: "bookmarks_folder_church_fk")
+  scripture ScriptureBookmark?
+
+  @@unique([folderId, position], map: "bookmarks_folder_position_uk")
+  @@index([churchId, folderId, position, id], map: "bookmarks_church_folder_position_idx")
+  @@map("bookmarks")
+}
+
+model ScriptureBookmark {
+  bookmarkId             String            @id @map("bookmark_id") @db.Uuid
+  bookId                 String            @map("book_id") @db.Uuid
+  chapterNumber          Int               @map("chapter_number") @db.SmallInt
+  startVerse             Int               @map("start_verse") @db.SmallInt
+  endVerse               Int               @map("end_verse") @db.SmallInt
+  primaryTranslationId   String            @map("primary_translation_id") @db.Uuid
+  secondaryTranslationId String?           @map("secondary_translation_id") @db.Uuid
+  bookmark               Bookmark          @relation(fields: [bookmarkId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "scripture_bookmarks_bookmark_fk")
+  book                   BibleBook         @relation(fields: [bookId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "scripture_bookmarks_book_fk")
+  primaryTranslation     BibleTranslation  @relation("ScriptureBookmarkPrimaryTranslation", fields: [primaryTranslationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "scripture_bookmarks_primary_translation_fk")
+  secondaryTranslation   BibleTranslation? @relation("ScriptureBookmarkSecondaryTranslation", fields: [secondaryTranslationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "scripture_bookmarks_secondary_translation_fk")
+  primaryStartVerse      BibleVerse        @relation("ScriptureBookmarkPrimaryStart", fields: [primaryTranslationId, bookId, chapterNumber, startVerse], references: [translationId, bookId, chapterNumber, verseNumber], onDelete: Restrict, onUpdate: NoAction, map: "scripture_bookmarks_primary_start_fk")
+  primaryEndVerse        BibleVerse        @relation("ScriptureBookmarkPrimaryEnd", fields: [primaryTranslationId, bookId, chapterNumber, endVerse], references: [translationId, bookId, chapterNumber, verseNumber], onDelete: Restrict, onUpdate: NoAction, map: "scripture_bookmarks_primary_end_fk")
+  secondaryStartVerse    BibleVerse?       @relation("ScriptureBookmarkSecondaryStart", fields: [secondaryTranslationId, bookId, chapterNumber, startVerse], references: [translationId, bookId, chapterNumber, verseNumber], onDelete: Restrict, onUpdate: NoAction, map: "scripture_bookmarks_secondary_start_fk")
+  secondaryEndVerse      BibleVerse?       @relation("ScriptureBookmarkSecondaryEnd", fields: [secondaryTranslationId, bookId, chapterNumber, endVerse], references: [translationId, bookId, chapterNumber, verseNumber], onDelete: Restrict, onUpdate: NoAction, map: "scripture_bookmarks_secondary_end_fk")
+
+  @@map("scripture_bookmarks")
 }
