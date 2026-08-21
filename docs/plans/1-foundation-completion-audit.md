@@ -51,6 +51,9 @@ and the successful final CI run.
 - 2026-08-21 13:05 JST — Observed isolated lint, typecheck, unit, migration, and
   E2E defects fail in their intended GitHub Actions jobs. Restored every probe
   and added the durable completion matrix with run URLs.
+- 2026-08-21 13:15 JST — Cloned the branch into a new temporary directory,
+  completed frozen install and the documented `.env.example` setup, then passed
+  the single `pnpm check` quality command.
 
 ## Decisions
 
@@ -71,7 +74,7 @@ and the successful final CI run.
 
 ## Verification
 
-- [ ] Clean install and `pnpm check`
+- [x] Clean install and `pnpm check`
 - [x] `pnpm test:unit:coverage`
 - [x] `pnpm test:integration`
 - [x] `pnpm test:e2e`
