@@ -2,6 +2,10 @@
 
 These rules apply until a later accepted ADR deliberately changes them.
 
+ADR 0007 and its
+[`data-model-dictionary.md`](data-model-dictionary.md) specialize these rules for
+Levi's identity, tenancy, Bible, Folder, and Bookmark models.
+
 - Store timestamps as PostgreSQL `timestamptz` in UTC. Convert only at display
   boundaries; never store a local timezone as if it were UTC.
 - Use UUID identifiers for durable domain records. Fixtures and seeds use fixed,

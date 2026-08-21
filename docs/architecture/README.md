@@ -22,9 +22,11 @@ them in implementation code.
 | [0004](0004-authentication-selection-gate.md) | superseded | Authentication selection gate                            |
 | [0005](0005-deployment-selection-gate.md)     | proposed   | Portable deployment and selection gate                   |
 | [0006](0006-better-auth-database-sessions.md) | accepted   | Better Auth with database sessions and operator recovery |
+| [0007](0007-normalized-data-model.md)         | accepted   | Normalized ownership-specific relational models          |
 
 Implementation-level data rules are documented in
-[`database-conventions.md`](database-conventions.md).
+[`database-conventions.md`](database-conventions.md) and the accepted
+[`data-model-dictionary.md`](data-model-dictionary.md).
 
 Open product and operational decisions are tracked in
 [`open-decisions.md`](open-decisions.md).
