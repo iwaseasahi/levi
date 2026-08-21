@@ -39,9 +39,9 @@ permissions, and the explicit production approval defined by governance.
 ## CI cost boundary
 
 GitHub Actions is only a deterministic verification and merge gate. Workflows do
-not invoke Codex, Claude Code, or another model provider, and do not consume
-provider API keys. Implementation, handoff, and cross-review run from the local
-subscription-authenticated clients described in
+not invoke Codex or another model provider and do not consume model API keys.
+Implementation, pause/resume, and review run through the local
+subscription-authenticated Codex client described in
 [`docs/agent-protocol.md`](agent-protocol.md).
 
 PRs produced by local agents must still pass all protected checks. A local agent

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/iwaseasahi/levi/blob/main/docs/schemas/review.schema.json",
-  "title": "Levi independent review",
+  "title": "Levi Codex review",
   "type": "object",
   "additionalProperties": false,
   "required": ["verdict", "findings"],

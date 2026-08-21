@@ -101,4 +101,32 @@ describe("local agent handoff CLI", () => {
       stderr: expect.stringContaining("Unsupported option: --directry"),
     });
   });
+
+  it("rejects a non-Codex writer", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "levi-lease-"));
+
+    await expect(
+      execFile(
+        "pnpm",
+        [
+          "agent:lease",
+          "--action",
+          "acquire",
+          "--directory",
+          directory,
+          "--issue",
+          "62",
+          "--run-id",
+          "other-agent",
+          "--provider",
+          "claude",
+          "--branch",
+          "claude/issue-62",
+        ],
+        { cwd: repositoryRoot },
+      ),
+    ).rejects.toMatchObject({
+      stderr: expect.stringContaining("provider must be codex"),
+    });
+  });
 });

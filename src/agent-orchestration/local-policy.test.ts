@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 const repositoryRoot = path.resolve(import.meta.dirname, "../..");
 const execFile = promisify(execFileCallback);
 
-describe("local subscription agent policy", () => {
+describe("Codex-only local subscription policy", () => {
   it("does not expose a provider-backed GitHub Actions workflow", async () => {
     await expect(
       access(
@@ -30,6 +30,39 @@ describe("local subscription agent policy", () => {
     expect(JSON.stringify(packageJson.scripts)).not.toMatch(
       /codex exec|claude\s+--|agent:(?:run|normalize|route)/,
     );
+  });
+
+  it("keeps active agent instructions and contracts Codex-only", async () => {
+    await expect(
+      access(path.join(repositoryRoot, "CLAUDE.md")),
+    ).rejects.toThrow();
+
+    const [agents, localDevelopment, protocol, handoffSchema] =
+      await Promise.all([
+        readFile(path.join(repositoryRoot, "AGENTS.md"), "utf8"),
+        readFile(
+          path.join(repositoryRoot, "docs/local-agent-development.md"),
+          "utf8",
+        ),
+        readFile(path.join(repositoryRoot, "docs/agent-protocol.md"), "utf8"),
+        readFile(
+          path.join(repositoryRoot, "docs/schemas/handoff.schema.json"),
+          "utf8",
+        ),
+      ]);
+
+    expect(agents).toContain(
+      "Codex is the sole implementation and review agent",
+    );
+    expect(localDevelopment).toContain(
+      "Levi uses Codex as its sole implementation and review agent",
+    );
+    expect(protocol).toContain(
+      "Codex is the sole implementation and review agent for Levi",
+    );
+    expect(JSON.parse(handoffSchema)).toMatchObject({
+      properties: { provider: { const: "codex" } },
+    });
   });
 
   it("does not pass provider API keys or invoke provider CLIs in automation", async () => {

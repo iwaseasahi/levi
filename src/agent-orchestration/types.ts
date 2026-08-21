@@ -12,7 +12,7 @@ export const agentStatuses = [
 ] as const;
 
 export type AgentStatus = (typeof agentStatuses)[number];
-export type Provider = "codex" | "claude";
+export type Provider = "codex";
 
 export interface VerificationRecord {
   command: string;

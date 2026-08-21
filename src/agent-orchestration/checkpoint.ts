@@ -89,7 +89,11 @@ export async function verifyCheckpoint(directory: string): Promise<boolean> {
   const actual = patch
     ? createHash("sha256").update(patch).digest("hex")
     : null;
-  return manifest.schema_version === 1 && manifest.patch_sha256 === actual;
+  return (
+    manifest.schema_version === 1 &&
+    manifest.provider === "codex" &&
+    manifest.patch_sha256 === actual
+  );
 }
 
 export async function readCheckpoint(

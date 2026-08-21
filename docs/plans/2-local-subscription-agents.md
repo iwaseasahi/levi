@@ -1,5 +1,9 @@
 # Run Codex and Claude Code without provider API billing
 
+> Historical completion record for Issue #2. Issue #62 supersedes the
+> dual-client operating policy; current work uses Codex only under
+> [`../agent-protocol.md`](../agent-protocol.md).
+
 ## Issue
 
 - Issue: #2

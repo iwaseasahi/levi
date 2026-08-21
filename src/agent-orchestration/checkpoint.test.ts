@@ -103,10 +103,10 @@ describe("checkpoint", () => {
         schema_version: 1,
         issue: 2,
         run_id: "run-empty",
-        provider: "claude",
+        provider: "codex",
         model: null,
         base_sha: "abc1234",
-        branch: "claude/issue-2",
+        branch: "codex/issue-2",
         worktree: "/repo",
         created_at: "2026-08-21T00:00:00.000Z",
         completed_steps: [],
@@ -127,6 +127,39 @@ describe("checkpoint", () => {
       path.join(directory, "handoff.json"),
       `${JSON.stringify({ ...manifest, schema_version: 2 })}\n`,
     );
+    expect(await verifyCheckpoint(directory)).toBe(false);
+  });
+
+  it("rejects a checkpoint attributed to another coding agent", async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "levi-checkpoint-"));
+    const manifest = await writeCheckpoint(
+      directory,
+      {
+        schema_version: 1,
+        issue: 62,
+        run_id: "codex-only",
+        provider: "codex",
+        model: null,
+        base_sha: "abc1234",
+        branch: "codex/issue-62",
+        worktree: "/repo",
+        created_at: "2026-08-21T00:00:00.000Z",
+        completed_steps: [],
+        changed_files: [],
+        verification: [],
+        remaining_work: [],
+        blocker: null,
+        switch_reason: null,
+        retry_after: null,
+      },
+      "",
+    );
+
+    await writeFile(
+      path.join(directory, "handoff.json"),
+      `${JSON.stringify({ ...manifest, provider: "claude" })}\n`,
+    );
+
     expect(await verifyCheckpoint(directory)).toBe(false);
   });
 });
