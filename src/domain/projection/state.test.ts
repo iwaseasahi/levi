@@ -71,7 +71,7 @@ describe("projection state and protocol", () => {
     expect(
       parseAudienceProjectionMessage({
         schema: projectionSchema,
-        version: 2,
+        version: 1,
         type: "READY",
       }),
     ).toBeNull();

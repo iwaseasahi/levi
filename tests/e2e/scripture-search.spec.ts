@@ -81,15 +81,63 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   expect(page.url()).not.toContain(encodeURIComponent("初めに、神が"));
 
   const audienceOpened = context.waitForEvent("page");
-  await page.getByRole("button", { name: "会衆向け画面を開く" }).click();
+  await page
+    .getByRole("button", { name: "会衆向け画面を新しいタブで開く" })
+    .click();
   let audience = await audienceOpened;
   await expect(page.getByRole("status")).toContainText("接続しています");
   await expect(
     audience.getByText("初めに、神が天と地を創造した。"),
   ).toBeVisible();
   await expect(
-    audience.getByRole("heading", { name: "創世記 1:1" }),
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 / Genesis : 1",
+    }),
   ).toBeVisible();
+  const projectedLines = audience.locator(".audience-book-word");
+  await expect(projectedLines).toHaveCount(2);
+  await expect(projectedLines.nth(0)).toHaveAttribute("lang", "ja");
+  await expect(projectedLines.nth(0)).toContainText(
+    "初めに、神が天と地を創造した。",
+  );
+  await expect(projectedLines.nth(1)).toHaveAttribute("lang", "en");
+  await expect(projectedLines.nth(1)).toContainText(
+    "In the beginning God created the heavens and the earth.",
+  );
+  await expect(audience.locator(".audience-translation")).toHaveCount(0);
+  const ginmakuStyles = await audience.evaluate(() => {
+    const screen = getComputedStyle(
+      document.querySelector<HTMLElement>(".audience-screen")!,
+    );
+    const heading = getComputedStyle(
+      document.querySelector<HTMLElement>(".audience-book-name")!,
+    );
+    const verseNumber = getComputedStyle(
+      document.querySelector<HTMLElement>(".audience-verse-number")!,
+    );
+    const line = getComputedStyle(
+      document.querySelector<HTMLElement>(".audience-book-word")!,
+    );
+    return {
+      background: screen.backgroundColor,
+      color: line.color,
+      fontFamily: screen.fontFamily,
+      headingColor: heading.color,
+      textShadow: line.textShadow,
+      verseColor: verseNumber.color,
+      verseStyle: verseNumber.fontStyle,
+    };
+  });
+  expect(ginmakuStyles).toEqual({
+    background: "rgb(0, 0, 0)",
+    color: "rgb(255, 255, 255)",
+    fontFamily: "Helvetica, Arial, sans-serif",
+    headingColor: "rgb(255, 255, 0)",
+    textShadow:
+      "rgb(0, 0, 255) -1px -1px 0px, rgb(0, 0, 255) 1px -1px 0px, rgb(0, 0, 255) -1px 1px 0px, rgb(0, 0, 255) 1px 1px 0px",
+    verseColor: "rgb(255, 255, 0)",
+    verseStyle: "italic",
+  });
   await expect(audience.locator(".controller-actions")).toHaveCount(0);
   await expect(audience.getByRole("button", { name: "次へ" })).toHaveCount(0);
 
@@ -101,37 +149,47 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   expect(audienceAccessibility.violations).toEqual([]);
 
   await page.getByRole("button", { name: "次へ" }).click();
-  await expect(
-    audience.getByRole("heading", { name: "創世記 1:2" }),
-  ).toBeVisible();
+  await expect(audience.locator(".audience-verse-number").first()).toHaveText(
+    "2:",
+  );
+  await page.getByRole("button", { name: "次へ" }).click();
+  await expect(audience.locator(".audience-verse-number").first()).toHaveText(
+    "3:",
+  );
   await page.getByRole("button", { name: "次へ" }).click();
   await expect(
-    audience.getByRole("heading", { name: "創世記 1:3" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "次へ" }).click();
-  await expect(
-    audience.getByRole("heading", { name: "創世記 2:1" }),
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 / Genesis : 2",
+    }),
   ).toBeVisible();
   await page.getByRole("button", { name: "前へ" }).click();
   await expect(
-    audience.getByRole("heading", { name: "創世記 1:3" }),
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 / Genesis : 1",
+    }),
   ).toBeVisible();
   await page.getByRole("button", { name: "次へ" }).click();
   await page.getByRole("button", { name: "次へ" }).click();
-  await expect(
-    audience.getByRole("heading", { name: "創世記 2:2" }),
-  ).toBeVisible();
+  await expect(audience.locator(".audience-verse-number").first()).toHaveText(
+    "2:",
+  );
   await page.getByRole("button", { name: "次へ" }).click();
   await expect(
-    audience.getByRole("heading", { name: "出エジプト記 1:1" }),
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 出エジプト記 / Exodus : 1",
+    }),
   ).toBeVisible();
   await page.getByRole("button", { name: "前へ" }).click();
   await expect(
-    audience.getByRole("heading", { name: "創世記 2:2" }),
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 / Genesis : 2",
+    }),
   ).toBeVisible();
   await page.getByRole("button", { name: "創世記 1:1" }).click();
   await expect(
-    audience.getByRole("heading", { name: "創世記 1:1" }),
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 / Genesis : 1",
+    }),
   ).toBeVisible();
 
   const initialFontSize = await audience
@@ -153,6 +211,32 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
         .evaluate((element) => getComputedStyle(element).fontSize),
     )
     .toBe(initialFontSize);
+
+  const overflowStyle = await audience.addStyleTag({
+    content: ".audience-book-word { font-size: 4em !important; }",
+  });
+  await audience.evaluate(() => window.dispatchEvent(new Event("resize")));
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-screen")
+        .evaluate((element) =>
+          Number(
+            getComputedStyle(element)
+              .getPropertyValue("--audience-fit-scale")
+              .trim(),
+          ),
+        ),
+    )
+    .toBeLessThan(1);
+  const fittedVerse = await audience.locator(".audience-verse").boundingBox();
+  expect(fittedVerse).not.toBeNull();
+  expect(fittedVerse!.y).toBeGreaterThanOrEqual(0);
+  expect(fittedVerse!.y + fittedVerse!.height).toBeLessThanOrEqual(720);
+  await overflowStyle.evaluate((element) =>
+    element.parentNode?.removeChild(element),
+  );
+  await audience.evaluate(() => window.dispatchEvent(new Event("resize")));
 
   await audience.addStyleTag({
     content: ".audience-content { min-height: 300vh !important; }",
@@ -205,7 +289,9 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
     timeout: 5_000,
   });
   const audienceReopened = context.waitForEvent("page");
-  await page.getByRole("button", { name: "会衆向け画面を開く" }).click();
+  await page
+    .getByRole("button", { name: "会衆向け画面を新しいタブで開く" })
+    .click();
   audience = await audienceReopened;
   await expect(
     audience.getByText("初めに、神が天と地を創造した。"),
