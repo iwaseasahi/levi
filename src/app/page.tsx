@@ -1,5 +1,5 @@
 export default function Home() {
-  const intentionalLintFailure: any = true;
+  const intentionalTypeFailure: string = 1;
 
   return (
     <main className="shell">
