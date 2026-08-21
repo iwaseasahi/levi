@@ -21,6 +21,20 @@ enum ChurchStatus {
   @@map("church_status")
 }
 
+enum BibleRightsStatus {
+  PENDING
+  APPROVED
+
+  @@map("bible_rights_status")
+}
+
+enum BibleTestament {
+  OLD
+  NEW
+
+  @@map("bible_testament")
+}
+
 model User {
   id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name               String            @db.VarChar(200)
@@ -138,4 +152,63 @@ model SystemSetting {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
 
   @@map("system_settings")
+}
+
+model BibleTranslation {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code            String            @unique(map: "bible_translations_code_uk") @db.VarChar(16)
+  name            String            @db.VarChar(200)
+  languageTag     String            @map("language_tag") @db.VarChar(35)
+  displayOrder    Int               @unique(map: "bible_translations_display_order_uk") @map("display_order") @db.SmallInt
+  rightsStatus    BibleRightsStatus @map("rights_status")
+  sourceReference String?           @map("source_reference") @db.Text
+  rightsNotice    String?           @map("rights_notice") @db.Text
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  bookNames       BibleBookName[]
+  verses          BibleVerse[]
+
+  @@map("bible_translations")
+}
+
+model BibleBook {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  canonicalCode  String          @unique(map: "bible_books_canonical_code_uk") @map("canonical_code") @db.VarChar(16)
+  canonicalOrder Int             @unique(map: "bible_books_canonical_order_uk") @map("canonical_order") @db.SmallInt
+  testament      BibleTestament
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  names          BibleBookName[]
+  verses         BibleVerse[]
+
+  @@map("bible_books")
+}
+
+model BibleBookName {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  translationId String           @map("translation_id") @db.Uuid
+  bookId        String           @map("book_id") @db.Uuid
+  name          String           @db.VarChar(100)
+  shortName     String?          @map("short_name") @db.VarChar(40)
+  translation   BibleTranslation @relation(fields: [translationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bible_book_names_translation_fk")
+  book          BibleBook        @relation(fields: [bookId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bible_book_names_book_fk")
+
+  @@unique([translationId, bookId], map: "bible_book_names_translation_book_uk")
+  @@unique([translationId, name], map: "bible_book_names_translation_name_uk")
+  @@map("bible_book_names")
+}
+
+model BibleVerse {
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  translationId String           @map("translation_id") @db.Uuid
+  bookId        String           @map("book_id") @db.Uuid
+  chapterNumber Int              @map("chapter_number") @db.SmallInt
+  verseNumber   Int              @map("verse_number") @db.SmallInt
+  text          String           @db.Text
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  translation   BibleTranslation @relation(fields: [translationId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bible_verses_translation_fk")
+  book          BibleBook        @relation(fields: [bookId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bible_verses_book_fk")
+
+  @@unique([translationId, bookId, chapterNumber, verseNumber], map: "bible_verses_location_uk")
+  @@index([bookId, chapterNumber, verseNumber, translationId], map: "bible_verses_navigation_idx")
+  @@map("bible_verses")
 }
