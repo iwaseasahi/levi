@@ -144,7 +144,7 @@ describe("shared Bible catalog constraints", () => {
     ).rejects.toThrow();
   });
 
-  it("requires positive unique verse locations but deliberately permits empty text", async () => {
+  it("preserves verse zero and empty text while rejecting invalid locations", async () => {
     const { book, translation } = await createCatalogFixture();
     const location = {
       translationId: translation.id,
@@ -154,6 +154,9 @@ describe("shared Bible catalog constraints", () => {
       text: "",
     };
     await prisma.bibleVerse.create({ data: location });
+    await expect(
+      prisma.bibleVerse.create({ data: { ...location, verseNumber: 0 } }),
+    ).resolves.toMatchObject({ verseNumber: 0, text: "" });
 
     await expect(
       prisma.bibleVerse.create({ data: location }),
@@ -161,6 +164,11 @@ describe("shared Bible catalog constraints", () => {
     await expect(
       prisma.bibleVerse.create({
         data: { ...location, chapterNumber: 0, verseNumber: 2 },
+      }),
+    ).rejects.toThrow();
+    await expect(
+      prisma.bibleVerse.create({
+        data: { ...location, verseNumber: -1 },
       }),
     ).rejects.toThrow();
     await expect(

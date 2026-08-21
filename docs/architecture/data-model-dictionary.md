@@ -204,7 +204,7 @@ longer exists.
 | Column             | Type           | Null | Contract                             |
 | ------------------ | -------------- | ---- | ------------------------------------ |
 | `id`               | `uuid`         | no   | PK                                   |
-| `code`             | `varchar(16)`  | no   | stable UK: initially `JSS3`, `KJV`   |
+| `code`             | `varchar(16)`  | no   | stable UK: initially `JSS3`, `NKJV`  |
 | `name`             | `varchar(200)` | no   | displayed translation name           |
 | `language_tag`     | `varchar(35)`  | no   | initial BCP 47 tags `ja` and `en`    |
 | `display_order`    | `smallint`     | no   | positive UK                          |
@@ -256,7 +256,7 @@ approved abbreviation is genuinely absent; empty strings are rejected.
 | `translation_id` | `uuid`        | no   | FK to translation `ON DELETE RESTRICT`        |
 | `book_id`        | `uuid`        | no   | FK to canonical book `ON DELETE RESTRICT`     |
 | `chapter_number` | `smallint`    | no   | positive                                      |
-| `verse_number`   | `smallint`    | no   | positive                                      |
+| `verse_number`   | `smallint`    | no   | non-negative; source includes verse 0         |
 | `text`           | `text`        | no   | scripture text; Confidential licensed content |
 | `created_at`     | `timestamptz` | no   | import time                                   |
 
@@ -264,7 +264,7 @@ Constraints and indexes:
 
 - `bible_verses_location_uk`: unique
   `(translation_id, book_id, chapter_number, verse_number)`.
-- `bible_verses_numbers_ck`: both numbers are positive.
+- `bible_verses_numbers_ck`: chapter is positive and verse is non-negative.
 - `bible_verses_navigation_idx`:
   `(book_id, chapter_number, verse_number, translation_id)` for paired display
   and canonical next/previous lookup.
@@ -325,14 +325,14 @@ Constraints and indexes:
 | `bookmark_id`              | `uuid`     | no   | PK, FK to Bookmark `ON DELETE CASCADE` |
 | `book_id`                  | `uuid`     | no   | canonical book                         |
 | `chapter_number`           | `smallint` | no   | positive                               |
-| `start_verse`              | `smallint` | no   | positive inclusive start               |
+| `start_verse`              | `smallint` | no   | non-negative inclusive start           |
 | `end_verse`                | `smallint` | no   | inclusive end, at or after start       |
 | `primary_translation_id`   | `uuid`     | no   | first/only displayed translation       |
 | `secondary_translation_id` | `uuid`     | yes  | optional paired translation            |
 
 Constraints:
 
-- `scripture_bookmarks_range_ck`: positive chapter/verses and
+- `scripture_bookmarks_range_ck`: positive chapter, non-negative verses, and
   `end_verse >= start_verse`.
 - `scripture_bookmarks_translations_ck`: secondary is null or differs from
   primary.
@@ -426,7 +426,7 @@ reconciliation query reports zero violations, then made the target contract.
 | Suspension         | active/null and suspended/timestamp                     | inconsistent status/timestamp                                                  |
 | Session            | unique token and future expiry                          | duplicate token; expiry not after creation; cascade scope                      |
 | Bible masters      | unique stable code/order/name                           | duplicate code/order/name; blank name; invalid code                            |
-| Verse              | positive unique canonical location                      | zero/negative number; duplicate location; missing parent                       |
+| Verse              | unique canonical location; chapter > 0 and verse >= 0   | invalid number; duplicate location; missing parent                             |
 | Folder ownership   | tenant Folder with unique position                      | cross-tenant Bookmark/Folder pair; duplicate/negative position                 |
 | Bookmark subtype   | parent and typed child in one transaction               | parent without child; child without parent; subtype-only delete                |
 | Scripture range    | existing inclusive primary/optional-secondary endpoints | reverse range; same translations; missing endpoint; nonexistent book/chapter   |

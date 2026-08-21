@@ -49,10 +49,10 @@ bookmarks and folders. It does not require an outbound email service.
 
 The retained translations are:
 
-| Stable code | Display name             | Language |
-| ----------- | ------------------------ | -------- |
-| `JSS3`      | 新改訳聖書第3版          | Japanese |
-| `KJV`       | King James Version (KJV) | English  |
+| Stable code | Display name                  | Language |
+| ----------- | ----------------------------- | -------- |
+| `JSS3`      | 新改訳聖書第3版               | Japanese |
+| `NKJV`      | New King James Version (NKJV) | English  |
 
 Translation is first-class master data. A verse is identified by translation,
 canonical book, chapter number, and verse number; it must not depend on a legacy
@@ -82,7 +82,7 @@ have unrelated IDs.
 Examples:
 
 - `ヨハネ 3:16–18 / 日本語` initially shows three Japanese items.
-- `John 3:16–18 / English` initially shows three KJV items.
+- `John 3:16–18 / English` initially shows three NKJV items.
 - `ヨハネ 3:16–18 / 両方` initially shows three paired items, not six
   independently navigable items.
 

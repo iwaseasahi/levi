@@ -80,15 +80,16 @@ of this decision.
 
 ### Bible catalog and typed bookmarks
 
-- `BibleTranslation` identifies JSS3 and KJV through stable codes and carries a
+- `BibleTranslation` identifies JSS3 and NKJV through stable codes and carries a
   rights/provenance gate. A translation is not inferred from language or legacy
   version text, and Bible text cannot be imported or displayed while its status
   is pending approval.
 - `BibleBook` provides one canonical book identity and order shared by every
   translation plus an Old/New Testament classification. `BibleBookName` stores
   a translation-specific displayed name.
-- `BibleVerse` is unique by translation, book, chapter, and verse. Chapter and
-  verse numbers are positive; navigation uses canonical book order and existing
+- `BibleVerse` is unique by translation, book, chapter, and verse. Chapter
+  numbers are positive and verse numbers are non-negative because the approved
+  legacy source contains verse-zero rows; navigation uses canonical book order and existing
   locations, never row UUID or insertion order.
 - Verse text is non-null. A nonblank CHECK is not added until approved dump
   profiling in Issue #47 proves that the source contains no meaningful empty
@@ -99,7 +100,7 @@ of this decision.
   translation, and optional secondary translation. It never stores route JSON.
 - Composite foreign keys from each selected translation and both range endpoints
   to `BibleVerse` prove that the selected start/end locations exist. A CHECK
-  requires positive numbers, `end_verse >= start_verse`, and distinct primary
+  requires a positive chapter, non-negative verses, `end_verse >= start_verse`, and distinct primary
   and secondary translations.
 
 ### Ordering and concurrency
