@@ -48,11 +48,20 @@ provider output or environment variables into the normalized result.
 ## Provider invocation
 
 Codex runs non-interactively with an explicit `workspace-write` sandbox,
-ephemeral state, JSONL events, and stdin prompt. Claude runs in print mode with
-JSON output, `acceptEdits`, no persisted session, a hard workflow timeout, and a
-dollar budget. The current Claude CLI does not expose a turn-count flag, so the
-timeout and budget are the enforceable bounds. The workflow pins the CLI package
+ephemeral state, ignored user configuration, strict configuration validation,
+JSONL events, stdin prompt, and a subprocess environment filter that removes all
+provider API keys. Claude runs in bare print mode so repository hooks, plugins,
+MCP configuration, and local login state are not loaded; it uses JSON output,
+`acceptEdits`, no persisted session, a hard workflow timeout, and a dollar
+budget. The current Claude CLI does not expose a turn-count flag, so the timeout
+and budget are the enforceable bounds. The workflow pins the CLI package
 versions; updating them requires the normal dependency/security review.
+
+Claude credential-bearing steps do not enable the Bash tool. The fallback writer
+uses repository file tools and the later credential-free quality gate runs all
+commands. Claude review receives the staged diff in its prompt and uses read-only
+file/search tools. Codex may use shell commands, but its subprocess environment
+explicitly excludes all provider API-key variables.
 
 The prompt treats the Issue as scoped task data. Only a repository collaborator
 with write permission may dispatch an agent workflow. Pull-request or Issue
@@ -61,8 +70,11 @@ text never starts a writer automatically.
 ## Credential and permission boundaries
 
 - `prepare` receives only a read-only GitHub token and no provider credential.
-- `codex_generate` receives only `CODEX_API_KEY`; `claude_fallback` receives only
-  `ANTHROPIC_API_KEY`.
+- Only the exact `codex exec` wrapper step receives `CODEX_API_KEY`; checkout,
+  dependency installation, routing, checkpointing, and artifact steps cannot
+  read it.
+- Only the exact Claude invocation step receives `ANTHROPIC_API_KEY`; checkout,
+  dependency installation, patch application, and artifact steps cannot read it.
 - Provider jobs have read-only GitHub permission and export a patch/checkpoint.
 - `quality_gate` has no provider credential and a read-only GitHub token.
 - `open_pr` is the only job with repository write permission and has no provider

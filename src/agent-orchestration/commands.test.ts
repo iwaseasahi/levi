@@ -11,7 +11,11 @@ describe("providerCommand", () => {
         "--sandbox",
         "workspace-write",
         "--ephemeral",
+        "--ignore-user-config",
+        "--strict-config",
         "--json",
+        "--config",
+        'shell_environment_policy.filters={CODEX_API_KEY="exclude",OPENAI_API_KEY="exclude",ANTHROPIC_API_KEY="exclude"}',
         "--cd",
         "/repo",
         "-",
@@ -25,6 +29,7 @@ describe("providerCommand", () => {
       workspace: "/repo",
       maxBudgetUsd: 25,
     });
+    expect(command.args).toContain("--bare");
     expect(command.args).toContain("--no-session-persistence");
     expect(command.args).toContain("--max-budget-usd");
     expect(command.args).toContain("25");

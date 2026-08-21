@@ -50,6 +50,14 @@ PR publication job receives no provider secret. PRs created by the workflow
 still run the protected `Quality`, `Database`, `E2E`, and `Security` checks;
 their pre-publication gate is not a substitute for protected CI.
 
+Provider credentials are scoped to the single CLI invocation step, not the job.
+Checkout, package installation, repository scripts, routing, checkpointing,
+artifact upload, quality checks, and PR publication do not receive them. Codex
+also excludes provider-key variables from shell subprocesses, and Claude uses
+bare mode to disable repository/user hooks and plugin/MCP auto-discovery. Claude
+credential-bearing steps do not expose the Bash tool; command-based verification
+runs later in a credential-free job.
+
 The manual `simulate_codex_usage_limit` input skips the Codex call and creates a
 synthetic normalized usage-limit result. Use it only to rehearse the full Claude
 handoff path; ordinary runs leave it disabled.
