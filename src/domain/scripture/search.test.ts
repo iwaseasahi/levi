@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assembleScriptureSearchItems,
+  parseScriptureCatalogQuery,
   parseScriptureSearch,
   ScriptureSearchError,
   type ScriptureRow,
@@ -28,6 +29,32 @@ function row(verse: number, translation: "JSS3" | "NKJV"): ScriptureRow {
 }
 
 describe("scripture search domain", () => {
+  it("parses each valid catalog selection depth", () => {
+    expect(
+      parseScriptureCatalogQuery(new URLSearchParams("language=both")),
+    ).toEqual({ language: "both" });
+    expect(
+      parseScriptureCatalogQuery(
+        new URLSearchParams("language=ja&book=PSA&chapter=1"),
+      ),
+    ).toEqual({ language: "ja", book: "PSA", chapter: 1 });
+  });
+
+  it.each([
+    "language=both&chapter=1",
+    "language=both&language=ja",
+    "language=both&book=jhn",
+    "language=both&extra=1",
+  ])("rejects an invalid catalog hierarchy: %s", (query) => {
+    expect(() =>
+      parseScriptureCatalogQuery(new URLSearchParams(query)),
+    ).toThrow(
+      expect.objectContaining<Partial<ScriptureSearchError>>({
+        code: "INVALID_SEARCH_INPUT",
+      }),
+    );
+  });
+
   it("parses one strict inclusive range including verse zero", () => {
     expect(
       parseScriptureSearch(
