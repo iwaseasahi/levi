@@ -1,4 +1,6 @@
 export default function Home() {
+  const intentionalLintFailure: any = true;
+
   return (
     <main className="shell">
       <section className="card" aria-labelledby="page-title">
