@@ -65,6 +65,11 @@ development service without assembling commands by hand.
 - 2026-08-21 22:25 JST — Reviewed the complete staged diff for scope, secrets,
   environment preservation, database isolation, unsafe defaults, and generated
   noise; no unresolved findings remain.
+- 2026-08-21 22:27 JST — PR #95 passed Quality, E2E, and Security. Database
+  exposed that the full rollback/backup/restore rehearsal took 6.36 seconds on
+  CI and exceeded Vitest's generic 5-second limit. Kept retries at zero and all
+  assertions intact; assigned the long-running rehearsal an explicit 30-second
+  upper bound before repeating local and exact-head verification.
 
 ## Decisions
 
@@ -90,6 +95,11 @@ development service without assembling commands by hand.
   - Reason: `.env` intentionally configures the port-3000 development server;
     allowing it to configure Playwright's port-3100 server causes CSRF origin
     rejection and prevents a reproducible local E2E run.
+- 2026-08-21 — Decision: use a test-local 30-second limit for the database
+  rehearsal instead of retrying CI.
+  - Reason: the operation intentionally performs failure injection, retry,
+    backup, restore, and reconciliation; CI evidence measured 6.36 seconds, so
+    the generic 5-second unit-scale default was not a valid integration bound.
 
 ## Risks and mitigations
 
