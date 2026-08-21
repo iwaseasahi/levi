@@ -35,3 +35,7 @@ Temporary intentional failures used for that proof must not be committed.
 Tests that intentionally provoke a browser resource error must register its
 exact console message through `pageErrorGuard.allowConsoleError`. The exception
 is local to that test and does not suppress other console or page errors.
+
+The initial-release latest-Chrome behavior and its secret-bearing artifact
+boundary are mapped in
+[`docs/testing-initial-release-e2e.md`](testing-initial-release-e2e.md).

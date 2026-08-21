@@ -48,7 +48,7 @@ test.describe("operator administration access", () => {
 test.describe("operator church provisioning", () => {
   test.describe.configure({ mode: "serial" });
 
-  test("creates one account, dismisses its credential, and safely rejects a retry", async ({
+  test("provisions an account through first login, password change, and logout", async ({
     page,
   }) => {
     await signIn(page, E2E_OPERATOR_EMAIL);
@@ -74,6 +74,11 @@ test.describe("operator church provisioning", () => {
     });
     await expect(success).toBeVisible();
     await expect(success).toBeFocused();
+    await page.getByRole("button", { name: "一時パスワードを表示" }).click();
+    const temporaryPassword = await page
+      .locator(".credential-summary code")
+      .textContent();
+    expect(temporaryPassword).toHaveLength(24);
     await page.getByRole("button", { name: "表示を閉じる" }).click();
     await expect(page.locator(".credential-summary")).toHaveCount(0);
     await expect(
@@ -92,5 +97,29 @@ test.describe("operator church provisioning", () => {
     await expect(page.locator(".notice-error")).toContainText(
       "作成できませんでした。入力内容を確認して、もう一度お試しください。",
     );
+
+    await page.request.post("/api/auth/sign-out", {
+      headers: { origin: "http://127.0.0.1:3100" },
+    });
+    await page.goto("/login");
+    await page.getByLabel("メールアドレス").fill(E2E_CREATED_EMAIL);
+    await page.getByLabel("パスワード").fill(temporaryPassword ?? "");
+    await page.getByRole("button", { name: "ログイン" }).click();
+    await expect(page).toHaveURL(/\/change-password$/, { timeout: 20_000 });
+
+    const selectedPassword = "n".repeat(16);
+    await page.getByLabel("現在の一時パスワード").fill(temporaryPassword ?? "");
+    await page
+      .getByLabel("新しいパスワード", { exact: true })
+      .fill(selectedPassword);
+    await page.getByLabel("新しいパスワード（確認）").fill(selectedPassword);
+    await page.getByRole("button", { name: "パスワードを変更" }).click();
+    await page.getByRole("button", { name: "教会用画面へ" }).click();
+    await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
+    await expect(
+      page.getByRole("heading", { name: E2E_CREATED_CHURCH }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "ログアウト" }).click();
+    await expect(page).toHaveURL(/\/login$/);
   });
 });

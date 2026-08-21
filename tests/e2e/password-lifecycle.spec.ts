@@ -9,7 +9,8 @@ import {
 
 test.use({ screenshot: "off", trace: "off", video: "off" });
 
-test("operator reset forces a user-selected password before Church access", async ({
+test("operator reset revokes the old session and forces a new password", async ({
+  browser,
   page,
 }) => {
   const signIn = async (email: string, password: string) => {
@@ -18,6 +19,18 @@ test("operator reset forces a user-selected password before Church access", asyn
     await page.getByLabel("パスワード").fill(password);
     await page.getByRole("button", { name: "ログイン" }).click();
   };
+
+  const staleContext = await browser.newContext();
+  const stalePage = await staleContext.newPage();
+  const staleSignIn = await stalePage.request.post("/api/auth/sign-in/email", {
+    data: { email: E2E_PASSWORD_USER_EMAIL, password: E2E_PASSWORD },
+    headers: { origin: "http://127.0.0.1:3100" },
+  });
+  expect(staleSignIn.ok()).toBe(true);
+  await stalePage.goto("/church");
+  await expect(
+    stalePage.getByRole("heading", { name: "test.e2e password church" }),
+  ).toBeVisible();
 
   const operatorSignIn = await page.request.post("/api/auth/sign-in/email", {
     data: { email: E2E_OPERATOR_EMAIL, password: E2E_PASSWORD },
@@ -36,6 +49,9 @@ test("operator reset forces a user-selected password before Church access", asyn
     .textContent();
   expect(temporaryPassword).toHaveLength(24);
   await page.getByRole("button", { name: "表示を閉じる" }).click();
+  await stalePage.reload();
+  await expect(stalePage).toHaveURL(/\/login$/);
+  await staleContext.close();
   await page.request.post("/api/auth/sign-out", {
     headers: { origin: "http://127.0.0.1:3100" },
   });
