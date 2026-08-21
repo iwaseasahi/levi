@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ChurchScope } from "@/application/auth/church-access";
 import { createScriptureCatalogHandler } from "./controller";
 
 const authorized = {
-  churchId: "church-id",
   mustChangePassword: false,
+  scope: { churchId: "church-id" } as ChurchScope,
   status: "authorized" as const,
   userId: "user-id",
 };

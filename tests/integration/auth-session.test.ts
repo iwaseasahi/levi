@@ -45,6 +45,34 @@ async function createMember(status: "ACTIVE" | "SUSPENDED" = "ACTIVE") {
   return { email, userId };
 }
 
+async function createNonChurchIdentity(actor: "operator" | "pending") {
+  const userId = randomUUID();
+  const email = `${prefix}.${actor}.${randomUUID()}@example.invalid`;
+  const hash = await hashPassword(password);
+  await prisma.$transaction(async (tx) => {
+    await tx.user.create({
+      data: {
+        actorState: actor === "pending" ? "PENDING" : "ACTIVE",
+        email,
+        id: userId,
+        name: `Synthetic ${actor}`,
+      },
+    });
+    if (actor === "operator")
+      await tx.platformOperator.create({ data: { userId } });
+    await tx.account.create({
+      data: {
+        accountId: userId,
+        issuer: "local:credential",
+        password: hash,
+        providerId: "credential",
+        userId,
+      },
+    });
+  });
+  return { email, userId };
+}
+
 async function signIn(email: string) {
   const result = await auth.api.signInEmail({
     body: { email, password },
@@ -98,6 +126,23 @@ describe("Church authentication session lifecycle", () => {
       status: "forbidden",
       userId: member.userId,
     });
+  });
+
+  it("denies an active operator at the Church tenant boundary", async () => {
+    const operator = await createNonChurchIdentity("operator");
+    const { cookie } = await signIn(operator.email);
+    await expect(getChurchAccess(new Headers({ cookie }))).resolves.toEqual({
+      status: "forbidden",
+      userId: operator.userId,
+    });
+  });
+
+  it("does not create a session for a pending identity", async () => {
+    const pending = await createNonChurchIdentity("pending");
+    await expect(signIn(pending.email)).rejects.toThrow();
+    await expect(
+      prisma.session.count({ where: { userId: pending.userId } }),
+    ).resolves.toBe(0);
   });
 
   it("rejects expired and explicitly revoked sessions at the tenant boundary", async () => {

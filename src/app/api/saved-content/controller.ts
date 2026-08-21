@@ -49,7 +49,7 @@ async function authorized(request: Request, dependencies: Dependencies) {
     return { response: json({ error: { code: "UNAUTHENTICATED" } }, 401) };
   if (access.status !== "authorized" || access.mustChangePassword)
     return { response: json({ error: { code: "FORBIDDEN" } }, 403) };
-  return { churchId: access.churchId };
+  return { scope: access.scope };
 }
 
 export function createSavedContentHandlers(dependencies: Dependencies) {
@@ -65,11 +65,11 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
         if (values.length === 0) {
           const folders = await listFolders(
             dependencies.repository,
-            access.churchId,
+            access.scope,
           );
           const orderIds = await listFolderOrder(
             dependencies.repository,
-            access.churchId,
+            access.scope,
           );
           return json({ folders, orderIds });
         }
@@ -78,7 +78,7 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
         return json(
           await selectFolder(
             dependencies.repository,
-            access.churchId,
+            access.scope,
             parseSavedContentId(values[0]),
           ),
         );
@@ -97,7 +97,7 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
             return json({
               folder: await createFolder(
                 dependencies.repository,
-                access.churchId,
+                access.scope,
                 command.input.name,
               ),
             });
@@ -105,7 +105,7 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
             return json({
               folder: await updateFolder(
                 dependencies.repository,
-                access.churchId,
+                access.scope,
                 command.folderId,
                 {
                   ...(command.input.name !== undefined
@@ -120,14 +120,14 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
           case "reorder-folders":
             await reorderFolders(
               dependencies.repository,
-              access.churchId,
+              access.scope,
               command.ids,
             );
             return json({ ok: true });
           case "delete-folder":
             await deleteFolder(
               dependencies.repository,
-              access.churchId,
+              access.scope,
               command.folderId,
             );
             return json({ ok: true });
@@ -135,7 +135,7 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
             return json({
               bookmark: await createBookmark(
                 dependencies.repository,
-                access.churchId,
+                access.scope,
                 command.folderId,
                 command.input,
               ),
@@ -144,14 +144,14 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
             return json({
               bookmark: await openBookmark(
                 dependencies.repository,
-                access.churchId,
+                access.scope,
                 command.bookmarkId,
               ),
             });
           case "reorder-bookmarks":
             await reorderBookmarks(
               dependencies.repository,
-              access.churchId,
+              access.scope,
               command.folderId,
               command.ids,
             );
@@ -159,7 +159,7 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
           case "delete-bookmark":
             await deleteBookmark(
               dependencies.repository,
-              access.churchId,
+              access.scope,
               command.bookmarkId,
             );
             return json({ ok: true });

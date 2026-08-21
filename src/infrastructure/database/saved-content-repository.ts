@@ -99,7 +99,7 @@ function sameIdSet(current: string[], submitted: string[]) {
 }
 
 export const savedContentRepository: SavedContentRepository = {
-  async listFolders(churchId) {
+  async listFolders({ churchId }) {
     const pinned = await prisma.folder.findMany({
       where: { churchId, isPinned: true },
       orderBy: [{ position: "asc" }, { id: "asc" }],
@@ -117,7 +117,7 @@ export const savedContentRepository: SavedContentRepository = {
     return [...pinned, ...recent].map(folderView);
   },
 
-  async listFolderOrder(churchId) {
+  async listFolderOrder({ churchId }) {
     const folders = await prisma.folder.findMany({
       where: { churchId },
       orderBy: [{ position: "asc" }, { id: "asc" }],
@@ -126,7 +126,7 @@ export const savedContentRepository: SavedContentRepository = {
     return folders.map(({ id }) => id);
   },
 
-  async createFolder(churchId, name) {
+  async createFolder({ churchId }, name) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockChurch(transaction, churchId))) return null;
       const position = await transaction.folder.count({ where: { churchId } });
@@ -138,7 +138,7 @@ export const savedContentRepository: SavedContentRepository = {
     });
   },
 
-  async updateFolder(churchId, folderId, input) {
+  async updateFolder({ churchId }, folderId, input) {
     const changed = await prisma.folder.updateMany({
       where: { churchId, id: folderId },
       data: {
@@ -153,7 +153,7 @@ export const savedContentRepository: SavedContentRepository = {
     return folder ? folderView(folder) : null;
   },
 
-  async selectFolder(churchId, folderId) {
+  async selectFolder({ churchId }, folderId) {
     return prisma.$transaction(async (transaction) => {
       const changed = await transaction.folder.updateMany({
         where: { churchId, id: folderId },
@@ -175,7 +175,7 @@ export const savedContentRepository: SavedContentRepository = {
     });
   },
 
-  async reorderFolders(churchId, ids) {
+  async reorderFolders({ churchId }, ids) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockChurch(transaction, churchId))) return false;
       const current = await transaction.folder.findMany({
@@ -202,7 +202,7 @@ export const savedContentRepository: SavedContentRepository = {
     });
   },
 
-  async deleteFolder(churchId, folderId) {
+  async deleteFolder({ churchId }, folderId) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockChurch(transaction, churchId))) return false;
       const folder = await transaction.folder.findFirst({
@@ -222,7 +222,7 @@ export const savedContentRepository: SavedContentRepository = {
     });
   },
 
-  async createBookmark(churchId, folderId, input) {
+  async createBookmark({ churchId }, folderId, input) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockFolder(transaction, churchId, folderId))) return null;
       const book = await transaction.bibleBook.findUnique({
@@ -278,7 +278,7 @@ export const savedContentRepository: SavedContentRepository = {
     });
   },
 
-  async openBookmark(churchId, bookmarkId) {
+  async openBookmark({ churchId }, bookmarkId) {
     return prisma.$transaction(async (transaction) => {
       const bookmark = await transaction.bookmark.findFirst({
         where: { churchId, id: bookmarkId },
@@ -293,7 +293,7 @@ export const savedContentRepository: SavedContentRepository = {
     });
   },
 
-  async reorderBookmarks(churchId, folderId, ids) {
+  async reorderBookmarks({ churchId }, folderId, ids) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockFolder(transaction, churchId, folderId))) return false;
       const current = await transaction.bookmark.findMany({
@@ -320,7 +320,7 @@ export const savedContentRepository: SavedContentRepository = {
     });
   },
 
-  async deleteBookmark(churchId, bookmarkId) {
+  async deleteBookmark({ churchId }, bookmarkId) {
     return prisma.$transaction(async (transaction) => {
       const bookmark = await transaction.bookmark.findFirst({
         where: { churchId, id: bookmarkId },
