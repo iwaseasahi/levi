@@ -8,7 +8,7 @@ import {
 } from "./options";
 
 const config = (nodeEnvironment: AuthRuntimeConfig["nodeEnvironment"]) => ({
-  secret: "synthetic-secret-with-at-least-32-characters",
+  secret: "x".repeat(32),
   baseURL: "https://levi.example",
   trustedOrigins: ["https://levi.example"],
   nodeEnvironment,
