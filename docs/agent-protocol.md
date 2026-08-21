@@ -25,6 +25,11 @@ blocker/switch reason, retry time, and the patch SHA-256. The JSON interface is
 defined by `docs/schemas/handoff.schema.json` and the matching `HandoffManifest`
 type in `src/agent-orchestration/types.ts`.
 
+The patch includes tracked modifications and newly created repository files.
+Runtime files under `agent-artifacts/` are deliberately excluded so prompts,
+provider output, and normalized results cannot be folded back into source
+changes or published by the downstream PR job.
+
 Artifacts contain facts and reproducible evidence only. Do not include chat
 history, hidden reasoning, provider credentials, environment dumps, personal
 data, or production data. The receiving writer must verify the Issue, base SHA,

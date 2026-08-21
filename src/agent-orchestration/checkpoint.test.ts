@@ -1,10 +1,18 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { execFile as execFileCallback } from "node:child_process";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { promisify } from "node:util";
 
 import { describe, expect, it } from "vitest";
 
-import { verifyCheckpoint, writeCheckpoint } from "./checkpoint";
+import {
+  createWorkspacePatch,
+  verifyCheckpoint,
+  writeCheckpoint,
+} from "./checkpoint";
+
+const execFile = promisify(execFileCallback);
 
 describe("checkpoint", () => {
   it("writes an integrity-bound manifest and patch", async () => {
@@ -37,5 +45,43 @@ describe("checkpoint", () => {
     expect(
       await readFile(path.join(directory, "changes.patch"), "utf8"),
     ).toContain("diff --git");
+  });
+
+  it("includes untracked source files but excludes runtime artifacts", async () => {
+    const workspace = await mkdtemp(path.join(tmpdir(), "levi-workspace-"));
+    await execFile("git", ["init"], { cwd: workspace });
+    await execFile("git", ["config", "user.email", "test@example.invalid"], {
+      cwd: workspace,
+    });
+    await execFile("git", ["config", "user.name", "Test"], { cwd: workspace });
+    await writeFile(
+      path.join(workspace, "tracked.ts"),
+      "export const old = 1;\n",
+    );
+    await execFile("git", ["add", "tracked.ts"], { cwd: workspace });
+    await execFile("git", ["commit", "-m", "base"], { cwd: workspace });
+
+    await writeFile(
+      path.join(workspace, "tracked.ts"),
+      "export const old = 2;\n",
+    );
+    await mkdir(path.join(workspace, "src"));
+    await writeFile(
+      path.join(workspace, "src/new.ts"),
+      "export const added = 1;\n",
+    );
+    await mkdir(path.join(workspace, "agent-artifacts"));
+    await writeFile(
+      path.join(workspace, "agent-artifacts/provider-output.json"),
+      '{"secret":"must-not-be-checkpointed"}\n',
+    );
+
+    const result = await createWorkspacePatch(workspace);
+
+    expect(result.changedFiles).toEqual(["src/new.ts", "tracked.ts"]);
+    expect(result.patch).toContain("diff --git a/src/new.ts b/src/new.ts");
+    expect(result.patch).toContain("new file mode 100644");
+    expect(result.patch).not.toContain("agent-artifacts");
+    expect(result.patch).not.toContain("must-not-be-checkpointed");
   });
 });
