@@ -70,6 +70,24 @@ describe("projection state and protocol", () => {
     ).not.toBeNull();
     expect(
       parseAudienceProjectionMessage({
+        direction: "next",
+        schema: projectionSchema,
+        sessionId: "00000000-0000-4000-8000-000000000098",
+        type: "NAVIGATE",
+        version: projectionVersion,
+      }),
+    ).not.toBeNull();
+    expect(
+      parseAudienceProjectionMessage({
+        direction: "down",
+        schema: projectionSchema,
+        sessionId: "00000000-0000-4000-8000-000000000098",
+        type: "NAVIGATE",
+        version: projectionVersion,
+      }),
+    ).toBeNull();
+    expect(
+      parseAudienceProjectionMessage({
         schema: projectionSchema,
         version: 1,
         type: "READY",

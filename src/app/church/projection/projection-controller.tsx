@@ -78,6 +78,9 @@ export function ProjectionController({
   const sessionId = useRef("");
   const currentItemRef = useRef<ScriptureSearchItem | null>(null);
   const navigationQueue = useRef(Promise.resolve());
+  const audienceNavigation = useRef<(direction: "previous" | "next") => void>(
+    () => undefined,
+  );
 
   useEffect(() => {
     sessionId.current = crypto.randomUUID();
@@ -164,10 +167,15 @@ export function ProjectionController({
         return;
       const message = parseAudienceProjectionMessage(event.data);
       if (!message) return;
-      if (message.type === "PONG" && message.sessionId !== sessionId.current)
+      if (
+        (message.type === "PONG" || message.type === "NAVIGATE") &&
+        message.sessionId !== sessionId.current
+      )
         return;
       lastHeartbeat.current = Date.now();
       if (message.type === "READY") setSyncNonce((value) => value + 1);
+      if (message.type === "NAVIGATE")
+        audienceNavigation.current(message.direction);
       setConnection((state) => reduceAudienceConnection(state, "ready"));
     }
     window.addEventListener("message", receive);
@@ -312,6 +320,10 @@ export function ProjectionController({
       }
     });
   }
+
+  useEffect(() => {
+    audienceNavigation.current = queueNavigation;
+  });
 
   function openAudience() {
     const target = window.open("/church/audience", "_blank");

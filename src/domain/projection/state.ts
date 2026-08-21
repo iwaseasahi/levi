@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const projectionSchema = "levi.projection" as const;
-export const projectionVersion = 2 as const;
+export const projectionVersion = 3 as const;
 
 export type ProjectionControlState = {
   blank: boolean;
@@ -131,6 +131,14 @@ const audienceMessageSchema = z.discriminatedUnion("type", [
   z.object({ ...envelope, type: z.literal("READY") }).strict(),
   z
     .object({ ...envelope, type: z.literal("PONG"), sessionId: z.uuid() })
+    .strict(),
+  z
+    .object({
+      ...envelope,
+      direction: z.enum(["previous", "next"]),
+      sessionId: z.uuid(),
+      type: z.literal("NAVIGATE"),
+    })
     .strict(),
 ]);
 

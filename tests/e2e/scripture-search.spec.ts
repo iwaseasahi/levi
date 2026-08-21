@@ -148,21 +148,37 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   }).analyze();
   expect(audienceAccessibility.violations).toEqual([]);
 
-  await page.getByRole("button", { name: "次へ" }).click();
+  const audienceScrollTop = await audience
+    .locator(".audience-screen")
+    .evaluate((element) => element.scrollTop);
+  await audience.keyboard.press("ArrowDown");
   await expect(audience.locator(".audience-verse-number").first()).toHaveText(
     "2:",
   );
-  await page.getByRole("button", { name: "次へ" }).click();
+  expect(
+    await audience
+      .locator(".audience-screen")
+      .evaluate((element) => element.scrollTop),
+  ).toBe(audienceScrollTop);
+  await audience.keyboard.press("ArrowUp");
+  await expect(audience.locator(".audience-verse-number").first()).toHaveText(
+    "1:",
+  );
+  await audience.keyboard.press("ArrowDown");
+  await expect(audience.locator(".audience-verse-number").first()).toHaveText(
+    "2:",
+  );
+  await audience.keyboard.press("ArrowDown");
   await expect(audience.locator(".audience-verse-number").first()).toHaveText(
     "3:",
   );
-  await page.getByRole("button", { name: "次へ" }).click();
+  await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
       name: "新改訳聖書第3版 創世記 / Genesis : 2",
     }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "前へ" }).click();
+  await audience.keyboard.press("ArrowUp");
   await expect(
     audience.getByRole("heading", {
       name: "新改訳聖書第3版 創世記 / Genesis : 1",

@@ -97,6 +97,34 @@ export function AudienceDisplay() {
   }, []);
 
   useEffect(() => {
+    if (!authorized || !display) return;
+    const activeDisplay = display;
+
+    function navigateWithArrowKey(event: KeyboardEvent) {
+      const direction =
+        event.key === "ArrowUp"
+          ? ("previous" as const)
+          : event.key === "ArrowDown"
+            ? ("next" as const)
+            : null;
+      const target = opener.current;
+      if (!direction || !target) return;
+      event.preventDefault();
+      const navigate: AudienceProjectionMessage = {
+        direction,
+        schema: projectionSchema,
+        sessionId: activeDisplay.sessionId,
+        type: "NAVIGATE",
+        version: projectionVersion,
+      };
+      target.postMessage(navigate, window.location.origin);
+    }
+
+    window.addEventListener("keydown", navigateWithArrowKey);
+    return () => window.removeEventListener("keydown", navigateWithArrowKey);
+  }, [authorized, display]);
+
+  useEffect(() => {
     if (
       !display?.scrollDirection ||
       display.scrollRevision <= lastScrollRevision.current
