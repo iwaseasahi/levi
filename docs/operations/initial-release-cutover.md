@@ -8,31 +8,35 @@ static Bible catalog and Levi does not need a mutable dual-write period. The
 product owner and operations owner must approve the strategy, target, window,
 and every production action immediately before execution.
 
-Production hosting, region, PostgreSQL, backup/PITR, secret store, monitoring,
-cost ceiling, and operational ownership remain blocked on Issue #81 and ADR 0005. No outbound email provider is part of the initial release.
+ADR 0005 selects WebARENA Indigo Linux 4 GB in Tokyo with Caddy, Levi, and
+PostgreSQL 18 on one VPS. Issues #85–#89 still block production Compose,
+hardening, backup/restore, deploy, monitoring, domain/TLS, capacity proof,
+contracting, and credentials. No outbound email provider is part of the initial
+release.
 
 ## Service objectives and backup requirements
 
-The production provider must prove these entry criteria before it can be
-selected:
+The selected single-VPS implementation must prove these entry criteria before
+traffic is enabled:
 
 - recovery point objective (RPO): no more than 60 minutes of accepted mutable
   Levi data;
 - recovery time objective (RTO): restore a clean environment, reconcile data,
   pass readiness and critical smoke checks, and make the go/no-go decision
   within 120 minutes;
-- continuous PITR or backups at least hourly, plus an encrypted daily recovery
-  point retained for at least 35 days;
-- an access-controlled immutable or separately administered copy that cannot be
-  deleted with ordinary application credentials;
+- an encrypted on-host database archive at least hourly, retained for 48 hours,
+  plus a daily archive retained for 14 days;
+- archive ownership and permissions that prevent the application container from
+  reading, modifying, or deleting backups;
 - a successful restore into an isolated environment before first release and
   at least quarterly thereafter;
 - alert when the newest usable recovery point exceeds 60 minutes or the newest
   successful restore proof exceeds 90 days.
 
-Issue #81 must identify encryption/key ownership, retention/deletion policy,
-backup region, audit access, cost, and the human authorized to restore. These
-requirements are targets, not claims about an unselected provider.
+These RPO/RTO objectives cover operator or application error only while the VPS
+and disk remain available. ADR 0005 explicitly provides no objective for VPS,
+disk, provider, or Tokyo-region loss. Issue #86 must identify encryption/key
+ownership, audit access, storage limits, and the human authorized to restore.
 
 ## Roles required at the release gate
 
@@ -54,9 +58,10 @@ decision.
 
 ## Credential and recovery rules
 
-- The Better Auth secret and database credentials live only in the selected
-  protected secret store. They are not stored in database backups, repository
-  files, CI artifacts, Issues, or this runbook.
+- The Better Auth secret and database credentials live only in a root-owned
+  server file with mode `0600`. They are not stored in database backups,
+  repository files, images, Compose files, CI artifacts, Issues, or this
+  runbook.
 - Database backups contain password hashes, session records, account state, and
   temporary-password state and therefore use the Restricted data controls.
 - A restore must fail closed by invalidating all restored sessions before

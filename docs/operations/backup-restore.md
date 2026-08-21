@@ -34,20 +34,26 @@ does not grant cloud or production access.
 
 ## Production decision gate
 
-Issue [#81](https://github.com/iwaseasahi/levi/issues/81) must select and prove
-the provider/location, encryption and key ownership, access/audit policy,
-retention/deletion, immutable copy, restore environment, and cost. The proposed
-release-entry objectives are RPO no greater than 60 minutes and RTO no greater
-than 120 minutes. The selected service must provide continuous PITR or at least
-hourly recovery points, an encrypted daily recovery point retained for at least
-35 days, and an immutable or separately administered copy. These are pending
-acceptance requirements, not claims about an unselected provider.
+ADR 0005 selects one WebARENA Indigo 4 GB VPS in Tokyo. Issue #86 must prove
+encryption and key ownership, access/audit policy, retention/deletion, restore
+environment, storage limits, and operational ownership. The release-entry
+objectives are RPO no greater than 60 minutes and RTO no greater than 120
+minutes for logical error while that VPS and disk remain available. Hourly
+on-host archives are retained for 48 hours and daily archives for 14 days; the
+application identity must not be able to modify or delete them.
+
+VPS loss, disk loss, provider-wide loss, and Tokyo-region loss have no recovery
+objective. On-host archives are not disaster recovery and provider operational
+backups are not user restore points. This accepted limitation must be visible in
+release and incident decisions.
 
 Complete an isolated restore before first release and at least quarterly. Alert
 when the newest usable recovery point is older than 60 minutes or the newest
 successful restore proof is older than 90 days. A production restore requires
 the exact backup, target, impact, loss window, rollback/forward-recovery choice,
-and immediate human approval defined by governance.
+and immediate human approval defined by governance. The selected VPS has no
+managed PITR; Issue #86 must implement and measure the archive workflow rather
+than implying provider recovery.
 
 Disaster recovery succeeds only when a clean environment can restore an approved
 backup within RTO, reconcile data to the expected recovery point, pass migration
