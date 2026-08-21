@@ -1,10 +1,10 @@
 # ADR 0004: Require an explicit authentication selection gate
 
-- Status: proposed
+- Status: superseded
 - Date: 2026-08-21
 - Decision owners: product owner and security owner
 - Supersedes: none
-- Superseded by: none
+- Superseded by: ADR 0006
 
 ## Context
 
@@ -33,6 +33,9 @@ The selection record must define:
 
 Protected routes and domain data that depends on user or tenant ownership are
 blocked until this ADR is accepted or superseded.
+
+ADR 0006 records the approved identity, tenancy, authentication, session, and
+transactional-email decisions and removes this selection gate.
 
 ## Consequences
 
