@@ -43,7 +43,7 @@ items with explicit validation and catalog-integrity errors.
 3. [x] Add authenticated GET route behavior and unit tests for auth/input/domain
        response boundaries and no-store responses.
 4. [x] Capture representative `EXPLAIN` evidence and update parity/docs.
-5. [ ] Run local and exact-commit CI gates, then merge.
+5. [x] Run local and exact-commit CI gates, then merge.
 
 ## Progress
 
@@ -100,4 +100,6 @@ items with explicit validation and catalog-integrity errors.
 ## Result
 
 Implementation and local verification are complete. Draft PR #72 remains
-unmerged until its final commit passes all four required GitHub jobs.
+unmerged until its final commit passes all four required GitHub jobs. Quality,
+Database, E2E, and Security passed on the implementation commit; the recorded
+completion commit is verified again before merge.
