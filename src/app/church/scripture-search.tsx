@@ -154,7 +154,7 @@ export function ScriptureSearch({
   }, [catalogError]);
 
   function updateLanguage(language: ScriptureLanguage) {
-    const next = { ...initialSelection, language };
+    const next = { ...selection, language };
     setSelection(next);
     setStatus({ kind: "idle" });
     void loadCatalog(next);
@@ -241,19 +241,41 @@ export function ScriptureSearch({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (
-      !selection.book ||
-      !selection.chapter ||
-      !selection.startVerse ||
-      !selection.endVerse
-    ) {
+    if (!selection.book || !selection.chapter || !selection.startVerse) {
       setStatus({
         kind: "error",
-        message: "書巻、章、開始節、終了節をすべて選択してください。",
+        message: "書巻、章、開始節をすべて入力してください。",
       });
       return;
     }
-    await performSearch(selection);
+    const validEndVerses = contiguousEndVerses(verses, selection.startVerse);
+    const chapter = Number(selection.chapter);
+    const startVerse = Number(selection.startVerse);
+    const endVerse = Number(
+      selection.endVerse || String(validEndVerses.at(-1) ?? ""),
+    );
+    if (
+      !chapters.includes(chapter) ||
+      !verses.includes(startVerse) ||
+      !validEndVerses.includes(endVerse)
+    ) {
+      setStatus({ kind: "error", message: "検索条件を確認してください。" });
+      return;
+    }
+    await performSearch({
+      ...selection,
+      chapter: String(chapter),
+      endVerse: String(endVerse),
+      startVerse: String(startVerse),
+    });
+  }
+
+  function resetSearch() {
+    setSelection(initialSelection);
+    setStatus({ kind: "idle" });
+    setChapters([]);
+    setVerses([]);
+    void loadCatalog(initialSelection);
   }
 
   async function reopenBookmark(search: SearchResponse["search"]) {
@@ -269,7 +291,6 @@ export function ScriptureSearch({
   }
 
   const pending = catalogLoading || status.kind === "loading";
-  const validEndVerses = contiguousEndVerses(verses, selection.startVerse);
 
   return (
     <section
@@ -284,73 +305,72 @@ export function ScriptureSearch({
             <p>書巻と範囲を選び、会衆へ投影する内容を確認します。</p>
           </div>
 
-          <fieldset disabled={pending || Boolean(catalogError)}>
+          <fieldset
+            className="ginmaku-search-fields"
+            disabled={pending || Boolean(catalogError)}
+          >
             <legend className="sr-only">御言葉の検索条件</legend>
-            <label htmlFor="scripture-language">表示言語</label>
-            <select
-              id="scripture-language"
-              value={selection.language}
-              onChange={(event) =>
-                updateLanguage(event.target.value as ScriptureLanguage)
-              }
-            >
-              <option value="ja">日本語（新改訳聖書第3版）</option>
-              <option value="en">英語（NKJV）</option>
-              <option value="both">日本語と英語</option>
-            </select>
-
-            <label htmlFor="scripture-book">書巻</label>
-            <select
-              id="scripture-book"
-              value={selection.book}
-              onChange={(event) => updateBook(event.target.value)}
-            >
-              <option value="">書巻を選択</option>
-              {books.map((book) => (
-                <option key={book.code} value={book.code}>
-                  {book.name}
-                </option>
-              ))}
-            </select>
-
-            <label htmlFor="scripture-chapter">章</label>
-            <select
-              id="scripture-chapter"
-              disabled={!selection.book || catalogLoading}
-              value={selection.chapter}
-              onChange={(event) => updateChapter(event.target.value)}
-            >
-              <option value="">章を選択</option>
-              {chapters.map((chapter) => (
-                <option key={chapter} value={chapter}>
-                  {chapter}章
-                </option>
-              ))}
-            </select>
-
-            <div className="verse-range">
-              <div>
-                <label htmlFor="scripture-start-verse">開始節</label>
-                <select
-                  id="scripture-start-verse"
-                  disabled={!selection.chapter || catalogLoading}
-                  value={selection.startVerse}
-                  onChange={(event) => updateStartVerse(event.target.value)}
-                >
-                  <option value="">開始節を選択</option>
-                  {verses.map((verse) => (
-                    <option key={verse} value={verse}>
-                      {verse}節
-                    </option>
-                  ))}
-                </select>
+            <fieldset className="ginmaku-book-fieldset">
+              <legend>書巻</legend>
+              <div className="ginmaku-book-grid">
+                {books.map((book) => {
+                  const names = [book.japaneseName, book.englishName].filter(
+                    (name): name is string => Boolean(name),
+                  );
+                  const label = names.length > 0 ? names.join("/") : book.name;
+                  return (
+                    <label key={book.code}>
+                      <input
+                        checked={selection.book === book.code}
+                        name="scripture-book"
+                        onChange={() => updateBook(book.code)}
+                        type="radio"
+                        value={book.code}
+                      />
+                      {label}
+                    </label>
+                  );
+                })}
               </div>
-              <div>
-                <label htmlFor="scripture-end-verse">終了節</label>
-                <select
-                  id="scripture-end-verse"
+            </fieldset>
+
+            <div className="ginmaku-range-fields">
+              <label>
+                <input
+                  aria-label="章"
+                  disabled={!selection.book || catalogLoading}
+                  inputMode="numeric"
+                  max={32767}
+                  min={1}
+                  onChange={(event) => updateChapter(event.target.value)}
+                  size={3}
+                  type="number"
+                  value={selection.chapter}
+                />
+                章(chapter)
+              </label>
+              <label>
+                <input
+                  aria-label="開始節"
+                  disabled={!selection.chapter || catalogLoading}
+                  inputMode="numeric"
+                  max={32767}
+                  min={0}
+                  onChange={(event) => updateStartVerse(event.target.value)}
+                  size={4}
+                  type="number"
+                  value={selection.startVerse}
+                />
+                節(verse)
+              </label>
+              <span aria-hidden="true">〜</span>
+              <label>
+                <input
+                  aria-label="終了節（省略可）"
                   disabled={!selection.startVerse || catalogLoading}
-                  value={selection.endVerse}
+                  inputMode="numeric"
+                  max={32767}
+                  min={0}
                   onChange={(event) => {
                     setSelection({
                       ...selection,
@@ -358,25 +378,44 @@ export function ScriptureSearch({
                     });
                     setStatus({ kind: "idle" });
                   }}
-                >
-                  <option value="">終了節を選択</option>
-                  {validEndVerses.map((verse) => (
-                    <option key={verse} value={verse}>
-                      {verse}節
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  placeholder="省略可"
+                  size={4}
+                  type="number"
+                  value={selection.endVerse}
+                />
+                節(verse)
+              </label>
+            </div>
+
+            <fieldset className="ginmaku-language-fieldset">
+              <legend className="sr-only">表示言語</legend>
+              {[
+                ["both", "日本語 & English"],
+                ["ja", "日本語のみ"],
+                ["en", "English Only"],
+              ].map(([value, label]) => (
+                <label key={value}>
+                  <input
+                    checked={selection.language === value}
+                    name="scripture-language"
+                    onChange={() => updateLanguage(value as ScriptureLanguage)}
+                    type="radio"
+                    value={value}
+                  />
+                  {label}
+                </label>
+              ))}
+            </fieldset>
+
+            <div className="ginmaku-search-actions">
+              <button disabled={pending || Boolean(catalogError)} type="submit">
+                {status.kind === "loading" ? "検索中…" : "Open"}
+              </button>
+              <button type="button" onClick={resetSearch}>
+                Reset
+              </button>
             </div>
           </fieldset>
-
-          <button
-            className="primary-button"
-            disabled={pending || Boolean(catalogError)}
-            type="submit"
-          >
-            {status.kind === "loading" ? "検索中…" : "御言葉を検索"}
-          </button>
 
           <div className="search-feedback" aria-live="polite">
             {catalogLoading ? (

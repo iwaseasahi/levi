@@ -9,6 +9,8 @@ import { prisma } from "./client";
 type RawCatalogRow = {
   book_code: string;
   book_name: string;
+  english_name: string | null;
+  japanese_name: string | null;
   chapters: number[];
   verses: number[];
 };
@@ -40,6 +42,24 @@ export const scriptureCatalogRepository: ScriptureCatalogRepository = {
       SELECT
         book."canonical_code" AS book_code,
         book_name."name" AS book_name,
+        (
+          SELECT japanese_name."name"
+          FROM "bible_book_names" AS japanese_name
+          JOIN "bible_translations" AS japanese_translation
+            ON japanese_translation."id" = japanese_name."translation_id"
+           AND japanese_translation."code" = 'JSS3'
+           AND japanese_translation."rights_status" = 'APPROVED'
+          WHERE japanese_name."book_id" = book."id"
+        ) AS japanese_name,
+        (
+          SELECT english_name."name"
+          FROM "bible_book_names" AS english_name
+          JOIN "bible_translations" AS english_translation
+            ON english_translation."id" = english_name."translation_id"
+           AND english_translation."code" = 'NKJV'
+           AND english_translation."rights_status" = 'APPROVED'
+          WHERE english_name."book_id" = book."id"
+        ) AS english_name,
         CASE WHEN book."canonical_code" = ${selectedBook}
           THEN ARRAY(
             SELECT DISTINCT location."chapter_number"
@@ -75,7 +95,14 @@ export const scriptureCatalogRepository: ScriptureCatalogRepository = {
     `);
     const selected = rows.find((row) => row.book_code === query.book);
     return {
-      books: rows.map((row) => ({ code: row.book_code, name: row.book_name })),
+      books: rows.map((row) => ({
+        code: row.book_code,
+        ...(row.english_name === null ? {} : { englishName: row.english_name }),
+        ...(row.japanese_name === null
+          ? {}
+          : { japaneseName: row.japanese_name }),
+        name: row.book_name,
+      })),
       chapters: selected?.chapters ?? [],
       verses: selected?.verses ?? [],
     };

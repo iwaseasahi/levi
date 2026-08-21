@@ -22,6 +22,11 @@ Unknown, missing, or repeated parameters are invalid. Searches remain inside
 one book and one chapter and contain at most 500 verse numbers. Verse zero is
 accepted because it exists in the approved source data.
 
+The authenticated search form always sends this normalized API shape. When its
+optional ending-verse field is empty, it uses the catalog to resolve the last
+contiguous verse at or after `startVerse`; projection and bookmarks therefore
+continue to receive an explicit inclusive `endVerse`.
+
 ## Result
 
 Results are ordered by verse and contain one item per canonical location.
@@ -75,8 +80,9 @@ so missing states do not require per-verse or per-translation queries.
 `GET /api/scripture/catalog` uses the same church authorization and `no-store`
 policy. It accepts a required `language` and optional cascading `book` and
 `chapter`; a chapter without a book, repeated values, and unknown parameters are
-invalid. The response contains ordered book codes/names plus eligible chapter
-and verse numbers for the selected depth. It never contains verse text, row IDs,
-or tenant data. In bilingual mode, candidates are the canonical intersection of
-approved JSS3 and NKJV locations, so the UI cannot construct a range with a
-known translation gap.
+invalid. The response contains ordered book codes, the preferred display name,
+available approved Japanese/English names, plus eligible chapter and verse
+numbers for the selected depth. It never contains verse text, row IDs, or tenant
+data. In bilingual mode, candidates are the canonical intersection of approved
+JSS3 and NKJV locations, so the UI cannot construct a range with a known
+translation gap.

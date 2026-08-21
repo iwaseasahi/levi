@@ -297,7 +297,7 @@ select:focus-visible,
 
 .scripture-workspace {
   display: grid;
-  grid-template-columns: minmax(18rem, 0.75fr) minmax(0, 1.25fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
   align-items: start;
 }
@@ -441,7 +441,23 @@ select:focus-visible,
 }
 
 .scripture-search-form {
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.scripture-search-form .section-heading .eyebrow,
+.scripture-search-form .section-heading > p:last-child {
+  display: none;
+}
+
+.scripture-search-form .section-heading h2 {
+  margin: 0 0 0.55rem;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  letter-spacing: normal;
 }
 
 .section-heading h2,
@@ -484,6 +500,90 @@ select:focus-visible,
   border-radius: 0.65rem;
   background: #fff;
   color: #17211c;
+}
+
+.scripture-search-form .ginmaku-search-fields {
+  display: block;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 11px;
+}
+
+.scripture-search-form .ginmaku-book-fieldset,
+.scripture-search-form .ginmaku-language-fieldset {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ginmaku-book-fieldset > legend {
+  margin-bottom: 0.35rem;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ginmaku-book-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(22, minmax(1.3rem, auto));
+  column-gap: 0.75rem;
+}
+
+.scripture-search-form .ginmaku-book-grid label,
+.scripture-search-form .ginmaku-language-fieldset label {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.ginmaku-book-grid input,
+.ginmaku-language-fieldset input {
+  flex: 0 0 auto;
+  margin: 0 0.2rem 0 0;
+}
+
+.ginmaku-range-fields,
+.ginmaku-language-fieldset,
+.ginmaku-search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: 0.6rem;
+}
+
+.scripture-search-form .ginmaku-range-fields label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0;
+  font-weight: 400;
+}
+
+.ginmaku-range-fields input {
+  width: 4.5rem;
+  min-height: 1.65rem;
+  padding: 0.1rem 0.2rem;
+  border: 1px solid #777;
+  border-radius: 0;
+  background: #fff;
+  color: #111;
+  font: inherit;
+}
+
+.ginmaku-search-actions button {
+  min-height: 1.75rem;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid #777;
+  border-radius: 0;
+  background: #eee;
+  color: #111;
+  font: inherit;
 }
 
 .verse-range {
