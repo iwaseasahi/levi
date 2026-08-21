@@ -28,6 +28,23 @@ export type ScriptureSearchItem = {
   };
 };
 
+export type ScriptureCatalogQuery = {
+  book?: string;
+  chapter?: number;
+  language: ScriptureLanguage;
+};
+
+export type ScriptureCatalogBook = {
+  code: string;
+  name: string;
+};
+
+export type ScriptureCatalog = {
+  books: ScriptureCatalogBook[];
+  chapters: number[];
+  verses: number[];
+};
+
 const positiveSmallInt = z
   .string()
   .regex(/^[1-9]\d{0,4}$/)
@@ -49,6 +66,20 @@ const searchSchema = z
   .strict()
   .refine(({ startVerse, endVerse }) => endVerse - startVerse < 500, {
     path: ["endVerse"],
+  });
+
+const catalogSchema = z
+  .object({
+    book: z
+      .string()
+      .regex(/^[A-Z0-9][A-Z0-9_-]{0,15}$/)
+      .optional(),
+    chapter: positiveSmallInt.optional(),
+    language: z.enum(scriptureLanguages),
+  })
+  .strict()
+  .refine(({ book, chapter }) => chapter === undefined || book !== undefined, {
+    path: ["chapter"],
   });
 
 export class ScriptureSearchError extends Error {
@@ -86,6 +117,27 @@ export function parseScriptureSearch(searchParams: URLSearchParams) {
   if (result.data.endVerse < result.data.startVerse)
     throw new ScriptureSearchError("INVALID_VERSE_RANGE");
   return result.data satisfies ScriptureSearch;
+}
+
+export function parseScriptureCatalogQuery(searchParams: URLSearchParams) {
+  const allowed = new Set(["book", "chapter", "language"]);
+  if (
+    [...searchParams.keys()].some((key) => !allowed.has(key)) ||
+    searchParams.getAll("language").length !== 1 ||
+    searchParams.getAll("book").length > 1 ||
+    searchParams.getAll("chapter").length > 1
+  )
+    throw new ScriptureSearchError("INVALID_SEARCH_INPUT");
+
+  const result = catalogSchema.safeParse(Object.fromEntries(searchParams));
+  if (!result.success) throw new ScriptureSearchError("INVALID_SEARCH_INPUT");
+  return {
+    language: result.data.language,
+    ...(result.data.book === undefined ? {} : { book: result.data.book }),
+    ...(result.data.chapter === undefined
+      ? {}
+      : { chapter: result.data.chapter }),
+  } satisfies ScriptureCatalogQuery;
 }
 
 export function requiredTranslations(

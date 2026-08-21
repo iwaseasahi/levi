@@ -18,6 +18,87 @@ export const E2E_AUTH_USER_ID = "00000000-0000-4000-8000-000000004304";
 const E2E_AUTH_CHURCH_ID = "00000000-0000-4000-8000-000000004305";
 const E2E_PASSWORD_USER_ID = "00000000-0000-4000-8000-000000004306";
 const E2E_PASSWORD_CHURCH_ID = "00000000-0000-4000-8000-000000004307";
+const E2E_SCRIPTURE_BOOK_ID = "00000000-0000-4000-8000-000000004350";
+
+export async function clearScriptureFixture() {
+  await prisma.bibleVerse.deleteMany({
+    where: { book: { canonicalCode: "TST" } },
+  });
+  await prisma.bibleBookName.deleteMany({
+    where: { book: { canonicalCode: "TST" } },
+  });
+  await prisma.bibleBook.deleteMany({ where: { canonicalCode: "TST" } });
+  await prisma.bibleTranslation.updateMany({
+    where: { code: { in: ["JSS3", "NKJV"] } },
+    data: {
+      rightsNotice: null,
+      rightsStatus: "PENDING",
+      sourceReference: null,
+    },
+  });
+}
+
+export async function seedScriptureFixture() {
+  await clearScriptureFixture();
+  const [japanese, english] = await Promise.all([
+    prisma.bibleTranslation.update({
+      where: { code: "JSS3" },
+      data: {
+        rightsNotice: "synthetic E2E fixture only",
+        rightsStatus: "APPROVED",
+        sourceReference: "synthetic E2E fixture",
+      },
+    }),
+    prisma.bibleTranslation.update({
+      where: { code: "NKJV" },
+      data: {
+        rightsNotice: "synthetic E2E fixture only",
+        rightsStatus: "APPROVED",
+        sourceReference: "synthetic E2E fixture",
+      },
+    }),
+  ]);
+  await prisma.bibleBook.create({
+    data: {
+      canonicalCode: "TST",
+      canonicalOrder: 1,
+      id: E2E_SCRIPTURE_BOOK_ID,
+      testament: "NEW",
+    },
+  });
+  await prisma.bibleBookName.createMany({
+    data: [
+      {
+        bookId: E2E_SCRIPTURE_BOOK_ID,
+        name: "架空書",
+        translationId: japanese.id,
+      },
+      {
+        bookId: E2E_SCRIPTURE_BOOK_ID,
+        name: "Synthetic Book",
+        translationId: english.id,
+      },
+    ],
+  });
+  await prisma.bibleVerse.createMany({
+    data: [1, 2, 3].flatMap((verse) => [
+      {
+        bookId: E2E_SCRIPTURE_BOOK_ID,
+        chapterNumber: 1,
+        text: `架空の日本語本文 ${verse}`,
+        translationId: japanese.id,
+        verseNumber: verse,
+      },
+      {
+        bookId: E2E_SCRIPTURE_BOOK_ID,
+        chapterNumber: 1,
+        text: `Synthetic English text ${verse}`,
+        translationId: english.id,
+        verseNumber: verse,
+      },
+    ]),
+  });
+}
 
 export async function clearOperatorFixtures() {
   await prisma.rateLimit.deleteMany();

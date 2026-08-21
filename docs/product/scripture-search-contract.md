@@ -69,3 +69,14 @@ The ellipses above describe response shape and are not copied Bible content.
 The repository performs one parameterized PostgreSQL statement. Its bounded
 range uses the Bible location/navigation indexes and returns context plus rows,
 so missing states do not require per-verse or per-translation queries.
+
+## Catalog options
+
+`GET /api/scripture/catalog` uses the same church authorization and `no-store`
+policy. It accepts a required `language` and optional cascading `book` and
+`chapter`; a chapter without a book, repeated values, and unknown parameters are
+invalid. The response contains ordered book codes/names plus eligible chapter
+and verse numbers for the selected depth. It never contains verse text, row IDs,
+or tenant data. In bilingual mode, candidates are the canonical intersection of
+approved JSS3 and NKJV locations, so the UI cannot construct a range with a
+known translation gap.

@@ -1,9 +1,11 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { searchScripture } from "@/application/scripture/search-scripture";
+import { readScriptureCatalog } from "@/application/scripture/read-scripture-catalog";
 import type { ScriptureSearch } from "@/domain/scripture/search";
 import { prisma } from "@/infrastructure/database/client";
 import { scriptureSearchRepository } from "@/infrastructure/database/scripture-search-repository";
+import { scriptureCatalogRepository } from "@/infrastructure/database/scripture-catalog-repository";
 
 const baseSearch: ScriptureSearch = {
   book: "JHN",
@@ -97,6 +99,54 @@ afterAll(async () => {
 });
 
 describe("PostgreSQL scripture search", () => {
+  it("returns cascading options and intersects bilingual locations", async () => {
+    expect(
+      await readScriptureCatalog(scriptureCatalogRepository, {
+        language: "both",
+      }),
+    ).toEqual({
+      books: [{ code: "JHN", name: "架空ヨハネ" }],
+      chapters: [],
+      verses: [],
+    });
+    expect(
+      await readScriptureCatalog(scriptureCatalogRepository, {
+        book: "JHN",
+        chapter: 3,
+        language: "both",
+      }),
+    ).toEqual({
+      books: [{ code: "JHN", name: "架空ヨハネ" }],
+      chapters: [3],
+      verses: [15, 16, 17, 18, 19],
+    });
+
+    await prisma.bibleVerse.delete({
+      where: {
+        translationId_bookId_chapterNumber_verseNumber: {
+          translationId: (
+            await prisma.bibleTranslation.findUniqueOrThrow({
+              where: { code: "NKJV" },
+            })
+          ).id,
+          bookId: (
+            await prisma.bibleBook.findUniqueOrThrow({
+              where: { canonicalCode: "JHN" },
+            })
+          ).id,
+          chapterNumber: 3,
+          verseNumber: 19,
+        },
+      },
+    });
+    const catalog = await readScriptureCatalog(scriptureCatalogRepository, {
+      book: "JHN",
+      chapter: 3,
+      language: "both",
+    });
+    expect(catalog.verses).toEqual([15, 16, 17, 18]);
+  });
+
   it.each([
     ["ja", ["japanese"]],
     ["en", ["english"]],
