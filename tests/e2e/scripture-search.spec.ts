@@ -1,4 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
+import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   E2E_CHURCH_USER_EMAIL,
@@ -16,7 +17,19 @@ async function login(page: import("@playwright/test").Page) {
   await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
 }
 
-test("searches a valid bilingual range and hands it to projection", async ({
+async function searchGenesis(page: Page, language: "ja" | "en" | "both") {
+  await page.getByLabel("表示言語").selectOption(language);
+  await page
+    .getByLabel("書巻")
+    .selectOption({ label: language === "en" ? "Genesis" : "創世記" });
+  await page.getByLabel("章").selectOption("1");
+  await page.getByLabel("開始節").selectOption("1");
+  await page.getByLabel("終了節").selectOption("2");
+  await page.getByRole("button", { name: "御言葉を検索" }).click();
+  await expect(page.getByRole("heading", { name: "検索結果" })).toBeFocused();
+}
+
+test("completes search, projection, recovery, and bookmark reuse", async ({
   context,
   page,
 }) => {
@@ -32,11 +45,19 @@ test("searches a valid bilingual range and hands it to projection", async ({
   expect(guessedFolder.status()).toBe(404);
   expect(await foreignFolder.text()).toBe(await guessedFolder.text());
 
-  await page.getByLabel("書巻").selectOption({ label: "創世記" });
-  await page.getByLabel("章").selectOption("1");
-  await page.getByLabel("開始節").selectOption("1");
-  await page.getByLabel("終了節").selectOption("2");
-  await page.getByRole("button", { name: "御言葉を検索" }).click();
+  await searchGenesis(page, "ja");
+  await expect(page.getByText("初めに、神が天と地を創造した。")).toBeVisible();
+  await expect(
+    page.getByText("In the beginning God created the heavens and the earth."),
+  ).toHaveCount(0);
+
+  await searchGenesis(page, "en");
+  await expect(page.getByText("初めに、神が天と地を創造した。")).toHaveCount(0);
+  await expect(
+    page.getByText("In the beginning God created the heavens and the earth."),
+  ).toBeVisible();
+
+  await searchGenesis(page, "both");
 
   await expect(page.getByText("初めに、神が天と地を創造した。")).toBeVisible();
   await expect(
@@ -123,6 +144,37 @@ test("searches a valid bilingual range and hands it to projection", async ({
         .evaluate((element) => getComputedStyle(element).fontSize),
     )
     .not.toBe(initialFontSize);
+  await page.getByRole("button", { name: "文字を小さく" }).click();
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-content")
+        .evaluate((element) => getComputedStyle(element).fontSize),
+    )
+    .toBe(initialFontSize);
+
+  await audience.addStyleTag({
+    content: ".audience-content { min-height: 300vh !important; }",
+  });
+  await page.getByRole("button", { name: "下へスクロール" }).click();
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-screen")
+        .evaluate((element) => element.scrollTop),
+    )
+    .toBeGreaterThan(0);
+  const scrolledDown = await audience
+    .locator(".audience-screen")
+    .evaluate((element) => element.scrollTop);
+  await page.getByRole("button", { name: "上へスクロール" }).click();
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-screen")
+        .evaluate((element) => element.scrollTop),
+    )
+    .toBeLessThan(scrolledDown);
 
   await page.getByRole("button", { name: "画面を暗転" }).click();
   await expect(audience.getByLabel("暗転中")).toBeVisible();
@@ -158,11 +210,12 @@ test("searches a valid bilingual range and hands it to projection", async ({
     audience.getByText("初めに、神が天と地を創造した。"),
   ).toBeVisible();
   await audience.close();
+
+  await page.goto("/church");
+  await organizeAndReopenBookmarks(page);
 });
 
-test("organizes and reopens church scripture bookmarks", async ({ page }) => {
-  await login(page);
-
+async function organizeAndReopenBookmarks(page: Page) {
   await page.getByLabel("書巻").selectOption({ label: "創世記" });
   await page.getByLabel("章").selectOption("1");
   await page.getByLabel("開始節").selectOption("1");
@@ -179,6 +232,26 @@ test("organizes and reopens church scripture bookmarks", async ({ page }) => {
     page.getByRole("button", { name: "創世記 1:1–2", exact: true }),
   ).toBeVisible();
 
+  await page.getByLabel("書巻").selectOption({ label: "出エジプト記" });
+  await page.getByLabel("章").selectOption("1");
+  await page.getByLabel("開始節").selectOption("1");
+  await page.getByLabel("終了節").selectOption("1");
+  await page.getByRole("button", { name: "御言葉を検索" }).click();
+  await page.getByLabel("ブックマーク名").fill("出エジプト記 1:1");
+  await page.getByRole("button", { name: "現在の検索結果を保存" }).click();
+  await page.getByRole("button", { name: "出エジプト記 1:1を上へ" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "ブックマークの順序を変更しました。",
+  );
+  const bookmarks = page.locator(".bookmark-list");
+  await expect(bookmarks.getByRole("listitem").first()).toContainText(
+    "出エジプト記 1:1",
+  );
+  await page.getByRole("button", { name: "創世記 1:1–2を上へ" }).click();
+  await expect(bookmarks.getByRole("listitem").first()).toContainText(
+    "創世記 1:1–2",
+  );
+
   await page.getByLabel("新しいフォルダー名").fill("祈祷会");
   await page.getByRole("button", { name: "作成" }).click();
   await expect(page.getByRole("heading", { name: "祈祷会" })).toBeVisible();
@@ -187,26 +260,25 @@ test("organizes and reopens church scripture bookmarks", async ({ page }) => {
     page.getByRole("button", { name: "固定：祈祷会" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "祈祷会を上へ" }).click();
+  await expect(page.getByRole("status")).toContainText(
+    "フォルダーの順序を変更しました。",
+  );
+
+  await page.getByLabel("新しいフォルダー名").fill("青年会");
+  await page.getByRole("button", { name: "作成" }).click();
+  await expect(page.getByRole("heading", { name: "青年会" })).toBeVisible();
 
   const folders = page.getByRole("list", { name: "フォルダー" });
   await expect(folders.getByRole("listitem").first()).toContainText("祈祷会");
   await page.getByRole("button", { name: "主日礼拝", exact: true }).click();
   await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
   await expect(folders.getByRole("listitem").nth(1)).toContainText("主日礼拝");
+  await expect(folders.getByRole("listitem").nth(2)).toContainText("青年会");
 
   await page.getByLabel("フォルダー名", { exact: true }).fill("礼拝用");
   await page.getByRole("button", { name: "名前を変更" }).click();
   await expect(
     page.getByRole("button", { name: "礼拝用", exact: true }),
-  ).toBeVisible();
-
-  await page.getByLabel("書巻").selectOption({ label: "出エジプト記" });
-  await page.getByLabel("章").selectOption("1");
-  await page.getByLabel("開始節").selectOption("1");
-  await page.getByLabel("終了節").selectOption("1");
-  await page.getByRole("button", { name: "御言葉を検索" }).click();
-  await expect(
-    page.getByText("E2E用日本語本文 出エジプト記 1:1"),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "創世記 1:1–2", exact: true }).click();
@@ -219,9 +291,12 @@ test("organizes and reopens church scripture bookmarks", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "創世記 1:1–2", exact: true }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "出エジプト記 1:1", exact: true }),
+  ).toBeVisible();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "フォルダーを削除" }).click();
   await expect(
     page.getByRole("button", { name: "礼拝用", exact: true }),
   ).toHaveCount(0);
-});
+}
