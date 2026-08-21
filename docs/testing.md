@@ -32,3 +32,6 @@ screenshot, and video in `test-results/`; an HTML report is written to
 
 Before changing a gate, prove that it fails for the defect it claims to detect.
 Temporary intentional failures used for that proof must not be committed.
+Tests that intentionally provoke a browser resource error must register its
+exact console message through `pageErrorGuard.allowConsoleError`. The exception
+is local to that test and does not suppress other console or page errors.

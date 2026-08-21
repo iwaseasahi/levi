@@ -19,16 +19,17 @@ const E2E_AUTH_CHURCH_ID = "00000000-0000-4000-8000-000000004305";
 const E2E_PASSWORD_USER_ID = "00000000-0000-4000-8000-000000004306";
 const E2E_PASSWORD_CHURCH_ID = "00000000-0000-4000-8000-000000004307";
 const E2E_SCRIPTURE_BOOK_ID = "00000000-0000-4000-8000-000000004350";
+const E2E_NEXT_SCRIPTURE_BOOK_ID = "00000000-0000-4000-8000-000000004351";
 
 export async function clearScriptureFixture() {
   await prisma.bibleVerse.deleteMany({
-    where: { book: { canonicalCode: { in: ["GEN", "TST"] } } },
+    where: { book: { canonicalCode: { in: ["GEN", "EXO", "TST"] } } },
   });
   await prisma.bibleBookName.deleteMany({
-    where: { book: { canonicalCode: { in: ["GEN", "TST"] } } },
+    where: { book: { canonicalCode: { in: ["GEN", "EXO", "TST"] } } },
   });
   await prisma.bibleBook.deleteMany({
-    where: { canonicalCode: { in: ["GEN", "TST"] } },
+    where: { canonicalCode: { in: ["GEN", "EXO", "TST"] } },
   });
   await prisma.bibleTranslation.updateMany({
     where: { code: { in: ["JSS3", "NKJV"] } },
@@ -78,13 +79,21 @@ export async function seedScriptureFixture() {
       },
     }),
   ]);
-  await prisma.bibleBook.create({
-    data: {
-      canonicalCode: "GEN",
-      canonicalOrder: 1,
-      id: E2E_SCRIPTURE_BOOK_ID,
-      testament: "NEW",
-    },
+  await prisma.bibleBook.createMany({
+    data: [
+      {
+        canonicalCode: "GEN",
+        canonicalOrder: 1,
+        id: E2E_SCRIPTURE_BOOK_ID,
+        testament: "OLD",
+      },
+      {
+        canonicalCode: "EXO",
+        canonicalOrder: 2,
+        id: E2E_NEXT_SCRIPTURE_BOOK_ID,
+        testament: "OLD",
+      },
+    ],
   });
   await prisma.bibleBookName.createMany({
     data: [
@@ -96,6 +105,16 @@ export async function seedScriptureFixture() {
       {
         bookId: E2E_SCRIPTURE_BOOK_ID,
         name: "Genesis",
+        translationId: english.id,
+      },
+      {
+        bookId: E2E_NEXT_SCRIPTURE_BOOK_ID,
+        name: "出エジプト記",
+        translationId: japanese.id,
+      },
+      {
+        bookId: E2E_NEXT_SCRIPTURE_BOOK_ID,
+        name: "Exodus",
         translationId: english.id,
       },
     ],
@@ -129,6 +148,18 @@ export async function seedScriptureFixture() {
         verseNumber: verse,
       },
     ]),
+  });
+  await prisma.bibleVerse.createMany({
+    data: [japanese, english].map(({ id: translationId }, index) => ({
+      bookId: E2E_NEXT_SCRIPTURE_BOOK_ID,
+      chapterNumber: 1,
+      text:
+        index === 0
+          ? "E2E用日本語本文 出エジプト記 1:1"
+          : "E2E English test text Exodus 1:1",
+      translationId,
+      verseNumber: 1,
+    })),
   });
 }
 

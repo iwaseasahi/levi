@@ -19,13 +19,18 @@ async function login(page: import("@playwright/test").Page) {
   ).toBeVisible();
 }
 
+const expectedUnauthorizedResourceError =
+  "Failed to load resource: the server responded with a status of 401 (Unauthorized)";
+
 test.describe("Church session lifecycle", () => {
   test.describe.configure({ mode: "serial" });
 
   test("keeps login across refresh and a second same-origin window, then logs out", async ({
     context,
     page,
+    pageErrorGuard,
   }) => {
+    pageErrorGuard.allowConsoleError(expectedUnauthorizedResourceError);
     await login(page);
     await page.reload();
     await expect(
@@ -42,7 +47,8 @@ test.describe("Church session lifecycle", () => {
     await expect(second).toHaveURL(/\/login$/);
   });
 
-  test("rejects an expired session", async ({ page }) => {
+  test("rejects an expired session", async ({ page, pageErrorGuard }) => {
+    pageErrorGuard.allowConsoleError(expectedUnauthorizedResourceError);
     await login(page);
     await prisma.session.updateMany({
       where: { userId: E2E_AUTH_USER_ID },
@@ -55,7 +61,11 @@ test.describe("Church session lifecycle", () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test("rejects an explicitly revoked session", async ({ page }) => {
+  test("rejects an explicitly revoked session", async ({
+    page,
+    pageErrorGuard,
+  }) => {
+    pageErrorGuard.allowConsoleError(expectedUnauthorizedResourceError);
     await login(page);
     await prisma.session.deleteMany({ where: { userId: E2E_AUTH_USER_ID } });
     await page.goto("/church");

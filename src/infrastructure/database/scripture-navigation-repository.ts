@@ -23,15 +23,25 @@ type RawNavigationRow = {
 export const scriptureNavigationRepository: ScriptureNavigationRepository = {
   async readAdjacent(navigation: ScriptureNavigation) {
     const translations = [...requiredTranslations(navigation.language)];
-    const tuplePredicate =
-      navigation.direction === "next"
-        ? Prisma.sql`(verse."chapter_number", verse."verse_number") > (${navigation.chapter}, ${navigation.verse})`
-        : Prisma.sql`(verse."chapter_number", verse."verse_number") < (${navigation.chapter}, ${navigation.verse})`;
     const tupleOrder =
       navigation.direction === "next" ? Prisma.sql`ASC` : Prisma.sql`DESC`;
+    const tuplePredicate =
+      navigation.direction === "next"
+        ? Prisma.sql`book."canonical_order" > current_book."canonical_order" OR (
+            book."canonical_order" = current_book."canonical_order"
+            AND (verse."chapter_number", verse."verse_number") > (${navigation.chapter}, ${navigation.verse})
+          )`
+        : Prisma.sql`book."canonical_order" < current_book."canonical_order" OR (
+            book."canonical_order" = current_book."canonical_order"
+            AND (verse."chapter_number", verse."verse_number") < (${navigation.chapter}, ${navigation.verse})
+          )`;
+    const bookPredicate =
+      navigation.direction === "next"
+        ? Prisma.sql`book."canonical_order" >= current_book."canonical_order"`
+        : Prisma.sql`book."canonical_order" <= current_book."canonical_order"`;
     const rows = await prisma.$queryRaw<RawNavigationRow[]>(Prisma.sql`
       WITH requested_book AS (
-        SELECT "id", "canonical_code"
+        SELECT "id", "canonical_code", "canonical_order"
         FROM "bible_books"
         WHERE "canonical_code" = ${navigation.book}
       ),
@@ -48,15 +58,30 @@ export const scriptureNavigationRepository: ScriptureNavigationRepository = {
           AND "rights_status" = 'APPROVED'
       ),
       adjacent_location AS (
-        SELECT verse."chapter_number", verse."verse_number"
-        FROM "bible_verses" AS verse
-        JOIN requested_book AS book ON book."id" = verse."book_id"
-        WHERE verse."translation_id" IN (
-          SELECT "id" FROM approved_catalog_translations
-        )
-          AND ${tuplePredicate}
-        GROUP BY verse."chapter_number", verse."verse_number"
-        ORDER BY verse."chapter_number" ${tupleOrder}, verse."verse_number" ${tupleOrder}
+        SELECT
+          book."id" AS book_id,
+          book."canonical_code" AS book_code,
+          book."canonical_order" AS book_order,
+          location."chapter_number",
+          location."verse_number"
+        FROM "bible_books" AS book
+        CROSS JOIN requested_book AS current_book
+        CROSS JOIN LATERAL (
+          SELECT verse."chapter_number", verse."verse_number"
+          FROM "bible_verses" AS verse
+          WHERE verse."book_id" = book."id"
+            AND verse."translation_id" IN (
+              SELECT "id" FROM approved_catalog_translations
+            )
+            AND (${tuplePredicate})
+          GROUP BY verse."chapter_number", verse."verse_number"
+          ORDER BY
+            verse."chapter_number" ${tupleOrder},
+            verse."verse_number" ${tupleOrder}
+          LIMIT 1
+        ) AS location
+        WHERE ${bookPredicate}
+        ORDER BY book."canonical_order" ${tupleOrder}
         LIMIT 1
       ),
       request_context AS (
@@ -81,17 +106,16 @@ export const scriptureNavigationRepository: ScriptureNavigationRepository = {
         request_context.book_exists,
         request_context.current_exists,
         request_context.approved_translations,
-        requested_book."canonical_code" AS book_code,
+        adjacent_location.book_code,
         adjacent_location."chapter_number",
         adjacent_location."verse_number",
         translation."code" AS translation_code,
         verse."text",
         book_name."name" AS book_name
       FROM request_context
-      LEFT JOIN requested_book ON TRUE
       LEFT JOIN adjacent_location ON TRUE
       LEFT JOIN "bible_verses" AS verse
-        ON verse."book_id" = requested_book."id"
+        ON verse."book_id" = adjacent_location.book_id
        AND verse."chapter_number" = adjacent_location."chapter_number"
        AND verse."verse_number" = adjacent_location."verse_number"
        AND verse."translation_id" IN (
@@ -101,7 +125,7 @@ export const scriptureNavigationRepository: ScriptureNavigationRepository = {
         ON translation."id" = verse."translation_id"
       LEFT JOIN "bible_book_names" AS book_name
         ON book_name."translation_id" = translation."id"
-       AND book_name."book_id" = requested_book."id"
+       AND book_name."book_id" = adjacent_location.book_id
       ORDER BY translation."code"
     `);
     const context = rows[0];
@@ -133,9 +157,12 @@ export const scriptureNavigationRepository: ScriptureNavigationRepository = {
       bookExists: context.book_exists,
       currentExists: context.current_exists,
       location:
-        context.chapter_number === null || context.verse_number === null
+        context.book_code === null ||
+        context.chapter_number === null ||
+        context.verse_number === null
           ? null
           : {
+              book: context.book_code,
               chapter: context.chapter_number,
               verse: context.verse_number,
             },
