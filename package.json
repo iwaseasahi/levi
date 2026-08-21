@@ -36,6 +36,7 @@
     "backup:rehearse": "bash scripts/rehearse-backup.sh",
     "readiness:check": "tsx scripts/check-readiness.ts",
     "migration:profile:ginmaku": "tsx scripts/profile-ginmaku-dump.ts",
+    "migration:bible": "tsx scripts/import-ginmaku-bible.ts",
     "agent:checkpoint": "tsx scripts/agent-handoff.ts checkpoint",
     "agent:checkpoint:verify": "tsx scripts/agent-handoff.ts verify",
     "agent:lease": "tsx scripts/agent-handoff.ts lease",
