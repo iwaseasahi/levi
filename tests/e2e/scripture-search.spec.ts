@@ -233,7 +233,9 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   expect(fittedVerse).not.toBeNull();
   expect(fittedVerse!.y).toBeGreaterThanOrEqual(0);
   expect(fittedVerse!.y + fittedVerse!.height).toBeLessThanOrEqual(720);
-  await overflowStyle.evaluate((element) => element.remove());
+  await overflowStyle.evaluate((element) =>
+    element.parentNode?.removeChild(element),
+  );
   await audience.evaluate(() => window.dispatchEvent(new Event("resize")));
 
   await audience.addStyleTag({
