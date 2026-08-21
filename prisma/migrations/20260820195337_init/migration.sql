@@ -10,5 +10,3 @@ CREATE TABLE "system_settings" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "system_settings_key_key" ON "system_settings"("key");
-
-INTENTIONAL INVALID MIGRATION PROBE;
