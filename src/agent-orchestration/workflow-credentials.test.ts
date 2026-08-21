@@ -88,4 +88,22 @@ describe("agent workflow credential scope", () => {
       'run: test "${{ steps.route.outputs.status }}" = succeeded',
     );
   });
+
+  it("provides the repository CI database configuration to the quality gate", async () => {
+    const workflow = await readFile(
+      path.join(process.cwd(), ".github/workflows/agent-orchestration.yml"),
+      "utf8",
+    );
+    const qualityGate = workflow.slice(
+      workflow.indexOf("  quality_gate:"),
+      workflow.indexOf("  claude_review:"),
+    );
+
+    expect(qualityGate).toContain(
+      "DATABASE_URL: postgresql://levi:levi@127.0.0.1:5432/levi_test?schema=public",
+    );
+    expect(qualityGate).toContain(
+      "SHADOW_DATABASE_URL: postgresql://levi:levi@127.0.0.1:5432/levi_shadow?schema=public",
+    );
+  });
 });

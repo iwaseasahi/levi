@@ -55,7 +55,9 @@ successful run with all downstream jobs skipped.
    - [x] Replace the global pnpm installation with the version-pinned native
          installation used by Anthropic's official GitHub Action and verify the
          binary before credential injection.
-   - [ ] Merge the native-install correction and repeat the rehearsal.
+   - [x] Merge the native-install correction and repeat the rehearsal.
+   - [ ] Supply the repository's non-secret CI database URLs to the agent quality
+         gate, then repeat the rehearsal after its `pnpm check` failure.
 
 ## Progress
 
@@ -72,6 +74,11 @@ installed`; the API key had not yet been used.
 - 2026-08-21 10:20 JST — Replaced both Claude installation steps with the pinned
   native installer and executable/version checks. Focused tests, `pnpm check`,
   coverage, security checks, and `git diff --check` passed again.
+- 2026-08-21 10:35 JST — PR #31 merged and rehearsal run `32436059340`
+  authenticated successfully: Claude completed in 10m55s and produced a patch.
+  The later quality gate failed because it did not inherit the non-secret
+  `DATABASE_URL` and `SHADOW_DATABASE_URL` values used by the authoritative CI
+  workflow. Added the same values only to the quality-gate job.
 
 ## Decisions
 
