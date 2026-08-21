@@ -61,6 +61,8 @@ successful run with all downstream jobs skipped.
    - [x] Preserve newly created repository files in checkpoints while excluding
          `agent-artifacts/`, then repeat the rehearsal after the missing-file
          quality-gate failure.
+   - [ ] Install the documented Linux sandbox prerequisite before Codex jobs,
+         then repeat the rehearsal after the read-only review inspection failure.
 
 ## Progress
 
@@ -92,6 +94,11 @@ installed`; the API key had not yet been used.
   new files, passed the common quality gate. The following read-only Codex
   cross-review connected to OpenAI but stopped with `Quota exceeded`, so the
   workflow correctly withheld PR publication.
+- 2026-08-21 11:41 JST — After OpenAI quota was added, rehearsal run
+  `32439655106` completed the Codex API call and returned a structured review.
+  Repository inspection failed because the hosted runner lacked system
+  bubblewrap and the bundled fallback could not configure loopback networking.
+  Added the Linux sandbox prerequisite documented by OpenAI to both Codex jobs.
 
 ## Decisions
 
@@ -113,6 +120,12 @@ installed`; the API key had not yet been used.
     the pnpm global install produced only the wrapper on the hosted runner.
   - Alternatives: repeat pnpm installation or switch to npm global installation;
     rejected because neither matches the maintained official Action path.
+- 2026-08-21 — Decision: install the system `bubblewrap` package before Codex
+  runs on Linux.
+  - Reason: OpenAI documents bubblewrap as a Linux sandbox prerequisite, and the
+    bundled fallback failed to configure loopback on the hosted runner.
+  - Alternatives: disable the Codex sandbox; rejected because the independent
+    reviewer must remain technically read-only.
 
 ## Risks and mitigations
 
@@ -148,14 +161,14 @@ installed`; the API key had not yet been used.
   verification, and a successful Claude fallback plus common quality gate.
 - Remaining: complete the required Codex cross-review and publish the generated
   PR through protected CI.
-- Blocker: the configured OpenAI API project has no available quota; Codex CLI
-  returns `Quota exceeded. Check your plan and billing details.`
-- Resume with: add API credit or quota to the project associated with
-  `CODEX_API_KEY`, rotate the repository secret if necessary, and repeat the
-  fallback rehearsal from `main`.
+- Blocker: the hosted Linux runner needs the documented system bubblewrap
+  prerequisite before Codex can inspect the repository in a read-only sandbox.
+- Resume with: merge the sandbox-prerequisite correction and repeat the fallback
+  rehearsal from `main`.
 
 ## Result
 
-The Anthropic API-key path and Claude fallback are operational. The repository
-now fails closed at the required cross-provider review because the configured
-OpenAI API project has exhausted or lacks quota. No generated PR was published.
+Both API keys are accepted and the Claude fallback plus common quality gate are
+operational. The repository now fails closed because the Codex reviewer cannot
+inspect the workspace without the documented Linux sandbox prerequisite. No
+generated PR was published.

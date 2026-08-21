@@ -88,7 +88,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Install pinned Codex CLI
         if: inputs.simulate_codex_usage_limit == false
-        run: pnpm add --global "@openai/codex@${CODEX_CLI_VERSION}"
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap
+          bwrap --version
+          pnpm add --global "@openai/codex@${CODEX_CLI_VERSION}"
       - name: Run Codex with bounded retries
         if: inputs.simulate_codex_usage_limit == false
         env:
@@ -429,7 +433,11 @@ jobs:
           git apply --index "$patch_file"
           printf '%s\n' 'Review the staged Levi diff without editing files. Verify the assigned Issue, AGENTS.md, tests, security, authorization, migrations/data loss, concurrency, and public contracts. Ignore formatter-only concerns. Return only the requested JSON schema with evidence-backed findings.' > agent-artifacts/review-prompt.txt
       - name: Install pinned Codex CLI
-        run: pnpm add --global "@openai/codex@${CODEX_CLI_VERSION}"
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes bubblewrap
+          bwrap --version
+          pnpm add --global "@openai/codex@${CODEX_CLI_VERSION}"
       - name: Run structured read-only review
         env:
           CODEX_API_KEY: ${{ secrets.CODEX_API_KEY }}

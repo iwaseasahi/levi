@@ -64,6 +64,10 @@ the expected executable path and `claude --version` before a provider credential
 is injected into a later step. This avoids package-manager-specific optional
 dependency layouts silently leaving only the npm wrapper installed.
 
+Codex jobs install and verify the system `bubblewrap` package before invocation,
+as required by the official Codex Linux sandbox documentation. The writer keeps
+`workspace-write` isolation and the reviewer keeps `read-only` isolation.
+
 Failed provider invocations write only a bounded stderr diagnostic to the GitHub
 log. The workflow replaces the exact provider secret and common provider-token
 and bearer-token shapes before output, disables workflow-command interpretation

@@ -59,6 +59,10 @@ describe("agent workflow credential scope", () => {
     expect(
       workflow.match(/"\$HOME\/\.local\/bin\/claude" --version/g),
     ).toHaveLength(2);
+    expect(
+      workflow.match(/sudo apt-get install --yes bubblewrap/g),
+    ).toHaveLength(2);
+    expect(workflow.match(/bwrap --version/g)).toHaveLength(2);
   });
 
   it("classifies failures portably, redacts diagnostics, and fails closed", async () => {
