@@ -316,7 +316,14 @@ describe("PostgreSQL scripture search", () => {
         language: "both",
       }),
     ).toEqual({
-      books: [{ code: "JHN", name: "架空ヨハネ" }],
+      books: [
+        {
+          code: "JHN",
+          englishName: "Synthetic John",
+          japaneseName: "架空ヨハネ",
+          name: "架空ヨハネ",
+        },
+      ],
       chapters: [],
       verses: [],
     });
@@ -327,7 +334,14 @@ describe("PostgreSQL scripture search", () => {
         language: "both",
       }),
     ).toEqual({
-      books: [{ code: "JHN", name: "架空ヨハネ" }],
+      books: [
+        {
+          code: "JHN",
+          englishName: "Synthetic John",
+          japaneseName: "架空ヨハネ",
+          name: "架空ヨハネ",
+        },
+      ],
       chapters: [3, 4],
       verses: [15, 16, 17, 18, 19],
     });

@@ -6,20 +6,20 @@ release. CI installs that browser afresh and runs with retries disabled.
 
 ## Acceptance matrix
 
-| Release behavior                           | Playwright evidence                                                                                                                                                             |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Operator creates a Church account          | `operator-provisioning.spec.ts` submits the protected form, verifies one-time output, and rejects duplicate provisioning.                                                       |
-| New Church account can start               | The same scenario uses the emitted one-time password, reaches forced change, selects a password, enters the Church screen, and logs out.                                        |
-| Church login, persistence, and logout      | `church-authentication.spec.ts` verifies refresh, a second same-origin window, logout, expiry, and explicit revocation.                                                         |
-| Operator reset and stale-session rejection | `password-lifecycle.spec.ts` establishes an old Church session, resets through the operator UI, proves the old page is denied, then completes one-time login and forced change. |
-| Japanese, NKJV, and bilingual search       | `scripture-search.spec.ts` runs all three language selections and checks inclusion/exclusion of each synthetic translation.                                                     |
-| Separate audience tab and synchronization  | The scripture flow opens a real ordinary tab and checks that audience-only content and its `chapter:verse` heading follow direct, next, and previous selection.                 |
-| Projection controls                        | The audience's Up/Down keys navigate backward/forward across a chapter boundary without scrolling; font size, explicit scroll, and blank/resume respond to controller actions.  |
-| End, chapter, and book boundaries          | Navigation crosses the selected end verse, both directions across chapters, and both directions across Genesis/Exodus.                                                          |
-| Audience recovery                          | Reload ignores stale/untrusted state, while close detection and reopen restore the current controller state.                                                                    |
-| Folder and bookmark lifecycle              | The scripture flow creates, pins, marks recent, renames, reorders, reopens, deletes a bookmark, and physically deletes its folder.                                              |
-| Tenant denial                              | Authenticated access to both a foreign folder ID and a guessed folder ID returns indistinguishable 404 responses.                                                               |
-| Runtime and accessibility                  | Shared fixtures fail on unexpected browser errors; Axe checks search, controller, audience, forced-change, and operator surfaces.                                               |
+| Release behavior                           | Playwright evidence                                                                                                                                                                        |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Operator creates a Church account          | `operator-provisioning.spec.ts` submits the protected form, verifies one-time output, and rejects duplicate provisioning.                                                                  |
+| New Church account can start               | The same scenario uses the emitted one-time password, reaches forced change, selects a password, enters the Church screen, and logs out.                                                   |
+| Church login, persistence, and logout      | `church-authentication.spec.ts` verifies refresh, a second same-origin window, logout, expiry, and explicit revocation.                                                                    |
+| Operator reset and stale-session rejection | `password-lifecycle.spec.ts` establishes an old Church session, resets through the operator UI, proves the old page is denied, then completes one-time login and forced change.            |
+| Japanese, NKJV, and bilingual search       | `scripture-search.spec.ts` checks the Ginmaku-style 3-column/22-row form, all three language selections, omitted-end normalization, and inclusion/exclusion of each synthetic translation. |
+| Separate audience tab and synchronization  | The scripture flow opens a real ordinary tab and checks that audience-only content and its `chapter:verse` heading follow direct, next, and previous selection.                            |
+| Projection controls                        | The audience's Up/Down keys navigate backward/forward across a chapter boundary without scrolling; font size, explicit scroll, and blank/resume respond to controller actions.             |
+| End, chapter, and book boundaries          | Navigation crosses the selected end verse, both directions across chapters, and both directions across Genesis/Exodus.                                                                     |
+| Audience recovery                          | Reload ignores stale/untrusted state, while close detection and reopen restore the current controller state.                                                                               |
+| Folder and bookmark lifecycle              | The scripture flow creates, pins, marks recent, renames, reorders, reopens, deletes a bookmark, and physically deletes its folder.                                                         |
+| Tenant denial                              | Authenticated access to both a foreign folder ID and a guessed folder ID returns indistinguishable 404 responses.                                                                          |
+| Runtime and accessibility                  | Shared fixtures fail on unexpected browser errors; Axe checks search, controller, audience, forced-change, and operator surfaces.                                                          |
 
 ## Secret and artifact boundary
 

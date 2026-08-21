@@ -36,6 +36,8 @@ export type ScriptureCatalogQuery = {
 
 export type ScriptureCatalogBook = {
   code: string;
+  englishName?: string;
+  japaneseName?: string;
   name: string;
 };
 

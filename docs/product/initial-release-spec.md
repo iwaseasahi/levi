@@ -78,10 +78,13 @@ Search preserves the legacy selection model:
 - an inclusive starting and ending verse within that chapter; and
 - Japanese, English, or both translations.
 
-The ending verse is required to be at or after the starting verse. Results are
-ordered by canonical location. In bilingual mode, the Japanese and English text
-for one location form one logical projected item even if their stored records
-have unrelated IDs.
+The ending verse, when entered, is required to be at or after the starting
+verse. It may be omitted in the search form; Levi then normalizes the inclusive
+range to the last contiguous verse in the selected chapter, matching the
+retained Ginmaku behavior while preserving a concrete ending verse for
+projection and bookmarks. Results are ordered by canonical location. In
+bilingual mode, the Japanese and English text for one location form one logical
+projected item even if their stored records have unrelated IDs.
 
 Examples:
 
@@ -90,9 +93,9 @@ Examples:
 - `ヨハネ 3:16–18 / 両方` initially shows three paired items, not six
   independently navigable items.
 
-Missing selections, reversed ranges, nonexistent chapters or verses, and a
-missing requested translation are explicit validation or data-integrity errors;
-they are not silently corrected.
+Missing book, chapter, or starting verse selections, reversed ranges,
+nonexistent chapters or verses, and a missing requested translation are
+explicit validation or data-integrity errors; they are not silently corrected.
 
 ## Projection and navigation
 
