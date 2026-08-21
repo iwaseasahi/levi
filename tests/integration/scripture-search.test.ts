@@ -2,10 +2,12 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { searchScripture } from "@/application/scripture/search-scripture";
 import { readScriptureCatalog } from "@/application/scripture/read-scripture-catalog";
+import { navigateScripture } from "@/application/scripture/navigate-scripture";
 import type { ScriptureSearch } from "@/domain/scripture/search";
 import { prisma } from "@/infrastructure/database/client";
 import { scriptureSearchRepository } from "@/infrastructure/database/scripture-search-repository";
 import { scriptureCatalogRepository } from "@/infrastructure/database/scripture-catalog-repository";
+import { scriptureNavigationRepository } from "@/infrastructure/database/scripture-navigation-repository";
 
 const baseSearch: ScriptureSearch = {
   book: "JHN",
@@ -68,20 +70,24 @@ async function createFixture() {
     ],
   });
   await prisma.bibleVerse.createMany({
-    data: [15, 16, 17, 18, 19].flatMap((verse) => [
+    data: [
+      ...[15, 16, 17, 18, 19].map((verse) => ({ chapter: 3, verse })),
+      { chapter: 4, verse: 1 },
+      { chapter: 4, verse: 3 },
+    ].flatMap(({ chapter, verse }) => [
       {
         translationId: jss3.id,
         bookId: book.id,
-        chapterNumber: 3,
+        chapterNumber: chapter,
         verseNumber: verse,
-        text: `架空の日本語 ${verse}`,
+        text: `架空の日本語 ${chapter}:${verse}`,
       },
       {
         translationId: nkjv.id,
         bookId: book.id,
-        chapterNumber: 3,
+        chapterNumber: chapter,
         verseNumber: verse,
-        text: `Synthetic English ${verse}`,
+        text: `Synthetic English ${chapter}:${verse}`,
       },
     ]),
   });
@@ -99,6 +105,98 @@ afterAll(async () => {
 });
 
 describe("PostgreSQL scripture search", () => {
+  it.each([
+    [3, 18, "next", 3, 19, false],
+    [3, 19, "next", 4, 1, true],
+    [4, 1, "next", 4, 3, false],
+    [4, 1, "previous", 3, 19, true],
+  ] as const)(
+    "navigates %s:%s %s to the adjacent existing %s:%s",
+    async (
+      chapter,
+      verse,
+      direction,
+      expectedChapter,
+      expectedVerse,
+      crossedChapter,
+    ) => {
+      const result = await navigateScripture(scriptureNavigationRepository, {
+        book: "JHN",
+        chapter,
+        verse,
+        direction,
+        language: "both",
+      });
+      expect(result).toMatchObject({
+        crossedChapter,
+        edge: null,
+        item: {
+          location: {
+            book: "JHN",
+            chapter: expectedChapter,
+            verse: expectedVerse,
+          },
+          texts: { japanese: {}, english: {} },
+        },
+      });
+    },
+  );
+
+  it("returns stable same-book edges", async () => {
+    await expect(
+      navigateScripture(scriptureNavigationRepository, {
+        book: "JHN",
+        chapter: 3,
+        verse: 15,
+        direction: "previous",
+        language: "both",
+      }),
+    ).resolves.toEqual({
+      crossedChapter: false,
+      edge: "book-start",
+      item: null,
+    });
+    await expect(
+      navigateScripture(scriptureNavigationRepository, {
+        book: "JHN",
+        chapter: 4,
+        verse: 3,
+        direction: "next",
+        language: "both",
+      }),
+    ).resolves.toEqual({ crossedChapter: false, edge: "book-end", item: null });
+  });
+
+  it("does not skip an adjacent location with a missing requested translation", async () => {
+    await prisma.bibleVerse.delete({
+      where: {
+        translationId_bookId_chapterNumber_verseNumber: {
+          translationId: (
+            await prisma.bibleTranslation.findUniqueOrThrow({
+              where: { code: "NKJV" },
+            })
+          ).id,
+          bookId: (
+            await prisma.bibleBook.findUniqueOrThrow({
+              where: { canonicalCode: "JHN" },
+            })
+          ).id,
+          chapterNumber: 3,
+          verseNumber: 19,
+        },
+      },
+    });
+    await expect(
+      navigateScripture(scriptureNavigationRepository, {
+        book: "JHN",
+        chapter: 3,
+        verse: 18,
+        direction: "next",
+        language: "both",
+      }),
+    ).rejects.toMatchObject({ code: "TRANSLATION_NOT_AVAILABLE" });
+  });
+
   it("returns cascading options and intersects bilingual locations", async () => {
     expect(
       await readScriptureCatalog(scriptureCatalogRepository, {
@@ -117,7 +215,7 @@ describe("PostgreSQL scripture search", () => {
       }),
     ).toEqual({
       books: [{ code: "JHN", name: "架空ヨハネ" }],
-      chapters: [3],
+      chapters: [3, 4],
       verses: [15, 16, 17, 18, 19],
     });
 
@@ -245,6 +343,27 @@ describe("PostgreSQL scripture search", () => {
     });
     expect(plan.map((row) => row["QUERY PLAN"]).join("\n")).toMatch(
       /bible_verses_(location_uk|navigation_idx)/,
+    );
+  });
+
+  it("uses the navigation index for the next canonical location", async () => {
+    const book = await prisma.bibleBook.findUniqueOrThrow({
+      where: { canonicalCode: "JHN" },
+    });
+    const plan = await prisma.$transaction(async (transaction) => {
+      await transaction.$executeRawUnsafe("SET LOCAL enable_seqscan = off");
+      return transaction.$queryRaw<Array<{ "QUERY PLAN": string }>>`
+        EXPLAIN
+        SELECT "chapter_number", "verse_number"
+        FROM "bible_verses"
+        WHERE "book_id" = ${book.id}::uuid
+          AND ("chapter_number", "verse_number") > (3, 18)
+        ORDER BY "chapter_number", "verse_number"
+        LIMIT 1
+      `;
+    });
+    expect(plan.map((row) => row["QUERY PLAN"]).join("\n")).toMatch(
+      /bible_verses_navigation_idx/,
     );
   });
 });

@@ -40,6 +40,16 @@ describe("projection state and protocol", () => {
     });
   });
 
+  it("marks a current location outside the initial search results", () => {
+    expect(
+      reduceProjectionControl(
+        initialProjectionControlState,
+        { type: "mark-current", index: -1 },
+        2,
+      ).currentIndex,
+    ).toBe(-1);
+  });
+
   it("models block, connect, timeout, close, and reopen", () => {
     expect(reduceAudienceConnection("closed", "blocked")).toBe("blocked");
     expect(reduceAudienceConnection("blocked", "open")).toBe("opening");

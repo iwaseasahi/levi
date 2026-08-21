@@ -15,6 +15,7 @@ export type ProjectionControlEvent =
   | { type: "previous" }
   | { type: "next" }
   | { type: "select"; index: number }
+  | { type: "mark-current"; index: number }
   | { type: "font-smaller" }
   | { type: "font-larger" }
   | { type: "scroll"; direction: "up" | "down" }
@@ -46,6 +47,10 @@ export function reduceProjectionControl(
       };
     case "select":
       return event.index >= 0 && event.index < itemCount
+        ? { ...state, currentIndex: event.index }
+        : state;
+    case "mark-current":
+      return event.index >= -1 && event.index < itemCount
         ? { ...state, currentIndex: event.index }
         : state;
     case "font-smaller":
