@@ -7,6 +7,7 @@ import type { ScriptureLanguage } from "@/domain/scripture/search";
 
 export type SavedContentRepository = {
   listFolders(churchId: string): Promise<FolderSummary[]>;
+  listFolderOrder(churchId: string): Promise<string[]>;
   createFolder(churchId: string, name: string): Promise<FolderSummary | null>;
   updateFolder(
     churchId: string,
@@ -59,6 +60,11 @@ export const listFolders = (
   repository: SavedContentRepository,
   churchId: string,
 ) => repository.listFolders(churchId);
+
+export const listFolderOrder = (
+  repository: SavedContentRepository,
+  churchId: string,
+) => repository.listFolderOrder(churchId);
 
 export async function createFolder(
   repository: SavedContentRepository,

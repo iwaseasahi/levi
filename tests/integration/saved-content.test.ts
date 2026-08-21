@@ -31,21 +31,28 @@ async function clearFixture() {
 }
 
 async function createFixture() {
-  const [primary, secondary] = await Promise.all(
-    codes.map((code, index) =>
-      prisma.bibleTranslation.create({
-        data: {
-          code,
-          displayOrder: 50 + index,
-          languageTag: index === 0 ? "ja" : "en",
-          name: `Synthetic ${code}`,
-          rightsNotice: "synthetic fixture only",
-          rightsStatus: "APPROVED",
-          sourceReference: "saved-content integration fixture",
-        },
-      }),
-    ),
-  );
+  const primary = await prisma.bibleTranslation.create({
+    data: {
+      code: codes[0]!,
+      displayOrder: 50,
+      languageTag: "ja",
+      name: `Synthetic ${codes[0]}`,
+      rightsNotice: "synthetic fixture only",
+      rightsStatus: "APPROVED",
+      sourceReference: "saved-content integration fixture",
+    },
+  });
+  const secondary = await prisma.bibleTranslation.create({
+    data: {
+      code: codes[1]!,
+      displayOrder: 51,
+      languageTag: "en",
+      name: `Synthetic ${codes[1]}`,
+      rightsNotice: "synthetic fixture only",
+      rightsStatus: "APPROVED",
+      sourceReference: "saved-content integration fixture",
+    },
+  });
   const book = await prisma.bibleBook.create({
     data: { canonicalCode: "T54", canonicalOrder: 54, testament: "NEW" },
   });
@@ -66,10 +73,12 @@ async function createFixture() {
       })),
     ),
   });
-  const [firstChurch, secondChurch] = await Promise.all([
-    prisma.church.create({ data: { name: "test.saved-content first" } }),
-    prisma.church.create({ data: { name: "test.saved-content second" } }),
-  ]);
+  const firstChurch = await prisma.church.create({
+    data: { name: "test.saved-content first" },
+  });
+  const secondChurch = await prisma.church.create({
+    data: { name: "test.saved-content second" },
+  });
   return {
     book,
     firstChurch,
@@ -156,9 +165,10 @@ describe("saved-content database contract", () => {
 
   it("enforces tenant scope through repository and use-case operations", async () => {
     const fixture = await createFixture();
-    const translations = await Promise.all(
-      (["JSS3", "NKJV"] as const).map((code, index) =>
-        prisma.bibleTranslation.upsert({
+    const translations = [];
+    for (const [index, code] of (["JSS3", "NKJV"] as const).entries()) {
+      translations.push(
+        await prisma.bibleTranslation.upsert({
           where: { code },
           update: {
             rightsNotice: "synthetic fixture only",
@@ -175,8 +185,8 @@ describe("saved-content database contract", () => {
             sourceReference: "saved-content repository fixture",
           },
         }),
-      ),
-    );
+      );
+    }
     await prisma.bibleVerse.createMany({
       data: translations.flatMap(({ id: translationId }) =>
         [1, 2, 3].map((verseNumber) => ({
@@ -249,6 +259,12 @@ describe("saved-content database contract", () => {
     expect(selected.folder.lastUsedAt).not.toBeNull();
     expect(selected.bookmarks).toHaveLength(1);
     await expect(
+      savedContentRepository.listFolders(fixture.firstChurch.id),
+    ).resolves.toEqual([
+      expect.objectContaining({ id: first.id }),
+      expect.objectContaining({ id: second.id }),
+    ]);
+    await expect(
       savedContentRepository.listFolders(fixture.secondChurch.id),
     ).resolves.toEqual([expect.objectContaining({ id: foreign.id })]);
   });
@@ -295,14 +311,12 @@ describe("saved-content database contract", () => {
 
   it("supports deferred complete-set reorder and exposes raw constraints", async () => {
     const fixture = await createFixture();
-    const [first, second] = await Promise.all([
-      prisma.folder.create({
-        data: { churchId: fixture.firstChurch.id, name: "First", position: 0 },
-      }),
-      prisma.folder.create({
-        data: { churchId: fixture.firstChurch.id, name: "Second", position: 1 },
-      }),
-    ]);
+    const first = await prisma.folder.create({
+      data: { churchId: fixture.firstChurch.id, name: "First", position: 0 },
+    });
+    const second = await prisma.folder.create({
+      data: { churchId: fixture.firstChurch.id, name: "Second", position: 1 },
+    });
     await prisma.$transaction(async (transaction) => {
       await transaction.$executeRawUnsafe(
         'SET CONSTRAINTS "folders_church_position_uk" DEFERRED',
@@ -340,34 +354,73 @@ describe("saved-content database contract", () => {
     expect(constraints.every(({ condeferrable }) => condeferrable)).toBe(true);
   });
 
+  it("serializes concurrent reorder and delete without duplicate positions", async () => {
+    const fixture = await createFixture();
+    const first = await createFolderUseCase(
+      savedContentRepository,
+      fixture.firstChurch.id,
+      "First",
+    );
+    const second = await createFolderUseCase(
+      savedContentRepository,
+      fixture.firstChurch.id,
+      "Second",
+    );
+    const third = await createFolderUseCase(
+      savedContentRepository,
+      fixture.firstChurch.id,
+      "Third",
+    );
+
+    const [reordered, deleted] = await Promise.all([
+      savedContentRepository.reorderFolders(fixture.firstChurch.id, [
+        third.id,
+        second.id,
+        first.id,
+      ]),
+      savedContentRepository.deleteFolder(fixture.firstChurch.id, second.id),
+    ]);
+    expect(deleted).toBe(true);
+    expect([true, false]).toContain(reordered);
+
+    const remaining = await prisma.folder.findMany({
+      where: { churchId: fixture.firstChurch.id },
+      orderBy: { position: "asc" },
+      select: { id: true, position: true },
+    });
+    expect(remaining.map(({ position }) => position)).toEqual([0, 1]);
+    expect(new Set(remaining.map(({ id }) => id))).toEqual(
+      new Set([first.id, third.id]),
+    );
+    await expect(
+      savedContentRepository.listFolderOrder(fixture.firstChurch.id),
+    ).resolves.toEqual(remaining.map(({ id }) => id));
+  });
+
   it("physically deletes only the folder aggregate and restricts Bible endpoints", async () => {
     const fixture = await createFixture();
-    const [first, second] = await Promise.all([
-      prisma.folder.create({
-        data: { churchId: fixture.firstChurch.id, name: "First", position: 0 },
-      }),
-      prisma.folder.create({
-        data: { churchId: fixture.firstChurch.id, name: "Second", position: 1 },
-      }),
-    ]);
-    const [deleted, retained] = await Promise.all([
-      createBookmark({
-        bookId: fixture.book.id,
-        churchId: fixture.firstChurch.id,
-        folderId: first.id,
-        position: 0,
-        primaryTranslationId: fixture.primary.id,
-        title: "Deleted",
-      }),
-      createBookmark({
-        bookId: fixture.book.id,
-        churchId: fixture.firstChurch.id,
-        folderId: second.id,
-        position: 0,
-        primaryTranslationId: fixture.primary.id,
-        title: "Retained",
-      }),
-    ]);
+    const first = await prisma.folder.create({
+      data: { churchId: fixture.firstChurch.id, name: "First", position: 0 },
+    });
+    const second = await prisma.folder.create({
+      data: { churchId: fixture.firstChurch.id, name: "Second", position: 1 },
+    });
+    const deleted = await createBookmark({
+      bookId: fixture.book.id,
+      churchId: fixture.firstChurch.id,
+      folderId: first.id,
+      position: 0,
+      primaryTranslationId: fixture.primary.id,
+      title: "Deleted",
+    });
+    const retained = await createBookmark({
+      bookId: fixture.book.id,
+      churchId: fixture.firstChurch.id,
+      folderId: second.id,
+      position: 0,
+      primaryTranslationId: fixture.primary.id,
+      title: "Retained",
+    });
     await expect(
       prisma.bibleVerse.deleteMany({
         where: { bookId: fixture.book.id, verseNumber: 1 },

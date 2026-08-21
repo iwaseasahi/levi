@@ -117,6 +117,15 @@ export const savedContentRepository: SavedContentRepository = {
     return [...pinned, ...recent].map(folderView);
   },
 
+  async listFolderOrder(churchId) {
+    const folders = await prisma.folder.findMany({
+      where: { churchId },
+      orderBy: [{ position: "asc" }, { id: "asc" }],
+      select: { id: true },
+    });
+    return folders.map(({ id }) => id);
+  },
+
   async createFolder(churchId, name) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockChurch(transaction, churchId))) return null;

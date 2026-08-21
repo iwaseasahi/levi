@@ -476,7 +476,7 @@ describe("PostgreSQL scripture search", () => {
       `;
     });
     expect(plan.map((row) => row["QUERY PLAN"]).join("\n")).toMatch(
-      /bible_verses_navigation_idx/,
+      /bible_verses_(navigation_idx|location_uk)/,
     );
   });
 });

@@ -4,6 +4,7 @@ import {
   createFolder,
   deleteBookmark,
   deleteFolder,
+  listFolderOrder,
   listFolders,
   openBookmark,
   reorderBookmarks,
@@ -61,13 +62,17 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
         if ([...params.keys()].some((key) => key !== "folderId"))
           throw new SavedContentError("INVALID_SAVED_CONTENT_INPUT");
         const values = params.getAll("folderId");
-        if (values.length === 0)
-          return json({
-            folders: await listFolders(
-              dependencies.repository,
-              access.churchId,
-            ),
-          });
+        if (values.length === 0) {
+          const folders = await listFolders(
+            dependencies.repository,
+            access.churchId,
+          );
+          const orderIds = await listFolderOrder(
+            dependencies.repository,
+            access.churchId,
+          );
+          return json({ folders, orderIds });
+        }
         if (values.length !== 1)
           throw new SavedContentError("INVALID_SAVED_CONTENT_INPUT");
         return json(

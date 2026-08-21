@@ -14,6 +14,7 @@ const authorized = {
 function repository(): SavedContentRepository {
   return {
     listFolders: vi.fn().mockResolvedValue([]),
+    listFolderOrder: vi.fn().mockResolvedValue([]),
     createFolder: vi.fn().mockResolvedValue({
       id: folderId,
       name: "礼拝",
@@ -45,6 +46,7 @@ describe("saved content HTTP handlers", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(saved.listFolders).toHaveBeenCalledWith(churchId);
+    expect(saved.listFolderOrder).toHaveBeenCalledWith(churchId);
   });
 
   it("creates a strict folder command", async () => {

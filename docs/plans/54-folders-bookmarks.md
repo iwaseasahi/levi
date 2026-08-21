@@ -31,10 +31,11 @@ or folders without affecting Bible masters or another church.
        pin/recent, save/reopen, reorder, and physical deletion.
 3. [x] Add authenticated strict APIs with denied cross-tenant cases at route,
        use-case, and repository boundaries.
-4. [ ] Add accessible folder/bookmark UI to scripture search with complete
+4. [x] Add accessible folder/bookmark UI to scripture search with complete
        loading/empty/error/success/disabled/focus/confirmation behavior.
-5. [ ] Add latest-Chrome create/pin/recent/reorder/reopen/delete E2E, update
-       parity/docs, pass exact-commit CI, and merge.
+5. [x] Add latest-Chrome create/pin/recent/reorder/reopen/delete E2E and update
+       parity/docs.
+6. [ ] Pass exact-commit CI and merge.
 
 ## Progress
 
@@ -48,17 +49,22 @@ or folders without affecting Bible masters or another church.
   and a strict authenticated command/query API. Unit tests (132) and integration
   tests (65) pass; route input cannot supply `churchId`, and foreign UUIDs are
   rejected below the route as not-found/conflict outcomes.
+- 2026-08-21 19:31 JST — Added the accessible saved-content workspace, complete
+  folder/bookmark operations, full-order conflict protection behind the 20-item
+  menu, recent-selection behavior, concurrent mutation coverage, and a real
+  Genesis 1:1–2 latest-Chrome scenario. All local quality, database, E2E, build,
+  and security gates pass.
 
 ## Verification
 
 - [x] raw PostgreSQL constraints and cascade/restrict scope
-- [ ] stale/cross-tenant/concurrent transaction integration
-- [ ] API unit and component accessibility states
-- [ ] latest-Chrome complete folder/bookmark flow
+- [x] stale/cross-tenant/concurrent transaction integration
+- [x] API unit and component accessibility states
+- [x] latest-Chrome complete folder/bookmark flow
 - [ ] repository gates and exact-commit GitHub CI
 
 ## Handoff or blockers
 
 - Blocker: none.
-- Resume with: integrate the folder/bookmark workspace into scripture search and
-  add component accessibility coverage.
+- Resume with: commit the completed slice, update PR #77, and wait for the exact
+  final commit to pass every required GitHub check before merge.
