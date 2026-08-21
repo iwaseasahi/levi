@@ -1,0 +1,15 @@
+.agent-runs
+.codex-log
+.git
+.github
+.next
+.env*
+!.env.example
+coverage
+docs
+node_modules
+playwright-report
+test-results
+*.log
+*.sql
+*.sql.gz
