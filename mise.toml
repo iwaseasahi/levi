@@ -1,0 +1,23 @@
+[tools]
+node = "24.19.0"
+
+[tasks.setup]
+description = "Prepare the local environment and development database"
+run = "bash scripts/setup-local.sh"
+
+[tasks.dev]
+description = "Start the Levi development server"
+run = "corepack pnpm dev"
+
+[tasks.smoke]
+description = "Verify local application liveness and readiness"
+run = "corepack pnpm local:smoke"
+
+[tasks.stop]
+description = "Stop only the local development database"
+run = "corepack pnpm db:stop:dev"
+
+[tasks.check]
+description = "Run canonical checks with a synthetic HTTPS build origin"
+env = { DATABASE_URL = "postgresql://levi:levi@127.0.0.1:55432/levi?schema=public", SHADOW_DATABASE_URL = "postgresql://levi:levi@127.0.0.1:55432/levi_shadow?schema=public", BETTER_AUTH_BASE_URL = "https://levi.local.test", BETTER_AUTH_TRUSTED_ORIGINS = "https://levi.local.test" }
+run = "corepack pnpm check"

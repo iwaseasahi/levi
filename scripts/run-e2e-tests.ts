@@ -2,6 +2,10 @@ import { spawnSync } from "node:child_process";
 
 const e2eEnvironment: NodeJS.ProcessEnv = {
   ...process.env,
+  BETTER_AUTH_BASE_URL:
+    process.env.E2E_BETTER_AUTH_BASE_URL ?? "http://127.0.0.1:3100",
+  BETTER_AUTH_TRUSTED_ORIGINS:
+    process.env.E2E_BETTER_AUTH_TRUSTED_ORIGINS ?? "http://127.0.0.1:3100",
   DATABASE_URL:
     process.env.E2E_DATABASE_URL ??
     process.env.DATABASE_URL ??
