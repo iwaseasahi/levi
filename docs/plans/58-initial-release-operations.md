@@ -33,7 +33,7 @@ monitoring, communication, and immediate human approvals.
        recovery, and before/after user communication templates.
 4. [x] Add a versioned release manifest plus fail-closed dry-run validator and
        tests that prove required gates and exact step order.
-5. [ ] Run backup restore, synthetic cutover/checklist, local quality, and
+5. [x] Run backup restore, synthetic cutover/checklist, local quality, and
        exact-commit CI before merge.
 
 ## Progress
@@ -50,6 +50,9 @@ monitoring, communication, and immediate human approvals.
   backup restore, 165 unit/component tests, nine latest-Chrome E2E scenarios,
   production build, security audit, and license gate passed. No production
   action or secret was used.
+- 2026-08-21 20:37 JST — PR #82 passed Quality, Database, E2E, and Security on
+  implementation commit `7f59da1`; recorded the completed checklist and
+  triggered the same required checks again for the documentation-only head.
 
 ## Decisions
 
@@ -75,12 +78,12 @@ monitoring, communication, and immediate human approvals.
 - [x] `pnpm release:checklist:dry-run`
 - [x] fail-closed manifest unit tests
 - [x] `pnpm check`, `pnpm security:check`
-- [ ] exact-head `Quality`, `Database`, `E2E`, `Security`
+- [x] exact-head `Quality`, `Database`, `E2E`, `Security`
 
 ## Handoff or blockers
 
 - Completed: intake, operations contracts, explicit selection Issue, runbook,
   manifest/validator, tests, local rehearsals, and local quality gates.
-- Remaining: exact-commit CI and merge.
+- Remaining: merge after the documentation-only head repeats all required CI.
 - Human blocker for production only: Issue #81 and immediate action approvals.
 - No blocker for repository-only preparation.
