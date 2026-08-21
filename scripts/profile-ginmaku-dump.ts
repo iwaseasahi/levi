@@ -1,88 +1,15 @@
-import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { basename, resolve } from "node:path";
-
-type SqlValue = string | null;
-
-function sha256(value: string | Buffer) {
-  return createHash("sha256").update(value).digest("hex");
-}
-
-function parseTuples(source: string): SqlValue[][] {
-  const rows: SqlValue[][] = [];
-  let row: SqlValue[] | null = null;
-  let field = "";
-  let quoted = false;
-  let wasQuoted = false;
-  const finishField = () => {
-    const value = wasQuoted ? field : field.trim();
-    row?.push(!wasQuoted && value.toUpperCase() === "NULL" ? null : value);
-    field = "";
-    wasQuoted = false;
-  };
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index]!;
-    if (quoted) {
-      if (character === "\\") {
-        const escaped = source[(index += 1)] ?? "";
-        field +=
-          ({ n: "\n", r: "\r", t: "\t", 0: "\0" } as Record<string, string>)[
-            escaped
-          ] ?? escaped;
-      } else if (character === "'") {
-        quoted = false;
-      } else {
-        field += character;
-      }
-    } else if (character === "'") {
-      quoted = true;
-      wasQuoted = true;
-    } else if (character === "(") {
-      row = [];
-    } else if (character === "," && row) {
-      finishField();
-    } else if (character === ")" && row) {
-      finishField();
-      rows.push(row);
-      row = null;
-    } else if (row) {
-      field += character;
-    }
-  }
-  if (quoted || row) throw new Error("Malformed or truncated SQL VALUES list");
-  return rows;
-}
-
-function tableRows(sql: string, table: string) {
-  const pattern = new RegExp(
-    "INSERT INTO `" +
-      table +
-      "`(?: \\([^\\n]+\\))?\\s+VALUES\\s+([\\s\\S]*?);(?:\\r?\\n|$)",
-    "g",
-  );
-  return [...sql.matchAll(pattern)].flatMap((match) => parseTuples(match[1]!));
-}
-
-function nullCounts(rows: SqlValue[][], columns: string[]) {
-  return Object.fromEntries(
-    columns.map((column, index) => [
-      column,
-      rows.filter((row) => row[index] === null).length,
-    ]),
-  );
-}
+import {
+  BOOK_COLUMNS,
+  BOOK_NAME_COLUMNS,
+  nullCounts,
+  readGinmakuDump,
+  sha256,
+} from "../src/migration/ginmaku-dump";
 
 const dumpArgument = process.argv[2];
 if (!dumpArgument) throw new Error("Usage: profile-ginmaku-dump.ts <dump.sql>");
-const dumpPath = resolve(dumpArgument);
-const bytes = await readFile(dumpPath);
-const sql = bytes.toString("utf8");
-const bookNames = tableRows(sql, "book_names");
-const books = tableRows(sql, "books");
-if (bookNames.some((row) => row.length !== 4))
-  throw new Error("Unexpected book_names column count");
-if (books.some((row) => row.length !== 6))
-  throw new Error("Unexpected books column count");
+const dump = await readGinmakuDump(dumpArgument);
+const { bookNames, books } = dump;
 
 const locationCounts = new Map<string, number>();
 const groupedVerses = new Map<string, number[]>();
@@ -126,15 +53,16 @@ const fingerprints = books.length
 const report = {
   formatVersion: 1,
   input: {
-    basename: basename(dumpPath),
-    bytes: bytes.length,
-    sha256: sha256(bytes),
+    basename: dump.basename,
+    bytes: dump.bytes,
+    sha256: dump.checksum,
   },
   schema: {
-    charset: /DEFAULT CHARSET=([^ ;]+)/.exec(sql)?.[1] ?? null,
-    collation: /COLLATE=([^ ;]+)/.exec(sql)?.[1] ?? null,
-    bookNamesColumns: ["id", "testament", "japanese", "english"],
-    booksColumns: ["id", "version", "book_name_id", "chapter", "verse", "word"],
+    charset: dump.charset,
+    collation: dump.collation,
+    newline: dump.newline,
+    bookNamesColumns: BOOK_NAME_COLUMNS,
+    booksColumns: BOOK_COLUMNS,
   },
   bookNames: {
     rows: bookNames.length,
