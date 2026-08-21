@@ -41,7 +41,7 @@ test("operator reset forces a user-selected password before Church access", asyn
   });
 
   await signIn(E2E_PASSWORD_USER_EMAIL, temporaryPassword ?? "");
-  await expect(page).toHaveURL(/\/change-password$/);
+  await expect(page).toHaveURL(/\/change-password$/, { timeout: 20_000 });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const selected = "z".repeat(16);
   await page.getByLabel("現在の一時パスワード").fill(temporaryPassword ?? "");
@@ -49,7 +49,7 @@ test("operator reset forces a user-selected password before Church access", asyn
   await page.getByLabel("新しいパスワード（確認）").fill(selected);
   await page.getByRole("button", { name: "パスワードを変更" }).click();
   await page.getByRole("button", { name: "教会用画面へ" }).click();
-  await expect(page).toHaveURL(/\/church$/);
+  await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
   await expect(
     page.getByRole("heading", { name: "test.e2e password church" }),
   ).toBeVisible();

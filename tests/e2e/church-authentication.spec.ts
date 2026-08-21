@@ -11,7 +11,9 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("メールアドレス").fill(E2E_AUTH_USER_EMAIL);
   await page.getByLabel("パスワード").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "ログイン" }).click();
-  await expect(page).toHaveURL(/\/church$/);
+  // Better Auth's scrypt verification can consume most of Playwright's
+  // default assertion budget on a two-core CI runner.
+  await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
   await expect(
     page.getByRole("heading", { name: "test.e2e auth church" }),
   ).toBeVisible();
