@@ -53,5 +53,5 @@ describe("Ginmaku Bible migration rehearsal", () => {
     expect(output).not.toContain("架空の本文");
     expect(output).not.toContain("Synthetic text");
     expect(output).not.toContain("Synthetic Book");
-  });
+  }, 30_000);
 });

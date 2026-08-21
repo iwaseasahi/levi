@@ -16,7 +16,10 @@
     "lint": "eslint .",
     "typecheck": "prisma generate && next typegen && tsc --noEmit",
     "db:up": "docker compose up -d --wait postgres postgres-test",
+    "db:up:dev": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
+    "db:stop:dev": "docker compose stop postgres",
+    "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "prisma db seed",
@@ -39,6 +42,9 @@
     "production:config:check": "tsx scripts/check-production-compose.ts",
     "production:rehearse": "bash scripts/rehearse-production-compose.sh",
     "readiness:check": "tsx scripts/check-readiness.ts",
+    "local:env:prepare": "tsx scripts/prepare-local-env.ts",
+    "local:smoke": "tsx scripts/check-local-app.ts",
+    "local:config:check": "tsx scripts/check-local-development.ts",
     "release:checklist:dry-run": "tsx scripts/check-release-plan.ts",
     "migration:profile:ginmaku": "tsx scripts/profile-ginmaku-dump.ts",
     "migration:bible": "tsx scripts/import-ginmaku-bible.ts",
@@ -46,7 +52,7 @@
     "agent:checkpoint": "tsx scripts/agent-handoff.ts checkpoint",
     "agent:checkpoint:verify": "tsx scripts/agent-handoff.ts verify",
     "agent:lease": "tsx scripts/agent-handoff.ts lease",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm production:config:check && pnpm backup:config:check && pnpm deployment:config:check && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm local:config:check && pnpm production:config:check && pnpm backup:config:check && pnpm deployment:config:check && pnpm build"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "1.7.1",
