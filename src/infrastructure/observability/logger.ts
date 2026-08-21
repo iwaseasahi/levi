@@ -11,10 +11,20 @@ export interface LogEntry {
 }
 
 const sensitiveKey =
-  /authorization|cookie|credential|password|secret|session|token/i;
+  /authorization|cookie|credential|password|secret|session|token|email|(?:church|folder|bookmark|user)?name|title|body|content|text|params|query/i;
+const allowedAttributeKeys = new Set([
+  "actorUserId",
+  "capability",
+  "check",
+  "method",
+  "outcome",
+  "status",
+  "targetChurchId",
+  "targetUserId",
+]);
 
 function redact(value: LogValue, key?: string): LogValue {
-  if (key && sensitiveKey.test(key)) {
+  if (key && (sensitiveKey.test(key) || !allowedAttributeKeys.has(key))) {
     return "[REDACTED]";
   }
 

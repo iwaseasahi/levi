@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ChurchScope } from "@/application/auth/church-access";
 import { ScriptureSearchError } from "@/domain/scripture/search";
 import { createScriptureNavigationHandler } from "./controller";
 
 const url =
   "https://levi.example/api/scripture/navigate?book=GEN&chapter=1&verse=31&direction=next&language=both";
 const authorized = {
-  churchId: "church-id",
   mustChangePassword: false,
+  scope: { churchId: "church-id" } as ChurchScope,
   status: "authorized" as const,
   userId: "user-id",
 };

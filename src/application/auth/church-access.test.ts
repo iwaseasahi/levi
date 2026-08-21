@@ -21,10 +21,13 @@ function dependencies(
 describe("Church tenant access", () => {
   it("derives an authorized tenant from the session user", async () => {
     await expect(
-      resolveChurchAccess(new Headers(), dependencies()),
+      resolveChurchAccess(
+        new Headers({ "x-church-id": "browser-supplied-church" }),
+        dependencies(),
+      ),
     ).resolves.toEqual({
-      churchId: "church-id",
       mustChangePassword: false,
+      scope: { churchId: "church-id" },
       status: "authorized",
       userId: "user-id",
     });

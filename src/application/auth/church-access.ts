@@ -1,7 +1,14 @@
+declare const churchScope: unique symbol;
+
+export type ChurchScope = Readonly<{
+  churchId: string;
+  [churchScope]: true;
+}>;
+
 export type ChurchAccess =
   | {
-      churchId: string;
       mustChangePassword: boolean;
+      scope: ChurchScope;
       status: "authorized";
       userId: string;
     }
@@ -31,8 +38,8 @@ export async function resolveChurchAccess(
   }
 
   return {
-    churchId: membership.churchId,
     mustChangePassword: membership.mustChangePassword,
+    scope: { churchId: membership.churchId } as ChurchScope,
     status: "authorized",
     userId,
   };

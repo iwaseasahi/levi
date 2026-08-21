@@ -40,7 +40,12 @@ describe("writeLog", () => {
     writeLog({
       attributes: {
         authorization: "Bearer not-a-real-token",
-        nested: { sessionCookie: "not-a-real-cookie", safe: "visible" },
+        bookmarkTitle: "other tenant title",
+        email: "other-tenant@example.invalid",
+        errorDetail: "other tenant database detail",
+        method: "GET",
+        queryParams: "folderId=foreign",
+        sessionCookie: "not-a-real-cookie",
       },
       event: "request.rejected",
       level: "warn",
@@ -49,7 +54,11 @@ describe("writeLog", () => {
     const serialized = String(output.mock.calls[0]?.[0]);
     expect(serialized).not.toContain("not-a-real-token");
     expect(serialized).not.toContain("not-a-real-cookie");
+    expect(serialized).not.toContain("other tenant title");
+    expect(serialized).not.toContain("other-tenant@example.invalid");
+    expect(serialized).not.toContain("other tenant database detail");
+    expect(serialized).not.toContain("folderId=foreign");
     expect(serialized).toContain("[REDACTED]");
-    expect(serialized).toContain("visible");
+    expect(serialized).toContain("GET");
   });
 });

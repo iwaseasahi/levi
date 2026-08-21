@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ChurchScope } from "@/application/auth/church-access";
 
 import { ScriptureSearchError } from "@/domain/scripture/search";
 import { createScriptureSearchHandler } from "./controller";
+
+const scope = { churchId: "church-id" } as ChurchScope;
 
 const url =
   "https://levi.example/api/scripture/search?book=JHN&chapter=3&startVerse=16&endVerse=18&language=both";
@@ -12,8 +15,8 @@ describe("scripture search HTTP handler", () => {
     [{ status: "forbidden", userId: "user-id" }, 403, "FORBIDDEN"],
     [
       {
-        churchId: "church-id",
         mustChangePassword: true,
+        scope,
         status: "authorized",
         userId: "user-id",
       },
@@ -41,8 +44,8 @@ describe("scripture search HTTP handler", () => {
     const search = vi.fn().mockResolvedValue({ items: [], search: {} });
     const handler = createScriptureSearchHandler({
       getChurchAccess: vi.fn().mockResolvedValue({
-        churchId: "church-id",
         mustChangePassword: false,
+        scope,
         status: "authorized",
         userId: "user-id",
       }),
@@ -71,8 +74,8 @@ describe("scripture search HTTP handler", () => {
   ] as const)("maps %s to a stable response", async (code, status) => {
     const handler = createScriptureSearchHandler({
       getChurchAccess: vi.fn().mockResolvedValue({
-        churchId: "church-id",
         mustChangePassword: false,
+        scope,
         status: "authorized",
         userId: "user-id",
       }),
@@ -86,8 +89,8 @@ describe("scripture search HTTP handler", () => {
   it("hides unexpected persistence details", async () => {
     const handler = createScriptureSearchHandler({
       getChurchAccess: vi.fn().mockResolvedValue({
-        churchId: "church-id",
         mustChangePassword: false,
+        scope,
         status: "authorized",
         userId: "user-id",
       }),

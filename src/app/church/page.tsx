@@ -10,7 +10,7 @@ export default async function ChurchPage() {
   if (access.status !== "authorized") notFound();
   if (access.mustChangePassword) redirect("/change-password");
   const church = await prisma.church.findFirst({
-    where: { id: access.churchId, status: "ACTIVE" },
+    where: { id: access.scope.churchId, status: "ACTIVE" },
     select: { name: true },
   });
   if (!church) notFound();

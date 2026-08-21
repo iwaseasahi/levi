@@ -1,12 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
+import type { ChurchScope } from "@/application/auth/church-access";
 import type { SavedContentRepository } from "@/application/saved-content/manage-saved-content";
 import { createSavedContentHandlers } from "./controller";
 
 const churchId = "00000000-0000-4000-8000-000000000054";
 const folderId = "00000000-0000-4000-8000-000000000055";
+const scope = { churchId } as ChurchScope;
 const authorized = {
-  churchId,
   mustChangePassword: false,
+  scope,
   status: "authorized" as const,
   userId: "user-id",
 };
@@ -45,8 +47,8 @@ describe("saved content HTTP handlers", () => {
     );
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    expect(saved.listFolders).toHaveBeenCalledWith(churchId);
-    expect(saved.listFolderOrder).toHaveBeenCalledWith(churchId);
+    expect(saved.listFolders).toHaveBeenCalledWith(scope);
+    expect(saved.listFolderOrder).toHaveBeenCalledWith(scope);
   });
 
   it("creates a strict folder command", async () => {
@@ -62,7 +64,7 @@ describe("saved content HTTP handlers", () => {
       }),
     );
     expect(response.status).toBe(200);
-    expect(saved.createFolder).toHaveBeenCalledWith(churchId, "礼拝");
+    expect(saved.createFolder).toHaveBeenCalledWith(scope, "礼拝");
   });
 
   it("never accepts a church ID from the command", async () => {

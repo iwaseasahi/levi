@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { ChurchScope } from "@/application/auth/church-access";
 
 import { prisma } from "@/infrastructure/database/client";
 import {
@@ -12,6 +13,10 @@ import {
 import { savedContentRepository } from "@/infrastructure/database/saved-content-repository";
 
 const codes = ["T54J", "T54E"];
+
+function tenant(churchId: string) {
+  return { churchId } as ChurchScope;
+}
 
 async function clearFixture() {
   await prisma.folder.deleteMany({
@@ -201,40 +206,47 @@ describe("saved-content database contract", () => {
 
     const first = await createFolderUseCase(
       savedContentRepository,
-      fixture.firstChurch.id,
+      tenant(fixture.firstChurch.id),
       "First folder",
     );
     const second = await createFolderUseCase(
       savedContentRepository,
-      fixture.firstChurch.id,
+      tenant(fixture.firstChurch.id),
       "Second folder",
     );
     const foreign = await createFolderUseCase(
       savedContentRepository,
-      fixture.secondChurch.id,
+      tenant(fixture.secondChurch.id),
       "Foreign folder",
     );
     await expect(
-      updateFolder(savedContentRepository, fixture.secondChurch.id, first.id, {
-        isPinned: true,
-      }),
+      updateFolder(
+        savedContentRepository,
+        tenant(fixture.secondChurch.id),
+        first.id,
+        { isPinned: true },
+      ),
     ).rejects.toMatchObject({ code: "SAVED_CONTENT_NOT_FOUND" });
     await expect(
-      savedContentRepository.selectFolder(fixture.secondChurch.id, first.id),
+      savedContentRepository.selectFolder(
+        tenant(fixture.secondChurch.id),
+        first.id,
+      ),
     ).resolves.toBeNull();
     await expect(
-      reorderFolders(savedContentRepository, fixture.firstChurch.id, [
+      reorderFolders(savedContentRepository, tenant(fixture.firstChurch.id), [
         second.id,
       ]),
     ).rejects.toMatchObject({ code: "SAVED_CONTENT_CONFLICT" });
-    await reorderFolders(savedContentRepository, fixture.firstChurch.id, [
-      second.id,
-      first.id,
-    ]);
+    await reorderFolders(
+      savedContentRepository,
+      tenant(fixture.firstChurch.id),
+      [second.id, first.id],
+    );
 
     const bookmark = await createBookmarkUseCase(
       savedContentRepository,
-      fixture.firstChurch.id,
+      tenant(fixture.firstChurch.id),
       first.id,
       {
         title: "Saved range",
@@ -246,26 +258,33 @@ describe("saved-content database contract", () => {
       },
     );
     await expect(
-      savedContentRepository.openBookmark(fixture.secondChurch.id, bookmark.id),
+      savedContentRepository.openBookmark(
+        tenant(fixture.secondChurch.id),
+        bookmark.id,
+      ),
     ).resolves.toBeNull();
     await expect(
-      openBookmark(savedContentRepository, fixture.firstChurch.id, bookmark.id),
+      openBookmark(
+        savedContentRepository,
+        tenant(fixture.firstChurch.id),
+        bookmark.id,
+      ),
     ).resolves.toMatchObject({ search: { book: "T54", language: "both" } });
     const selected = await selectFolder(
       savedContentRepository,
-      fixture.firstChurch.id,
+      tenant(fixture.firstChurch.id),
       first.id,
     );
     expect(selected.folder.lastUsedAt).not.toBeNull();
     expect(selected.bookmarks).toHaveLength(1);
     await expect(
-      savedContentRepository.listFolders(fixture.firstChurch.id),
+      savedContentRepository.listFolders(tenant(fixture.firstChurch.id)),
     ).resolves.toEqual([
       expect.objectContaining({ id: first.id }),
       expect.objectContaining({ id: second.id }),
     ]);
     await expect(
-      savedContentRepository.listFolders(fixture.secondChurch.id),
+      savedContentRepository.listFolders(tenant(fixture.secondChurch.id)),
     ).resolves.toEqual([expect.objectContaining({ id: foreign.id })]);
   });
 
@@ -358,27 +377,30 @@ describe("saved-content database contract", () => {
     const fixture = await createFixture();
     const first = await createFolderUseCase(
       savedContentRepository,
-      fixture.firstChurch.id,
+      tenant(fixture.firstChurch.id),
       "First",
     );
     const second = await createFolderUseCase(
       savedContentRepository,
-      fixture.firstChurch.id,
+      tenant(fixture.firstChurch.id),
       "Second",
     );
     const third = await createFolderUseCase(
       savedContentRepository,
-      fixture.firstChurch.id,
+      tenant(fixture.firstChurch.id),
       "Third",
     );
 
     const [reordered, deleted] = await Promise.all([
-      savedContentRepository.reorderFolders(fixture.firstChurch.id, [
+      savedContentRepository.reorderFolders(tenant(fixture.firstChurch.id), [
         third.id,
         second.id,
         first.id,
       ]),
-      savedContentRepository.deleteFolder(fixture.firstChurch.id, second.id),
+      savedContentRepository.deleteFolder(
+        tenant(fixture.firstChurch.id),
+        second.id,
+      ),
     ]);
     expect(deleted).toBe(true);
     expect([true, false]).toContain(reordered);
@@ -393,7 +415,7 @@ describe("saved-content database contract", () => {
       new Set([first.id, third.id]),
     );
     await expect(
-      savedContentRepository.listFolderOrder(fixture.firstChurch.id),
+      savedContentRepository.listFolderOrder(tenant(fixture.firstChurch.id)),
     ).resolves.toEqual(remaining.map(({ id }) => id));
   });
 

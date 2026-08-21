@@ -1,6 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "./fixtures";
-import { E2E_CHURCH_USER_EMAIL, E2E_PASSWORD } from "./operator-fixture";
+import {
+  E2E_CHURCH_USER_EMAIL,
+  E2E_FOREIGN_FOLDER_ID,
+  E2E_PASSWORD,
+} from "./operator-fixture";
+
+const E2E_GUESSED_FOLDER_ID = "00000000-0000-4000-8000-000000004399";
 
 async function login(page: import("@playwright/test").Page) {
   await page.goto("/login");
@@ -15,6 +21,16 @@ test("searches a valid bilingual range and hands it to projection", async ({
   page,
 }) => {
   await login(page);
+
+  const foreignFolder = await page.request.get(
+    `/api/saved-content?folderId=${E2E_FOREIGN_FOLDER_ID}`,
+  );
+  const guessedFolder = await page.request.get(
+    `/api/saved-content?folderId=${E2E_GUESSED_FOLDER_ID}`,
+  );
+  expect(foreignFolder.status()).toBe(404);
+  expect(guessedFolder.status()).toBe(404);
+  expect(await foreignFolder.text()).toBe(await guessedFolder.text());
 
   await page.getByLabel("書巻").selectOption({ label: "創世記" });
   await page.getByLabel("章").selectOption("1");

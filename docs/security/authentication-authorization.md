@@ -8,12 +8,14 @@ ADR 0006 selects Better Auth with revocable PostgreSQL sessions. Better Auth
 proves identity and manages credentials, verification records, and sessions;
 Levi remains responsible for every authorization decision.
 
-When implemented:
+The implemented boundary follows these rules:
 
 - centralize authentication/session verification at the server boundary;
 - distinguish platform operators from church users and deny by default;
 - derive church context from the verified identity and membership, never from a
   client-supplied church ID;
+- represent that context as a branded `ChurchScope`; church-owned use-case and
+  repository interfaces do not accept a raw UUID in its place;
 - enforce authorization in server use cases before database mutation or content
   disclosure, never only by hiding UI;
 - scope every record lookup to the authorized actor/context to prevent IDOR;
@@ -34,6 +36,13 @@ authenticated-but-denied, allowed, expired/revoked, and cross-resource access.
 The test fixture must name the actor type and church it grants. A generic
 “admin” flag or a valid Better Auth session is not a substitute for testing the
 actual platform or tenant authorization rule.
+
+`ChurchScope` is a compile-time misuse guard, not the sole authorization
+mechanism. Runtime queries still include the scope's `church_id`, PostgreSQL
+enforces composite ownership, and foreign and nonexistent UUIDs return the same
+public status and body. An explicit TypeScript cast must never be used in
+application code to manufacture a scope; test-only casts name synthetic tenant
+fixtures.
 
 ## Initial lifecycle
 

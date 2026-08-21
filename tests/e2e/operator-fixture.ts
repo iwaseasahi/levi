@@ -16,6 +16,7 @@ const E2E_CHURCH_USER_ID = "00000000-0000-4000-8000-000000004302";
 const E2E_CHURCH_ID = "00000000-0000-4000-8000-000000004303";
 export const E2E_AUTH_USER_ID = "00000000-0000-4000-8000-000000004304";
 const E2E_AUTH_CHURCH_ID = "00000000-0000-4000-8000-000000004305";
+export const E2E_FOREIGN_FOLDER_ID = "00000000-0000-4000-8000-000000004355";
 const E2E_PASSWORD_USER_ID = "00000000-0000-4000-8000-000000004306";
 const E2E_PASSWORD_CHURCH_ID = "00000000-0000-4000-8000-000000004307";
 const E2E_SCRIPTURE_BOOK_ID = "00000000-0000-4000-8000-000000004350";
@@ -236,6 +237,14 @@ export async function seedOperatorFixtures() {
     });
     await transaction.churchMembership.create({
       data: { churchId: E2E_AUTH_CHURCH_ID, userId: E2E_AUTH_USER_ID },
+    });
+    await transaction.folder.create({
+      data: {
+        churchId: E2E_AUTH_CHURCH_ID,
+        id: E2E_FOREIGN_FOLDER_ID,
+        name: "Synthetic foreign tenant folder",
+        position: 0,
+      },
     });
     await transaction.account.create({
       data: {
