@@ -19,7 +19,7 @@ every source row without silent repair.
 3. [x] Profile schema, encoding, counts, NULL/empty, duplicates, gaps, versions,
        names, and anonymous fingerprints.
 4. [x] Define typed translation/book mapping and record product decisions.
-5. [ ] Run all quality gates and merge only the exact passing commit.
+5. [x] Run all quality gates and merge only the exact passing commit.
 
 ## Decisions
 
@@ -34,4 +34,5 @@ every source row without silent repair.
 Local verification passed: production profile checksum/counts, empty-schema
 migration reconstruction and drift, 52 unit tests, 10 component tests, 39
 PostgreSQL integration tests, build, security audit/license policy, and
-`git diff --check`. Exact-commit GitHub verification remains before merge.
+`git diff --check`. PR #70 passed Quality, Database, E2E, and Security on the
+implementation commit; the recorded completion commit is verified before merge.
