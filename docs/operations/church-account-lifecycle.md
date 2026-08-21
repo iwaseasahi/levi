@@ -31,9 +31,10 @@ hidden until the operator deliberately reveals it.
 5. Do not place the value in email, SMS, chat, an Issue, pull request, support
    ticket, agent prompt, screenshot, screen recording, ordinary notes, or logs.
 
-The recipient must change the temporary password at the next login. Issue #45
-implements and verifies that forced-change workflow; provisioning is not ready
-for production use until that Issue is complete.
+The recipient must change the temporary password at the next login. Until the
+change succeeds, Levi permits only the password-change screen and logout. A
+successful change verifies the current temporary password, replaces its hash,
+clears the forced-change state, and revokes every other session.
 
 ## Lost or possibly exposed credential
 
@@ -42,7 +43,7 @@ for production use until that Issue is complete.
 - Treat a screenshot, message, recording, unintended observer, or uncertain
   handoff as exposure.
 - Suspend use of the account and invoke the protected operator reset/reissue
-  workflow from Issue #45. That workflow replaces the scrypt hash, revokes all
+  workflow. That workflow replaces the scrypt hash, revokes all
   sessions, and returns a new temporary password once.
 - If the protected reset/reissue workflow is unavailable, keep the account
   unused and escalate; never edit credential rows directly.

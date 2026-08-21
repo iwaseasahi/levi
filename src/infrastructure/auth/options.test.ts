@@ -44,6 +44,16 @@ describe("Better Auth options", () => {
     expect(options.logger).toEqual({ disabled: true });
   });
 
+  it("does not configure public or outbound-email password recovery", () => {
+    const options = buildAuthOptions(config("production"));
+
+    expect(options.emailAndPassword).not.toHaveProperty("sendResetPassword");
+    expect(options.emailAndPassword).not.toHaveProperty("onPasswordReset");
+    expect(options).not.toHaveProperty(
+      "emailVerification.sendVerificationEmail",
+    );
+  });
+
   it("uses database rate limits and server-owned actor fields", () => {
     const options = buildAuthOptions(config("test"));
 
@@ -51,6 +61,9 @@ describe("Better Auth options", () => {
       enabled: true,
       storage: "database",
       modelName: "rateLimit",
+    });
+    expect(options.rateLimit.customRules).toEqual({
+      "/sign-in/email": { max: 10, window: 60 },
     });
     expect(options.user.additionalFields).toMatchObject({
       actorState: { input: false, returned: false, defaultValue: "PENDING" },
