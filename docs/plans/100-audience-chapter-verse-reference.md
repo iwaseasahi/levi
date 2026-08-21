@@ -8,7 +8,7 @@
 
 ## Outcome
 
-会衆向け投影画面の右上に、現在表示中の聖書箇所を `訳名 書巻名 : 章:節` と表示し、前後移動と章・書巻境界越えでも同期する。
+会衆向け投影画面の右上に、現在表示中の聖書箇所を `訳名 書巻名 章:節` と表示し、前後移動と章・書巻境界越えでも同期する。
 
 ## Context
 
@@ -40,12 +40,16 @@
 - 2026-08-22 00:35 JST — Issue #100を作成し、governance、Next.js client component資料、現行実装、固定済みGinmaku sourceを確認した。
 - 2026-08-22 00:38 JST — 章・節heading、日英/単言語component回帰、節・章・書巻移動E2E、parity/testing文書を更新した。latest Chromium E2E 9件が成功した。
 - 2026-08-22 00:40 JST — unit 142件、component 25件、integration 72件、production build、security checkを隔離DBで完了した。開発DBの66巻・62,325節は不変。
+- 2026-08-22 00:42 JST — 利用者指定により最終形式を `新改訳聖書第3版 創世記 4:1` に変更し、日英表示では日本語書巻名を優先する仕様へ更新した。
 
 ## Decisions
 
 - 2026-08-22 — Decision: protocol schemaを変更せず、controllerで既存heading文字列へ `item.location.verse` を追加する。
   - Reason: headingと本文は同じcurrent itemから一度に生成され、追加stateや通信契約変更なしで常に同期できる。
   - Alternatives: audience payloadへchapterを新設すると不要なprotocol version更新と同期面の増加になる。
+- 2026-08-22 — Decision: 日英表示では日本語書巻名だけを表示し、区切り記号を入れず `訳名 書巻名 章:節` とする。
+  - Reason: 利用者が `新改訳聖書第3版 創世記 4:1` を正確な表示形式として指定した。
+  - Alternatives: Ginmaku由来の日英書巻名併記とコロン区切りは採用しない。
 
 ## Risks and mitigations
 

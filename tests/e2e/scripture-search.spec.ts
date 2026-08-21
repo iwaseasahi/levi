@@ -91,7 +91,7 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   ).toBeVisible();
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 / Genesis : 1:1",
+      name: "新改訳聖書第3版 創世記 1:1",
     }),
   ).toBeVisible();
   const projectedLines = audience.locator(".audience-book-word");
@@ -157,7 +157,7 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   );
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 / Genesis : 1:2",
+      name: "新改訳聖書第3版 創世記 1:2",
     }),
   ).toBeVisible();
   expect(
@@ -171,7 +171,7 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   );
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 / Genesis : 1:1",
+      name: "新改訳聖書第3版 創世記 1:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
@@ -185,13 +185,13 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 / Genesis : 2:1",
+      name: "新改訳聖書第3版 創世記 2:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowUp");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 / Genesis : 1:3",
+      name: "新改訳聖書第3版 創世記 1:3",
     }),
   ).toBeVisible();
   await page.getByRole("button", { name: "次へ" }).click();
@@ -202,19 +202,19 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   await page.getByRole("button", { name: "次へ" }).click();
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 出エジプト記 / Exodus : 1:1",
+      name: "新改訳聖書第3版 出エジプト記 1:1",
     }),
   ).toBeVisible();
   await page.getByRole("button", { name: "前へ" }).click();
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 / Genesis : 2:2",
+      name: "新改訳聖書第3版 創世記 2:2",
     }),
   ).toBeVisible();
   await page.getByRole("button", { name: "創世記 1:1" }).click();
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 / Genesis : 1:1",
+      name: "新改訳聖書第3版 創世記 1:1",
     }),
   ).toBeVisible();
 
