@@ -48,6 +48,17 @@ describe("agent workflow credential scope", () => {
     expect(workflow).toContain(
       'shell_environment_policy.filters={CODEX_API_KEY="exclude",OPENAI_API_KEY="exclude",ANTHROPIC_API_KEY="exclude"}',
     );
+    expect(workflow).not.toContain(
+      'pnpm add --global "@anthropic-ai/claude-code@${CLAUDE_CLI_VERSION}"',
+    );
+    expect(
+      workflow.match(
+        /curl -fsSL https:\/\/claude\.ai\/install\.sh \| bash -s --/g,
+      ),
+    ).toHaveLength(2);
+    expect(
+      workflow.match(/"\$HOME\/\.local\/bin\/claude" --version/g),
+    ).toHaveLength(2);
   });
 
   it("classifies failures portably, redacts diagnostics, and fails closed", async () => {
