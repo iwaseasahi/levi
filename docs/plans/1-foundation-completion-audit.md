@@ -38,7 +38,8 @@ and the successful final CI run.
 2. [x] Run isolated CI probes for lint, typecheck, unit, migration, and E2E;
        record run URLs and observed failing steps.
 3. [x] Restore the valid tree and add the final completion evidence matrix.
-4. [ ] Run the full local gates, pass protected CI, merge, and close #1.
+4. [x] Run the full local gates and pass protected CI. Merge closes #1 after
+       this recorded plan is accepted by the same protected checks.
 
 ## Progress
 
@@ -54,6 +55,8 @@ and the successful final CI run.
 - 2026-08-21 13:15 JST — Cloned the branch into a new temporary directory,
   completed frozen install and the documented `.env.example` setup, then passed
   the single `pnpm check` quality command.
+- 2026-08-21 13:20 JST — The restored audit head passed protected `Quality`,
+  `Database`, `E2E`, and `Security` in GitHub Actions run 32443999696.
 
 ## Decisions
 
@@ -85,15 +88,17 @@ and the successful final CI run.
 - [x] Deliberate unit-test failure observed in CI
 - [x] Deliberate migration failure observed in CI
 - [x] Deliberate E2E failure observed in CI
-- [ ] Final protected CI succeeds on the restored head
+- [x] Final protected CI succeeds on the restored head
 
 ## Handoff or blockers
 
-- Completed: foundation audit, negative probes, restoration, and evidence matrix.
-- Remaining: clean-checkout/local verification, final CI, merge, and Issue closure.
+- Completed: audit, negative probes, restoration, clean-checkout verification,
+  evidence matrix, local gates, and protected CI.
+- Remaining: merge PR #37; its `Closes #1` link closes the parent Issue.
 - Blocker: none.
-- Resume with: verify a clean checkout and run the final gates.
+- Resume with: mark PR #37 ready and merge after its refreshed checks pass.
 
 ## Result
 
-Pending.
+All repository work and verification are complete. PR #37 is ready for the
+protected merge and automatic Issue closure.
