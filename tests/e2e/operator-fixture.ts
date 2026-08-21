@@ -101,24 +101,30 @@ export async function seedScriptureFixture() {
     ],
   });
   await prisma.bibleVerse.createMany({
-    data: [1, 2, 3].flatMap((verse) => [
+    data: [
+      { chapter: 1, verse: 1 },
+      { chapter: 1, verse: 2 },
+      { chapter: 1, verse: 3 },
+      { chapter: 2, verse: 1 },
+      { chapter: 2, verse: 2 },
+    ].flatMap(({ chapter, verse }) => [
       {
         bookId: E2E_SCRIPTURE_BOOK_ID,
-        chapterNumber: 1,
+        chapterNumber: chapter,
         text:
-          verse === 1
+          chapter === 1 && verse === 1
             ? "初めに、神が天と地を創造した。"
-            : `E2E用日本語本文 ${verse}`,
+            : `E2E用日本語本文 ${chapter}:${verse}`,
         translationId: japanese.id,
         verseNumber: verse,
       },
       {
         bookId: E2E_SCRIPTURE_BOOK_ID,
-        chapterNumber: 1,
+        chapterNumber: chapter,
         text:
-          verse === 1
+          chapter === 1 && verse === 1
             ? "In the beginning God created the heavens and the earth."
-            : `E2E English test text ${verse}`,
+            : `E2E English test text ${chapter}:${verse}`,
         translationId: english.id,
         verseNumber: verse,
       },

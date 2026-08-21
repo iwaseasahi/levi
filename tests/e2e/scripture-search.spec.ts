@@ -62,6 +62,18 @@ test("searches a valid bilingual range and hands it to projection", async ({
   await expect(
     audience.getByRole("heading", { name: "創世記 1:2" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "次へ" }).click();
+  await expect(
+    audience.getByRole("heading", { name: "創世記 1:3" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "次へ" }).click();
+  await expect(
+    audience.getByRole("heading", { name: "創世記 2:1" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "前へ" }).click();
+  await expect(
+    audience.getByRole("heading", { name: "創世記 1:3" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "創世記 1:1" }).click();
   await expect(
     audience.getByRole("heading", { name: "創世記 1:1" }),

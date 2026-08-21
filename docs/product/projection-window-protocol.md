@@ -45,5 +45,6 @@ book/chapter/range/language coordinates and never contains verse text.
   page is reloaded through an eligible session. Later controller messages cannot
   repopulate a failed-closed audience.
 
-Navigation outside the initial result range is intentionally added by Issues
-#52 and #53 without changing this protocol envelope.
+Navigation outside the initial result range and across chapter boundaries uses
+the [scripture navigation contract](scripture-navigation-contract.md) without
+changing this protocol envelope. Issue #53 extends it across book boundaries.

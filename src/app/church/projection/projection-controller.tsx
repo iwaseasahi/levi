@@ -17,6 +17,7 @@ import type {
   ScriptureSearch,
   ScriptureSearchItem,
 } from "@/domain/scripture/search";
+import type { ScriptureNavigationEdge } from "@/domain/scripture/navigation";
 
 type LoadState =
   | { kind: "loading" }
@@ -44,6 +45,13 @@ export function ProjectionController({
   const [loadState, setLoadState] = useState<LoadState>({ kind: "loading" });
   const [connection, setConnection] = useState<AudienceConnection>("closed");
   const [syncNonce, setSyncNonce] = useState(0);
+  const [currentItem, setCurrentItem] = useState<ScriptureSearchItem | null>(
+    null,
+  );
+  const [navigationError, setNavigationError] = useState("");
+  const [navigationEdges, setNavigationEdges] = useState<
+    Record<"previous" | "next", boolean>
+  >({ next: false, previous: false });
   const [control, dispatchControl] = useReducer(
     (
       state: typeof initialProjectionControlState,
@@ -60,6 +68,8 @@ export function ProjectionController({
   const lastHeartbeat = useRef(0);
   const revision = useRef(0);
   const sessionId = useRef("");
+  const currentItemRef = useRef<ScriptureSearchItem | null>(null);
+  const navigationQueue = useRef(Promise.resolve());
 
   useEffect(() => {
     sessionId.current = crypto.randomUUID();
@@ -82,6 +92,8 @@ export function ProjectionController({
         };
         if (result.items.length === 0)
           throw new Error("projection search empty");
+        currentItemRef.current = result.items[0]!;
+        setCurrentItem(result.items[0]!);
         setLoadState({ kind: "ready", items: result.items });
       } catch {
         setLoadState({
@@ -179,7 +191,7 @@ export function ProjectionController({
     if (connection !== "connected" || loadState.kind !== "ready") return;
     const target = audienceWindow.current;
     if (!target || target.closed) return;
-    const item = loadState.items[control.currentIndex];
+    const item = currentItem;
     if (!item) return;
     revision.current += 1;
     const message: ControllerProjectionMessage = {
@@ -217,7 +229,82 @@ export function ProjectionController({
       },
     };
     target.postMessage(message, window.location.origin);
-  }, [connection, control, loadState, syncNonce]);
+  }, [connection, control, currentItem, loadState, syncNonce]);
+
+  function selectItem(item: ScriptureSearchItem, index: number) {
+    currentItemRef.current = item;
+    setCurrentItem(item);
+    setNavigationEdges({ next: false, previous: false });
+    setNavigationError("");
+    dispatchControl({ type: "mark-current", index });
+  }
+
+  function queueNavigation(direction: "previous" | "next") {
+    navigationQueue.current = navigationQueue.current.then(async () => {
+      const current = currentItemRef.current;
+      const readyState = loadState;
+      if (!current || readyState.kind !== "ready") return;
+      try {
+        const query = new URLSearchParams({
+          book: current.location.book,
+          chapter: String(current.location.chapter),
+          verse: String(current.location.verse),
+          direction,
+          language: selection.language,
+        });
+        const response = await fetch(`/api/scripture/navigate?${query}`, {
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
+        if (response.status === 401 || response.status === 403) {
+          const target = audienceWindow.current;
+          if (target && !target.closed && sessionId.current) {
+            const message: ControllerProjectionMessage = {
+              schema: projectionSchema,
+              sessionId: sessionId.current,
+              type: "CLEAR",
+              version: projectionVersion,
+            };
+            target.postMessage(message, window.location.origin);
+          }
+          setConnection("disconnected");
+          setLoadState({
+            kind: "error",
+            message:
+              "セッションを確認できないため、投影操作と本文の表示を終了しました。",
+          });
+          return;
+        }
+        if (!response.ok) throw new Error("scripture navigation unavailable");
+        const result = (await response.json()) as {
+          edge: ScriptureNavigationEdge | null;
+          item: ScriptureSearchItem | null;
+        };
+        if (!result.item) {
+          setNavigationEdges((edges) => ({
+            ...edges,
+            [direction]: true,
+          }));
+          return;
+        }
+        currentItemRef.current = result.item;
+        setCurrentItem(result.item);
+        setNavigationEdges({ next: false, previous: false });
+        setNavigationError("");
+        const index = readyState.items.findIndex(
+          ({ location }) =>
+            location.book === result.item!.location.book &&
+            location.chapter === result.item!.location.chapter &&
+            location.verse === result.item!.location.verse,
+        );
+        dispatchControl({ type: "mark-current", index });
+      } catch {
+        setNavigationError(
+          "前後の御言葉へ移動できませんでした。もう一度お試しください。",
+        );
+      }
+    });
+  }
 
   function openAudience() {
     const target = window.open(
@@ -249,13 +336,19 @@ export function ProjectionController({
       </main>
     );
 
-  const current = loadState.items[control.currentIndex]!;
+  const current = currentItem;
+  if (!current)
+    return (
+      <main className="shell">
+        <p role="status">投影する御言葉を読み込んでいます。</p>
+      </main>
+    );
   return (
     <main
       className="projection-controller"
       onKeyDown={(event) => {
-        if (event.key === "ArrowLeft") dispatchControl({ type: "previous" });
-        if (event.key === "ArrowRight") dispatchControl({ type: "next" });
+        if (event.key === "ArrowLeft") queueNavigation("previous");
+        if (event.key === "ArrowRight") queueNavigation("next");
       }}
     >
       <header className="controller-header">
@@ -285,8 +378,8 @@ export function ProjectionController({
             className="secondary-button"
             type="button"
             aria-keyshortcuts="ArrowLeft"
-            disabled={control.currentIndex === 0}
-            onClick={() => dispatchControl({ type: "previous" })}
+            disabled={navigationEdges.previous}
+            onClick={() => queueNavigation("previous")}
           >
             前へ
           </button>
@@ -294,8 +387,8 @@ export function ProjectionController({
             className="secondary-button"
             type="button"
             aria-keyshortcuts="ArrowRight"
-            disabled={control.currentIndex === loadState.items.length - 1}
-            onClick={() => dispatchControl({ type: "next" })}
+            disabled={navigationEdges.next}
+            onClick={() => queueNavigation("next")}
           >
             次へ
           </button>
@@ -344,6 +437,12 @@ export function ProjectionController({
         </button>
       </section>
 
+      {navigationError ? (
+        <div className="notice notice-error" role="alert">
+          <p>{navigationError}</p>
+        </div>
+      ) : null}
+
       <section className="controller-grid">
         <nav className="projection-index" aria-label="検索結果から直接移動">
           <ol>
@@ -356,7 +455,7 @@ export function ProjectionController({
                   aria-current={
                     index === control.currentIndex ? "true" : undefined
                   }
-                  onClick={() => dispatchControl({ type: "select", index })}
+                  onClick={() => selectItem(item, index)}
                 >
                   {reference(item)}
                 </button>

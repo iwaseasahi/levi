@@ -38,6 +38,21 @@ const items = [1, 2].map((verse) => ({
     },
   },
 }));
+const item3 = {
+  location: { book: "GEN", chapter: 1, verse: 3 },
+  texts: {
+    english: {
+      bookName: "Genesis",
+      text: "E2E English test text 1:3",
+      translation: "NKJV" as const,
+    },
+    japanese: {
+      bookName: "創世記",
+      text: "E2E用日本語本文 1:3",
+      translation: "JSS3" as const,
+    },
+  },
+};
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -116,6 +131,47 @@ describe("projection windows", () => {
     expect(JSON.stringify(popupPostMessage.mock.calls)).not.toContain(
       "E2E用日本語本文 2",
     );
+  });
+
+  it("processes rapid navigation actions serially in input order", async () => {
+    let resolveFirst!: (value: Response) => void;
+    const firstNavigation = new Promise<Response>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const fetcher = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/scripture/search"))
+        return Promise.resolve(Response.json({ items }));
+      if (url.includes("verse=1")) return firstNavigation;
+      return Promise.resolve(
+        Response.json({ crossedChapter: false, edge: null, item: item3 }),
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    render(<ProjectionController selection={selection} />);
+    await screen.findByRole("heading", { name: "投影操作" });
+
+    const next = screen.getByRole("button", { name: "次へ" });
+    await userEvent.click(next);
+    await userEvent.click(next);
+    await waitFor(() =>
+      expect(
+        fetcher.mock.calls.filter(([input]) =>
+          String(input).includes("/api/scripture/navigate"),
+        ),
+      ).toHaveLength(1),
+    );
+
+    resolveFirst(
+      Response.json({ crossedChapter: false, edge: null, item: items[1] }),
+    );
+    await screen.findByRole("heading", { name: "創世記 1:3" });
+    const navigationCalls = fetcher.mock.calls
+      .map(([input]) => String(input))
+      .filter((url) => url.includes("/api/scripture/navigate"));
+    expect(navigationCalls).toHaveLength(2);
+    expect(navigationCalls[0]).toContain("verse=1");
+    expect(navigationCalls[1]).toContain("verse=2");
   });
 
   it("removes controller text and controls when session eligibility is lost", async () => {
