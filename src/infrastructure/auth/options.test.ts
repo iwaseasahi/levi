@@ -41,6 +41,7 @@ describe("Better Auth options", () => {
       },
     });
     expect(options.trustedOrigins).toEqual(["https://levi.example"]);
+    expect(options.logger).toEqual({ disabled: true });
   });
 
   it("uses database rate limits and server-owned actor fields", () => {

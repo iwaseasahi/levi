@@ -3,6 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   fullyParallel: true,
+  globalSetup: "./tests/e2e/global-setup.ts",
+  globalTeardown: "./tests/e2e/global-teardown.ts",
   outputDir: "test-results/playwright",
   reporter: [
     ["line"],

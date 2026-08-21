@@ -66,5 +66,6 @@ export function buildAuthOptions(config: AuthRuntimeConfig) {
       },
     },
     telemetry: { enabled: false },
+    logger: { disabled: true },
   } satisfies BetterAuthOptions;
 }
