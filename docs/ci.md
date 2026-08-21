@@ -58,6 +58,12 @@ bare mode to disable repository/user hooks and plugin/MCP auto-discovery. Claude
 credential-bearing steps do not expose the Bash tool; command-based verification
 runs later in a credential-free job.
 
+Claude jobs use Anthropic's official native installer with the repository-pinned
+CLI version. Installation has a bounded three-attempt retry and must verify both
+the expected executable path and `claude --version` before a provider credential
+is injected into a later step. This avoids package-manager-specific optional
+dependency layouts silently leaving only the npm wrapper installed.
+
 Failed provider invocations write only a bounded stderr diagnostic to the GitHub
 log. The workflow replaces the exact provider secret and common provider-token
 and bearer-token shapes before output, disables workflow-command interpretation

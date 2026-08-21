@@ -49,6 +49,13 @@ successful run with all downstream jobs skipped.
        workflow behavior.
 4. [ ] Run local checks, open and merge a PR, then rerun the fallback rehearsal
        from `main` and inspect the provider result.
+   - [x] The first rehearsal failed closed and exposed the root cause: pnpm's
+         global layout installed the Claude npm wrapper without its Linux native
+         optional package.
+   - [x] Replace the global pnpm installation with the version-pinned native
+         installation used by Anthropic's official GitHub Action and verify the
+         binary before credential injection.
+   - [ ] Merge the native-install correction and repeat the rehearsal.
 
 ## Progress
 
@@ -59,6 +66,12 @@ successful run with all downstream jobs skipped.
   new plan and was corrected with the repository formatter.
 - 2026-08-21 10:15 JST — Completed local verification; `pnpm check`, unit
   coverage, security audit/license inventory, and `git diff --check` passed.
+- 2026-08-21 10:18 JST — PR #30 passed all required checks and merged. Rehearsal
+  run `32435733077` then failed closed with `Error: claude native binary not
+installed`; the API key had not yet been used.
+- 2026-08-21 10:20 JST — Replaced both Claude installation steps with the pinned
+  native installer and executable/version checks. Focused tests, `pnpm check`,
+  coverage, security checks, and `git diff --check` passed again.
 
 ## Decisions
 
@@ -74,6 +87,12 @@ successful run with all downstream jobs skipped.
     covers common bearer and provider-token forms before output.
   - Alternatives: upload raw logs; rejected because artifacts are not an
     approved secret-masking boundary.
+- 2026-08-21 — Decision: install Claude through Anthropic's pinned native
+  installer and verify the executable before provider execution.
+  - Reason: Anthropic's official GitHub Action uses the native installer, while
+    the pnpm global install produced only the wrapper on the hosted runner.
+  - Alternatives: repeat pnpm installation or switch to npm global installation;
+    rejected because neither matches the maintained official Action path.
 
 ## Risks and mitigations
 

@@ -214,7 +214,19 @@ jobs:
           patch_file=agent-artifacts/codex-checkpoint/changes.patch
           if test -s "$patch_file"; then git apply --index "$patch_file"; fi
       - name: Install pinned Claude Code CLI
-        run: pnpm add --global "@anthropic-ai/claude-code@${CLAUDE_CLI_VERSION}"
+        run: |
+          installed=false
+          for attempt in 1 2 3; do
+            if timeout --foreground --kill-after=10 120 bash -o pipefail -c 'curl -fsSL https://claude.ai/install.sh | bash -s -- "$1"' _ "$CLAUDE_CLI_VERSION"; then
+              installed=true
+              break
+            fi
+            test "$attempt" -eq 3 || sleep 5
+          done
+          test "$installed" = true
+          test -x "$HOME/.local/bin/claude"
+          "$HOME/.local/bin/claude" --version
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Continue with Claude Code
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -358,7 +370,19 @@ jobs:
           printf '%s\n' 'Review the staged Levi diff without editing files. Verify the assigned Issue, AGENTS.md, tests, security, authorization, migrations/data loss, concurrency, and public contracts. Ignore formatter-only concerns. Return only the requested JSON schema with evidence-backed findings.' > agent-artifacts/review-prompt.txt
           git diff --cached >> agent-artifacts/review-prompt.txt
       - name: Install pinned Claude Code CLI
-        run: pnpm add --global "@anthropic-ai/claude-code@${CLAUDE_CLI_VERSION}"
+        run: |
+          installed=false
+          for attempt in 1 2 3; do
+            if timeout --foreground --kill-after=10 120 bash -o pipefail -c 'curl -fsSL https://claude.ai/install.sh | bash -s -- "$1"' _ "$CLAUDE_CLI_VERSION"; then
+              installed=true
+              break
+            fi
+            test "$attempt" -eq 3 || sleep 5
+          done
+          test "$installed" = true
+          test -x "$HOME/.local/bin/claude"
+          "$HOME/.local/bin/claude" --version
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Run structured read-only review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
