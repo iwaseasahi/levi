@@ -1,9 +1,14 @@
 import { expect, test as base } from "@playwright/test";
 
-export const test = base.extend<{ pageErrorGuard: void }>({
+type PageErrorGuard = {
+  allowConsoleError(message: string): void;
+};
+
+export const test = base.extend<{ pageErrorGuard: PageErrorGuard }>({
   pageErrorGuard: [
     async ({ page }, use) => {
       const errors: string[] = [];
+      const allowedConsoleErrors = new Set<string>();
 
       page.on("console", (message) => {
         if (message.type() === "error") {
@@ -14,9 +19,16 @@ export const test = base.extend<{ pageErrorGuard: void }>({
         errors.push(`pageerror: ${error.message}`);
       });
 
-      await use();
+      await use({
+        allowConsoleError(message) {
+          allowedConsoleErrors.add(`console.error: ${message}`);
+        },
+      });
 
-      expect(errors, "browser console and page errors").toEqual([]);
+      expect(
+        errors.filter((error) => !allowedConsoleErrors.has(error)),
+        "unexpected browser console and page errors",
+      ).toEqual([]);
     },
     { auto: true },
   ],
