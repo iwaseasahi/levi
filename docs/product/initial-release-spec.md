@@ -61,9 +61,13 @@ while displayed book names may differ by translation.
 
 Only Bible data is migrated from the legacy MySQL dump. Bible text may be read,
 stored, migrated, or displayed only after the product owner confirms the
-applicable rights and provenance. The dump itself and extracted verse text must
-not appear in the repository, Issues, pull requests, prompts, logs, fixtures, or
-public CI artifacts.
+applicable rights and provenance. The dump itself and text extracted from
+production must not appear in the repository, Issues, pull requests, prompts,
+logs, fixtures, or public CI artifacts. On 2026-08-21, the product owner
+explicitly approved using small, reviewed Bible passages in tests. Such fixtures
+must come from documented non-production published sources, stay limited to the
+verses needed for an observable test, and must not be copied from the production
+dump.
 
 ## Bible search
 

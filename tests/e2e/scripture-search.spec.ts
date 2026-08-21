@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures";
 import { E2E_CHURCH_USER_EMAIL, E2E_PASSWORD } from "./operator-fixture";
 
 test("searches a valid bilingual range and hands it to projection", async ({
+  context,
   page,
 }) => {
   await page.goto("/login");
@@ -11,14 +12,16 @@ test("searches a valid bilingual range and hands it to projection", async ({
   await page.getByRole("button", { name: "ログイン" }).click();
   await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
 
-  await page.getByLabel("書巻").selectOption({ label: "架空書" });
+  await page.getByLabel("書巻").selectOption({ label: "創世記" });
   await page.getByLabel("章").selectOption("1");
   await page.getByLabel("開始節").selectOption("1");
   await page.getByLabel("終了節").selectOption("2");
   await page.getByRole("button", { name: "御言葉を検索" }).click();
 
-  await expect(page.getByText("架空の日本語本文 1")).toBeVisible();
-  await expect(page.getByText("Synthetic English text 1")).toBeVisible();
+  await expect(page.getByText("初めに、神が天と地を創造した。")).toBeVisible();
+  await expect(
+    page.getByText("In the beginning God created the heavens and the earth."),
+  ).toBeVisible();
   await expect(page.getByText("新改訳聖書第3版（JSS3）").first()).toBeVisible();
   await expect(
     page.getByText("New King James Version (NKJV)").first(),
@@ -30,10 +33,84 @@ test("searches a valid bilingual range and hands it to projection", async ({
 
   await page.getByRole("link", { name: "投影を開始" }).click();
   await expect(page).toHaveURL(
-    /\/church\/projection\?book=TST&chapter=1&startVerse=1&endVerse=2&language=both$/,
+    /\/church\/projection\?book=GEN&chapter=1&startVerse=1&endVerse=2&language=both$/,
+  );
+  await expect(page.getByRole("heading", { name: "投影操作" })).toBeVisible();
+  expect(page.url()).not.toContain(encodeURIComponent("初めに、神が"));
+
+  const audienceOpened = context.waitForEvent("page");
+  await page.getByRole("button", { name: "会衆向け画面を開く" }).click();
+  let audience = await audienceOpened;
+  await expect(page.getByRole("status")).toContainText("接続しています");
+  await expect(
+    audience.getByText("初めに、神が天と地を創造した。"),
+  ).toBeVisible();
+  await expect(
+    audience.getByRole("heading", { name: "創世記 1:1" }),
+  ).toBeVisible();
+  await expect(audience.locator(".controller-actions")).toHaveCount(0);
+  await expect(audience.getByRole("button", { name: "次へ" })).toHaveCount(0);
+
+  const controllerAccessibility = await new AxeBuilder({ page }).analyze();
+  expect(controllerAccessibility.violations).toEqual([]);
+  const audienceAccessibility = await new AxeBuilder({
+    page: audience,
+  }).analyze();
+  expect(audienceAccessibility.violations).toEqual([]);
+
+  await page.getByRole("button", { name: "次へ" }).click();
+  await expect(
+    audience.getByRole("heading", { name: "創世記 1:2" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "創世記 1:1" }).click();
+  await expect(
+    audience.getByRole("heading", { name: "創世記 1:1" }),
+  ).toBeVisible();
+
+  const initialFontSize = await audience
+    .locator(".audience-content")
+    .evaluate((element) => getComputedStyle(element).fontSize);
+  await page.getByRole("button", { name: "文字を大きく" }).click();
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-content")
+        .evaluate((element) => getComputedStyle(element).fontSize),
+    )
+    .not.toBe(initialFontSize);
+
+  await page.getByRole("button", { name: "画面を暗転" }).click();
+  await expect(audience.getByLabel("暗転中")).toBeVisible();
+  await expect(page.getByText("会衆向け画面：暗転中")).toBeVisible();
+  await page.getByRole("button", { name: "投影を再開" }).click();
+  await expect(
+    audience.getByText("初めに、神が天と地を創造した。"),
+  ).toBeVisible();
+
+  await audience.reload();
+  await expect(page.getByRole("status")).toContainText("接続しています");
+  await expect(
+    audience.getByText("初めに、神が天と地を創造した。"),
+  ).toBeVisible();
+  await audience.evaluate(() =>
+    window.postMessage(
+      { schema: "levi.projection", type: "CLEAR", version: 99 },
+      window.location.origin,
+    ),
   );
   await expect(
-    page.getByRole("heading", { name: "投影の準備ができました" }),
+    audience.getByText("初めに、神が天と地を創造した。"),
   ).toBeVisible();
-  expect(page.url()).not.toContain(encodeURIComponent("架空の日本語本文"));
+
+  await audience.close();
+  await expect(page.getByRole("status")).toContainText("閉じています", {
+    timeout: 5_000,
+  });
+  const audienceReopened = context.waitForEvent("page");
+  await page.getByRole("button", { name: "会衆向け画面を開く" }).click();
+  audience = await audienceReopened;
+  await expect(
+    audience.getByText("初めに、神が天と地を創造した。"),
+  ).toBeVisible();
+  await audience.close();
 });
