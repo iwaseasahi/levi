@@ -37,12 +37,12 @@ function reference(item: ScriptureSearchItem) {
   return `${text?.bookName ?? item.location.book} ${item.location.chapter}:${item.location.verse}`;
 }
 
-function audienceHeading(item: ScriptureSearchItem) {
+export function audienceHeading(item: ScriptureSearchItem) {
   const bookNames = [
     item.texts.japanese?.bookName,
     item.texts.english?.bookName,
   ].filter((bookName): bookName is string => Boolean(bookName));
-  return `新改訳聖書第3版 ${bookNames.join(" / ")} : ${item.location.chapter}`;
+  return `新改訳聖書第3版 ${bookNames.join(" / ")} : ${item.location.chapter}:${item.location.verse}`;
 }
 
 export function ProjectionController({

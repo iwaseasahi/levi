@@ -10,7 +10,7 @@ import {
   type ControllerProjectionMessage,
 } from "@/domain/projection/state";
 import { AudienceDisplay } from "../audience/audience-display";
-import { ProjectionController } from "./projection-controller";
+import { audienceHeading, ProjectionController } from "./projection-controller";
 
 const selection = {
   book: "GEN",
@@ -60,6 +60,28 @@ afterEach(() => {
 });
 
 describe("projection windows", () => {
+  it("formats bilingual and single-language headings with chapter and verse", () => {
+    const verse4 = {
+      ...items[0]!,
+      location: { book: "GEN", chapter: 1, verse: 4 },
+    };
+    expect(audienceHeading(verse4)).toBe(
+      "新改訳聖書第3版 創世記 / Genesis : 1:4",
+    );
+    expect(
+      audienceHeading({
+        ...verse4,
+        texts: { japanese: verse4.texts.japanese },
+      }),
+    ).toBe("新改訳聖書第3版 創世記 : 1:4");
+    expect(
+      audienceHeading({
+        ...verse4,
+        texts: { english: verse4.texts.english },
+      }),
+    ).toBe("新改訳聖書第3版 Genesis : 1:4");
+  });
+
   it("opens an ordinary tab and reports when the new tab is blocked", async () => {
     vi.stubGlobal(
       "fetch",
@@ -129,7 +151,7 @@ describe("projection windows", () => {
       expect(popupPostMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           payload: expect.objectContaining({
-            heading: "新改訳聖書第3版 創世記 / Genesis : 1",
+            heading: "新改訳聖書第3版 創世記 / Genesis : 1:1",
             translations: [
               {
                 language: "ja",
@@ -169,6 +191,18 @@ describe("projection windows", () => {
       );
     });
     await screen.findByRole("heading", { name: "創世記 1:2" });
+    await waitFor(() =>
+      expect(popupPostMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            heading: "新改訳聖書第3版 創世記 / Genesis : 1:2",
+            verseNumber: 2,
+          }),
+          type: "STATE",
+        }),
+        window.location.origin,
+      ),
+    );
     expect(
       fetcher.mock.calls.filter(([input]) =>
         String(input).includes("/api/scripture/navigate"),
@@ -294,7 +328,7 @@ describe("projection windows", () => {
             payload: {
               blank: false,
               fontScale: 1,
-              heading: "新改訳聖書第3版 Genesis : 1",
+              heading: "新改訳聖書第3版 Genesis : 1:1",
               revision: 1,
               scrollDirection: null,
               scrollRevision: 0,
@@ -320,6 +354,11 @@ describe("projection windows", () => {
       ),
     ).toHaveAttribute("lang", "en");
     expect(document.querySelectorAll(".audience-book-word")).toHaveLength(1);
+    expect(
+      screen.getByRole("heading", {
+        name: "新改訳聖書第3版 Genesis : 1:1",
+      }),
+    ).toHaveClass("audience-book-name");
     expect(screen.queryByText("初めに、神が天と地を創造した。")).toBeNull();
 
     const initialMessages = postMessage.mock.calls.length;
@@ -386,7 +425,7 @@ describe("projection windows", () => {
       payload: {
         blank: false,
         fontScale: 1,
-        heading: "新改訳聖書第3版 創世記 / Genesis : 1",
+        heading: "新改訳聖書第3版 創世記 / Genesis : 1:1",
         revision: 1,
         scrollDirection: "down",
         scrollRevision: 1,
@@ -418,7 +457,7 @@ describe("projection windows", () => {
     ).toBeVisible();
     expect(
       screen.getByRole("heading", {
-        name: "新改訳聖書第3版 創世記 / Genesis : 1",
+        name: "新改訳聖書第3版 創世記 / Genesis : 1:1",
       }),
     ).toHaveClass("audience-book-name");
     const lines = document.querySelectorAll(".audience-book-word");
