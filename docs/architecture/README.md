@@ -20,7 +20,7 @@ them in implementation code.
 | [0002](0002-prisma-postgresql.md)             | accepted   | Prisma ORM and PostgreSQL                                |
 | [0003](0003-pnpm-and-version-policy.md)       | accepted   | pnpm and explicit version pinning                        |
 | [0004](0004-authentication-selection-gate.md) | superseded | Authentication selection gate                            |
-| [0005](0005-deployment-selection-gate.md)     | proposed   | Portable deployment and selection gate                   |
+| [0005](0005-deployment-selection-gate.md)     | accepted   | WebARENA Indigo single-VPS production architecture       |
 | [0006](0006-better-auth-database-sessions.md) | accepted   | Better Auth with database sessions and operator recovery |
 | [0007](0007-normalized-data-model.md)         | accepted   | Normalized ownership-specific relational models          |
 
