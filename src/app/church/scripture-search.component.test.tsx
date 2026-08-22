@@ -174,10 +174,14 @@ describe("ScriptureSearch", () => {
     const smaller = screen.getByRole("button", { name: "文字を小さく" });
     const previous = screen.getByRole("button", { name: "前の御言葉へ" });
     const next = screen.getByRole("button", { name: "次の御言葉へ" });
+    const toggleBlank = screen.getByRole("button", {
+      name: "空白と表示を切り替え",
+    });
     expect(larger).toBeDisabled();
     expect(smaller).toBeDisabled();
     expect(previous).toBeDisabled();
     expect(next).toBeDisabled();
+    expect(toggleBlank).toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: "Open" }));
     act(() =>
@@ -199,11 +203,13 @@ describe("ScriptureSearch", () => {
     await user.click(smaller);
     await user.click(previous);
     await user.click(next);
+    await user.click(toggleBlank);
     expect(audiencePostMessage.mock.calls.map(([message]) => message)).toEqual([
       expect.objectContaining({ action: "font-larger", type: "CONTROL" }),
       expect.objectContaining({ action: "font-smaller", type: "CONTROL" }),
       expect.objectContaining({ action: "previous", type: "CONTROL" }),
       expect.objectContaining({ action: "next", type: "CONTROL" }),
+      expect.objectContaining({ action: "toggle-blank", type: "CONTROL" }),
     ]);
     expect(
       audiencePostMessage.mock.calls.every(

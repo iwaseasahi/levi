@@ -504,6 +504,14 @@ export function ScriptureSearch({
                     </button>{" "}
                     <button type="button" onClick={resetSearch}>
                       Reset
+                    </button>{" "}
+                    <button
+                      aria-label="空白と表示を切り替え"
+                      disabled={!audienceReady}
+                      onClick={() => controlAudience("toggle-blank")}
+                      type="button"
+                    >
+                      空白⇔表示
                     </button>
                   </td>
                 </tr>

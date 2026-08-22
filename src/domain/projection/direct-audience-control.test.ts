@@ -19,6 +19,14 @@ describe("direct audience control protocol", () => {
     ).toMatchObject({ action: "font-larger" });
     expect(
       parseDirectAudienceCommand({
+        action: "toggle-blank",
+        schema: directAudienceSchema,
+        type: "CONTROL",
+        version: directAudienceVersion,
+      }),
+    ).toMatchObject({ action: "toggle-blank" });
+    expect(
+      parseDirectAudienceCommand({
         action: "scroll-down",
         schema: directAudienceSchema,
         type: "CONTROL",

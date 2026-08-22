@@ -18,13 +18,17 @@ The search screen retains the exact `Window` reference returned by `Open` and
 enables its Ginmaku controls only after that audience replies with a versioned
 `READY` message. It sends runtime-validated `CONTROL` messages for:
 
-- `font-larger` and `font-smaller`, clamped to 60–220%; and
-- `previous` and `next`, displayed as Ginmaku's `スクロール ↑／↓` controls.
+- `font-larger` and `font-smaller`, clamped to 60–220%;
+- `previous` and `next`, displayed as Ginmaku's `スクロール ↑／↓` controls;
+  and
+- `toggle-blank`, displayed as Ginmaku's `空白⇔表示` control.
 
 As in Ginmaku, `スクロール` changes the current scripture item; it does not
 move the viewport by a pixel offset. It uses the same serial navigation path as
 the audience's Up/Down keyboard controls, including selected-range, chapter,
-and book boundaries.
+and book boundaries. Blank hides all audience scripture on the existing black
+surface without discarding the current location or font scale. Navigation
+remains active while blank, and unblank displays the latest location.
 
 The direct channel uses schema `levi.direct-audience`, version `1`. Search
 accepts `READY` only from its retained audience reference and same origin. The
