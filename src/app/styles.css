@@ -486,6 +486,24 @@ select:focus-visible,
   white-space: nowrap;
 }
 
+.ginmaku-books-table .ginmaku-direct-controls {
+  padding-left: 48px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.ginmaku-direct-controls div {
+  margin-bottom: 2px;
+}
+
+.ginmaku-direct-controls button {
+  margin-left: 3px;
+}
+
+.ginmaku-direct-controls .ginmaku-scroll-controls {
+  margin-top: 12px;
+}
+
 .ginmaku-books-table input,
 .ginmaku-books-table button {
   font: revert;

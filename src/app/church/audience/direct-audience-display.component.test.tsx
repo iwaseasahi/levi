@@ -133,6 +133,71 @@ describe("DirectAudienceDisplay", () => {
     ).toBeVisible();
   });
 
+  it("accepts font and Ginmaku previous or next controls only from its opener", async () => {
+    const opener = { postMessage: vi.fn() } as unknown as Window;
+    vi.stubGlobal("opener", opener);
+    const fetcher = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/scripture/search"))
+        return Promise.resolve(Response.json({ items: [item(1)] }));
+      return Promise.resolve(
+        Response.json({
+          crossedBook: false,
+          crossedChapter: false,
+          edge: null,
+          item: url.includes("direction=previous") ? item(1) : item(2),
+        }),
+      );
+    });
+    vi.stubGlobal("fetch", fetcher);
+    const { container } = render(
+      <DirectAudienceDisplay selection={selection} />,
+    );
+    await screen.findByText("架空の日本語 1:1");
+    expect(opener.postMessage).toHaveBeenCalledWith(
+      {
+        schema: "levi.direct-audience",
+        type: "READY",
+        version: 1,
+      },
+      window.location.origin,
+    );
+
+    const send = (action: string, source: MessageEventSource = opener) =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            action,
+            schema: "levi.direct-audience",
+            type: "CONTROL",
+            version: 1,
+          },
+          origin: window.location.origin,
+          source,
+        }),
+      );
+    act(() => send("font-larger"));
+    expect(container.querySelector(".audience-screen")).toHaveStyle({
+      "--audience-scale": "1.1",
+    });
+    act(() => send("font-smaller"));
+    expect(container.querySelector(".audience-screen")).toHaveStyle({
+      "--audience-scale": "1",
+    });
+    act(() => send("next"));
+    expect(await screen.findByText("架空の日本語 1:2")).toBeVisible();
+    expect(
+      fetcher.mock.calls.some(([input]) =>
+        String(input).includes("direction=next"),
+      ),
+    ).toBe(true);
+
+    act(() => send("font-larger", {} as MessageEventSource));
+    expect(container.querySelector(".audience-screen")).toHaveStyle({
+      "--audience-scale": "1",
+    });
+  });
+
   it("fails closed when the active session is denied", async () => {
     const fetcher = vi.fn((input: RequestInfo | URL) =>
       String(input).includes("/api/scripture/search")

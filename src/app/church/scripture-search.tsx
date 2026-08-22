@@ -6,6 +6,13 @@ import type {
   ScriptureCatalogBook,
   ScriptureLanguage,
 } from "@/domain/scripture/search";
+import {
+  directAudienceSchema,
+  directAudienceVersion,
+  isTrustedDirectAudienceEvent,
+  parseDirectAudienceReady,
+  type DirectAudienceCommand,
+} from "@/domain/projection/direct-audience-control";
 import { SavedContentPanel } from "./saved-content-panel";
 
 type NormalizedSearch = {
@@ -112,8 +119,10 @@ export function ScriptureSearch({
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [audienceReady, setAudienceReady] = useState(false);
   const requestSequence = useRef(0);
   const feedbackRef = useRef<HTMLDivElement>(null);
+  const audienceWindow = useRef<Window | null>(null);
 
   async function loadCatalog(next: Selection) {
     const sequence = ++requestSequence.current;
@@ -156,6 +165,34 @@ export function ScriptureSearch({
   useEffect(() => {
     if (catalogError) feedbackRef.current?.focus();
   }, [catalogError]);
+
+  useEffect(() => {
+    function receiveAudienceReady(event: MessageEvent) {
+      if (
+        !isTrustedDirectAudienceEvent(
+          event,
+          window.location.origin,
+          audienceWindow.current,
+        ) ||
+        !parseDirectAudienceReady(event.data)
+      )
+        return;
+      setAudienceReady(true);
+      setStatus({ kind: "idle" });
+    }
+
+    const closedWindowCheck = window.setInterval(() => {
+      const target = audienceWindow.current;
+      if (!target || !target.closed) return;
+      audienceWindow.current = null;
+      setAudienceReady(false);
+    }, 1_000);
+    window.addEventListener("message", receiveAudienceReady);
+    return () => {
+      window.clearInterval(closedWindowCheck);
+      window.removeEventListener("message", receiveAudienceReady);
+    };
+  }, []);
 
   function updateLanguage(language: ScriptureLanguage) {
     const next = { ...selection, language };
@@ -217,7 +254,39 @@ export function ScriptureSearch({
       });
       return;
     }
+    audienceWindow.current = target;
+    setAudienceReady(false);
     setStatus({ kind: "idle" });
+  }
+
+  function controlAudience(action: DirectAudienceCommand["action"]) {
+    const target = audienceWindow.current;
+    if (!target || target.closed || !audienceReady) {
+      audienceWindow.current = null;
+      setAudienceReady(false);
+      setStatus({
+        kind: "error",
+        message: "先にOpenで聖書投映画面を開いてください。",
+      });
+      return;
+    }
+    const command: DirectAudienceCommand = {
+      action,
+      schema: directAudienceSchema,
+      type: "CONTROL",
+      version: directAudienceVersion,
+    };
+    try {
+      target.postMessage(command, window.location.origin);
+      setStatus({ kind: "idle" });
+    } catch {
+      audienceWindow.current = null;
+      setAudienceReady(false);
+      setStatus({
+        kind: "error",
+        message: "聖書投映画面を操作できませんでした。再度Openしてください。",
+      });
+    }
   }
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -298,6 +367,56 @@ export function ScriptureSearch({
                         </td>
                       );
                     })}
+                    {rowIndex === 0 ? (
+                      <td className="ginmaku-direct-controls" rowSpan={23}>
+                        <div>
+                          文字
+                          <button
+                            aria-label="文字を大きく"
+                            disabled={!audienceReady}
+                            onClick={() => controlAudience("font-larger")}
+                            type="button"
+                          >
+                            大
+                          </button>
+                        </div>
+                        <div>
+                          文字
+                          <button
+                            aria-label="文字を小さく"
+                            disabled={!audienceReady}
+                            onClick={() => controlAudience("font-smaller")}
+                            type="button"
+                          >
+                            小
+                          </button>
+                        </div>
+                        <div className="ginmaku-scroll-controls">
+                          <div>
+                            スクロール
+                            <button
+                              aria-label="前の御言葉へ"
+                              disabled={!audienceReady}
+                              onClick={() => controlAudience("previous")}
+                              type="button"
+                            >
+                              ↑
+                            </button>
+                          </div>
+                          <div>
+                            スクロール
+                            <button
+                              aria-label="次の御言葉へ"
+                              disabled={!audienceReady}
+                              onClick={() => controlAudience("next")}
+                              type="button"
+                            >
+                              ↓
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
                 <tr>
