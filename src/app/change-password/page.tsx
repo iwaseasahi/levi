@@ -8,7 +8,7 @@ export default async function ChangePasswordPage() {
   const access = await getChurchAccess(await headers());
   if (access.status === "unauthenticated") redirect("/login");
   if (access.status !== "authorized") notFound();
-  if (!access.mustChangePassword) redirect("/church");
+  if (!access.mustChangePassword) redirect("/scripture");
   return (
     <main className="auth-shell">
       <section className="auth-card">

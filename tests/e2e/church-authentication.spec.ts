@@ -13,7 +13,7 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "ログイン" }).click();
   // Better Auth's scrypt verification can consume most of Playwright's
   // default assertion budget on a two-core CI runner.
-  await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
   await expect(
     page.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();
@@ -37,7 +37,7 @@ test.describe("Church session lifecycle", () => {
       page.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();
     const second = await context.newPage();
-    await second.goto("/church");
+    await second.goto("/scripture");
     await expect(
       second.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();
@@ -49,7 +49,7 @@ test.describe("Church session lifecycle", () => {
         method: "POST",
       }),
     );
-    await page.goto("/church");
+    await page.goto("/scripture");
     await expect(page).toHaveURL(/\/login$/);
     await second.reload();
     await expect(second).toHaveURL(/\/login$/);
@@ -65,7 +65,7 @@ test.describe("Church session lifecycle", () => {
         expiresAt: new Date(Date.now() - 86_400_000),
       },
     });
-    await page.goto("/church");
+    await page.goto("/scripture");
     await expect(page).toHaveURL(/\/login$/);
   });
 
@@ -76,7 +76,7 @@ test.describe("Church session lifecycle", () => {
     pageErrorGuard.allowConsoleError(expectedUnauthorizedResourceError);
     await login(page);
     await prisma.session.deleteMany({ where: { userId: E2E_AUTH_USER_ID } });
-    await page.goto("/church");
+    await page.goto("/scripture");
     await expect(page).toHaveURL(/\/login$/);
   });
 });

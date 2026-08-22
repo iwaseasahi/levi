@@ -3,14 +3,15 @@
 ## Topology
 
 The primary Ginmaku-compatible flow keeps the authenticated search screen open
-and opens `/church/audience` directly in a new, ordinary Chrome tab named
+at `/scripture` and opens `/scripture/audience` directly in a new, ordinary
+Chrome tab named
 `projector`, without popup window features. Canonical search coordinates are in
 the URL; the audience fetches its own current scripture and handles `ArrowUp`
 and `ArrowDown` navigation through the authenticated APIs. It contains no
 controls, account identifiers, or full search result set.
 
-The controller route remains compatible with the synchronization protocol
-below, but search and bookmark `Open` actions do not pass through it.
+The `/scripture/controller` route remains compatible with the synchronization
+protocol below, but search and bookmark `Open` actions do not pass through it.
 
 ## Direct audience controls
 

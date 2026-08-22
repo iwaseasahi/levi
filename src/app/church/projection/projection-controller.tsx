@@ -326,7 +326,7 @@ export function ProjectionController({
   });
 
   function openAudience() {
-    const target = window.open("/church/audience", "_blank");
+    const target = window.open("/scripture/audience", "_blank");
     if (!target) {
       setConnection((state) => reduceAudienceConnection(state, "blocked"));
       return;

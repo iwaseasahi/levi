@@ -1,13 +1,14 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+
+import { ProjectionController } from "@/app/church/projection/projection-controller";
 import {
   parseScriptureSearch,
   ScriptureSearchError,
 } from "@/domain/scripture/search";
 import { getChurchAccess } from "@/infrastructure/auth/church-session";
-import { ProjectionController } from "./projection-controller";
 
-export default async function ProjectionHandoffPage({
+export default async function ScriptureControllerPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

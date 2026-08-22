@@ -155,7 +155,7 @@ describe("ScriptureSearch", () => {
     await user.click(screen.getByRole("button", { name: "Open" }));
 
     expect(window.open).toHaveBeenCalledWith(
-      "/church/audience?book=JHN&chapter=3&endVerse=17&language=both&startVerse=16",
+      "/scripture/audience?book=JHN&chapter=3&endVerse=17&language=both&startVerse=16",
       "projector",
     );
     expect(screen.queryByText("検索結果")).not.toBeInTheDocument();
@@ -256,7 +256,7 @@ describe("ScriptureSearch", () => {
     await user.click(screen.getByRole("button", { name: "Open" }));
 
     expect(window.open).toHaveBeenCalledWith(
-      "/church/audience?book=JHN&chapter=3&endVerse=18&language=both&startVerse=16",
+      "/scripture/audience?book=JHN&chapter=3&endVerse=18&language=both&startVerse=16",
       "projector",
     );
   });

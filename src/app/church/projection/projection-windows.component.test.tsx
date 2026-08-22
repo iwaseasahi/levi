@@ -95,7 +95,7 @@ describe("projection windows", () => {
         name: "会衆向け画面を新しいタブで開く",
       }),
     );
-    expect(window.open).toHaveBeenCalledWith("/church/audience", "_blank");
+    expect(window.open).toHaveBeenCalledWith("/scripture/audience", "_blank");
     expect(screen.getByRole("status")).toHaveTextContent("ブロックされました");
     const results = await axe.run(container, {
       rules: { "color-contrast": { enabled: false } },

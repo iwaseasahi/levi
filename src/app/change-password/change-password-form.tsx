@@ -80,7 +80,7 @@ export function ChangePasswordForm({
           <button
             className="primary-button"
             onClick={() => {
-              router.replace("/church");
+              router.replace("/scripture");
             }}
             type="button"
           >

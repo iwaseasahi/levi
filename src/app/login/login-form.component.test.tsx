@@ -35,7 +35,7 @@ describe("LoginForm", () => {
     );
     await user.type(screen.getByLabelText("パスワード"), "p".repeat(16));
     await user.click(screen.getByRole("button", { name: "ログイン" }));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/church"));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/scripture"));
     expect(refresh).not.toHaveBeenCalled();
     expect(signIn).toHaveBeenCalledWith(
       expect.objectContaining({ email: "member@example.invalid" }),

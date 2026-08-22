@@ -1,9 +1,11 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+
+import { ScriptureSearch } from "@/app/church/scripture-search";
 import { getChurchAccess } from "@/infrastructure/auth/church-session";
 import { prisma } from "@/infrastructure/database/client";
-import { ScriptureSearch } from "./scripture-search";
-export default async function ChurchPage() {
+
+export default async function ScripturePage() {
   const access = await getChurchAccess(await headers());
   if (access.status === "unauthenticated") redirect("/login");
   if (access.status !== "authorized") notFound();
