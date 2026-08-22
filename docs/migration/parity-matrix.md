@@ -36,6 +36,10 @@ decision trail. Evidence links are pinned to legacy commit
   toggled new-folder form, and same-folder bookmark drag ordering. Component,
   integration, and latest-Chromium E2E evidence verify persisted complete-order
   updates, keyboard fallback, and recovery after a rejected reorder.
+- Issue #134 completes BOOKMARK-001 control-placement parity: the accordion is
+  limited to saved scripture links, date/meeting creation and current-folder
+  editing sit beneath it, management runs in a separate tab, and the automatic
+  title `お気に入りに追加` action follows the search form.
 
 ## Matrix maintenance rules
 

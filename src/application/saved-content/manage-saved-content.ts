@@ -40,6 +40,11 @@ export type SavedContentRepository = {
     scope: ChurchScope,
     bookmarkId: string,
   ): Promise<ScriptureBookmarkView | null>;
+  updateBookmark(
+    scope: ChurchScope,
+    bookmarkId: string,
+    input: { title: string },
+  ): Promise<ScriptureBookmarkView | null>;
   reorderBookmarks(
     scope: ChurchScope,
     folderId: string,
@@ -124,6 +129,15 @@ export async function openBookmark(
   bookmarkId: string,
 ) {
   return found(await repository.openBookmark(scope, bookmarkId));
+}
+
+export async function updateBookmark(
+  repository: SavedContentRepository,
+  scope: ChurchScope,
+  bookmarkId: string,
+  input: { title: string },
+) {
+  return found(await repository.updateBookmark(scope, bookmarkId, input));
 }
 
 export async function reorderBookmarks(

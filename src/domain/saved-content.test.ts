@@ -4,6 +4,8 @@ import {
   parseCreateBookmark,
   parseCreateFolder,
   parseReorder,
+  parseSavedContentCommand,
+  parseUpdateBookmark,
   parseUpdateFolder,
   SavedContentError,
 } from "./saved-content";
@@ -27,9 +29,26 @@ describe("saved content input", () => {
     ).toMatchObject({ book: "GEN", language: "both" });
   });
 
+  it("normalizes a strict bookmark title update", () => {
+    expect(parseUpdateBookmark({ title: "  創世記 1:1  " })).toEqual({
+      title: "創世記 1:1",
+    });
+    expect(
+      parseSavedContentCommand({
+        action: "update-bookmark",
+        bookmarkId: "00000000-0000-4000-8000-000000000054",
+        title: "  創世記 1:1  ",
+      }),
+    ).toMatchObject({
+      action: "update-bookmark",
+      input: { title: "創世記 1:1" },
+    });
+  });
+
   it.each([
     [{ name: " " }, parseCreateFolder],
     [{}, parseUpdateFolder],
+    [{ title: " " }, parseUpdateBookmark],
     [
       {
         ids: [
