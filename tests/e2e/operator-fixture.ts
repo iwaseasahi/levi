@@ -1,8 +1,13 @@
 import { hashPassword } from "better-auth/crypto";
 
+import {
+  INTERNAL_PLATFORM_OPERATOR_EMAIL,
+  INTERNAL_PLATFORM_OPERATOR_ID,
+  INTERNAL_PLATFORM_OPERATOR_NAME,
+} from "@/domain/admin/platform-operator";
 import { prisma } from "@/infrastructure/database/client";
 
-export const E2E_OPERATOR_EMAIL = "test.e2e.operator@example.invalid";
+export const E2E_ADMIN_BASIC_USERNAME = "test-e2e-admin";
 export const E2E_CHURCH_USER_EMAIL = "test.e2e.member@example.invalid";
 export const E2E_AUTH_USER_EMAIL = "test.e2e.auth-member@example.invalid";
 export const E2E_PASSWORD_USER_EMAIL =
@@ -11,7 +16,6 @@ export const E2E_PASSWORD = "e".repeat(16);
 export const E2E_CREATED_EMAIL = "test.e2e.created@example.invalid";
 export const E2E_CREATED_CHURCH = "test.e2e created church";
 
-const E2E_OPERATOR_ID = "00000000-0000-4000-8000-000000004301";
 const E2E_CHURCH_USER_ID = "00000000-0000-4000-8000-000000004302";
 const E2E_CHURCH_ID = "00000000-0000-4000-8000-000000004303";
 export const E2E_AUTH_USER_ID = "00000000-0000-4000-8000-000000004304";
@@ -167,6 +171,9 @@ export async function seedScriptureFixture() {
 export async function clearOperatorFixtures() {
   await prisma.rateLimit.deleteMany();
   await prisma.user.deleteMany({
+    where: { id: INTERNAL_PLATFORM_OPERATOR_ID },
+  });
+  await prisma.user.deleteMany({
     where: { email: { startsWith: "test.e2e." } },
   });
   await prisma.church.deleteMany({
@@ -182,22 +189,13 @@ export async function seedOperatorFixtures() {
     await transaction.user.create({
       data: {
         actorState: "ACTIVE",
-        email: E2E_OPERATOR_EMAIL,
-        id: E2E_OPERATOR_ID,
-        name: "Synthetic E2E Platform Operator",
+        email: INTERNAL_PLATFORM_OPERATOR_EMAIL,
+        id: INTERNAL_PLATFORM_OPERATOR_ID,
+        name: INTERNAL_PLATFORM_OPERATOR_NAME,
       },
     });
     await transaction.platformOperator.create({
-      data: { userId: E2E_OPERATOR_ID },
-    });
-    await transaction.account.create({
-      data: {
-        accountId: E2E_OPERATOR_ID,
-        issuer: "local:credential",
-        password: passwordHash,
-        providerId: "credential",
-        userId: E2E_OPERATOR_ID,
-      },
+      data: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
     });
 
     await transaction.church.create({

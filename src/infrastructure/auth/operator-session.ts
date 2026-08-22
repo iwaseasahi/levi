@@ -1,19 +1,11 @@
-import { resolveOperatorAccess } from "@/application/auth/operator-access";
-import { prisma } from "@/infrastructure/database/client";
-import { auth } from "./server";
+import type { OperatorAccess } from "@/application/auth/operator-access";
+import { authenticateAdminBasic } from "./admin-basic-auth";
 
-export function getOperatorAccess(headers: Headers) {
-  return resolveOperatorAccess(headers, {
-    async getSessionUserId(requestHeaders) {
-      const session = await auth.api.getSession({ headers: requestHeaders });
-      return session?.user.id ?? null;
-    },
-    async findActiveOperator(userId) {
-      const operator = await prisma.platformOperator.findUnique({
-        where: { userId },
-        select: { user: { select: { actorState: true } } },
-      });
-      return operator?.user.actorState === "ACTIVE";
-    },
-  });
+export async function getOperatorAccess(
+  headers: Headers,
+): Promise<OperatorAccess> {
+  const access = await authenticateAdminBasic(headers.get("authorization"));
+  return access.status === "authorized"
+    ? { status: "authorized", userId: access.userId }
+    : { status: "unauthenticated" };
 }

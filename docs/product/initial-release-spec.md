@@ -19,8 +19,8 @@ must be isolated from every other church.
 
 The initial release has two identity types:
 
-- a **platform operator**, who operates Levi and creates churches and their
-  initial accounts through a protected administration screen; and
+- a **platform operator**, who uses one HTTPS Basic-authenticated administration
+  credential to create churches and their initial accounts; and
 - a **church user**, who signs in with an email address and password and can use
   only that church's data.
 
@@ -163,6 +163,12 @@ does not delete shared Bible master data. Core bookmark fields must not be store
 as legacy controller/action names or opaque route-parameter JSON.
 
 ## Authentication behavior
+
+The single platform operator enters `/admin/churches` using browser Basic
+authentication. That credential does not create a Better Auth login session and
+cannot be used on `/login`. Church users use Better Auth email/password login as
+described below. Adding another platform operator requires replacing the shared
+credential with individually attributable accounts.
 
 Login succeeds only for an active church account with a valid password. Login
 failure must not reveal whether an email address exists. Logout, expiry,

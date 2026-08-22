@@ -36,6 +36,7 @@
     "security:audit": "pnpm audit --prod --audit-level high",
     "security:licenses": "tsx scripts/check-licenses.ts",
     "security:check": "pnpm security:audit && pnpm security:licenses",
+    "admin:hash-password": "tsx scripts/hash-admin-password.ts",
     "backup:rehearse": "bash scripts/rehearse-backup.sh",
     "backup:config:check": "tsx scripts/check-backup-configuration.ts",
     "deployment:config:check": "tsx scripts/check-deployment-configuration.ts",

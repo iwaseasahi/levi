@@ -9,6 +9,42 @@ export interface AuthRuntimeConfig {
   nodeEnvironment: NodeEnvironment;
 }
 
+export interface AdminBasicAuthConfig {
+  passwordHash: string;
+  username: string;
+}
+
+const ADMIN_PASSWORD_HASH_PATTERN = /^[a-f0-9]{32}:[a-f0-9]{128}$/;
+
+export function parseAdminBasicAuthConfig(values: {
+  passwordHash: string | undefined;
+  username: string | undefined;
+}): AdminBasicAuthConfig {
+  const username = values.username?.trim() ?? "";
+  if (
+    username.length < 1 ||
+    username.length > 128 ||
+    username.includes(":") ||
+    /[\u0000-\u001f\u007f]/.test(username)
+  ) {
+    throw new Error("ADMIN_BASIC_AUTH_USERNAME is invalid");
+  }
+
+  const passwordHash = values.passwordHash?.trim() ?? "";
+  if (!ADMIN_PASSWORD_HASH_PATTERN.test(passwordHash)) {
+    throw new Error("ADMIN_BASIC_AUTH_PASSWORD_HASH is invalid");
+  }
+
+  return { passwordHash, username };
+}
+
+export function getAdminBasicAuthConfig(): AdminBasicAuthConfig {
+  return parseAdminBasicAuthConfig({
+    passwordHash: process.env.ADMIN_BASIC_AUTH_PASSWORD_HASH,
+    username: process.env.ADMIN_BASIC_AUTH_USERNAME,
+  });
+}
+
 export function parseNodeEnvironment(
   value: string | undefined,
 ): NodeEnvironment {

@@ -4,7 +4,7 @@
 - Date: 2026-08-21
 - Decision owners: product owner and security owner
 - Supersedes: ADR 0004
-- Superseded by: none
+- Superseded by: ADR 0008 for platform-operator authentication only
 
 ## Context
 

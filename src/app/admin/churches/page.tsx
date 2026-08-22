@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { getOperatorAccess } from "@/infrastructure/auth/operator-session";
 import { provisionChurchAction } from "./actions";
@@ -11,9 +11,6 @@ import { ResetPasswordForm } from "./reset-password-form";
 export default async function ChurchAdministrationPage() {
   const access = await getOperatorAccess(await headers());
 
-  if (access.status === "unauthenticated") {
-    redirect("/login");
-  }
   if (access.status !== "authorized") {
     notFound();
   }

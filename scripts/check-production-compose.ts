@@ -40,6 +40,8 @@ const exampleEnvironment = path.join(
 const composeEnvironment = { ...process.env };
 for (const variable of [
   "ACME_EMAIL",
+  "ADMIN_BASIC_AUTH_PASSWORD_HASH",
+  "ADMIN_BASIC_AUTH_USERNAME",
   "BETTER_AUTH_BASE_URL",
   "BETTER_AUTH_SECRET",
   "BETTER_AUTH_TRUSTED_ORIGINS",
@@ -105,6 +107,11 @@ assert(app.cap_drop?.includes("ALL"));
 assert.deepEqual(Object.keys(app.networks ?? {}), ["private"]);
 assert(app.healthcheck, "app must define a readiness healthcheck");
 assert.match(app.environment?.DATABASE_URL ?? "", /^postgresql:\/\/levi_app:/);
+assert.equal(app.environment?.ADMIN_BASIC_AUTH_USERNAME, "levi-admin");
+assert.equal(
+  app.environment?.ADMIN_BASIC_AUTH_PASSWORD_HASH,
+  "replace-with-output-from-pnpm-admin-hash-password",
+);
 assert.equal(app.environment?.POSTGRES_PASSWORD, undefined);
 assert.equal(app.environment?.MIGRATION_DATABASE_URL, undefined);
 

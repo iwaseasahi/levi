@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   getDatabaseUrl,
+  parseAdminBasicAuthConfig,
   parseAuthRuntimeConfig,
   parseNodeEnvironment,
 } from "./env";
@@ -14,6 +15,31 @@ afterEach(() => {
   } else {
     process.env.DATABASE_URL = originalDatabaseUrl;
   }
+});
+
+describe("parseAdminBasicAuthConfig", () => {
+  const passwordHash = `${"a".repeat(32)}:${"b".repeat(128)}`;
+
+  it("accepts a trimmed username and a Better Auth scrypt verifier", () => {
+    expect(
+      parseAdminBasicAuthConfig({
+        passwordHash,
+        username: " levi-admin ",
+      }),
+    ).toEqual({ passwordHash, username: "levi-admin" });
+  });
+
+  it.each([
+    [{ username: "", passwordHash }, "ADMIN_BASIC_AUTH_USERNAME"],
+    [{ username: "admin:name", passwordHash }, "ADMIN_BASIC_AUTH_USERNAME"],
+    [{ username: "admin\nname", passwordHash }, "ADMIN_BASIC_AUTH_USERNAME"],
+    [
+      { username: "admin", passwordHash: "plaintext" },
+      "ADMIN_BASIC_AUTH_PASSWORD_HASH",
+    ],
+  ])("rejects unsafe Basic authentication configuration", (values, message) => {
+    expect(() => parseAdminBasicAuthConfig(values)).toThrow(message);
+  });
 });
 
 describe("parseNodeEnvironment", () => {
