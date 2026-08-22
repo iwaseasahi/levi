@@ -10,9 +10,6 @@ the URL; the audience fetches its own current scripture and handles `ArrowUp`
 and `ArrowDown` navigation through the authenticated APIs. It contains no
 controls, account identifiers, or full search result set.
 
-The `/scripture/controller` route remains compatible with the synchronization
-protocol below, but search and bookmark `Open` actions do not pass through it.
-
 ## Direct audience controls
 
 The search screen retains the exact `Window` reference returned by `Open` and
@@ -38,49 +35,16 @@ message shapes are strict, and the audience ignores every control after its
 session has failed closed. A closed audience disables the search controls; a
 new `Open` establishes a new ready handshake.
 
-## Legacy controller transport and trust boundary
-
-Messages use direct `window.postMessage` between the controller's retained
-`Window` reference and the audience's `window.opener`. Both receivers require:
-
-- `event.origin === window.location.origin`;
-- `event.source` to be the exact expected window;
-- `schema === "levi.projection"`;
-- `version === 3`;
-- a recognized message type; and
-- a runtime-validated payload with no unknown fields.
-
-Untrusted, malformed, stale-revision, and wrong-session messages are ignored.
-
-## Messages
-
-- Audience → controller `READY`: sent on initial load and every refresh.
-- Audience → controller `NAVIGATE`: sends `previous` for `ArrowUp` and `next`
-  for `ArrowDown`, together with the active projection session ID. The
-  controller passes trusted requests through its serial navigation queue.
-- Controller → audience `STATE`: the current chapter heading, verse number, one
-  or two translation texts, font scale, blank state, and monotonic
-  scroll/revision counters. When both translations are present their order is
-  Japanese then English.
-- Controller → audience `PING` and audience → controller `PONG`: detect a lost
-  connection without treating a temporarily open window as healthy.
-- Controller → audience `CLEAR`: reserved for explicit protected-state removal.
-
-Only the current projected item is sent. The projection URL contains canonical
-book/chapter/range/language coordinates and never contains verse text.
-
 ## Recovery and authorization
 
 - A null result from `window.open` is shown as new-tab blocking.
 - A closed direct audience tab can be reopened with `Open` from the unchanged
   search screen.
 - Refresh reloads the scripture identified by the canonical audience URL.
-- Heartbeat loss is visible as disconnected and the user can re-display the
-  audience window when using the retained controller compatibility route.
 - The audience checks `/api/church/session` every 30 seconds and whenever it
   becomes visible. Any denied or failed check irreversibly clears text until the
-  page is reloaded through an eligible session. Later controller messages cannot
-  repopulate a failed-closed audience.
+  page is reloaded through an eligible session. Later direct control messages
+  cannot repopulate a failed-closed audience.
 
 Navigation outside the initial result range and across chapter boundaries uses
 the [scripture navigation contract](scripture-navigation-contract.md) without

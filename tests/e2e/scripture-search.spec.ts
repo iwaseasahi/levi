@@ -61,27 +61,15 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
     "rgb(0, 0, 0)",
   );
 
-  for (const oldPath of ["/church", "/church/audience", "/church/projection"]) {
+  for (const oldPath of [
+    "/church",
+    "/church/audience",
+    "/church/projection",
+    "/scripture/controller",
+  ]) {
     const oldRoute = await page.request.get(oldPath, { maxRedirects: 0 });
     expect(oldRoute.status(), `${oldPath} must not redirect`).toBe(404);
   }
-
-  await page.goto(
-    "/scripture/controller?book=GEN&chapter=1&startVerse=1&endVerse=2&language=both",
-  );
-  await expect(
-    page.getByRole("heading", { level: 1, name: "投影操作" }),
-  ).toBeVisible();
-  await expect(page.locator(".controller-actions")).toHaveCSS(
-    "background-color",
-    "rgb(16, 16, 16)",
-  );
-  await expect(page.locator(".controller-preview")).toHaveCSS(
-    "background-color",
-    "rgb(16, 16, 16)",
-  );
-  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.goto("/scripture");
 
   const legacyFormStyle = await page
     .locator(".ginmaku-books-table")
@@ -219,7 +207,6 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
     verseColor: "rgb(255, 255, 0)",
     verseStyle: "italic",
   });
-  await expect(audience.locator(".controller-actions")).toHaveCount(0);
   await expect(audience.getByRole("button", { name: "次へ" })).toHaveCount(0);
 
   const larger = page.getByRole("button", { name: "文字を大きく" });

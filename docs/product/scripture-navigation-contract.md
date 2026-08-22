@@ -42,10 +42,10 @@ requested translation must then exist at that exact location. A missing row is
 reported as `TRANSLATION_NOT_AVAILABLE`; navigation never silently skips the
 location and drifts the two translations.
 
-## Controller ordering
+## Navigation ordering
 
-The controller submits previous/next actions through one promise queue. Rapid
-clicks and keyboard actions execute in input order. A successful response
-becomes the complete current projection state, including locations outside the
-initial search range. A denied session clears the audience window and removes
-protected controller content.
+The direct audience submits previous/next actions through one promise queue.
+Rapid controls and keyboard actions execute in input order. A successful
+response becomes the complete current projection state, including locations
+outside the initial search range. A denied session clears protected audience
+content.
