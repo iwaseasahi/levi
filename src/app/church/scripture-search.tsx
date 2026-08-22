@@ -291,10 +291,17 @@ export function ScriptureSearch({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selection.book || !selection.chapter || !selection.startVerse) {
+    const missingRequiredMessage = !selection.book
+      ? "書巻を選択してください。"
+      : !selection.chapter
+        ? "章を入力してください。"
+        : !selection.startVerse
+          ? "開始節を入力してください。"
+          : null;
+    if (missingRequiredMessage) {
       setStatus({
         kind: "error",
-        message: "書巻、章、開始節をすべて入力してください。",
+        message: missingRequiredMessage,
       });
       return;
     }

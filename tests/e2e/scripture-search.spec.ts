@@ -81,6 +81,25 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
   const searchAccessibility = await new AxeBuilder({ page }).analyze();
   expect(searchAccessibility.violations).toEqual([]);
 
+  await page.getByRole("radio", { name: "創世記/Genesis" }).click();
+  await page.getByLabel("章").fill("1");
+  await page.getByRole("button", { name: "Open", exact: true }).click();
+  const missingStartVerse = page.locator(".search-feedback").getByRole("alert");
+  await expect(missingStartVerse).toHaveText("開始節を入力してください。");
+  await expect(missingStartVerse).toBeFocused();
+  expect(
+    await missingStartVerse.evaluate((element) => {
+      const message = element.querySelector("p")!;
+      return {
+        background: getComputedStyle(element).backgroundColor,
+        color: getComputedStyle(message).color,
+      };
+    }),
+  ).toEqual({
+    background: "rgb(255, 248, 247)",
+    color: "rgb(143, 29, 29)",
+  });
+
   const foreignFolder = await page.request.get(
     `/api/saved-content?folderId=${E2E_FOREIGN_FOLDER_ID}`,
   );

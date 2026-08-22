@@ -255,15 +255,28 @@ describe("ScriptureSearch", () => {
     );
   });
 
-  it("announces and focuses validation feedback", async () => {
+  it("announces and focuses the first missing required field", async () => {
     renderSearch(successfulFetcher());
-    await screen.findByRole("radio", {
+    const user = userEvent.setup();
+    const book = await screen.findByRole("radio", {
       name: "架空ヨハネ/Synthetic John",
     });
-    await userEvent.click(screen.getByRole("button", { name: "Open" }));
-    const alert = await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    let alert = await screen.findByRole("alert");
     await waitFor(() => expect(alert).toHaveFocus());
-    expect(alert).toHaveTextContent("書巻、章、開始節をすべて入力してください");
+    expect(alert).toHaveTextContent("書巻を選択してください。");
+
+    await user.click(book);
+    await waitFor(() => expect(screen.getByLabelText("章")).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("章を入力してください。");
+
+    await user.type(screen.getByLabelText("章"), "3");
+    await waitFor(() => expect(screen.getByLabelText("開始節")).toBeEnabled());
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("開始節を入力してください。");
   });
 
   it("resets selections and feedback", async () => {
