@@ -15,7 +15,7 @@ async function login(page: import("@playwright/test").Page) {
   // default assertion budget on a two-core CI runner.
   await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
   await expect(
-    page.getByRole("heading", { name: "test.e2e auth church" }),
+    page.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();
 }
 
@@ -34,14 +34,22 @@ test.describe("Church session lifecycle", () => {
     await login(page);
     await page.reload();
     await expect(
-      page.getByRole("heading", { name: "test.e2e auth church" }),
+      page.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();
     const second = await context.newPage();
     await second.goto("/church");
     await expect(
-      second.getByRole("heading", { name: "test.e2e auth church" }),
+      second.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();
-    await page.getByRole("button", { name: "ログアウト" }).click();
+    await page.evaluate(() =>
+      fetch("/api/auth/sign-out", {
+        body: "{}",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      }),
+    );
+    await page.goto("/church");
     await expect(page).toHaveURL(/\/login$/);
     await second.reload();
     await expect(second).toHaveURL(/\/login$/);

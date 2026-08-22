@@ -27,6 +27,12 @@ optional ending-verse field is empty, it uses the catalog to resolve the last
 contiguous verse at or after `startVerse`; projection and bookmarks therefore
 continue to receive an explicit inclusive `endVerse`.
 
+The Church screen reproduces Ginmaku's black surface, white 11px Helvetica
+table, canonical three-column/twenty-two-row book order, inline range controls,
+language labels, and native `Open`/`Reset` controls. It has no Church header,
+logout control, explanatory copy, or result-preview region. A successful
+`Open` validates the range and navigates directly to the projection controller.
+
 ## Result
 
 Results are ordered by verse and contain one item per canonical location.

@@ -48,7 +48,7 @@ test.describe("operator administration access", () => {
 test.describe("operator church provisioning", () => {
   test.describe.configure({ mode: "serial" });
 
-  test("provisions an account through first login, password change, and logout", async ({
+  test("provisions an account through first login and password change", async ({
     page,
   }) => {
     await signIn(page, E2E_OPERATOR_EMAIL);
@@ -98,9 +98,14 @@ test.describe("operator church provisioning", () => {
       "作成できませんでした。入力内容を確認して、もう一度お試しください。",
     );
 
-    await page.request.post("/api/auth/sign-out", {
-      headers: { origin: "http://127.0.0.1:3100" },
-    });
+    await page.evaluate(() =>
+      fetch("/api/auth/sign-out", {
+        body: "{}",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        method: "POST",
+      }),
+    );
     await page.goto("/login");
     await page.getByLabel("メールアドレス").fill(E2E_CREATED_EMAIL);
     await page.getByLabel("パスワード").fill(temporaryPassword ?? "");
@@ -117,9 +122,7 @@ test.describe("operator church provisioning", () => {
     await page.getByRole("button", { name: "教会用画面へ" }).click();
     await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
     await expect(
-      page.getByRole("heading", { name: E2E_CREATED_CHURCH }),
+      page.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();
-    await page.getByRole("button", { name: "ログアウト" }).click();
-    await expect(page).toHaveURL(/\/login$/);
   });
 });
