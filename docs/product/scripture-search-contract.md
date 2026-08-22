@@ -38,12 +38,14 @@ contains only book, chapter, normalized range, and language coordinates; it
 never contains Bible text. Reopening a bookmark uses the same direct-tab flow.
 
 The fourth table column reproduces Ginmaku's `文字 大／小` and `スクロール
-↑／↓` controls. They remain disabled until the directly opened audience sends
-an authenticated same-origin readiness message. Text controls adjust the
-audience font immediately. Scroll up/down selects the previous/next canonical
-scripture item, matching Ginmaku terminology and behavior rather than moving a
-viewport offset. Closing the audience disables these controls until another
-successful `Open`.
+↑／↓` controls, and the Open/Reset row includes Ginmaku's `空白⇔表示` control.
+They remain disabled until the directly opened audience sends an authenticated
+same-origin readiness message. Text controls adjust the audience font
+immediately. Scroll up/down selects the previous/next canonical scripture item,
+matching Ginmaku terminology and behavior rather than moving a viewport offset.
+Blank hides the audience scripture on the black surface while retaining the
+latest location for display when toggled again. Closing the audience disables
+these controls until another successful `Open`.
 
 ## Result
 

@@ -11,7 +11,13 @@ const envelope = {
 const directAudienceCommandSchema = z
   .object({
     ...envelope,
-    action: z.enum(["font-larger", "font-smaller", "previous", "next"]),
+    action: z.enum([
+      "font-larger",
+      "font-smaller",
+      "previous",
+      "next",
+      "toggle-blank",
+    ]),
     type: z.literal("CONTROL"),
   })
   .strict();

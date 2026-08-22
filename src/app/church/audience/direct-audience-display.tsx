@@ -39,6 +39,7 @@ export function DirectAudienceDisplay({
   );
   const [message, setMessage] = useState("");
   const [fontScale, setFontScale] = useState(1);
+  const [blank, setBlank] = useState(false);
   const currentRef = useRef<ScriptureSearchItem | null>(null);
   const authorizedRef = useRef(true);
   const navigationQueue = useRef(Promise.resolve());
@@ -173,6 +174,8 @@ export function DirectAudienceDisplay({
         setFontScale((currentScale) =>
           Math.max(0.6, Number((currentScale - 0.1).toFixed(1))),
         );
+      } else if (command.action === "toggle-blank") {
+        setBlank((currentBlank) => !currentBlank);
       } else {
         navigate(command.action);
       }
@@ -239,7 +242,7 @@ export function DirectAudienceDisplay({
     fitVerse();
     window.addEventListener("resize", fitVerse);
     return () => window.removeEventListener("resize", fitVerse);
-  }, [current, fontScale]);
+  }, [blank, current, fontScale]);
 
   if (status !== "ready" || !current)
     return (
@@ -263,7 +266,8 @@ export function DirectAudienceDisplay({
 
   return (
     <main
-      className="audience-screen"
+      aria-label={blank ? "空白投影" : undefined}
+      className={`audience-screen${blank ? " audience-blank" : ""}`}
       ref={screenRef}
       style={
         {
@@ -272,24 +276,30 @@ export function DirectAudienceDisplay({
         } as React.CSSProperties
       }
     >
-      <h1 className="audience-book-name">{heading(current)}</h1>
-      <article className="audience-content">
-        <div className="audience-verse" ref={verseRef}>
-          {translations.map((translation) => (
-            <p
-              className="audience-book-word audience-shadow"
-              key={translation.language}
-              lang={translation.language}
-            >
-              <span className="audience-verse-number">
-                {current.location.verse}:
-              </span>{" "}
-              {translation.text}
-            </p>
-          ))}
-        </div>
-      </article>
-      {message ? <p className="audience-navigation-error">{message}</p> : null}
+      {blank ? null : (
+        <>
+          <h1 className="audience-book-name">{heading(current)}</h1>
+          <article className="audience-content">
+            <div className="audience-verse" ref={verseRef}>
+              {translations.map((translation) => (
+                <p
+                  className="audience-book-word audience-shadow"
+                  key={translation.language}
+                  lang={translation.language}
+                >
+                  <span className="audience-verse-number">
+                    {current.location.verse}:
+                  </span>{" "}
+                  {translation.text}
+                </p>
+              ))}
+            </div>
+          </article>
+          {message ? (
+            <p className="audience-navigation-error">{message}</p>
+          ) : null}
+        </>
+      )}
     </main>
   );
 }

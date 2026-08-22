@@ -133,7 +133,7 @@ describe("DirectAudienceDisplay", () => {
     ).toBeVisible();
   });
 
-  it("accepts font and Ginmaku previous or next controls only from its opener", async () => {
+  it("accepts Ginmaku display controls only from its opener", async () => {
     const opener = { postMessage: vi.fn() } as unknown as Window;
     vi.stubGlobal("opener", opener);
     const fetcher = vi.fn((input: RequestInfo | URL) => {
@@ -184,18 +184,44 @@ describe("DirectAudienceDisplay", () => {
     expect(container.querySelector(".audience-screen")).toHaveStyle({
       "--audience-scale": "1",
     });
+    act(() => send("toggle-blank"));
+    expect(screen.getByRole("main", { name: "空白投影" })).toBeVisible();
+    expect(screen.queryByText("架空の日本語 1:1")).not.toBeInTheDocument();
     act(() => send("next"));
+    await waitFor(() =>
+      expect(
+        fetcher.mock.calls.some(([input]) =>
+          String(input).includes("direction=next"),
+        ),
+      ).toBe(true),
+    );
+    expect(screen.queryByText("架空の日本語 1:2")).not.toBeInTheDocument();
+    act(() => send("toggle-blank"));
     expect(await screen.findByText("架空の日本語 1:2")).toBeVisible();
-    expect(
-      fetcher.mock.calls.some(([input]) =>
-        String(input).includes("direction=next"),
-      ),
-    ).toBe(true);
 
     act(() => send("font-larger", {} as MessageEventSource));
     expect(container.querySelector(".audience-screen")).toHaveStyle({
       "--audience-scale": "1",
     });
+    act(() => send("toggle-blank", {} as MessageEventSource));
+    expect(
+      screen.queryByRole("main", { name: "空白投影" }),
+    ).not.toBeInTheDocument();
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            action: "toggle-blank",
+            schema: "levi.direct-audience",
+            type: "CONTROL",
+            version: 1,
+          },
+          origin: "https://untrusted.example",
+          source: opener,
+        }),
+      ),
+    );
+    expect(screen.getByText("架空の日本語 1:2")).toBeVisible();
   });
 
   it("fails closed when the active session is denied", async () => {

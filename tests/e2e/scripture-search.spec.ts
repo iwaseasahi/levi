@@ -200,10 +200,32 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
   const smaller = page.getByRole("button", { name: "文字を小さく" });
   const previous = page.getByRole("button", { name: "前の御言葉へ" });
   const next = page.getByRole("button", { name: "次の御言葉へ" });
+  const toggleBlank = page.getByRole("button", {
+    name: "空白と表示を切り替え",
+  });
   await expect(larger).toBeEnabled();
   await expect(smaller).toBeEnabled();
   await expect(previous).toBeEnabled();
   await expect(next).toBeEnabled();
+  await expect(toggleBlank).toBeEnabled();
+
+  await toggleBlank.click();
+  await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
+  await expect(audience.locator(".audience-book-name")).toHaveCount(0);
+  await expect(audience.locator(".audience-book-word")).toHaveCount(0);
+  await next.click();
+  await toggleBlank.click();
+  await expect(
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 1:2",
+    }),
+  ).toBeVisible();
+  await previous.click();
+  await expect(
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 1:1",
+    }),
+  ).toBeVisible();
 
   const initialFontSize = await audience
     .locator(".audience-content")
