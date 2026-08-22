@@ -2,11 +2,15 @@
 
 ## Topology
 
-The authenticated controller opens `/church/audience` in a new, ordinary Chrome
-tab without popup window features. It retains the returned same-origin `Window`
-reference for communication.
-The audience contains no controls, account identifiers, or full search result
-set.
+The primary Ginmaku-compatible flow keeps the authenticated search screen open
+and opens `/church/audience` directly in a new, ordinary Chrome tab named
+`projector`, without popup window features. Canonical search coordinates are in
+the URL; the audience fetches its own current scripture and handles `ArrowUp`
+and `ArrowDown` navigation through the authenticated APIs. It contains no
+controls, account identifiers, or full search result set.
+
+The controller route remains compatible with the synchronization protocol
+below, but search and bookmark `Open` actions do not pass through it.
 
 ## Transport and trust boundary
 
@@ -42,10 +46,11 @@ book/chapter/range/language coordinates and never contains verse text.
 ## Recovery and authorization
 
 - A null result from `window.open` is shown as new-tab blocking.
-- A closed window is detected and can be reopened with the same control.
-- Refresh emits a new `READY`, causing the complete current state to be resent.
+- A closed direct audience tab can be reopened with `Open` from the unchanged
+  search screen.
+- Refresh reloads the scripture identified by the canonical audience URL.
 - Heartbeat loss is visible as disconnected and the user can re-display the
-  audience window.
+  audience window when using the retained controller compatibility route.
 - The audience checks `/api/church/session` every 30 seconds and whenever it
   becomes visible. Any denied or failed check irreversibly clears text until the
   page is reloaded through an eligible session. Later controller messages cannot

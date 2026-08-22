@@ -1,33 +1,22 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import type { Route } from "next";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type {
   ScriptureCatalog,
   ScriptureCatalogBook,
   ScriptureLanguage,
-  ScriptureSearchItem,
 } from "@/domain/scripture/search";
 import { SavedContentPanel } from "./saved-content-panel";
 
-type SearchResponse = {
-  items: ScriptureSearchItem[];
-  search: {
-    book: string;
-    chapter: number;
-    startVerse: number;
-    endVerse: number;
-    language: ScriptureLanguage;
-  };
+type NormalizedSearch = {
+  book: string;
+  chapter: number;
+  startVerse: number;
+  endVerse: number;
+  language: ScriptureLanguage;
 };
 
-type Status =
-  | { kind: "idle" }
-  | { kind: "loading"; message: string }
-  | { kind: "error"; message: string }
-  | { kind: "empty"; message: string }
-  | { kind: "success"; result: SearchResponse };
+type Status = { kind: "idle" } | { kind: "error"; message: string };
 
 type Selection = {
   book: string;
@@ -54,22 +43,6 @@ function catalogUrl(
   return `/api/scripture/catalog?${query}`;
 }
 
-function errorMessage(code?: string) {
-  switch (code) {
-    case "INVALID_SEARCH_INPUT":
-    case "INVALID_VERSE_RANGE":
-      return "検索条件を確認してください。";
-    case "VERSE_RANGE_NOT_FOUND":
-    case "CHAPTER_NOT_FOUND":
-    case "BOOK_NOT_FOUND":
-      return "指定した聖書箇所は見つかりませんでした。";
-    case "TRANSLATION_NOT_AVAILABLE":
-      return "選択した翻訳ではこの箇所を表示できません。";
-    default:
-      return "御言葉を読み込めませんでした。しばらくしてから再度お試しください。";
-  }
-}
-
 function contiguousEndVerses(verses: number[], startVerse: string) {
   if (!startVerse) return [];
   const startIndex = verses.indexOf(Number(startVerse));
@@ -91,7 +64,7 @@ function normalizedSearch(
   selection: Selection,
   chapters: number[],
   verses: number[],
-): SearchResponse["search"] | null {
+): NormalizedSearch | null {
   if (!selection.book || !selection.chapter || !selection.startVerse)
     return null;
   const validEndVerses = contiguousEndVerses(verses, selection.startVerse);
@@ -115,14 +88,14 @@ function normalizedSearch(
   };
 }
 
-function projectionUrl(search: SearchResponse["search"]) {
-  return `/church/projection?${new URLSearchParams({
+function audienceUrl(search: NormalizedSearch) {
+  return `/church/audience?${new URLSearchParams({
     book: search.book,
     chapter: String(search.chapter),
     endVerse: String(search.endVerse),
     language: search.language,
     startVerse: String(search.startVerse),
-  })}` as Route;
+  })}`;
 }
 
 export function ScriptureSearch({
@@ -132,7 +105,6 @@ export function ScriptureSearch({
   fetcher?: typeof fetch;
   savedContentFetcher?: typeof fetch;
 }) {
-  const router = useRouter();
   const [selection, setSelection] = useState(initialSelection);
   const [books, setBooks] = useState<ScriptureCatalogBook[]>([]);
   const [chapters, setChapters] = useState<number[]>([]);
@@ -178,8 +150,7 @@ export function ScriptureSearch({
   }, []);
 
   useEffect(() => {
-    if (status.kind === "error" || status.kind === "empty")
-      feedbackRef.current?.focus();
+    if (status.kind === "error") feedbackRef.current?.focus();
   }, [status]);
 
   useEffect(() => {
@@ -236,44 +207,20 @@ export function ScriptureSearch({
     setStatus({ kind: "idle" });
   }
 
-  async function performSearch(next: Selection) {
-    setStatus({ kind: "loading", message: "御言葉を検索しています。" });
-    try {
-      const query = new URLSearchParams({
-        book: next.book,
-        chapter: next.chapter,
-        startVerse: next.startVerse,
-        endVerse: next.endVerse,
-        language: next.language,
+  function openAudience(search: NormalizedSearch) {
+    const target = window.open(audienceUrl(search), "projector");
+    if (!target) {
+      setStatus({
+        kind: "error",
+        message:
+          "聖書投映画面を開けませんでした。Chromeで新しいタブを許可してください。",
       });
-      const response = await fetcher(`/api/scripture/search?${query}`, {
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      });
-      const payload = (await response.json()) as
-        SearchResponse | { error?: { code?: string } };
-      if (!response.ok) {
-        setStatus({
-          kind: "error",
-          message: errorMessage(
-            "error" in payload ? payload.error?.code : undefined,
-          ),
-        });
-        return;
-      }
-      const result = payload as SearchResponse;
-      if (result.items.length === 0) {
-        setStatus({ kind: "empty", message: "該当する御言葉はありません。" });
-        return;
-      }
-      setStatus({ kind: "success", result });
-      router.push(projectionUrl(result.search));
-    } catch {
-      setStatus({ kind: "error", message: errorMessage() });
+      return;
     }
+    setStatus({ kind: "idle" });
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selection.book || !selection.chapter || !selection.startVerse) {
       setStatus({
@@ -287,13 +234,7 @@ export function ScriptureSearch({
       setStatus({ kind: "error", message: "検索条件を確認してください。" });
       return;
     }
-    await performSearch({
-      book: search.book,
-      chapter: String(search.chapter),
-      endVerse: String(search.endVerse),
-      language: search.language,
-      startVerse: String(search.startVerse),
-    });
+    openAudience(search);
   }
 
   function resetSearch() {
@@ -304,11 +245,11 @@ export function ScriptureSearch({
     void loadCatalog(initialSelection);
   }
 
-  async function reopenBookmark(search: SearchResponse["search"]) {
-    router.push(projectionUrl(search));
+  async function reopenBookmark(search: NormalizedSearch) {
+    openAudience(search);
   }
 
-  const pending = catalogLoading || status.kind === "loading";
+  const pending = catalogLoading;
   const currentSearch = normalizedSearch(selection, chapters, verses);
 
   return (
@@ -433,7 +374,7 @@ export function ScriptureSearch({
                       disabled={pending || Boolean(catalogError)}
                       type="submit"
                     >
-                      {status.kind === "loading" ? "検索中…" : "Open"}
+                      Open
                     </button>{" "}
                     <button type="button" onClick={resetSearch}>
                       Reset
@@ -468,18 +409,15 @@ export function ScriptureSearch({
             {!catalogLoading && !catalogError && books.length === 0 ? (
               <p role="status">利用できる聖書データがありません。</p>
             ) : null}
-            {status.kind === "error" || status.kind === "empty" ? (
+            {status.kind === "error" ? (
               <div
-                className={`notice ${status.kind === "error" ? "notice-error" : ""}`}
-                role={status.kind === "error" ? "alert" : "status"}
+                className="notice notice-error"
+                role="alert"
                 tabIndex={-1}
                 ref={feedbackRef}
               >
                 <p>{status.message}</p>
               </div>
-            ) : null}
-            {status.kind === "loading" ? (
-              <p role="status">{status.message}</p>
             ) : null}
           </div>
         </form>

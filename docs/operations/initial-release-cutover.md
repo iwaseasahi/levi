@@ -141,7 +141,7 @@ Before traffic and again during stabilization, verify:
 2. platform-operator login and protected administration access;
 3. Church login and logout;
 4. Japanese, NKJV, and bilingual scripture search;
-5. real controller/audience window synchronization;
+5. direct search/audience-tab opening and Ginmaku keyboard navigation;
 6. end-verse, chapter, and book boundary navigation;
 7. folder/bookmark save, reopen, and physical delete;
 8. foreign and guessed tenant resources receive indistinguishable denial;

@@ -12,8 +12,8 @@ while removing accidental constraints of the legacy implementation.
 
 The approved first replacement release is defined in
 [`initial-release-spec.md`](initial-release-spec.md). Its first complete flow is
-Bible search followed by synchronized controller/audience-window projection and
-page operation, with authenticated church isolation and reusable bookmarks.
+Bible search followed by direct audience-tab projection and keyboard page
+operation, with authenticated church isolation and reusable bookmarks.
 
 ## Product principles
 

@@ -31,7 +31,11 @@ The Church screen reproduces Ginmaku's black surface, white 11px Helvetica
 table, canonical three-column/twenty-two-row book order, inline range controls,
 language labels, and native `Open`/`Reset` controls. It has no Church header,
 logout control, explanatory copy, or result-preview region. A successful
-`Open` validates the range and navigates directly to the projection controller.
+`Open` validates the range, keeps the search screen in place, and opens the
+canonical `/church/audience` URL directly in an ordinary Chrome tab named
+`projector`. Repeated opens reuse that named tab when it remains open. The URL
+contains only book, chapter, normalized range, and language coordinates; it
+never contains Bible text. Reopening a bookmark uses the same direct-tab flow.
 
 ## Result
 

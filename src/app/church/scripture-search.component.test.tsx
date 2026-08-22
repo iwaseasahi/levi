@@ -3,14 +3,8 @@ import "@testing-library/jest-dom/vitest";
 import axe from "axe-core";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ScriptureSearch } from "./scripture-search";
-
-const push = vi.hoisted(() => vi.fn());
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push }),
-}));
 
 const books = [
   {
@@ -99,7 +93,8 @@ async function chooseRange(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("ScriptureSearch", () => {
-  beforeEach(() => push.mockReset());
+  beforeEach(() => vi.spyOn(window, "open").mockReturnValue({} as Window));
+  afterEach(() => vi.restoreAllMocks());
 
   it("renders 66 canonically ordered bilingual book radio buttons", async () => {
     const catalogBooks = Array.from({ length: 66 }, (_, index) => ({
@@ -140,7 +135,7 @@ describe("ScriptureSearch", () => {
     expect(results.violations).toEqual([]);
   });
 
-  it("cascades valid candidates and opens the projection controller directly", async () => {
+  it("keeps the search page and opens the audience directly in the projector tab", async () => {
     const fetcher = successfulFetcher();
     renderSearch(fetcher);
     const user = userEvent.setup();
@@ -150,10 +145,9 @@ describe("ScriptureSearch", () => {
     expect(end).toHaveValue("17");
     await user.click(screen.getByRole("button", { name: "Open" }));
 
-    await waitFor(() =>
-      expect(push).toHaveBeenCalledWith(
-        "/church/projection?book=JHN&chapter=3&endVerse=17&language=both&startVerse=16",
-      ),
+    expect(window.open).toHaveBeenCalledWith(
+      "/church/audience?book=JHN&chapter=3&endVerse=17&language=both&startVerse=16",
+      "projector",
     );
     expect(screen.queryByText("検索結果")).not.toBeInTheDocument();
     expect(screen.queryByText("架空の日本語 16")).not.toBeInTheDocument();
@@ -177,14 +171,9 @@ describe("ScriptureSearch", () => {
     await user.type(screen.getByLabelText("開始節"), "16");
     await user.click(screen.getByRole("button", { name: "Open" }));
 
-    await waitFor(() => expect(push).toHaveBeenCalledOnce());
-    const searchCall = fetcher.mock.calls
-      .map(([input]) => String(input))
-      .find((url) => url.includes("/api/scripture/search?"));
-    expect(searchCall).toContain("startVerse=16");
-    expect(searchCall).toContain("endVerse=18");
-    expect(push).toHaveBeenCalledWith(
-      "/church/projection?book=JHN&chapter=3&endVerse=18&language=both&startVerse=16",
+    expect(window.open).toHaveBeenCalledWith(
+      "/church/audience?book=JHN&chapter=3&endVerse=18&language=both&startVerse=16",
+      "projector",
     );
   });
 
@@ -213,31 +202,18 @@ describe("ScriptureSearch", () => {
     expect(screen.queryByText("検索結果")).not.toBeInTheDocument();
   });
 
-  it("disables controls and announces loading", async () => {
-    let finish: ((value: Response) => void) | undefined;
-    const fetcher = successfulFetcher();
-    fetcher.mockImplementationOnce(() =>
-      response({ books, chapters: [], verses: [] }),
-    );
-    renderSearch(fetcher);
+  it("announces when Chrome blocks the audience tab", async () => {
+    vi.mocked(window.open).mockReturnValue(null);
+    renderSearch(successfulFetcher());
     const user = userEvent.setup();
     await chooseRange(user);
-    fetcher.mockImplementationOnce(
-      () =>
-        new Promise<Response>((resolve) => {
-          finish = resolve;
-        }),
-    );
     await user.click(screen.getByRole("button", { name: "Open" }));
-    expect(screen.getByRole("button", { name: "検索中…" })).toBeDisabled();
-    expect(screen.getByText("御言葉を検索しています。")).toBeVisible();
-    finish?.(Response.json({ items: [], search: {} }));
-    expect(
-      await screen.findByText("該当する御言葉はありません。"),
-    ).toBeVisible();
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Chromeで新しいタブを許可してください");
+    expect(alert).toHaveFocus();
   });
 
-  it("shows recoverable catalog and search server errors", async () => {
+  it("shows a recoverable catalog server error", async () => {
     const catalogFailure = vi.fn<typeof fetch>(() => response({}, 500));
     const { unmount } = renderSearch(catalogFailure);
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -245,17 +221,5 @@ describe("ScriptureSearch", () => {
     );
     expect(screen.getByRole("button", { name: "再読み込み" })).toBeVisible();
     unmount();
-
-    const fetcher = successfulFetcher();
-    renderSearch(fetcher);
-    const user = userEvent.setup();
-    await chooseRange(user);
-    fetcher.mockImplementationOnce(() =>
-      response({ error: { code: "SEARCH_UNAVAILABLE" } }, 500),
-    );
-    await user.click(screen.getByRole("button", { name: "Open" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "御言葉を読み込めませんでした",
-    );
   });
 });

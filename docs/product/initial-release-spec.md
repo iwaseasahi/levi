@@ -101,14 +101,14 @@ explicit validation or data-integrity errors; they are not silently corrected.
 
 Projection uses two browser windows in one latest-Chrome session:
 
-- the **controller window** contains search results and controls; and
-- the **audience window** contains only audience-facing content and display
-  state.
+- the **search window** retains the Ginmaku-compatible search form; and
+- the **audience window** opens directly from `Open` or a bookmark and contains
+  only audience-facing scripture and display state.
 
-The controller provides direct selection of a result, previous and next verse,
-larger and smaller text, scroll up and down, and blank/unblank behavior. Its
-visible state must make the current reference and whether the audience is
-blanked understandable under time pressure.
+There is no intermediate projection-controller screen in this primary flow.
+The audience provides the Ginmaku keyboard behavior: `ArrowUp` moves to the
+previous canonical verse and `ArrowDown` moves to the next one. The heading
+shows translation, book, chapter, and current verse.
 
 The search range chooses the initial result set; it is not a navigation fence.
 For example, after searching `ヨハネ 3:16–18`, pressing next on `3:18` moves to
@@ -122,10 +122,10 @@ and the inverse, is a `should` requirement. It is implemented in
 when measured complexity materially threatens the initial release and the
 product owner approves the reason, impact, and follow-up Issue.
 
-If the audience window is blocked, closed, reloaded, or reopened, the controller
-must show the condition and offer a deterministic recovery path. Synchronization
-messages must be schema- and origin-validated. Expired authentication must not
-leave protected controls usable or expose additional content.
+If the audience tab is blocked, the search screen reports the condition. If it
+is closed, `Open` deterministically creates it again; if it remains open, the
+named `projector` target is reused. Reload uses the canonical audience URL.
+Expired authentication must immediately fail closed and remove protected text.
 
 ## Folders and bookmarks
 
@@ -139,7 +139,7 @@ A folder and its bookmarks belong to one church. The initial release supports:
 - reorder folders and bookmarks deterministically;
 - save a typed Bible search consisting of book, chapter, inclusive range, and
   language selection;
-- reopen a bookmark into the search and projection flow; and
+- reopen a bookmark directly into the audience-tab flow; and
 - physically delete a bookmark or folder after confirmation.
 
 Deleting a folder physically deletes only bookmarks owned by that folder. It
@@ -181,7 +181,7 @@ completion. Opening the audience window must not unexpectedly strand keyboard
 focus.
 
 Only the latest stable Chrome is guaranteed initially. Responsive behavior must
-support the controller and audience window sizes exercised by the release E2E;
+support the search and audience window sizes exercised by the release E2E;
 other browsers and offline operation are not compatibility claims.
 
 ## Initial-release exclusions and later work
@@ -204,8 +204,8 @@ Initial replacement readiness requires all of the following:
 
 - database constraint and tenant-isolation integration tests;
 - deterministic synthetic search and navigation golden cases;
-- a two-window latest-Chrome E2E covering search, projection, controls,
-  end-range navigation, chapter-boundary navigation, window recovery, and
+- a two-window latest-Chrome E2E covering search, direct audience opening,
+  end-range navigation, chapter-boundary navigation, tab recovery, and
   folder/bookmark reuse;
 - a Bible import reconciliation report that exposes no verse text or secrets;
 - successful backup/restore and migration rehearsals against disposable data;
