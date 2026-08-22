@@ -96,7 +96,7 @@ function normalizedSearch(
 }
 
 function audienceUrl(search: NormalizedSearch) {
-  return `/church/audience?${new URLSearchParams({
+  return `/scripture/audience?${new URLSearchParams({
     book: search.book,
     chapter: String(search.chapter),
     endVerse: String(search.endVerse),

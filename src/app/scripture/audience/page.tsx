@@ -1,12 +1,13 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { getChurchAccess } from "@/infrastructure/auth/church-session";
+
+import { AudienceDisplay } from "@/app/church/audience/audience-display";
+import { DirectAudienceDisplay } from "@/app/church/audience/direct-audience-display";
 import {
   parseScriptureSearch,
   ScriptureSearchError,
 } from "@/domain/scripture/search";
-import { AudienceDisplay } from "./audience-display";
-import { DirectAudienceDisplay } from "./direct-audience-display";
+import { getChurchAccess } from "@/infrastructure/auth/church-session";
 
 export default async function AudiencePage({
   searchParams,

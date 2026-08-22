@@ -14,7 +14,7 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("メールアドレス").fill(E2E_CHURCH_USER_EMAIL);
   await page.getByLabel("パスワード").fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "ログイン" }).click();
-  await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
 }
 
 async function searchGenesis(
@@ -37,10 +37,10 @@ async function searchGenesis(
   const opened = context.waitForEvent("page");
   await page.getByRole("button", { name: "Open", exact: true }).click();
   const audience = await opened;
-  await expect(page).toHaveURL(/\/church$/);
+  await expect(page).toHaveURL(/\/scripture$/);
   await expect(audience).toHaveURL(
     new RegExp(
-      `/church/audience\\?book=GEN&chapter=1&endVerse=${omitEnd ? "3" : "2"}&language=${language}&startVerse=1$`,
+      `/scripture/audience\\?book=GEN&chapter=1&endVerse=${omitEnd ? "3" : "2"}&language=${language}&startVerse=1$`,
     ),
   );
   return audience;
@@ -61,8 +61,13 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
     "rgb(0, 0, 0)",
   );
 
+  for (const oldPath of ["/church", "/church/audience", "/church/projection"]) {
+    const oldRoute = await page.request.get(oldPath, { maxRedirects: 0 });
+    expect(oldRoute.status(), `${oldPath} must not redirect`).toBe(404);
+  }
+
   await page.goto(
-    "/church/projection?book=GEN&chapter=1&startVerse=1&endVerse=2&language=both",
+    "/scripture/controller?book=GEN&chapter=1&startVerse=1&endVerse=2&language=both",
   );
   await expect(
     page.getByRole("heading", { level: 1, name: "投影操作" }),
@@ -76,7 +81,7 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
     "rgb(16, 16, 16)",
   );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.goto("/church");
+  await page.goto("/scripture");
 
   const legacyFormStyle = await page
     .locator(".ginmaku-books-table")
@@ -491,9 +496,9 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   const bookmarkOpened = context.waitForEvent("page");
   await page.getByRole("button", { name: "創世記 1:1–2", exact: true }).click();
   const bookmarkedAudience = await bookmarkOpened;
-  await expect(page).toHaveURL(/\/church$/);
+  await expect(page).toHaveURL(/\/scripture$/);
   await expect(bookmarkedAudience).toHaveURL(
-    /\/church\/audience\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1$/,
+    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1$/,
   );
   await expect(
     bookmarkedAudience.getByRole("heading", {

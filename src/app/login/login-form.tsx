@@ -28,7 +28,7 @@ export function LoginForm() {
         rememberMe: true,
       });
       if (result.error) throw new Error("rejected");
-      router.replace("/church");
+      router.replace("/scripture");
     } catch {
       setError(genericError);
     } finally {

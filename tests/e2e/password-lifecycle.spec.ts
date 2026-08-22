@@ -27,7 +27,7 @@ test("operator reset revokes the old session and forces a new password", async (
     headers: { origin: "http://127.0.0.1:3100" },
   });
   expect(staleSignIn.ok()).toBe(true);
-  await stalePage.goto("/church");
+  await stalePage.goto("/scripture");
   await expect(
     stalePage.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();
@@ -65,7 +65,7 @@ test("operator reset revokes the old session and forces a new password", async (
   await page.getByLabel("新しいパスワード（確認）").fill(selected);
   await page.getByRole("button", { name: "パスワードを変更" }).click();
   await page.getByRole("button", { name: "教会用画面へ" }).click();
-  await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
+  await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
   await expect(
     page.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();

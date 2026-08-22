@@ -101,9 +101,15 @@ explicit validation or data-integrity errors; they are not silently corrected.
 
 Projection uses two browser windows in one latest-Chrome session:
 
-- the **search window** retains the Ginmaku-compatible search form; and
+- the **search window** at `/scripture` retains the Ginmaku-compatible search
+  form; and
 - the **audience window** opens directly from `Open` or a bookmark and contains
-  only audience-facing scripture and display state.
+  only audience-facing scripture and display state at `/scripture/audience`.
+
+The retained compatibility controller is available at `/scripture/controller`.
+The former `/church`, `/church/audience`, and `/church/projection` screen routes
+do not exist and are not redirect aliases. Church membership remains an
+authorization and data-scope concept rather than a public screen namespace.
 
 There is no intermediate projection-controller screen in this primary flow.
 The audience provides the Ginmaku keyboard behavior: `ArrowUp` moves to the

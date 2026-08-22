@@ -6,7 +6,7 @@ import { LoginForm } from "./login-form";
 export default async function LoginPage() {
   const access = await getChurchAccess(await headers());
   if (access.status === "authorized")
-    redirect(access.mustChangePassword ? "/change-password" : "/church");
+    redirect(access.mustChangePassword ? "/change-password" : "/scripture");
   return (
     <main className="auth-shell">
       <section className="auth-card" aria-labelledby="login-title">
