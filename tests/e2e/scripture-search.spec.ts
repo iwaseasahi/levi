@@ -408,7 +408,15 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await page.getByLabel("開始節").fill("1");
   await page.getByLabel("終了節（省略可）").fill("2");
 
-  await page.getByRole("button", { name: "新規フォルダ作成" }).click();
+  const createFolderToggle = page.getByRole("button", {
+    name: "新規フォルダ作成",
+  });
+  await expect(createFolderToggle).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(createFolderToggle).toHaveCSS(
+    "background-color",
+    "rgba(0, 0, 0, 0)",
+  );
+  await createFolderToggle.click();
   await page.getByLabel("新しいフォルダー名").fill("主日礼拝");
   await page.getByRole("button", { name: "作成", exact: true }).click();
   await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
