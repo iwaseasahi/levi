@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
-import { AudienceDisplay } from "@/app/church/audience/audience-display";
 import { DirectAudienceDisplay } from "@/app/church/audience/direct-audience-display";
 import {
   parseScriptureSearch,
@@ -19,21 +18,17 @@ export default async function AudiencePage({
   if (access.status !== "authorized") notFound();
   if (access.mustChangePassword) redirect("/change-password");
   const raw = await searchParams;
-  if (Object.keys(raw).length > 0) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(raw)) {
-      if (Array.isArray(value))
-        value.forEach((item) => params.append(key, item));
-      else if (value !== undefined) params.append(key, value);
-    }
-    let selection;
-    try {
-      selection = parseScriptureSearch(params);
-    } catch (error) {
-      if (error instanceof ScriptureSearchError) notFound();
-      throw error;
-    }
-    return <DirectAudienceDisplay selection={selection} />;
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(raw)) {
+    if (Array.isArray(value)) value.forEach((item) => params.append(key, item));
+    else if (value !== undefined) params.append(key, value);
   }
-  return <AudienceDisplay />;
+  let selection;
+  try {
+    selection = parseScriptureSearch(params);
+  } catch (error) {
+    if (error instanceof ScriptureSearchError) notFound();
+    throw error;
+  }
+  return <DirectAudienceDisplay selection={selection} />;
 }
