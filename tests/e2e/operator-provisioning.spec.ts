@@ -4,9 +4,9 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   E2E_CHURCH_USER_EMAIL,
+  E2E_ADMIN_BASIC_USERNAME,
   E2E_CREATED_CHURCH,
   E2E_CREATED_EMAIL,
-  E2E_OPERATOR_EMAIL,
   E2E_PASSWORD,
 } from "./operator-fixture";
 
@@ -24,42 +24,43 @@ async function signIn(page: Page, email: string) {
 }
 
 test.describe("operator administration access", () => {
-  test("redirects an unauthenticated visitor to login", async ({ page }) => {
-    await page.goto("/admin/churches");
+  test("challenges an unauthenticated visitor with Basic authentication", async ({
+    page,
+  }) => {
+    const response = await page.request.get("/admin/churches", {
+      maxRedirects: 0,
+    });
 
-    await expect(page).toHaveURL(/\/login$/);
-    await expect(
-      page.getByRole("heading", { level: 1, name: "ログイン" }),
-    ).toBeVisible();
-    await expect(page.locator(".auth-card")).toHaveCSS(
-      "background-color",
-      "rgb(16, 16, 16)",
-    );
-    await expect(page.getByLabel("メールアドレス")).toHaveCSS(
-      "background-color",
-      "rgb(36, 36, 36)",
+    expect(response.status()).toBe(401);
+    expect(response.headers()["www-authenticate"]).toBe(
+      'Basic realm="Levi Administration", charset="UTF-8"',
     );
   });
 
-  test("returns not found to an authenticated church user", async ({
+  test("does not accept a church session as operator authentication", async ({
     page,
   }) => {
     await signIn(page, E2E_CHURCH_USER_EMAIL);
 
     const response = await page.request.get("/admin/churches");
 
-    expect(response.status()).toBe(404);
+    expect(response.status()).toBe(401);
     expect(await response.text()).not.toContain("教会アカウントを作成");
   });
 });
 
 test.describe("operator church provisioning", () => {
   test.describe.configure({ mode: "serial" });
+  test.use({
+    httpCredentials: {
+      password: E2E_PASSWORD,
+      username: E2E_ADMIN_BASIC_USERNAME,
+    },
+  });
 
   test("provisions an account through first login and password change", async ({
     page,
   }) => {
-    await signIn(page, E2E_OPERATOR_EMAIL);
     await page.goto("/admin/churches");
 
     await expect(

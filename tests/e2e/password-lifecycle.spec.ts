@@ -2,12 +2,18 @@ import AxeBuilder from "@axe-core/playwright";
 
 import { expect, test } from "./fixtures";
 import {
-  E2E_OPERATOR_EMAIL,
+  E2E_ADMIN_BASIC_USERNAME,
   E2E_PASSWORD,
   E2E_PASSWORD_USER_EMAIL,
 } from "./operator-fixture";
 
 test.use({ screenshot: "off", trace: "off", video: "off" });
+test.use({
+  httpCredentials: {
+    password: E2E_PASSWORD,
+    username: E2E_ADMIN_BASIC_USERNAME,
+  },
+});
 
 test("operator reset revokes the old session and forces a new password", async ({
   browser,
@@ -32,11 +38,6 @@ test("operator reset revokes the old session and forces a new password", async (
     stalePage.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();
 
-  const operatorSignIn = await page.request.post("/api/auth/sign-in/email", {
-    data: { email: E2E_OPERATOR_EMAIL, password: E2E_PASSWORD },
-    headers: { origin: "http://127.0.0.1:3100" },
-  });
-  expect(operatorSignIn.ok()).toBe(true);
   await page.goto("/admin/churches");
   await page
     .getByLabel("対象教会")

@@ -23,6 +23,13 @@ After a domain and VPS exist, the repository owner configures these settings man
 - add Environment secrets `PRODUCTION_SSH_HOST`, `PRODUCTION_SSH_USER`, `PRODUCTION_SSH_PRIVATE_KEY`, and pinned `PRODUCTION_SSH_KNOWN_HOSTS`;
 - add repository variable `PRODUCTION_BASE_URL` as the exact HTTPS origin.
 
+Before the first administration deployment, generate the Basic password
+verifier with `pnpm admin:hash-password` and configure
+`ADMIN_BASIC_AUTH_USERNAME` and `ADMIN_BASIC_AUTH_PASSWORD_HASH` in the host's
+protected `production.env`. Follow
+[`admin-basic-auth.md`](admin-basic-auth.md); never store the plaintext password
+or verifier in GitHub Issues, workflow inputs, or repository files.
+
 Do not use `ssh-keyscan` inside the deployment workflow as the trust decision. Record the host key through the WebARENA console/out-of-band setup and pin it. Environment secrets are created only after VPS provisioning is separately approved.
 
 ## Publish immutable images

@@ -176,6 +176,12 @@ No unique church-name rule is imposed; distinct churches may share a name.
 | `user_id`    | `uuid`        | no   | PK and FK to `users.id ON DELETE CASCADE` |
 | `created_at` | `timestamptz` | no   | assignment time                           |
 
+The initial seed creates exactly one deterministic internal platform operator.
+It has no `accounts` row and therefore cannot authenticate through Better Auth.
+Successful administration Basic authentication is mapped to this actor only so
+existing provisioning, reset, and audit authorization continues to use an
+explicit database identity.
+
 ### `church_memberships`
 
 | Column       | Type          | Null | Contract                              |

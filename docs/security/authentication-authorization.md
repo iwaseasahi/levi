@@ -4,9 +4,9 @@ Authentication proves an actor's identity and session. Authorization decides
 whether that actor may perform a specific action on a specific resource. Levi
 must not treat “signed in” as permission to perform every action.
 
-ADR 0006 selects Better Auth with revocable PostgreSQL sessions. Better Auth
-proves identity and manages credentials, verification records, and sessions;
-Levi remains responsible for every authorization decision.
+ADR 0006 selects Better Auth with revocable PostgreSQL sessions for church
+users. ADR 0008 protects the single platform operator with HTTPS Basic
+authentication. Levi remains responsible for every authorization decision.
 
 The implemented boundary follows these rules:
 
@@ -30,6 +30,15 @@ The implemented boundary follows these rules:
   limits, and no initial session cookie cache; and
 - record security-relevant actions without recording credentials, tokens, or
   temporary passwords.
+
+The `/admin` route is challenged by Proxy, and every administration Server
+Action independently repeats Basic authentication before authorization. A valid
+credential maps only to the deterministic internal platform operator, which is
+active but has no Better Auth account or session. The configured password is a
+Better Auth `scrypt` verifier, never plaintext. Five failures per 60 seconds are
+limited globally in PostgreSQL, and missing configuration or storage fails
+closed. Basic authentication is permitted only behind the production HTTPS
+edge. See [`../operations/admin-basic-auth.md`](../operations/admin-basic-auth.md).
 
 Every protected capability needs separate automated cases for unauthenticated,
 authenticated-but-denied, allowed, expired/revoked, and cross-resource access.
@@ -60,6 +69,6 @@ fixtures.
 - Expired session rows are removed on a bounded schedule; they are not retained
   as an authentication history.
 
-Password, temporary password, cookie, session token, and auth secret values are
-Restricted. Email addresses and retained IP/user-agent metadata are
+Password, Basic password verifier, temporary password, cookie, session token,
+and auth secret values are Restricted. Email addresses and retained IP/user-agent metadata are
 Confidential. See [`data-classification.md`](data-classification.md).

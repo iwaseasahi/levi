@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+import { INTERNAL_PLATFORM_OPERATOR_ID } from "../src/domain/admin/platform-operator.js";
 import { prisma } from "../src/infrastructure/database/client.js";
 
 try {
@@ -9,6 +10,21 @@ try {
 
   if (setting?.id !== "00000000-0000-4000-8000-000000000001") {
     throw new Error("Deterministic foundation seed is missing");
+  }
+
+  const operator = await prisma.platformOperator.findUnique({
+    where: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
+    select: {
+      user: {
+        select: { accounts: { select: { id: true } }, actorState: true },
+      },
+    },
+  });
+  if (
+    operator?.user.actorState !== "ACTIVE" ||
+    operator.user.accounts.length !== 0
+  ) {
+    throw new Error("Credential-free internal operator seed is missing");
   }
 
   const translations = await prisma.bibleTranslation.findMany({
