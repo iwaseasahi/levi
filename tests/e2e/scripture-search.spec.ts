@@ -69,7 +69,7 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
       };
     });
   expect(legacyFormStyle).toMatchObject({
-    columns: 3,
+    columns: 4,
     fontSize: "11px",
     rows: 22,
   });
@@ -176,6 +176,54 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
   });
   await expect(audience.locator(".controller-actions")).toHaveCount(0);
   await expect(audience.getByRole("button", { name: "次へ" })).toHaveCount(0);
+
+  const larger = page.getByRole("button", { name: "文字を大きく" });
+  const smaller = page.getByRole("button", { name: "文字を小さく" });
+  const previous = page.getByRole("button", { name: "前の御言葉へ" });
+  const next = page.getByRole("button", { name: "次の御言葉へ" });
+  await expect(larger).toBeEnabled();
+  await expect(smaller).toBeEnabled();
+  await expect(previous).toBeEnabled();
+  await expect(next).toBeEnabled();
+
+  const initialFontSize = await audience
+    .locator(".audience-content")
+    .evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element).fontSize),
+    );
+  await larger.click();
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-content")
+        .evaluate((element) =>
+          Number.parseFloat(getComputedStyle(element).fontSize),
+        ),
+    )
+    .toBeGreaterThan(initialFontSize);
+  await smaller.click();
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-content")
+        .evaluate((element) =>
+          Number.parseFloat(getComputedStyle(element).fontSize),
+        ),
+    )
+    .toBe(initialFontSize);
+
+  await next.click();
+  await expect(
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 1:2",
+    }),
+  ).toBeVisible();
+  await previous.click();
+  await expect(
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 1:1",
+    }),
+  ).toBeVisible();
 
   const audienceAccessibility = await new AxeBuilder({
     page: audience,
@@ -287,6 +335,7 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
   ).toBeVisible();
 
   await audience.close();
+  await expect(larger).toBeDisabled({ timeout: 3_000 });
   const audienceReopened = context.waitForEvent("page");
   await page.getByRole("button", { name: "Open", exact: true }).click();
   audience = await audienceReopened;

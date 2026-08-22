@@ -1,11 +1,24 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import type {
   ScriptureSearch,
   ScriptureSearchItem,
 } from "@/domain/scripture/search";
 import type { ScriptureNavigationEdge } from "@/domain/scripture/navigation";
+import {
+  directAudienceSchema,
+  directAudienceVersion,
+  isTrustedDirectAudienceEvent,
+  parseDirectAudienceCommand,
+  type DirectAudienceReady,
+} from "@/domain/projection/direct-audience-control";
 
 function heading(item: ScriptureSearchItem) {
   const bookName =
@@ -25,19 +38,22 @@ export function DirectAudienceDisplay({
     "loading",
   );
   const [message, setMessage] = useState("");
+  const [fontScale, setFontScale] = useState(1);
   const currentRef = useRef<ScriptureSearchItem | null>(null);
   const authorizedRef = useRef(true);
   const navigationQueue = useRef(Promise.resolve());
+  const openerRef = useRef<Window | null>(null);
+  const readySentRef = useRef(false);
   const screenRef = useRef<HTMLElement>(null);
   const verseRef = useRef<HTMLDivElement>(null);
 
-  function failClosed() {
+  const failClosed = useCallback(() => {
     authorizedRef.current = false;
     currentRef.current = null;
     setCurrent(null);
     setStatus("error");
     setMessage("セッションを確認できないため、表示を終了しました。");
-  }
+  }, []);
 
   useEffect(() => {
     void Promise.resolve().then(async () => {
@@ -71,7 +87,7 @@ export function DirectAudienceDisplay({
         setMessage("投影する御言葉を読み込めませんでした。");
       }
     });
-  }, [selection]);
+  }, [failClosed, selection]);
 
   useEffect(() => {
     async function verifySession() {
@@ -95,42 +111,89 @@ export function DirectAudienceDisplay({
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", verifyWhenVisible);
     };
-  }, []);
+  }, [failClosed]);
 
-  function navigate(direction: "previous" | "next") {
-    navigationQueue.current = navigationQueue.current.then(async () => {
-      const item = currentRef.current;
-      if (!item || !authorizedRef.current) return;
-      try {
-        const query = new URLSearchParams({
-          book: item.location.book,
-          chapter: String(item.location.chapter),
-          direction,
-          language: selection.language,
-          verse: String(item.location.verse),
-        });
-        const response = await fetch(`/api/scripture/navigate?${query}`, {
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-        });
-        if (response.status === 401 || response.status === 403) {
-          failClosed();
-          return;
+  const navigate = useCallback(
+    (direction: "previous" | "next") => {
+      navigationQueue.current = navigationQueue.current.then(async () => {
+        const item = currentRef.current;
+        if (!item || !authorizedRef.current) return;
+        try {
+          const query = new URLSearchParams({
+            book: item.location.book,
+            chapter: String(item.location.chapter),
+            direction,
+            language: selection.language,
+            verse: String(item.location.verse),
+          });
+          const response = await fetch(`/api/scripture/navigate?${query}`, {
+            cache: "no-store",
+            headers: { Accept: "application/json" },
+          });
+          if (response.status === 401 || response.status === 403) {
+            failClosed();
+            return;
+          }
+          if (!response.ok) throw new Error("navigation unavailable");
+          const result = (await response.json()) as {
+            edge: ScriptureNavigationEdge | null;
+            item: ScriptureSearchItem | null;
+          };
+          if (!result.item) return;
+          currentRef.current = result.item;
+          setCurrent(result.item);
+          setMessage("");
+        } catch {
+          setMessage("前後の御言葉へ移動できませんでした。");
         }
-        if (!response.ok) throw new Error("navigation unavailable");
-        const result = (await response.json()) as {
-          edge: ScriptureNavigationEdge | null;
-          item: ScriptureSearchItem | null;
-        };
-        if (!result.item) return;
-        currentRef.current = result.item;
-        setCurrent(result.item);
-        setMessage("");
-      } catch {
-        setMessage("前後の御言葉へ移動できませんでした。");
+      });
+    },
+    [failClosed, selection.language],
+  );
+
+  useEffect(() => {
+    openerRef.current = window.opener as Window | null;
+    function receiveControl(event: MessageEvent) {
+      if (
+        !authorizedRef.current ||
+        !isTrustedDirectAudienceEvent(
+          event,
+          window.location.origin,
+          openerRef.current,
+        )
+      )
+        return;
+      const command = parseDirectAudienceCommand(event.data);
+      if (!command) return;
+      if (command.action === "font-larger") {
+        setFontScale((currentScale) =>
+          Math.min(2.2, Number((currentScale + 0.1).toFixed(1))),
+        );
+      } else if (command.action === "font-smaller") {
+        setFontScale((currentScale) =>
+          Math.max(0.6, Number((currentScale - 0.1).toFixed(1))),
+        );
+      } else {
+        navigate(command.action);
       }
-    });
-  }
+    }
+
+    window.addEventListener("message", receiveControl);
+    return () => window.removeEventListener("message", receiveControl);
+  }, [navigate]);
+
+  useEffect(() => {
+    const opener = openerRef.current;
+    if (status !== "ready" || !current || !opener || readySentRef.current)
+      return;
+    const ready: DirectAudienceReady = {
+      schema: directAudienceSchema,
+      type: "READY",
+      version: directAudienceVersion,
+    };
+    opener.postMessage(ready, window.location.origin);
+    readySentRef.current = true;
+  }, [current, status]);
 
   useEffect(() => {
     function navigateWithArrowKey(event: KeyboardEvent) {
@@ -146,7 +209,7 @@ export function DirectAudienceDisplay({
     }
     window.addEventListener("keydown", navigateWithArrowKey);
     return () => window.removeEventListener("keydown", navigateWithArrowKey);
-  });
+  }, [navigate]);
 
   useLayoutEffect(() => {
     const screen = screenRef.current;
@@ -176,7 +239,7 @@ export function DirectAudienceDisplay({
     fitVerse();
     window.addEventListener("resize", fitVerse);
     return () => window.removeEventListener("resize", fitVerse);
-  }, [current]);
+  }, [current, fontScale]);
 
   if (status !== "ready" || !current)
     return (
@@ -205,7 +268,7 @@ export function DirectAudienceDisplay({
       style={
         {
           "--audience-fit-scale": 1,
-          "--audience-scale": 1,
+          "--audience-scale": fontScale,
         } as React.CSSProperties
       }
     >

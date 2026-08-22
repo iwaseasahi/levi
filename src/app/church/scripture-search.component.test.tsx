@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import axe from "axe-core";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ScriptureSearch } from "./scripture-search";
@@ -69,6 +69,11 @@ function successfulFetcher() {
 const savedContentFetcher = vi.fn<typeof fetch>(() =>
   response({ folders: [], orderIds: [] }),
 );
+const audiencePostMessage = vi.fn();
+const audienceTarget = {
+  closed: false,
+  postMessage: audiencePostMessage,
+} as unknown as Window;
 
 function renderSearch(fetcher: typeof fetch) {
   return render(
@@ -93,7 +98,11 @@ async function chooseRange(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("ScriptureSearch", () => {
-  beforeEach(() => vi.spyOn(window, "open").mockReturnValue({} as Window));
+  beforeEach(() => {
+    audiencePostMessage.mockReset();
+    Object.assign(audienceTarget, { closed: false });
+    vi.spyOn(window, "open").mockReturnValue(audienceTarget);
+  });
   afterEach(() => vi.restoreAllMocks());
 
   it("renders 66 canonically ordered bilingual book radio buttons", async () => {
@@ -154,6 +163,75 @@ describe("ScriptureSearch", () => {
     expect(
       screen.queryByRole("link", { name: "投影を開始" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("controls font size and previous or next scripture after the audience is ready", async () => {
+    renderSearch(successfulFetcher());
+    const user = userEvent.setup();
+    await chooseRange(user);
+
+    const larger = screen.getByRole("button", { name: "文字を大きく" });
+    const smaller = screen.getByRole("button", { name: "文字を小さく" });
+    const previous = screen.getByRole("button", { name: "前の御言葉へ" });
+    const next = screen.getByRole("button", { name: "次の御言葉へ" });
+    expect(larger).toBeDisabled();
+    expect(smaller).toBeDisabled();
+    expect(previous).toBeDisabled();
+    expect(next).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            schema: "levi.direct-audience",
+            type: "READY",
+            version: 1,
+          },
+          origin: window.location.origin,
+          source: audienceTarget,
+        }),
+      ),
+    );
+    await waitFor(() => expect(larger).toBeEnabled());
+
+    await user.click(larger);
+    await user.click(smaller);
+    await user.click(previous);
+    await user.click(next);
+    expect(audiencePostMessage.mock.calls.map(([message]) => message)).toEqual([
+      expect.objectContaining({ action: "font-larger", type: "CONTROL" }),
+      expect.objectContaining({ action: "font-smaller", type: "CONTROL" }),
+      expect.objectContaining({ action: "previous", type: "CONTROL" }),
+      expect.objectContaining({ action: "next", type: "CONTROL" }),
+    ]);
+    expect(
+      audiencePostMessage.mock.calls.every(
+        ([, origin]) => origin === window.location.origin,
+      ),
+    ).toBe(true);
+  });
+
+  it("ignores readiness from another window", async () => {
+    renderSearch(successfulFetcher());
+    const user = userEvent.setup();
+    await chooseRange(user);
+    await user.click(screen.getByRole("button", { name: "Open" }));
+
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            schema: "levi.direct-audience",
+            type: "READY",
+            version: 1,
+          },
+          origin: window.location.origin,
+          source: {} as Window,
+        }),
+      ),
+    );
+    expect(screen.getByRole("button", { name: "文字を大きく" })).toBeDisabled();
   });
 
   it("normalizes an omitted end verse to the contiguous chapter end", async () => {

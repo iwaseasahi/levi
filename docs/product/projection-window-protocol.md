@@ -12,7 +12,28 @@ controls, account identifiers, or full search result set.
 The controller route remains compatible with the synchronization protocol
 below, but search and bookmark `Open` actions do not pass through it.
 
-## Transport and trust boundary
+## Direct audience controls
+
+The search screen retains the exact `Window` reference returned by `Open` and
+enables its Ginmaku controls only after that audience replies with a versioned
+`READY` message. It sends runtime-validated `CONTROL` messages for:
+
+- `font-larger` and `font-smaller`, clamped to 60–220%; and
+- `previous` and `next`, displayed as Ginmaku's `スクロール ↑／↓` controls.
+
+As in Ginmaku, `スクロール` changes the current scripture item; it does not
+move the viewport by a pixel offset. It uses the same serial navigation path as
+the audience's Up/Down keyboard controls, including selected-range, chapter,
+and book boundaries.
+
+The direct channel uses schema `levi.direct-audience`, version `1`. Search
+accepts `READY` only from its retained audience reference and same origin. The
+audience accepts `CONTROL` only from its `window.opener` and same origin. Both
+message shapes are strict, and the audience ignores every control after its
+session has failed closed. A closed audience disables the search controls; a
+new `Open` establishes a new ready handshake.
+
+## Legacy controller transport and trust boundary
 
 Messages use direct `window.postMessage` between the controller's retained
 `Window` reference and the audience's `window.opener`. Both receivers require:

@@ -108,7 +108,10 @@ Projection uses two browser windows in one latest-Chrome session:
 There is no intermediate projection-controller screen in this primary flow.
 The audience provides the Ginmaku keyboard behavior: `ArrowUp` moves to the
 previous canonical verse and `ArrowDown` moves to the next one. The heading
-shows translation, book, chapter, and current verse.
+shows translation, book, chapter, and current verse. The retained search screen
+also provides Ginmaku's text larger/smaller and scroll up/down controls. Scroll
+up/down means previous/next scripture in the legacy behavior; both buttons use
+the same canonical navigation as the audience keys.
 
 The search range chooses the initial result set; it is not a navigation fence.
 For example, after searching `ヨハネ 3:16–18`, pressing next on `3:18` moves to
