@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import type { Page } from "@playwright/test";
+import type { BrowserContext, Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   E2E_CHURCH_USER_EMAIL,
@@ -18,6 +18,7 @@ async function login(page: import("@playwright/test").Page) {
 }
 
 async function searchGenesis(
+  context: BrowserContext,
   page: Page,
   language: "ja" | "en" | "both",
   omitEnd = false,
@@ -33,16 +34,19 @@ async function searchGenesis(
   await expect(page.getByLabel("開始節")).toBeEnabled();
   await page.getByLabel("開始節").fill("1");
   await page.getByLabel("終了節（省略可）").fill(omitEnd ? "" : "2");
+  const opened = context.waitForEvent("page");
   await page.getByRole("button", { name: "Open", exact: true }).click();
-  await expect(page).toHaveURL(
+  const audience = await opened;
+  await expect(page).toHaveURL(/\/church$/);
+  await expect(audience).toHaveURL(
     new RegExp(
-      `/church/projection\\?book=GEN&chapter=1&endVerse=${omitEnd ? "3" : "2"}&language=${language}&startVerse=1$`,
+      `/church/audience\\?book=GEN&chapter=1&endVerse=${omitEnd ? "3" : "2"}&language=${language}&startVerse=1$`,
     ),
   );
-  await expect(page.getByRole("heading", { name: "投影操作" })).toBeVisible();
+  return audience;
 }
 
-test("completes search, projection, recovery, and bookmark reuse", async ({
+test("opens scripture directly, navigates, recovers, and reuses bookmarks", async ({
   context,
   page,
 }) => {
@@ -87,41 +91,40 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   expect(guessedFolder.status()).toBe(404);
   expect(await foreignFolder.text()).toBe(await guessedFolder.text());
 
-  await searchGenesis(page, "ja");
-  await expect(page.getByText("初めに、神が天と地を創造した。")).toBeVisible();
-  await expect(
-    page.getByText("In the beginning God created the heavens and the earth."),
-  ).toHaveCount(0);
-
-  await page.goto("/church");
-  await searchGenesis(page, "en");
-  await expect(page.getByText("初めに、神が天と地を創造した。")).toHaveCount(0);
-  await expect(
-    page.getByText("In the beginning God created the heavens and the earth."),
-  ).toBeVisible();
-
-  await page.goto("/church");
-  await searchGenesis(page, "both", true);
-
-  await expect(page.getByText("初めに、神が天と地を創造した。")).toBeVisible();
-  await expect(
-    page.getByText("In the beginning God created the heavens and the earth."),
-  ).toBeVisible();
-  await expect(page.getByText("新改訳聖書第3版（JSS3）").first()).toBeVisible();
-  await expect(
-    page.getByText("New King James Version (NKJV)").first(),
-  ).toBeVisible();
-  expect(page.url()).not.toContain(encodeURIComponent("初めに、神が"));
-
-  const audienceOpened = context.waitForEvent("page");
-  await page
-    .getByRole("button", { name: "会衆向け画面を新しいタブで開く" })
-    .click();
-  let audience = await audienceOpened;
-  await expect(page.getByRole("status")).toContainText("接続しています");
+  let audience = await searchGenesis(context, page, "ja");
   await expect(
     audience.getByText("初めに、神が天と地を創造した。"),
   ).toBeVisible();
+  await expect(
+    audience.getByText(
+      "In the beginning God created the heavens and the earth.",
+    ),
+  ).toHaveCount(0);
+  await audience.close();
+
+  audience = await searchGenesis(context, page, "en");
+  await expect(
+    audience.getByText("初めに、神が天と地を創造した。"),
+  ).toHaveCount(0);
+  await expect(
+    audience.getByText(
+      "In the beginning God created the heavens and the earth.",
+    ),
+  ).toBeVisible();
+  await audience.close();
+
+  audience = await searchGenesis(context, page, "both", true);
+
+  await expect(
+    audience.getByText("初めに、神が天と地を創造した。"),
+  ).toBeVisible();
+  await expect(
+    audience.getByText(
+      "In the beginning God created the heavens and the earth.",
+    ),
+  ).toBeVisible();
+  expect(audience.url()).not.toContain(encodeURIComponent("初めに、神が"));
+  await expect(page.getByRole("heading", { name: "投影操作" })).toHaveCount(0);
   await expect(
     audience.getByRole("heading", {
       name: "新改訳聖書第3版 創世記 1:1",
@@ -174,8 +177,6 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   await expect(audience.locator(".controller-actions")).toHaveCount(0);
   await expect(audience.getByRole("button", { name: "次へ" })).toHaveCount(0);
 
-  const controllerAccessibility = await new AxeBuilder({ page }).analyze();
-  expect(controllerAccessibility.violations).toEqual([]);
   const audienceAccessibility = await new AxeBuilder({
     page: audience,
   }).analyze();
@@ -227,49 +228,30 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
       name: "新改訳聖書第3版 創世記 1:3",
     }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "次へ" }).click();
-  await page.getByRole("button", { name: "次へ" }).click();
-  await expect(audience.locator(".audience-verse-number").first()).toHaveText(
-    "2:",
-  );
-  await page.getByRole("button", { name: "次へ" }).click();
+  await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 出エジプト記 1:1",
+      name: "新改訳聖書第3版 創世記 2:1",
     }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "前へ" }).click();
+  await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
       name: "新改訳聖書第3版 創世記 2:2",
     }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "創世記 1:1" }).click();
+  await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:1",
+      name: "新改訳聖書第3版 出エジプト記 1:1",
     }),
   ).toBeVisible();
-
-  const initialFontSize = await audience
-    .locator(".audience-content")
-    .evaluate((element) => getComputedStyle(element).fontSize);
-  await page.getByRole("button", { name: "文字を大きく" }).click();
-  await expect
-    .poll(() =>
-      audience
-        .locator(".audience-content")
-        .evaluate((element) => getComputedStyle(element).fontSize),
-    )
-    .not.toBe(initialFontSize);
-  await page.getByRole("button", { name: "文字を小さく" }).click();
-  await expect
-    .poll(() =>
-      audience
-        .locator(".audience-content")
-        .evaluate((element) => getComputedStyle(element).fontSize),
-    )
-    .toBe(initialFontSize);
+  await audience.keyboard.press("ArrowUp");
+  await expect(
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 2:2",
+    }),
+  ).toBeVisible();
 
   const overflowStyle = await audience.addStyleTag({
     content: ".audience-book-word { font-size: 4em !important; }",
@@ -297,71 +279,26 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   );
   await audience.evaluate(() => window.dispatchEvent(new Event("resize")));
 
-  await audience.addStyleTag({
-    content: ".audience-content { min-height: 300vh !important; }",
-  });
-  await page.getByRole("button", { name: "下へスクロール" }).click();
-  await expect
-    .poll(() =>
-      audience
-        .locator(".audience-screen")
-        .evaluate((element) => element.scrollTop),
-    )
-    .toBeGreaterThan(0);
-  const scrolledDown = await audience
-    .locator(".audience-screen")
-    .evaluate((element) => element.scrollTop);
-  await page.getByRole("button", { name: "上へスクロール" }).click();
-  await expect
-    .poll(() =>
-      audience
-        .locator(".audience-screen")
-        .evaluate((element) => element.scrollTop),
-    )
-    .toBeLessThan(scrolledDown);
-
-  await page.getByRole("button", { name: "画面を暗転" }).click();
-  await expect(audience.getByLabel("暗転中")).toBeVisible();
-  await expect(page.getByText("会衆向け画面：暗転中")).toBeVisible();
-  await page.getByRole("button", { name: "投影を再開" }).click();
-  await expect(
-    audience.getByText("初めに、神が天と地を創造した。"),
-  ).toBeVisible();
-
   await audience.reload();
-  await expect(page.getByRole("status")).toContainText("接続しています");
   await expect(
-    audience.getByText("初めに、神が天と地を創造した。"),
-  ).toBeVisible();
-  await audience.evaluate(() =>
-    window.postMessage(
-      { schema: "levi.projection", type: "CLEAR", version: 99 },
-      window.location.origin,
-    ),
-  );
-  await expect(
-    audience.getByText("初めに、神が天と地を創造した。"),
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 1:1",
+    }),
   ).toBeVisible();
 
   await audience.close();
-  await expect(page.getByRole("status")).toContainText("閉じています", {
-    timeout: 5_000,
-  });
   const audienceReopened = context.waitForEvent("page");
-  await page
-    .getByRole("button", { name: "会衆向け画面を新しいタブで開く" })
-    .click();
+  await page.getByRole("button", { name: "Open", exact: true }).click();
   audience = await audienceReopened;
   await expect(
     audience.getByText("初めに、神が天と地を創造した。"),
   ).toBeVisible();
   await audience.close();
 
-  await page.goto("/church");
-  await organizeAndReopenBookmarks(page);
+  await organizeAndReopenBookmarks(context, page);
 });
 
-async function organizeAndReopenBookmarks(page: Page) {
+async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await page.getByRole("radio", { name: "創世記/Genesis" }).click();
   await page.getByLabel("章").fill("1");
   await expect(page.getByLabel("開始節")).toBeEnabled();
@@ -426,14 +363,19 @@ async function organizeAndReopenBookmarks(page: Page) {
     page.getByRole("button", { name: "礼拝用", exact: true }),
   ).toBeVisible();
 
+  const bookmarkOpened = context.waitForEvent("page");
   await page.getByRole("button", { name: "創世記 1:1–2", exact: true }).click();
-  await expect(page).toHaveURL(
-    /\/church\/projection\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1$/,
+  const bookmarkedAudience = await bookmarkOpened;
+  await expect(page).toHaveURL(/\/church$/);
+  await expect(bookmarkedAudience).toHaveURL(
+    /\/church\/audience\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1$/,
   );
-  await expect(page.getByRole("heading", { name: "投影操作" })).toBeVisible();
-
-  await page.goto("/church");
-  await page.getByRole("button", { name: "礼拝用", exact: true }).click();
+  await expect(
+    bookmarkedAudience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 1:1",
+    }),
+  ).toBeVisible();
+  await bookmarkedAudience.close();
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "創世記 1:1–2を削除" }).click();
