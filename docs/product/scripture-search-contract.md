@@ -50,18 +50,32 @@ these controls until another successful `Open`.
 ## Folder sidebar
 
 The left sidebar follows Ginmaku's folder accordion. Folder headers use the
-dark gradient and disclosure triangle from the legacy screen and start closed.
+dark gradient and disclosure triangle from the legacy screen. The initial or
+current folder starts open.
 Selecting a header opens that folder directly below the header, closes any
 other open folder, and updates its last-used time. Selecting the same header
 again closes it.
 
 `新規フォルダ作成` appears below the folder list and toggles the creation form.
-After a successful creation, the form closes and the new folder opens. Within
-the open folder, scripture bookmarks can be reordered with native Chrome
-drag-and-drop. The client submits the complete ordered ID set for that folder;
-the server rejects partial, foreign, or cross-folder orders. Up/down buttons
-remain available as a keyboard fallback. A failed reorder reloads the server
-order instead of leaving an unpersisted order on screen.
+The form follows Ginmaku's separate optional date and required meeting-name
+fields and stores their space-joined title. After a successful creation, the
+form closes and the new folder opens. `フォルダの編集` appears below creation
+and opens the current folder's management surface in a separate tab.
+
+The open accordion body contains only document icons and saved scripture links;
+rename, pin, delete, and bookmark-title controls never appear there. Bookmarks
+can be reordered with native Chrome drag-and-drop. The client submits the
+complete ordered ID set for that folder; the server rejects partial, foreign,
+or cross-folder orders. Alt+ArrowUp and Alt+ArrowDown provide a non-visual
+keyboard fallback. A failed reorder reloads server order instead of leaving an
+unpersisted order on screen.
+
+Ginmaku's `お気に入りに追加` control appears immediately after the scripture
+search form. It saves the normalized current selection into the current folder
+using the automatic `日本語/English chapter:start-end` title. Folder management
+supports rename, sticky/pinned state, physical folder deletion, bookmark title
+editing, physical bookmark deletion, and drag ordering without cluttering the
+search screen.
 
 ## Result
 

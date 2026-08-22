@@ -521,6 +521,11 @@ select:focus-visible,
   display: block;
 }
 
+.ginmaku-search-page #index_container {
+  position: absolute;
+  left: 230px;
+}
+
 .scripture-search-form,
 .scripture-search-form .ginmaku-search-fields {
   margin: 0;
@@ -617,12 +622,10 @@ select:focus-visible,
   margin: 0 0 4px;
 }
 
-.ginmaku-bookmark-container .compact-form,
 .ginmaku-bookmark-container .folder-list,
 .ginmaku-bookmark-container .bookmark-list,
-.ginmaku-bookmark-container .selected-content,
-.ginmaku-bookmark-container .folder-actions {
-  margin-top: 4px;
+.ginmaku-bookmark-container .selected-content {
+  margin: 0;
 }
 
 .ginmaku-bookmark-container .saved-content input {
@@ -640,14 +643,13 @@ select:focus-visible,
 }
 
 .ginmaku-bookmark-container .folder-list {
-  gap: 3px;
-  margin-top: 0;
+  display: block;
+  margin: 0;
 }
 
 .ginmaku-bookmark-container .folder-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 3px;
+  display: block;
+  margin: 0 0 2px;
 }
 
 .ginmaku-bookmark-container .folder-toggle {
@@ -679,24 +681,78 @@ select:focus-visible,
   color: #d2d2d2;
 }
 
-.ginmaku-bookmark-container .folder-order-actions {
-  display: none;
-}
-
-.ginmaku-bookmark-container .folder-item.is-open .folder-order-actions {
-  display: flex;
-}
-
 .ginmaku-bookmark-container .selected-content {
   margin: 0;
-  padding: 4px 2px 6px 14px;
-  border: 0;
-  background: #050505;
+  padding: 8px 7px 10px;
+  overflow: hidden;
+  border: 1px solid #3b3b3b;
+  border-top: 0;
+  background-color: #080808;
+  background-image: radial-gradient(#242424 1px, transparent 1px);
+  background-size: 6px 6px;
+}
+
+.ginmaku-bookmark-container .bookmark-list {
+  display: block;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  line-height: 1.7;
+}
+
+.ginmaku-bookmark-container .bookmark-list > li {
+  display: flex;
+  min-width: 0;
+  gap: 3px;
+  align-items: center;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.ginmaku-bookmark-container .bookmark-list a {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bookmark-document-icon {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 8px;
+  width: 8px;
+  height: 10px;
+  border: 1px solid #d2d2d2;
+}
+
+.bookmark-document-icon::after {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 3px;
+  height: 3px;
+  border-bottom: 1px solid #d2d2d2;
+  border-left: 1px solid #d2d2d2;
+  background: #080808;
+  content: "";
+}
+
+.ginmaku-bookmark-container .new-folder-action,
+.ginmaku-bookmark-container .edit-folder-action {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.ginmaku-action-icon {
+  color: #d2d2d2;
 }
 
 .ginmaku-bookmark-container .saved-content .new-folder-toggle {
-  margin-top: 6px;
-  padding: 1px 2px;
+  padding: 0;
   border: 0;
   background: transparent;
   color: #fff;
@@ -706,24 +762,104 @@ select:focus-visible,
 }
 
 .ginmaku-bookmark-container .new-folder-form {
-  margin: 3px 0 6px;
+  margin: 3px 0 8px;
+  line-height: 1.8;
 }
 
-.bookmark-drag-hint {
-  margin-top: 5px;
+.ginmaku-bookmark-container .new-folder-form input {
+  width: auto;
+  background: #242424;
+  color: #fff;
 }
 
-.bookmark-drag-handle {
-  color: #aaa;
+.ginmaku-bookmark-container .edit-folder-action a,
+.ginmaku-bookmark-container .edit-folder-action span[aria-disabled="true"] {
+  color: #fff;
+  font-weight: 400;
+}
+
+.ginmaku-bookmark-container .edit-folder-action span[aria-disabled="true"] {
+  color: #777;
+}
+
+.ginmaku-add-bookmark {
+  margin-top: 3px;
+  color: #fff;
+  font:
+    11px Helvetica,
+    Arial,
+    sans-serif;
+}
+
+.ginmaku-add-bookmark button {
+  font: revert;
+}
+
+.ginmaku-add-bookmark .saved-feedback {
+  display: inline;
+  min-height: 0;
+  margin-left: 4px;
+}
+
+.ginmaku-management-page {
+  min-height: 100vh;
+  padding: 8px;
+  background: #000;
+  color: #fff;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.ginmaku-management-page h1 {
+  font-size: 2em;
+  letter-spacing: normal;
+  line-height: normal;
+}
+
+.ginmaku-management-page a,
+.ginmaku-management-page .ginmaku-link-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 400;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ginmaku-management-page .danger-link {
+  color: var(--error-text);
+}
+
+.ginmaku-folder-edit-form input[type="text"],
+.ginmaku-management-page input:not([type="checkbox"]) {
+  background: var(--surface-control);
+  color: #fff;
+}
+
+.ginmaku-folder-content-table {
+  border-collapse: collapse;
+  color: #fff;
+}
+
+.ginmaku-folder-content-table td {
+  padding: 3px 5px;
+}
+
+.ginmaku-folder-content-table tr[draggable="true"] {
   cursor: move;
-  user-select: none;
 }
 
 .bookmark-list > li.bookmark-dragging {
   opacity: 0.45;
 }
 
-.bookmark-list > li.bookmark-drop-target {
+.ginmaku-folder-content-table tr.bookmark-dragging {
+  opacity: 0.45;
+}
+
+.bookmark-list > li.bookmark-drop-target,
+.ginmaku-folder-content-table tr.bookmark-drop-target {
   outline: 2px solid #d9822b;
   outline-offset: 1px;
 }

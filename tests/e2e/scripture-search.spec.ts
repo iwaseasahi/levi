@@ -417,49 +417,57 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
     "rgba(0, 0, 0, 0)",
   );
   await createFolderToggle.click();
-  await page.getByLabel("新しいフォルダー名").fill("主日礼拝");
+  await page.getByLabel("日付").fill("2026-08-23");
+  await page.getByLabel("集会名").fill("第二礼拝");
   const createFolderButton = page.getByRole("button", {
     name: "作成",
     exact: true,
   });
-  await expect(createFolderButton).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(createFolderButton).toHaveCSS("color", "rgb(0, 0, 0)");
   await expect(createFolderButton).toHaveCSS(
     "background-color",
-    "rgb(36, 36, 36)",
+    "rgb(239, 239, 239)",
   );
   await createFolderButton.click();
-  await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
   const worshipFolder = page.getByRole("button", {
-    name: "主日礼拝",
+    name: "2026-08-23 第二礼拝",
     exact: true,
   });
   await expect(worshipFolder).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
-  await expect(
-    page.getByRole("button", { name: "よく使うフォルダーに固定" }),
-  ).toHaveCSS("color", "rgb(255, 255, 255)");
-  await expect(page.getByRole("button", { name: "名前を変更" })).toHaveCSS(
-    "color",
-    "rgb(255, 255, 255)",
+  await expect(page.getByLabel("フォルダー名")).toHaveCount(0);
+  await expect(page.getByText("ブックマーク名", { exact: true })).toHaveCount(
+    0,
   );
-  await expect(
-    page.getByRole("button", { name: "フォルダーを削除" }),
-  ).toHaveCSS("color", "rgb(255, 180, 171)");
+  await expect(page.getByRole("button", { name: /を上へ/ })).toHaveCount(0);
+  const editFolderLink = page.getByRole("link", { name: "フォルダの編集" });
+  await expect(editFolderLink).toHaveAttribute("target", "_blank");
   await worshipFolder.click();
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "false");
-  await expect(page.getByRole("heading", { name: "主日礼拝" })).toHaveCount(0);
   await worshipFolder.click();
-  await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
-  await page.getByLabel("ブックマーク名").fill("創世記 1:1–2");
-  await page.getByRole("button", { name: "現在の聖書箇所を保存" }).click();
+  const favoriteButton = page.getByRole("button", {
+    name: "お気に入りに追加",
+  });
+  const searchTableBox = await page
+    .locator(".ginmaku-books-table")
+    .boundingBox();
+  const favoriteBox = await favoriteButton.boundingBox();
+  expect(Math.abs(favoriteBox!.x - searchTableBox!.x)).toBeLessThan(2);
+  expect(favoriteBox!.y).toBeGreaterThanOrEqual(
+    searchTableBox!.y + searchTableBox!.height,
+  );
+  await favoriteButton.click();
   await expect(
-    page.getByRole("button", { name: "創世記 1:1–2", exact: true }),
+    page.getByRole("link", {
+      name: "創世記/Genesis 1:1-2",
+      exact: true,
+    }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "創世記 1:1–2", exact: true }),
-  ).toHaveCSS("color", "rgb(255, 255, 255)");
-  await expect(
-    page.getByRole("button", { name: "創世記 1:1–2を削除" }),
+    page.getByRole("link", {
+      name: "創世記/Genesis 1:1-2",
+      exact: true,
+    }),
   ).toHaveCSS("color", "rgb(255, 255, 255)");
 
   const savedContentAccessibility = await new AxeBuilder({ page })
@@ -473,55 +481,60 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await expect(page.getByLabel("開始節")).toBeEnabled();
   await page.getByLabel("開始節").fill("1");
   await page.getByLabel("終了節（省略可）").fill("1");
-  await page.getByLabel("ブックマーク名").fill("出エジプト記 1:1");
-  await page.getByRole("button", { name: "現在の聖書箇所を保存" }).click();
+  await favoriteButton.click();
   const bookmarkRows = page.locator("[data-bookmark-id]");
   await bookmarkRows.nth(1).dragTo(bookmarkRows.nth(0));
-  await expect(page.getByRole("status")).toContainText(
-    "ブックマークの順序を変更しました。",
-  );
   const bookmarks = page.locator(".bookmark-list");
   await expect(bookmarks.getByRole("listitem").first()).toContainText(
-    "出エジプト記 1:1",
+    "出エジプト記/Exodus 1:1-1",
   );
-  await page.getByRole("button", { name: "創世記 1:1–2を上へ" }).click();
+  await bookmarks.getByRole("listitem").nth(1).press("Alt+ArrowUp");
   await expect(bookmarks.getByRole("listitem").first()).toContainText(
-    "創世記 1:1–2",
+    "創世記/Genesis 1:1-2",
   );
 
   await page.getByRole("button", { name: "新規フォルダ作成" }).click();
-  await page.getByLabel("新しいフォルダー名").fill("祈祷会");
+  await page.getByLabel("集会名").fill("祈祷会");
   await page.getByRole("button", { name: "作成", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "祈祷会" })).toBeVisible();
-  await page.getByRole("button", { name: "よく使うフォルダーに固定" }).click();
   await expect(
-    page.getByRole("button", { name: "固定：祈祷会" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "祈祷会を上へ" }).click();
-  await expect(page.getByRole("status")).toContainText(
-    "フォルダーの順序を変更しました。",
+    page.getByRole("button", { name: "祈祷会", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
+  await worshipFolder.click();
+  await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
+  const worshipEditHref = await editFolderLink.getAttribute("href");
+
+  const folderEditorOpened = context.waitForEvent("page");
+  await editFolderLink.click();
+  let folderEditor = await folderEditorOpened;
+  await expect(folderEditor).toHaveURL(
+    new RegExp(`${worshipEditHref!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
   );
+  await folderEditor.getByLabel("Title").fill("礼拝用");
+  await folderEditor.getByLabel("Sticky").check();
+  await folderEditor.getByRole("button", { name: "更新" }).click();
+  await expect(folderEditor.getByRole("status")).toHaveText(
+    "フォルダーを更新しました。",
+  );
+  await folderEditor.getByRole("link", { name: "編集/edit" }).first().click();
+  await expect(folderEditor).toHaveURL(/\/bookmarks\/[^/]+\/edit\?folderId=/);
+  await folderEditor.getByLabel("Title").fill("礼拝開始");
+  await folderEditor.getByRole("button", { name: "更新" }).click();
+  await expect(folderEditor.getByRole("status")).toHaveText(
+    "お気に入りを更新しました。",
+  );
+  await folderEditor.getByRole("link", { name: "Back" }).click();
+  await expect(folderEditor).toHaveURL(/\/folders\/[^/]+\/edit$/);
+  await folderEditor.close();
 
-  await page.getByRole("button", { name: "新規フォルダ作成" }).click();
-  await page.getByLabel("新しいフォルダー名").fill("青年会");
-  await page.getByRole("button", { name: "作成", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "青年会" })).toBeVisible();
-
-  const folders = page.locator(".folder-list > li");
-  await expect(folders.first()).toContainText("祈祷会");
-  await page.getByRole("button", { name: "主日礼拝", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
-  await expect(folders.nth(1)).toContainText("主日礼拝");
-  await expect(folders.nth(2)).toContainText("青年会");
-
-  await page.getByLabel("フォルダー名", { exact: true }).fill("礼拝用");
-  await page.getByRole("button", { name: "名前を変更" }).click();
-  await expect(
-    page.getByRole("button", { name: "礼拝用", exact: true }),
-  ).toBeVisible();
+  await page.reload();
+  const renamedFolder = page.getByRole("button", {
+    name: "礼拝用",
+    exact: true,
+  });
+  await expect(renamedFolder).toHaveAttribute("aria-expanded", "true");
 
   const bookmarkOpened = context.waitForEvent("page");
-  await page.getByRole("button", { name: "創世記 1:1–2", exact: true }).click();
+  await page.getByRole("link", { name: "礼拝開始", exact: true }).click();
   const bookmarkedAudience = await bookmarkOpened;
   await expect(page).toHaveURL(/\/scripture$/);
   await expect(bookmarkedAudience).toHaveURL(
@@ -534,17 +547,17 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   ).toBeVisible();
   await bookmarkedAudience.close();
 
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "創世記 1:1–2を削除" }).click();
-  await expect(
-    page.getByRole("button", { name: "創世記 1:1–2", exact: true }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: "出エジプト記 1:1", exact: true }),
-  ).toBeVisible();
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "フォルダーを削除" }).click();
-  await expect(
-    page.getByRole("button", { name: "礼拝用", exact: true }),
-  ).toHaveCount(0);
+  const deleteEditorOpened = context.waitForEvent("page");
+  await page.getByRole("link", { name: "フォルダの編集" }).click();
+  folderEditor = await deleteEditorOpened;
+  folderEditor.once("dialog", (dialog) => dialog.accept());
+  await folderEditor.getByRole("button", { name: "削除/del" }).last().click();
+  await expect(folderEditor.getByRole("status")).toHaveText(
+    "お気に入りを削除しました。",
+  );
+  folderEditor.once("dialog", (dialog) => dialog.accept());
+  await folderEditor.getByRole("button", { name: "フォルダーを削除" }).click();
+  await expect.poll(() => folderEditor.isClosed()).toBe(true);
+  await page.reload();
+  await expect(renamedFolder).toHaveCount(0);
 }

@@ -30,6 +30,7 @@ function repository(): SavedContentRepository {
     deleteFolder: vi.fn().mockResolvedValue(true),
     createBookmark: vi.fn(),
     openBookmark: vi.fn(),
+    updateBookmark: vi.fn(),
     reorderBookmarks: vi.fn().mockResolvedValue(true),
     deleteBookmark: vi.fn().mockResolvedValue(true),
   };
@@ -85,6 +86,43 @@ describe("saved content HTTP handlers", () => {
     );
     expect(response.status).toBe(400);
     expect(saved.createFolder).not.toHaveBeenCalled();
+  });
+
+  it("updates a bookmark only through the server-derived church scope", async () => {
+    const saved = repository();
+    vi.mocked(saved.updateBookmark).mockResolvedValue({
+      id: "00000000-0000-4000-8000-000000000056",
+      folderId,
+      position: 0,
+      title: "創世記 1:1",
+      search: {
+        book: "GEN",
+        chapter: 1,
+        startVerse: 1,
+        endVerse: 1,
+        language: "both",
+      },
+    });
+    const handlers = createSavedContentHandlers({
+      getChurchAccess: vi.fn().mockResolvedValue(authorized),
+      repository: saved,
+    });
+    const response = await handlers.POST(
+      new Request("https://levi.example/api/saved-content", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "update-bookmark",
+          bookmarkId: "00000000-0000-4000-8000-000000000056",
+          title: "  創世記 1:1  ",
+        }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(saved.updateBookmark).toHaveBeenCalledWith(
+      scope,
+      "00000000-0000-4000-8000-000000000056",
+      { title: "創世記 1:1" },
+    );
   });
 
   it.each([
