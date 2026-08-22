@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
+import nextConfig from "../next.config";
 import { planLocalEnvironment } from "./lib/local-environment";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -34,6 +35,10 @@ assert(
 assert(
   packageJson.packageManager === "pnpm@11.19.0",
   "packageManager must pin pnpm 11.19.0",
+);
+assert(
+  nextConfig.devIndicators === false,
+  "Next.js development indicators must remain hidden from Levi screens",
 );
 assert(
   ci.includes("node-version: 24.19.0") && ci.includes("version: 11.19.0"),
