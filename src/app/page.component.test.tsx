@@ -7,8 +7,8 @@ import { describe, expect, it } from "vitest";
 import Home from "./page";
 
 describe("Home", () => {
-  it("renders the walking-skeleton navigation", () => {
-    render(<Home />);
+  it("renders only the title and login action", () => {
+    const { container } = render(<Home />);
 
     expect(
       screen.getByRole("heading", {
@@ -16,12 +16,13 @@ describe("Home", () => {
         name: "礼拝投影システム Levi",
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText("教会用画面を利用するには、ログインしてください。"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "ログイン画面へ" }),
-    ).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("link", { name: "ログイン" })).toHaveAttribute(
+      "href",
+      "/login",
+    );
+    expect(container.querySelector(".card")?.children).toHaveLength(2);
+    expect(container.querySelector(".eyebrow")).not.toBeInTheDocument();
+    expect(container.querySelector("p")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /health/i }),
     ).not.toBeInTheDocument();

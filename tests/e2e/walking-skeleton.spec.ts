@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 import { expect, test } from "./fixtures";
 
-test("home directs users to login while health remains available", async ({
+test("minimal home directs users to login while health remains available", async ({
   page,
 }) => {
   await page.goto("/");
@@ -13,12 +13,11 @@ test("home directs users to login while health remains available", async ({
       name: "礼拝投影システム Levi",
     }),
   ).toBeVisible();
-  await expect(
-    page.getByText("教会用画面を利用するには、ログインしてください。"),
-  ).toBeVisible();
-  const loginLink = page.getByRole("link", { name: "ログイン画面へ" });
+  const loginLink = page.getByRole("link", { name: "ログイン" });
   await expect(loginLink).toHaveAttribute("href", "/login");
   await expect(loginLink).toHaveCSS("background-color", "rgb(210, 134, 50)");
+  await expect(page.locator(".card > *")).toHaveCount(2);
+  await expect(page.locator(".card p, .card .eyebrow")).toHaveCount(0);
   await expect(page.getByRole("link", { name: /health/i })).toHaveCount(0);
 
   await expect(page.locator("html")).toHaveCSS(
