@@ -47,6 +47,22 @@ Blank hides the audience scripture on the black surface while retaining the
 latest location for display when toggled again. Closing the audience disables
 these controls until another successful `Open`.
 
+## Folder sidebar
+
+The left sidebar follows Ginmaku's folder accordion. Folder headers use the
+dark gradient and disclosure triangle from the legacy screen and start closed.
+Selecting a header opens that folder directly below the header, closes any
+other open folder, and updates its last-used time. Selecting the same header
+again closes it.
+
+`新規フォルダ作成` appears below the folder list and toggles the creation form.
+After a successful creation, the form closes and the new folder opens. Within
+the open folder, scripture bookmarks can be reordered with native Chrome
+drag-and-drop. The client submits the complete ordered ID set for that folder;
+the server rejects partial, foreign, or cross-folder orders. Up/down buttons
+remain available as a keyboard fallback. A failed reorder reloads the server
+order instead of leaving an unpersisted order on screen.
+
 ## Result
 
 Results are ordered by verse and contain one item per canonical location.

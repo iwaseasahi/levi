@@ -395,8 +395,19 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await page.getByLabel("開始節").fill("1");
   await page.getByLabel("終了節（省略可）").fill("2");
 
+  await page.getByRole("button", { name: "新規フォルダ作成" }).click();
   await page.getByLabel("新しいフォルダー名").fill("主日礼拝");
-  await page.getByRole("button", { name: "作成" }).click();
+  await page.getByRole("button", { name: "作成", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
+  const worshipFolder = page.getByRole("button", {
+    name: "主日礼拝",
+    exact: true,
+  });
+  await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
+  await worshipFolder.click();
+  await expect(worshipFolder).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("heading", { name: "主日礼拝" })).toHaveCount(0);
+  await worshipFolder.click();
   await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
   await page.getByLabel("ブックマーク名").fill("創世記 1:1–2");
   await page.getByRole("button", { name: "現在の聖書箇所を保存" }).click();
@@ -411,7 +422,8 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await page.getByLabel("終了節（省略可）").fill("1");
   await page.getByLabel("ブックマーク名").fill("出エジプト記 1:1");
   await page.getByRole("button", { name: "現在の聖書箇所を保存" }).click();
-  await page.getByRole("button", { name: "出エジプト記 1:1を上へ" }).click();
+  const bookmarkRows = page.locator("[data-bookmark-id]");
+  await bookmarkRows.nth(1).dragTo(bookmarkRows.nth(0));
   await expect(page.getByRole("status")).toContainText(
     "ブックマークの順序を変更しました。",
   );
@@ -424,8 +436,9 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
     "創世記 1:1–2",
   );
 
+  await page.getByRole("button", { name: "新規フォルダ作成" }).click();
   await page.getByLabel("新しいフォルダー名").fill("祈祷会");
-  await page.getByRole("button", { name: "作成" }).click();
+  await page.getByRole("button", { name: "作成", exact: true }).click();
   await expect(page.getByRole("heading", { name: "祈祷会" })).toBeVisible();
   await page.getByRole("button", { name: "よく使うフォルダーに固定" }).click();
   await expect(
@@ -436,16 +449,17 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
     "フォルダーの順序を変更しました。",
   );
 
+  await page.getByRole("button", { name: "新規フォルダ作成" }).click();
   await page.getByLabel("新しいフォルダー名").fill("青年会");
-  await page.getByRole("button", { name: "作成" }).click();
+  await page.getByRole("button", { name: "作成", exact: true }).click();
   await expect(page.getByRole("heading", { name: "青年会" })).toBeVisible();
 
-  const folders = page.getByRole("list", { name: "フォルダー" });
-  await expect(folders.getByRole("listitem").first()).toContainText("祈祷会");
+  const folders = page.locator(".folder-list > li");
+  await expect(folders.first()).toContainText("祈祷会");
   await page.getByRole("button", { name: "主日礼拝", exact: true }).click();
   await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
-  await expect(folders.getByRole("listitem").nth(1)).toContainText("主日礼拝");
-  await expect(folders.getByRole("listitem").nth(2)).toContainText("青年会");
+  await expect(folders.nth(1)).toContainText("主日礼拝");
+  await expect(folders.nth(2)).toContainText("青年会");
 
   await page.getByLabel("フォルダー名", { exact: true }).fill("礼拝用");
   await page.getByRole("button", { name: "名前を変更" }).click();

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import type {
   FolderSummary,
   ScriptureBookmarkView,
@@ -35,6 +35,16 @@ function move(ids: string[], id: string, offset: -1 | 1) {
   return next;
 }
 
+function moveTo(ids: string[], draggedId: string, targetId: string) {
+  const from = ids.indexOf(draggedId);
+  const target = ids.indexOf(targetId);
+  if (from < 0 || target < 0 || from === target) return null;
+  const next = [...ids];
+  next.splice(from, 1);
+  next.splice(target, 0, draggedId);
+  return next;
+}
+
 export function SavedContentPanel({
   currentSearch,
   fetcher,
@@ -48,8 +58,15 @@ export function SavedContentPanel({
   const [orderIds, setOrderIds] = useState<string[]>([]);
   const [selected, setSelected] = useState<SelectedFolder | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [bookmarkTitle, setBookmarkTitle] = useState("");
+  const [draggedBookmarkId, setDraggedBookmarkId] = useState<string | null>(
+    null,
+  );
+  const [dragOverBookmarkId, setDragOverBookmarkId] = useState<string | null>(
+    null,
+  );
   const [pending, setPending] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -82,7 +99,11 @@ export function SavedContentPanel({
     setOrderIds(response.orderIds);
   }
 
-  async function run(action: () => Promise<void>, success?: string) {
+  async function run(
+    action: () => Promise<void>,
+    success?: string,
+    recover?: () => Promise<void>,
+  ) {
     setPending(true);
     setError("");
     setMessage("");
@@ -90,6 +111,13 @@ export function SavedContentPanel({
       await action();
       if (success) setMessage(success);
     } catch {
+      if (recover) {
+        try {
+          await recover();
+        } catch {
+          // Keep the original update failure visible when recovery also fails.
+        }
+      }
       setError(
         "保存内容を更新できませんでした。再読み込みしてお試しください。",
       );
@@ -123,6 +151,11 @@ export function SavedContentPanel({
   }
 
   async function chooseFolder(folderId: string) {
+    if (selected?.folder.id === folderId) {
+      setSelected(null);
+      setFolderName("");
+      return;
+    }
     await run(async () => {
       await loadFolder(folderId);
       await refreshFolders();
@@ -139,6 +172,7 @@ export function SavedContentPanel({
         name,
       });
       setNewFolderName("");
+      setNewFolderOpen(false);
       await loadFolder(folder.id);
       await refreshFolders();
     }, "フォルダーを作成しました。");
@@ -227,6 +261,43 @@ export function SavedContentPanel({
     }, "ブックマークの順序を変更しました。");
   }
 
+  async function reorderBookmarkTo(draggedId: string, targetId: string) {
+    if (!selected) return;
+    const folderId = selected.folder.id;
+    const ids = moveTo(
+      selected.bookmarks.map(({ id }) => id),
+      draggedId,
+      targetId,
+    );
+    setDraggedBookmarkId(null);
+    setDragOverBookmarkId(null);
+    if (!ids) return;
+    await run(
+      async () => {
+        await request({ action: "reorder-bookmarks", folderId, ids });
+        await loadFolder(folderId);
+        await refreshFolders();
+      },
+      "ブックマークの順序を変更しました。",
+      () => loadFolder(folderId),
+    );
+  }
+
+  function beginBookmarkDrag(
+    event: DragEvent<HTMLLIElement>,
+    bookmarkId: string,
+  ) {
+    if (pending) return;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", bookmarkId);
+    setDraggedBookmarkId(bookmarkId);
+  }
+
+  function finishBookmarkDrag() {
+    setDraggedBookmarkId(null);
+    setDragOverBookmarkId(null);
+  }
+
   async function removeBookmark(bookmark: ScriptureBookmarkView) {
     if (!selected || !window.confirm(`「${bookmark.title}」を削除しますか？`))
       return;
@@ -237,175 +308,133 @@ export function SavedContentPanel({
     }, "ブックマークを削除しました。");
   }
 
-  return (
-    <section
-      className="saved-content"
-      aria-labelledby="saved-content-title"
-      aria-busy={pending}
-    >
-      <div className="section-heading">
-        <p className="eyebrow">Saved scripture</p>
-        <h2 id="saved-content-title">フォルダーとブックマーク</h2>
-        <p>よく使う御言葉を教会ごとに整理できます。</p>
-      </div>
-
-      <form className="compact-form" onSubmit={createFolder}>
-        <label htmlFor="new-folder-name">新しいフォルダー名</label>
-        <div className="inline-controls">
-          <input
-            disabled={pending}
-            id="new-folder-name"
-            maxLength={200}
-            value={newFolderName}
-            onChange={(event) => setNewFolderName(event.target.value)}
-          />
-          <button
-            className="secondary-button"
-            disabled={pending || !newFolderName.trim()}
-            type="submit"
-          >
-            作成
-          </button>
-        </div>
-      </form>
-
-      {pending && folders.length === 0 ? (
-        <p role="status">フォルダーを読み込んでいます。</p>
-      ) : null}
-      {!pending && folders.length === 0 ? (
-        <p className="empty-copy">フォルダーはまだありません。</p>
-      ) : null}
-      {folders.length > 0 ? (
-        <ul className="folder-list" aria-label="フォルダー">
-          {folders.map((folder) => (
-            <li key={folder.id}>
-              <button
-                className={
-                  selected?.folder.id === folder.id ? "selected-folder" : ""
-                }
-                disabled={pending}
-                type="button"
-                onClick={() => void chooseFolder(folder.id)}
-              >
-                <span>
-                  {folder.isPinned ? "固定：" : ""}
-                  {folder.name}
-                </span>
-              </button>
-              <div
-                className="order-actions"
-                aria-label={`${folder.name}の順序`}
-              >
-                <button
-                  disabled={pending || orderIds.indexOf(folder.id) <= 0}
-                  type="button"
-                  aria-label={`${folder.name}を上へ`}
-                  onClick={() => void reorderFolder(folder.id, -1)}
-                >
-                  ↑
-                </button>
-                <button
-                  disabled={
-                    pending ||
-                    orderIds.indexOf(folder.id) >= orderIds.length - 1
-                  }
-                  type="button"
-                  aria-label={`${folder.name}を下へ`}
-                  onClick={() => void reorderFolder(folder.id, 1)}
-                >
-                  ↓
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {selected ? (
-        <div className="selected-content">
-          <h3>{selected.folder.name}</h3>
-          <form
-            className="compact-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const name = folderName.trim();
-              if (name) void updateFolder({ name });
-            }}
-          >
-            <label htmlFor="folder-name">フォルダー名</label>
-            <div className="inline-controls">
-              <input
-                disabled={pending}
-                id="folder-name"
-                maxLength={200}
-                value={folderName}
-                onChange={(event) => setFolderName(event.target.value)}
-              />
-              <button
-                className="secondary-button"
-                disabled={
-                  pending ||
-                  !folderName.trim() ||
-                  folderName.trim() === selected.folder.name
-                }
-                type="submit"
-              >
-                名前を変更
-              </button>
-            </div>
-          </form>
-          <div className="folder-actions">
+  function selectedFolderContent() {
+    if (!selected) return null;
+    return (
+      <div
+        className="selected-content"
+        id={`folder-content-${selected.folder.id}`}
+      >
+        <h3 className="sr-only">{selected.folder.name}</h3>
+        <form
+          className="compact-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const name = folderName.trim();
+            if (name) void updateFolder({ name });
+          }}
+        >
+          <label htmlFor="folder-name">フォルダー名</label>
+          <div className="inline-controls">
+            <input
+              disabled={pending}
+              id="folder-name"
+              maxLength={200}
+              value={folderName}
+              onChange={(event) => setFolderName(event.target.value)}
+            />
             <button
               className="secondary-button"
-              disabled={pending}
-              type="button"
-              onClick={() =>
-                void updateFolder({ isPinned: !selected.folder.isPinned })
+              disabled={
+                pending ||
+                !folderName.trim() ||
+                folderName.trim() === selected.folder.name
               }
+              type="submit"
             >
-              {selected.folder.isPinned
-                ? "固定を解除"
-                : "よく使うフォルダーに固定"}
-            </button>
-            <button
-              className="danger-button"
-              disabled={pending}
-              type="button"
-              onClick={() => void removeFolder()}
-            >
-              フォルダーを削除
+              名前を変更
             </button>
           </div>
+        </form>
+        <div className="folder-actions">
+          <button
+            className="secondary-button"
+            disabled={pending}
+            type="button"
+            onClick={() =>
+              void updateFolder({ isPinned: !selected.folder.isPinned })
+            }
+          >
+            {selected.folder.isPinned
+              ? "固定を解除"
+              : "よく使うフォルダーに固定"}
+          </button>
+          <button
+            className="danger-button"
+            disabled={pending}
+            type="button"
+            onClick={() => void removeFolder()}
+          >
+            フォルダーを削除
+          </button>
+        </div>
 
-          <form className="compact-form" onSubmit={saveBookmark}>
-            <label htmlFor="bookmark-title">ブックマーク名</label>
-            <div className="inline-controls">
-              <input
-                disabled={pending}
-                id="bookmark-title"
-                maxLength={200}
-                value={bookmarkTitle}
-                onChange={(event) => setBookmarkTitle(event.target.value)}
-              />
-              <button
-                className="secondary-button"
-                disabled={pending || !currentSearch || !bookmarkTitle.trim()}
-                type="submit"
-              >
-                現在の聖書箇所を保存
-              </button>
-            </div>
-            {!currentSearch ? (
-              <p className="hint">先に御言葉を検索すると保存できます。</p>
-            ) : null}
-          </form>
+        <form className="compact-form" onSubmit={saveBookmark}>
+          <label htmlFor="bookmark-title">ブックマーク名</label>
+          <div className="inline-controls">
+            <input
+              disabled={pending}
+              id="bookmark-title"
+              maxLength={200}
+              value={bookmarkTitle}
+              onChange={(event) => setBookmarkTitle(event.target.value)}
+            />
+            <button
+              className="secondary-button"
+              disabled={pending || !currentSearch || !bookmarkTitle.trim()}
+              type="submit"
+            >
+              現在の聖書箇所を保存
+            </button>
+          </div>
+          {!currentSearch ? (
+            <p className="hint">先に御言葉を検索すると保存できます。</p>
+          ) : null}
+        </form>
 
-          {selected.bookmarks.length === 0 ? (
-            <p className="empty-copy">ブックマークはまだありません。</p>
-          ) : (
-            <ol className="bookmark-list">
+        {selected.bookmarks.length === 0 ? (
+          <p className="empty-copy">ブックマークはまだありません。</p>
+        ) : (
+          <>
+            <p className="bookmark-drag-hint">
+              聖書箇所はドラッグして並べ替えできます。
+            </p>
+            <ol className="bookmark-list" aria-label="保存した聖書箇所">
               {selected.bookmarks.map((bookmark, index) => (
-                <li key={bookmark.id}>
+                <li
+                  className={
+                    dragOverBookmarkId === bookmark.id
+                      ? "bookmark-drop-target"
+                      : draggedBookmarkId === bookmark.id
+                        ? "bookmark-dragging"
+                        : undefined
+                  }
+                  data-bookmark-id={bookmark.id}
+                  draggable={!pending}
+                  key={bookmark.id}
+                  onDragEnd={finishBookmarkDrag}
+                  onDragEnter={() => setDragOverBookmarkId(bookmark.id)}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = "move";
+                  }}
+                  onDragStart={(event) => beginBookmarkDrag(event, bookmark.id)}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const draggedId =
+                      draggedBookmarkId ||
+                      event.dataTransfer.getData("text/plain");
+                    if (draggedId)
+                      void reorderBookmarkTo(draggedId, bookmark.id);
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="bookmark-drag-handle"
+                    title="ドラッグして並べ替え"
+                  >
+                    ⠿
+                  </span>
                   <button
                     className="bookmark-open"
                     disabled={pending}
@@ -448,8 +477,121 @@ export function SavedContentPanel({
                 </li>
               ))}
             </ol>
-          )}
-        </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <section
+      className="saved-content"
+      aria-labelledby="saved-content-title"
+      aria-busy={pending}
+    >
+      <div className="section-heading">
+        <p className="eyebrow">Saved scripture</p>
+        <h2 id="saved-content-title">フォルダーとブックマーク</h2>
+        <p>よく使う御言葉を教会ごとに整理できます。</p>
+      </div>
+
+      {pending && folders.length === 0 ? (
+        <p role="status">フォルダーを読み込んでいます。</p>
+      ) : null}
+      {!pending && folders.length === 0 ? (
+        <p className="empty-copy">フォルダーはまだありません。</p>
+      ) : null}
+      {folders.length > 0 ? (
+        <ul className="folder-list" aria-label="フォルダー">
+          {folders.map((folder) => {
+            const open = selected?.folder.id === folder.id;
+            return (
+              <li
+                className={`folder-item${open ? " is-open" : ""}`}
+                key={folder.id}
+              >
+                <button
+                  aria-controls={`folder-content-${folder.id}`}
+                  aria-expanded={open}
+                  className={`folder-toggle${open ? " selected-folder" : ""}`}
+                  disabled={pending}
+                  type="button"
+                  onClick={() => void chooseFolder(folder.id)}
+                >
+                  <span aria-hidden="true" className="folder-toggle-indicator">
+                    {open ? "▾" : "▸"}
+                  </span>
+                  <span>
+                    {folder.isPinned ? "固定：" : ""}
+                    {folder.name}
+                  </span>
+                </button>
+                <div
+                  className="order-actions folder-order-actions"
+                  aria-label={`${folder.name}の順序`}
+                >
+                  <button
+                    disabled={pending || orderIds.indexOf(folder.id) <= 0}
+                    type="button"
+                    aria-label={`${folder.name}を上へ`}
+                    onClick={() => void reorderFolder(folder.id, -1)}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    disabled={
+                      pending ||
+                      orderIds.indexOf(folder.id) >= orderIds.length - 1
+                    }
+                    type="button"
+                    aria-label={`${folder.name}を下へ`}
+                    onClick={() => void reorderFolder(folder.id, 1)}
+                  >
+                    ↓
+                  </button>
+                </div>
+                {open ? selectedFolderContent() : null}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+
+      <button
+        aria-controls="new-folder-form"
+        aria-expanded={newFolderOpen}
+        className="new-folder-toggle"
+        disabled={pending}
+        onClick={() => setNewFolderOpen((open) => !open)}
+        type="button"
+      >
+        <span aria-hidden="true">⊕</span> 新規フォルダ作成
+      </button>
+      {newFolderOpen ? (
+        <form
+          className="compact-form new-folder-form"
+          id="new-folder-form"
+          onSubmit={createFolder}
+        >
+          <label htmlFor="new-folder-name">新しいフォルダー名</label>
+          <div className="inline-controls">
+            <input
+              autoFocus
+              disabled={pending}
+              id="new-folder-name"
+              maxLength={200}
+              value={newFolderName}
+              onChange={(event) => setNewFolderName(event.target.value)}
+            />
+            <button
+              className="secondary-button"
+              disabled={pending || !newFolderName.trim()}
+              type="submit"
+            >
+              作成
+            </button>
+          </div>
+        </form>
       ) : null}
 
       <div className="saved-feedback" aria-live="polite">
