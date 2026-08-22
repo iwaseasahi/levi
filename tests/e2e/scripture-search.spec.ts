@@ -418,13 +418,33 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   );
   await createFolderToggle.click();
   await page.getByLabel("新しいフォルダー名").fill("主日礼拝");
-  await page.getByRole("button", { name: "作成", exact: true }).click();
+  const createFolderButton = page.getByRole("button", {
+    name: "作成",
+    exact: true,
+  });
+  await expect(createFolderButton).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(createFolderButton).toHaveCSS(
+    "background-color",
+    "rgb(36, 36, 36)",
+  );
+  await createFolderButton.click();
   await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
   const worshipFolder = page.getByRole("button", {
     name: "主日礼拝",
     exact: true,
   });
+  await expect(worshipFolder).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    page.getByRole("button", { name: "よく使うフォルダーに固定" }),
+  ).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(page.getByRole("button", { name: "名前を変更" })).toHaveCSS(
+    "color",
+    "rgb(255, 255, 255)",
+  );
+  await expect(
+    page.getByRole("button", { name: "フォルダーを削除" }),
+  ).toHaveCSS("color", "rgb(255, 180, 171)");
   await worshipFolder.click();
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "false");
   await expect(page.getByRole("heading", { name: "主日礼拝" })).toHaveCount(0);
@@ -435,6 +455,18 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await expect(
     page.getByRole("button", { name: "創世記 1:1–2", exact: true }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "創世記 1:1–2", exact: true }),
+  ).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(
+    page.getByRole("button", { name: "創世記 1:1–2を削除" }),
+  ).toHaveCSS("color", "rgb(255, 255, 255)");
+
+  const savedContentAccessibility = await new AxeBuilder({ page })
+    .include(".ginmaku-bookmark-container")
+    .withRules(["color-contrast"])
+    .analyze();
+  expect(savedContentAccessibility.violations).toEqual([]);
 
   await page.getByRole("radio", { name: "出エジプト記/Exodus" }).click();
   await page.getByLabel("章").fill("1");
