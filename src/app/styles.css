@@ -695,7 +695,7 @@ select:focus-visible,
   background: #050505;
 }
 
-.ginmaku-bookmark-container .new-folder-toggle {
+.ginmaku-bookmark-container .saved-content .new-folder-toggle {
   margin-top: 6px;
   padding: 1px 2px;
   border: 0;
