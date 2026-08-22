@@ -13,12 +13,18 @@ describe("Home", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "Levi is ready for its first vertical slice.",
+        name: "礼拝投影システム Levi",
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "View health status" }),
-    ).toHaveAttribute("href", "/api/health");
+      screen.getByText("教会用画面を利用するには、ログインしてください。"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "ログイン画面へ" }),
+    ).toHaveAttribute("href", "/login");
+    expect(
+      screen.queryByRole("link", { name: /health/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("has no automatically detectable accessibility violations", async () => {
