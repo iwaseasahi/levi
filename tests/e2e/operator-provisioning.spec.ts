@@ -31,6 +31,14 @@ test.describe("operator administration access", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "ログイン" }),
     ).toBeVisible();
+    await expect(page.locator(".auth-card")).toHaveCSS(
+      "background-color",
+      "rgb(16, 16, 16)",
+    );
+    await expect(page.getByLabel("メールアドレス")).toHaveCSS(
+      "background-color",
+      "rgb(36, 36, 36)",
+    );
   });
 
   test("returns not found to an authenticated church user", async ({
@@ -60,6 +68,14 @@ test.describe("operator church provisioning", () => {
         name: "教会アカウントを作成",
       }),
     ).toBeVisible();
+    await expect(page.locator(".admin-form").first()).toHaveCSS(
+      "background-color",
+      "rgb(16, 16, 16)",
+    );
+    await expect(page.getByLabel("教会名")).toHaveCSS(
+      "background-color",
+      "rgb(36, 36, 36)",
+    );
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
     await page.getByLabel("教会名").fill(E2E_CREATED_CHURCH);
@@ -111,6 +127,10 @@ test.describe("operator church provisioning", () => {
     await page.getByLabel("パスワード").fill(temporaryPassword ?? "");
     await page.getByRole("button", { name: "ログイン" }).click();
     await expect(page).toHaveURL(/\/change-password$/, { timeout: 20_000 });
+    await expect(page.locator(".auth-card")).toHaveCSS(
+      "background-color",
+      "rgb(16, 16, 16)",
+    );
 
     const selectedPassword = "n".repeat(16);
     await page.getByLabel("現在の一時パスワード").fill(temporaryPassword ?? "");
