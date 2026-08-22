@@ -56,6 +56,27 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
   await expect(page.getByText("教会用画面", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "ログアウト" })).toHaveCount(0);
   await expect(page.getByText("検索結果", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".ginmaku-search-page")).toHaveCSS(
+    "background-color",
+    "rgb(0, 0, 0)",
+  );
+
+  await page.goto(
+    "/church/projection?book=GEN&chapter=1&startVerse=1&endVerse=2&language=both",
+  );
+  await expect(
+    page.getByRole("heading", { level: 1, name: "投影操作" }),
+  ).toBeVisible();
+  await expect(page.locator(".controller-actions")).toHaveCSS(
+    "background-color",
+    "rgb(16, 16, 16)",
+  );
+  await expect(page.locator(".controller-preview")).toHaveCSS(
+    "background-color",
+    "rgb(16, 16, 16)",
+  );
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.goto("/church");
 
   const legacyFormStyle = await page
     .locator(".ginmaku-books-table")
@@ -96,8 +117,8 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
       };
     }),
   ).toEqual({
-    background: "rgb(255, 248, 247)",
-    color: "rgb(143, 29, 29)",
+    background: "rgb(43, 16, 16)",
+    color: "rgb(255, 180, 171)",
   });
 
   const foreignFolder = await page.request.get(

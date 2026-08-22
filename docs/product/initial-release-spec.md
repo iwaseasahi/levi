@@ -183,6 +183,14 @@ temporary-password safeguards are selected through
 
 ## UI state and accessibility requirements
 
+All Levi application routes use the scripture-search screen's black-first
+visual language: black page backgrounds, black-to-dark-gray content surfaces,
+white primary text, muted light-gray supporting text, gray borders, and orange
+focus and selection accents. Error and success messages use dark tinted
+surfaces with high-contrast text. Ginmaku-compatible search controls and
+audience typography retain their scoped legacy appearance within this shared
+palette.
+
 Every interactive screen defines and tests relevant loading, empty, validation
 error, server error, success, and disabled states. Controls have programmatic
 labels, work by keyboard, expose error messages to assistive technology, and

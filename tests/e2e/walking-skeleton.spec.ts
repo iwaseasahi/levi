@@ -14,6 +14,16 @@ test("home and health endpoint form a working skeleton", async ({ page }) => {
   const healthLink = page.getByRole("link", { name: "View health status" });
   await expect(healthLink).toHaveAttribute("href", "/api/health");
 
+  await expect(page.locator("html")).toHaveCSS(
+    "background-color",
+    "rgb(0, 0, 0)",
+  );
+  await expect(page.locator(".card")).toHaveCSS(
+    "background-color",
+    "rgb(16, 16, 16)",
+  );
+  await expect(page.locator(".card")).toHaveCSS("color", "rgb(255, 255, 255)");
+
   const accessibility = await new AxeBuilder({ page }).analyze();
   expect(accessibility.violations).toEqual([]);
 
