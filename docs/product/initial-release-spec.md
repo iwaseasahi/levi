@@ -137,11 +137,16 @@ Expired authentication must immediately fail closed and remove protected text.
 A folder and its bookmarks belong to one church. The initial release supports:
 
 - create and rename a folder;
+- show folders as collapsed Ginmaku-style headers, open only one folder at a
+  time, and close it by selecting the same header again;
+- toggle the folder-creation form from the `新規フォルダ作成` action and open
+  the newly created folder;
 - pin or unpin a frequently used folder;
 - show pinned folders first and then recently used folders, up to 20 total;
 - update `last used` when a folder is explicitly selected or one of its
   bookmarks is reopened;
-- reorder folders and bookmarks deterministically;
+- reorder folders deterministically and reorder bookmarks within their folder
+  by drag-and-drop, with up/down controls as the keyboard fallback;
 - save a typed Bible search consisting of book, chapter, inclusive range, and
   language selection;
 - reopen a bookmark directly into the audience-tab flow; and

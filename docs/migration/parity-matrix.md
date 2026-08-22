@@ -32,6 +32,10 @@ decision trail. Evidence links are pinned to legacy commit
   protocol and component tests plus the latest-Chromium two-tab E2E verify
   blank, navigation while blank, and display of the latest location after
   unblank.
+- Issue #116 extends BOOKMARK-001 with Ginmaku's collapsed folder accordion,
+  toggled new-folder form, and same-folder bookmark drag ordering. Component,
+  integration, and latest-Chromium E2E evidence verify persisted complete-order
+  updates, keyboard fallback, and recovery after a rejected reorder.
 
 ## Matrix maintenance rules
 

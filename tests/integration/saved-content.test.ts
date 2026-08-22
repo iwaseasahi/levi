@@ -6,6 +6,7 @@ import {
   createBookmark as createBookmarkUseCase,
   createFolder as createFolderUseCase,
   openBookmark,
+  reorderBookmarks,
   reorderFolders,
   selectFolder,
   updateFolder,
@@ -257,6 +258,19 @@ describe("saved-content database contract", () => {
         language: "both",
       },
     );
+    const secondBookmark = await createBookmarkUseCase(
+      savedContentRepository,
+      tenant(fixture.firstChurch.id),
+      first.id,
+      {
+        title: "Second saved range",
+        book: "T54",
+        chapter: 1,
+        startVerse: 2,
+        endVerse: 3,
+        language: "both",
+      },
+    );
     await expect(
       savedContentRepository.openBookmark(
         tenant(fixture.secondChurch.id),
@@ -270,13 +284,30 @@ describe("saved-content database contract", () => {
         bookmark.id,
       ),
     ).resolves.toMatchObject({ search: { book: "T54", language: "both" } });
+    await expect(
+      reorderBookmarks(
+        savedContentRepository,
+        tenant(fixture.firstChurch.id),
+        first.id,
+        [bookmark.id],
+      ),
+    ).rejects.toMatchObject({ code: "SAVED_CONTENT_CONFLICT" });
+    await reorderBookmarks(
+      savedContentRepository,
+      tenant(fixture.firstChurch.id),
+      first.id,
+      [secondBookmark.id, bookmark.id],
+    );
     const selected = await selectFolder(
       savedContentRepository,
       tenant(fixture.firstChurch.id),
       first.id,
     );
     expect(selected.folder.lastUsedAt).not.toBeNull();
-    expect(selected.bookmarks).toHaveLength(1);
+    expect(selected.bookmarks.map(({ id }) => id)).toEqual([
+      secondBookmark.id,
+      bookmark.id,
+    ]);
     await expect(
       savedContentRepository.listFolders(tenant(fixture.firstChurch.id)),
     ).resolves.toEqual([
