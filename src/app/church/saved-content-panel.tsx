@@ -392,7 +392,7 @@ export function SavedContentPanel({
                 disabled={pending || !currentSearch || !bookmarkTitle.trim()}
                 type="submit"
               >
-                現在の検索結果を保存
+                現在の聖書箇所を保存
               </button>
             </div>
             {!currentSearch ? (

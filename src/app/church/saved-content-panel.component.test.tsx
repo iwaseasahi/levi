@@ -105,7 +105,7 @@ describe("SavedContentPanel", () => {
     await user.click(await screen.findByRole("button", { name: "主日礼拝" }));
     await user.type(screen.getByLabelText("ブックマーク名"), "創世記 1:1–2");
     await user.click(
-      screen.getByRole("button", { name: "現在の検索結果を保存" }),
+      screen.getByRole("button", { name: "現在の聖書箇所を保存" }),
     );
 
     const bookmark = await screen.findByRole("button", {
@@ -150,7 +150,7 @@ describe("SavedContentPanel", () => {
 
     await user.type(screen.getByLabelText("ブックマーク名"), "削除対象");
     await user.click(
-      screen.getByRole("button", { name: "現在の検索結果を保存" }),
+      screen.getByRole("button", { name: "現在の聖書箇所を保存" }),
     );
     vi.spyOn(window, "confirm").mockReturnValueOnce(true);
     await user.click(

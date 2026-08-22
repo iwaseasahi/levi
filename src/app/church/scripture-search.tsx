@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import type {
   ScriptureCatalog,
@@ -53,11 +54,6 @@ function catalogUrl(
   return `/api/scripture/catalog?${query}`;
 }
 
-function referenceFor(item: ScriptureSearchItem) {
-  const text = item.texts.japanese ?? item.texts.english;
-  return `${text?.bookName ?? item.location.book} ${item.location.chapter}:${item.location.verse}`;
-}
-
 function errorMessage(code?: string) {
   switch (code) {
     case "INVALID_SEARCH_INPUT":
@@ -91,6 +87,44 @@ function contiguousEndVerses(verses: number[], startVerse: string) {
   return candidates;
 }
 
+function normalizedSearch(
+  selection: Selection,
+  chapters: number[],
+  verses: number[],
+): SearchResponse["search"] | null {
+  if (!selection.book || !selection.chapter || !selection.startVerse)
+    return null;
+  const validEndVerses = contiguousEndVerses(verses, selection.startVerse);
+  const chapter = Number(selection.chapter);
+  const startVerse = Number(selection.startVerse);
+  const endVerse = Number(
+    selection.endVerse || String(validEndVerses.at(-1) ?? ""),
+  );
+  if (
+    !chapters.includes(chapter) ||
+    !verses.includes(startVerse) ||
+    !validEndVerses.includes(endVerse)
+  )
+    return null;
+  return {
+    book: selection.book,
+    chapter,
+    endVerse,
+    language: selection.language,
+    startVerse,
+  };
+}
+
+function projectionUrl(search: SearchResponse["search"]) {
+  return `/church/projection?${new URLSearchParams({
+    book: search.book,
+    chapter: String(search.chapter),
+    endVerse: String(search.endVerse),
+    language: search.language,
+    startVerse: String(search.startVerse),
+  })}` as Route;
+}
+
 export function ScriptureSearch({
   fetcher = fetch,
   savedContentFetcher = fetcher,
@@ -98,6 +132,7 @@ export function ScriptureSearch({
   fetcher?: typeof fetch;
   savedContentFetcher?: typeof fetch;
 }) {
+  const router = useRouter();
   const [selection, setSelection] = useState(initialSelection);
   const [books, setBooks] = useState<ScriptureCatalogBook[]>([]);
   const [chapters, setChapters] = useState<number[]>([]);
@@ -107,7 +142,6 @@ export function ScriptureSearch({
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const requestSequence = useRef(0);
   const feedbackRef = useRef<HTMLDivElement>(null);
-  const resultsRef = useRef<HTMLHeadingElement>(null);
 
   async function loadCatalog(next: Selection) {
     const sequence = ++requestSequence.current;
@@ -144,7 +178,6 @@ export function ScriptureSearch({
   }, []);
 
   useEffect(() => {
-    if (status.kind === "success") resultsRef.current?.focus();
     if (status.kind === "error" || status.kind === "empty")
       feedbackRef.current?.focus();
   }, [status]);
@@ -234,6 +267,7 @@ export function ScriptureSearch({
         return;
       }
       setStatus({ kind: "success", result });
+      router.push(projectionUrl(result.search));
     } catch {
       setStatus({ kind: "error", message: errorMessage() });
     }
@@ -248,25 +282,17 @@ export function ScriptureSearch({
       });
       return;
     }
-    const validEndVerses = contiguousEndVerses(verses, selection.startVerse);
-    const chapter = Number(selection.chapter);
-    const startVerse = Number(selection.startVerse);
-    const endVerse = Number(
-      selection.endVerse || String(validEndVerses.at(-1) ?? ""),
-    );
-    if (
-      !chapters.includes(chapter) ||
-      !verses.includes(startVerse) ||
-      !validEndVerses.includes(endVerse)
-    ) {
+    const search = normalizedSearch(selection, chapters, verses);
+    if (!search) {
       setStatus({ kind: "error", message: "検索条件を確認してください。" });
       return;
     }
     await performSearch({
-      ...selection,
-      chapter: String(chapter),
-      endVerse: String(endVerse),
-      startVerse: String(startVerse),
+      book: search.book,
+      chapter: String(search.chapter),
+      endVerse: String(search.endVerse),
+      language: search.language,
+      startVerse: String(search.startVerse),
     });
   }
 
@@ -279,142 +305,143 @@ export function ScriptureSearch({
   }
 
   async function reopenBookmark(search: SearchResponse["search"]) {
-    const next: Selection = {
-      book: search.book,
-      chapter: String(search.chapter),
-      startVerse: String(search.startVerse),
-      endVerse: String(search.endVerse),
-      language: search.language,
-    };
-    setSelection(next);
-    await Promise.all([loadCatalog(next), performSearch(next)]);
+    router.push(projectionUrl(search));
   }
 
   const pending = catalogLoading || status.kind === "loading";
+  const currentSearch = normalizedSearch(selection, chapters, verses);
 
   return (
-    <section
-      className="scripture-workspace"
-      aria-labelledby="scripture-search-title"
-    >
-      <div className="scripture-tools">
-        <form className="scripture-search-form" onSubmit={submit}>
-          <div className="section-heading">
-            <p className="eyebrow">Scripture search</p>
-            <h2 id="scripture-search-title">御言葉を検索</h2>
-            <p>書巻と範囲を選び、会衆へ投影する内容を確認します。</p>
-          </div>
+    <section className="ginmaku-search-workspace" aria-label="聖句検索">
+      <h1 className="sr-only">聖句検索</h1>
+      <div id="bookmark_container" className="ginmaku-bookmark-container">
+        <SavedContentPanel
+          currentSearch={currentSearch}
+          fetcher={savedContentFetcher}
+          onOpen={reopenBookmark}
+        />
+      </div>
 
+      <div id="index_container">
+        <form className="scripture-search-form" onSubmit={submit}>
           <fieldset
             className="ginmaku-search-fields"
             disabled={pending || Boolean(catalogError)}
           >
             <legend className="sr-only">御言葉の検索条件</legend>
-            <fieldset className="ginmaku-book-fieldset">
-              <legend>書巻</legend>
-              <div className="ginmaku-book-grid">
-                {books.map((book) => {
-                  const names = [book.japaneseName, book.englishName].filter(
-                    (name): name is string => Boolean(name),
-                  );
-                  const label = names.length > 0 ? names.join("/") : book.name;
-                  return (
-                    <label key={book.code}>
+            <table className="books ginmaku-books-table">
+              <tbody>
+                {Array.from({ length: 22 }, (_, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {[0, 22, 44].map((offset) => {
+                      const book = books[rowIndex + offset];
+                      if (!book) return <td key={offset} />;
+                      const names = [
+                        book.japaneseName,
+                        book.englishName,
+                      ].filter((name): name is string => Boolean(name));
+                      const label =
+                        names.length > 0 ? names.join("/") : book.name;
+                      return (
+                        <td key={book.code}>
+                          <label>
+                            <input
+                              checked={selection.book === book.code}
+                              name="scripture-book"
+                              onChange={() => updateBook(book.code)}
+                              type="radio"
+                              value={book.code}
+                            />
+                            {label}
+                          </label>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+                <tr>
+                  <td colSpan={3}>
+                    <label>
                       <input
-                        checked={selection.book === book.code}
-                        name="scripture-book"
-                        onChange={() => updateBook(book.code)}
-                        type="radio"
-                        value={book.code}
+                        aria-label="章"
+                        disabled={!selection.book || catalogLoading}
+                        inputMode="numeric"
+                        onChange={(event) => updateChapter(event.target.value)}
+                        pattern="[0-9]*"
+                        size={3}
+                        type="text"
+                        value={selection.chapter}
                       />
-                      {label}
+                      章(chapter)
+                    </label>{" "}
+                    <label>
+                      <input
+                        aria-label="開始節"
+                        disabled={!selection.chapter || catalogLoading}
+                        inputMode="numeric"
+                        onChange={(event) =>
+                          updateStartVerse(event.target.value)
+                        }
+                        pattern="[0-9]*"
+                        size={4}
+                        type="text"
+                        value={selection.startVerse}
+                      />
+                      節(verse)
+                    </label>{" "}
+                    <span aria-hidden="true">〜</span>{" "}
+                    <label>
+                      <input
+                        aria-label="終了節（省略可）"
+                        disabled={!selection.startVerse || catalogLoading}
+                        inputMode="numeric"
+                        onChange={(event) => {
+                          setSelection({
+                            ...selection,
+                            endVerse: event.target.value,
+                          });
+                          setStatus({ kind: "idle" });
+                        }}
+                        pattern="[0-9]*"
+                        size={4}
+                        type="text"
+                        value={selection.endVerse}
+                      />
+                      節(verse)
                     </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            <div className="ginmaku-range-fields">
-              <label>
-                <input
-                  aria-label="章"
-                  disabled={!selection.book || catalogLoading}
-                  inputMode="numeric"
-                  max={32767}
-                  min={1}
-                  onChange={(event) => updateChapter(event.target.value)}
-                  size={3}
-                  type="number"
-                  value={selection.chapter}
-                />
-                章(chapter)
-              </label>
-              <label>
-                <input
-                  aria-label="開始節"
-                  disabled={!selection.chapter || catalogLoading}
-                  inputMode="numeric"
-                  max={32767}
-                  min={0}
-                  onChange={(event) => updateStartVerse(event.target.value)}
-                  size={4}
-                  type="number"
-                  value={selection.startVerse}
-                />
-                節(verse)
-              </label>
-              <span aria-hidden="true">〜</span>
-              <label>
-                <input
-                  aria-label="終了節（省略可）"
-                  disabled={!selection.startVerse || catalogLoading}
-                  inputMode="numeric"
-                  max={32767}
-                  min={0}
-                  onChange={(event) => {
-                    setSelection({
-                      ...selection,
-                      endVerse: event.target.value,
-                    });
-                    setStatus({ kind: "idle" });
-                  }}
-                  placeholder="省略可"
-                  size={4}
-                  type="number"
-                  value={selection.endVerse}
-                />
-                節(verse)
-              </label>
-            </div>
-
-            <fieldset className="ginmaku-language-fieldset">
-              <legend className="sr-only">表示言語</legend>
-              {[
-                ["both", "日本語 & English"],
-                ["ja", "日本語のみ"],
-                ["en", "English Only"],
-              ].map(([value, label]) => (
-                <label key={value}>
-                  <input
-                    checked={selection.language === value}
-                    name="scripture-language"
-                    onChange={() => updateLanguage(value as ScriptureLanguage)}
-                    type="radio"
-                    value={value}
-                  />
-                  {label}
-                </label>
-              ))}
-            </fieldset>
-
-            <div className="ginmaku-search-actions">
-              <button disabled={pending || Boolean(catalogError)} type="submit">
-                {status.kind === "loading" ? "検索中…" : "Open"}
-              </button>
-              <button type="button" onClick={resetSearch}>
-                Reset
-              </button>
-            </div>
+                    <br />
+                    {[
+                      ["both", "日本語 & English"],
+                      ["ja", "日本語のみ"],
+                      ["en", "English Only"],
+                    ].map(([value, label]) => (
+                      <label key={value}>
+                        <input
+                          checked={selection.language === value}
+                          name="scripture-language"
+                          onChange={() =>
+                            updateLanguage(value as ScriptureLanguage)
+                          }
+                          type="radio"
+                          value={value}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                    <br />
+                    <button
+                      disabled={pending || Boolean(catalogError)}
+                      type="submit"
+                    >
+                      {status.kind === "loading" ? "検索中…" : "Open"}
+                    </button>{" "}
+                    <button type="button" onClick={resetSearch}>
+                      Reset
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </fieldset>
 
           <div className="search-feedback" aria-live="polite">
@@ -456,72 +483,6 @@ export function ScriptureSearch({
             ) : null}
           </div>
         </form>
-
-        <SavedContentPanel
-          currentSearch={
-            status.kind === "success" ? status.result.search : null
-          }
-          fetcher={savedContentFetcher}
-          onOpen={reopenBookmark}
-        />
-      </div>
-
-      <div className="scripture-results" aria-busy={status.kind === "loading"}>
-        {status.kind === "success" ? (
-          <>
-            <div className="results-heading">
-              <div>
-                <p className="eyebrow">Search result</p>
-                <h2 ref={resultsRef} tabIndex={-1}>
-                  検索結果
-                </h2>
-              </div>
-              <Link
-                className="projection-link"
-                href={`/church/projection?${new URLSearchParams({
-                  book: status.result.search.book,
-                  chapter: String(status.result.search.chapter),
-                  startVerse: String(status.result.search.startVerse),
-                  endVerse: String(status.result.search.endVerse),
-                  language: status.result.search.language,
-                })}`}
-              >
-                投影を開始
-              </Link>
-            </div>
-            <ol className="verse-results">
-              {status.result.items.map((item) => (
-                <li
-                  key={`${item.location.book}-${item.location.chapter}-${item.location.verse}`}
-                >
-                  <h3>{referenceFor(item)}</h3>
-                  {item.texts.japanese ? (
-                    <div className="translation-text">
-                      <p className="translation-name">
-                        新改訳聖書第3版（JSS3）
-                      </p>
-                      <p>{item.texts.japanese.text}</p>
-                    </div>
-                  ) : null}
-                  {item.texts.english ? (
-                    <div className="translation-text" lang="en">
-                      <p className="translation-name">
-                        New King James Version (NKJV)
-                      </p>
-                      <p>{item.texts.english.text}</p>
-                    </div>
-                  ) : null}
-                </li>
-              ))}
-            </ol>
-          </>
-        ) : (
-          <div className="results-placeholder">
-            <p className="eyebrow">Search result</p>
-            <h2>検索結果</h2>
-            <p>検索すると、選択した御言葉がここに表示されます。</p>
-          </div>
-        )}
       </div>
     </section>
   );

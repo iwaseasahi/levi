@@ -295,19 +295,6 @@ select:focus-visible,
   font: inherit;
 }
 
-.scripture-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.scripture-tools {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.scripture-search-form,
 .scripture-results,
 .saved-content {
   border: 1px solid #d3cec0;
@@ -440,26 +427,6 @@ select:focus-visible,
   min-height: 1.5rem;
 }
 
-.scripture-search-form {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.scripture-search-form .section-heading .eyebrow,
-.scripture-search-form .section-heading > p:last-child {
-  display: none;
-}
-
-.scripture-search-form .section-heading h2 {
-  margin: 0 0 0.55rem;
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  letter-spacing: normal;
-}
-
 .section-heading h2,
 .results-heading h2,
 .results-placeholder h2 {
@@ -474,116 +441,114 @@ select:focus-visible,
   font-size: 0.95rem;
 }
 
-.scripture-search-form fieldset {
-  display: grid;
-  gap: 0.6rem;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.scripture-search-form fieldset:disabled {
-  opacity: 0.65;
-}
-
-.scripture-search-form label {
-  margin-top: 0.55rem;
-  font-weight: 750;
-}
-
-.scripture-search-form select {
-  width: 100%;
-  min-height: 3rem;
-  padding: 0.7rem 2.25rem 0.7rem 0.85rem;
-  border: 1px solid #8f9e95;
-  border-radius: 0.65rem;
-  background: #fff;
-  color: #17211c;
-}
-
-.scripture-search-form .ginmaku-search-fields {
-  display: block;
+.ginmaku-search-page {
+  min-height: 100vh;
+  padding: 8px;
+  background: #000;
+  color: #fff;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 11px;
 }
 
-.scripture-search-form .ginmaku-book-fieldset,
-.scripture-search-form .ginmaku-language-fieldset {
+.ginmaku-search-workspace {
   display: block;
+}
+
+.scripture-search-form,
+.scripture-search-form .ginmaku-search-fields {
   margin: 0;
   padding: 0;
   border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+  font: inherit;
 }
 
-.ginmaku-book-fieldset > legend {
-  margin-bottom: 0.35rem;
-  font-size: 11px;
-  font-weight: 700;
+.scripture-search-form .ginmaku-search-fields:disabled {
+  opacity: 0.65;
 }
 
-.ginmaku-book-grid {
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(22, minmax(1.3rem, auto));
-  column-gap: 0.75rem;
+.ginmaku-books-table {
+  border-collapse: separate;
+  border-spacing: 2px;
+  color: #fff;
+  font: inherit;
 }
 
-.scripture-search-form .ginmaku-book-grid label,
-.scripture-search-form .ginmaku-language-fieldset label {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  margin: 0;
+.ginmaku-books-table td {
+  padding: 1px;
+  vertical-align: middle;
+}
+
+.ginmaku-books-table label {
   font-weight: 400;
-  line-height: 1.25;
   white-space: nowrap;
 }
 
-.ginmaku-book-grid input,
-.ginmaku-language-fieldset input {
-  flex: 0 0 auto;
-  margin: 0 0.2rem 0 0;
+.ginmaku-books-table input,
+.ginmaku-books-table button {
+  font: revert;
 }
 
-.ginmaku-range-fields,
-.ginmaku-language-fieldset,
-.ginmaku-search-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-  margin-top: 0.6rem;
+.ginmaku-bookmark-container {
+  float: left;
+  width: 200px;
+  margin: 0 8px 8px 0;
+  overflow: hidden;
+  font-size: 8pt;
 }
 
-.scripture-search-form .ginmaku-range-fields label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  margin: 0;
-  font-weight: 400;
-}
-
-.ginmaku-range-fields input {
-  width: 4.5rem;
-  min-height: 1.65rem;
-  padding: 0.1rem 0.2rem;
-  border: 1px solid #777;
+.ginmaku-bookmark-container .saved-content {
+  padding: 0;
+  border: 0;
   border-radius: 0;
-  background: #fff;
-  color: #111;
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
   font: inherit;
 }
 
-.ginmaku-search-actions button {
-  min-height: 1.75rem;
-  padding: 0.15rem 0.55rem;
-  border: 1px solid #777;
+.ginmaku-bookmark-container .saved-content h2,
+.ginmaku-bookmark-container .saved-content h3,
+.ginmaku-bookmark-container .saved-content p,
+.ginmaku-bookmark-container .saved-content label {
+  color: #fff;
+  font-size: inherit;
+  line-height: normal;
+}
+
+.ginmaku-bookmark-container .saved-content .eyebrow,
+.ginmaku-bookmark-container .saved-content .section-heading > p:last-child {
+  display: none;
+}
+
+.ginmaku-bookmark-container .saved-content .section-heading h2,
+.ginmaku-bookmark-container .saved-content p {
+  margin: 0 0 4px;
+}
+
+.ginmaku-bookmark-container .compact-form,
+.ginmaku-bookmark-container .folder-list,
+.ginmaku-bookmark-container .bookmark-list,
+.ginmaku-bookmark-container .selected-content,
+.ginmaku-bookmark-container .folder-actions {
+  margin-top: 4px;
+}
+
+.ginmaku-bookmark-container .saved-content input {
+  min-height: 0;
+  padding: 1px 2px;
   border-radius: 0;
-  background: #eee;
-  color: #111;
-  font: inherit;
+  font: revert;
+}
+
+.ginmaku-bookmark-container .saved-content button {
+  min-height: 0;
+  padding: 1px 6px;
+  border-radius: 0;
+  color: buttontext;
+  font: revert;
 }
 
 .verse-range {
@@ -598,17 +563,19 @@ select:focus-visible,
 }
 
 .search-feedback {
-  min-height: 2.5rem;
+  min-height: 0;
 }
 
 .search-feedback p {
-  margin: 0.9rem 0 0;
-  font-size: 0.9rem;
+  margin: 4px 0 0;
+  color: #fff;
+  font-size: 11px;
+  line-height: normal;
 }
 
 .search-feedback .notice {
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-top: 4px;
+  padding: 4px;
 }
 
 .scripture-results {

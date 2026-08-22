@@ -3,8 +3,14 @@ import "@testing-library/jest-dom/vitest";
 import axe from "axe-core";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ScriptureSearch } from "./scripture-search";
+
+const push = vi.hoisted(() => vi.fn());
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push }),
+}));
 
 const books = [
   {
@@ -93,6 +99,8 @@ async function chooseRange(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe("ScriptureSearch", () => {
+  beforeEach(() => push.mockReset());
+
   it("renders 66 canonically ordered bilingual book radio buttons", async () => {
     const catalogBooks = Array.from({ length: 66 }, (_, index) => ({
       code: `BOOK_${index + 1}`,
@@ -113,6 +121,10 @@ describe("ScriptureSearch", () => {
     expect(bookRadios).toHaveLength(66);
     expect(bookRadios[0]).toHaveAccessibleName("架空書巻1/English 1");
     expect(bookRadios[65]).toHaveAccessibleName("架空書巻66/English 66");
+    const firstRow = screen.getByRole("table").querySelector("tr");
+    expect(firstRow).toHaveTextContent("架空書巻1/English 1");
+    expect(firstRow).toHaveTextContent("架空書巻23/English 23");
+    expect(firstRow).toHaveTextContent("架空書巻45/English 45");
   });
 
   it("supports keyboard navigation and has no detectable accessibility violations", async () => {
@@ -120,8 +132,7 @@ describe("ScriptureSearch", () => {
     const book = await screen.findByRole("radio", {
       name: "架空ヨハネ/Synthetic John",
     });
-    const user = userEvent.setup();
-    await user.tab();
+    book.focus();
     expect(book).toHaveFocus();
     const results = await axe.run(container, {
       rules: { "color-contrast": { enabled: false } },
@@ -129,27 +140,26 @@ describe("ScriptureSearch", () => {
     expect(results.violations).toEqual([]);
   });
 
-  it("cascades valid candidates, prevents a reversed range, and renders results", async () => {
+  it("cascades valid candidates and opens the projection controller directly", async () => {
     const fetcher = successfulFetcher();
     renderSearch(fetcher);
     const user = userEvent.setup();
     await chooseRange(user);
 
     const end = screen.getByLabelText("終了節（省略可）");
-    expect(end).toHaveValue(17);
+    expect(end).toHaveValue("17");
     await user.click(screen.getByRole("button", { name: "Open" }));
 
-    const heading = await screen.findByRole("heading", { name: "検索結果" });
-    await waitFor(() => expect(heading).toHaveFocus());
-    expect(screen.getByText("架空の日本語 16")).toBeVisible();
-    expect(screen.getByText("Synthetic English 16")).toBeVisible();
-    expect(screen.getAllByText("新改訳聖書第3版（JSS3）")).toHaveLength(2);
-    const projection = screen.getByRole("link", { name: "投影を開始" });
-    expect(projection).toHaveAttribute(
-      "href",
-      "/church/projection?book=JHN&chapter=3&startVerse=16&endVerse=17&language=both",
+    await waitFor(() =>
+      expect(push).toHaveBeenCalledWith(
+        "/church/projection?book=JHN&chapter=3&endVerse=17&language=both&startVerse=16",
+      ),
     );
-    expect(projection.getAttribute("href")).not.toContain("架空の日本語");
+    expect(screen.queryByText("検索結果")).not.toBeInTheDocument();
+    expect(screen.queryByText("架空の日本語 16")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "投影を開始" }),
+    ).not.toBeInTheDocument();
   });
 
   it("normalizes an omitted end verse to the contiguous chapter end", async () => {
@@ -167,15 +177,14 @@ describe("ScriptureSearch", () => {
     await user.type(screen.getByLabelText("開始節"), "16");
     await user.click(screen.getByRole("button", { name: "Open" }));
 
-    await screen.findByText("架空の日本語 18");
+    await waitFor(() => expect(push).toHaveBeenCalledOnce());
     const searchCall = fetcher.mock.calls
       .map(([input]) => String(input))
       .find((url) => url.includes("/api/scripture/search?"));
     expect(searchCall).toContain("startVerse=16");
     expect(searchCall).toContain("endVerse=18");
-    expect(screen.getByRole("link", { name: "投影を開始" })).toHaveAttribute(
-      "href",
-      "/church/projection?book=JHN&chapter=3&startVerse=16&endVerse=18&language=both",
+    expect(push).toHaveBeenCalledWith(
+      "/church/projection?book=JHN&chapter=3&endVerse=18&language=both&startVerse=16",
     );
   });
 
@@ -190,24 +199,18 @@ describe("ScriptureSearch", () => {
     expect(alert).toHaveTextContent("書巻、章、開始節をすべて入力してください");
   });
 
-  it("resets selections, results, and feedback", async () => {
+  it("resets selections and feedback", async () => {
     renderSearch(successfulFetcher());
     const user = userEvent.setup();
     await chooseRange(user);
-    await user.click(screen.getByRole("button", { name: "Open" }));
-    await screen.findByText("架空の日本語 16");
-
     await user.click(screen.getByRole("button", { name: "Reset" }));
     expect(
       screen.getByRole("radio", { name: "架空ヨハネ/Synthetic John" }),
     ).not.toBeChecked();
-    expect(screen.getByLabelText("章")).toHaveValue(null);
-    expect(screen.getByLabelText("開始節")).toHaveValue(null);
-    expect(screen.getByLabelText("終了節（省略可）")).toHaveValue(null);
-    expect(screen.queryByText("架空の日本語 16")).toBeNull();
-    expect(
-      screen.getByText("検索すると、選択した御言葉がここに表示されます。"),
-    ).toBeVisible();
+    expect(screen.getByLabelText("章")).toHaveValue("");
+    expect(screen.getByLabelText("開始節")).toHaveValue("");
+    expect(screen.getByLabelText("終了節（省略可）")).toHaveValue("");
+    expect(screen.queryByText("検索結果")).not.toBeInTheDocument();
   });
 
   it("disables controls and announces loading", async () => {

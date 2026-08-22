@@ -34,7 +34,12 @@ async function searchGenesis(
   await page.getByLabel("開始節").fill("1");
   await page.getByLabel("終了節（省略可）").fill(omitEnd ? "" : "2");
   await page.getByRole("button", { name: "Open", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "検索結果" })).toBeFocused();
+  await expect(page).toHaveURL(
+    new RegExp(
+      `/church/projection\\?book=GEN&chapter=1&endVerse=${omitEnd ? "3" : "2"}&language=${language}&startVerse=1$`,
+    ),
+  );
+  await expect(page.getByRole("heading", { name: "投影操作" })).toBeVisible();
 }
 
 test("completes search, projection, recovery, and bookmark reuse", async ({
@@ -44,18 +49,19 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   test.setTimeout(60_000);
   await login(page);
 
+  await expect(page.getByText("教会用画面", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "ログアウト" })).toHaveCount(0);
+  await expect(page.getByText("検索結果", { exact: true })).toHaveCount(0);
+
   const legacyFormStyle = await page
-    .locator(".ginmaku-book-grid")
+    .locator(".ginmaku-books-table")
     .evaluate((element) => {
-      const grid = getComputedStyle(element);
-      const form = getComputedStyle(
-        element.closest<HTMLElement>(".ginmaku-search-fields")!,
-      );
+      const table = getComputedStyle(element);
       return {
-        columns: grid.gridTemplateColumns.split(" ").length,
-        fontFamily: form.fontFamily,
-        fontSize: form.fontSize,
-        rows: grid.gridTemplateRows.split(" ").length,
+        columns: element.querySelectorAll("tr:first-child td").length,
+        fontFamily: table.fontFamily,
+        fontSize: table.fontSize,
+        rows: element.querySelectorAll("tr").length - 1,
       };
     });
   expect(legacyFormStyle).toMatchObject({
@@ -64,6 +70,12 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
     rows: 22,
   });
   expect(legacyFormStyle.fontFamily).toContain("Helvetica");
+
+  const firstRow = page.locator(".ginmaku-books-table tr").first();
+  await expect(firstRow.locator("td").nth(0)).toContainText("創世記/Genesis");
+
+  const searchAccessibility = await new AxeBuilder({ page }).analyze();
+  expect(searchAccessibility.violations).toEqual([]);
 
   const foreignFolder = await page.request.get(
     `/api/saved-content?folderId=${E2E_FOREIGN_FOLDER_ID}`,
@@ -81,12 +93,14 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
     page.getByText("In the beginning God created the heavens and the earth."),
   ).toHaveCount(0);
 
+  await page.goto("/church");
   await searchGenesis(page, "en");
   await expect(page.getByText("初めに、神が天と地を創造した。")).toHaveCount(0);
   await expect(
     page.getByText("In the beginning God created the heavens and the earth."),
   ).toBeVisible();
 
+  await page.goto("/church");
   await searchGenesis(page, "both", true);
 
   await expect(page.getByText("初めに、神が天と地を創造した。")).toBeVisible();
@@ -97,16 +111,6 @@ test("completes search, projection, recovery, and bookmark reuse", async ({
   await expect(
     page.getByText("New King James Version (NKJV)").first(),
   ).toBeVisible();
-  expect(new URL(page.url()).search).toBe("");
-
-  const accessibility = await new AxeBuilder({ page }).analyze();
-  expect(accessibility.violations).toEqual([]);
-
-  await page.getByRole("link", { name: "投影を開始" }).click();
-  await expect(page).toHaveURL(
-    /\/church\/projection\?book=GEN&chapter=1&startVerse=1&endVerse=3&language=both$/,
-  );
-  await expect(page.getByRole("heading", { name: "投影操作" })).toBeVisible();
   expect(page.url()).not.toContain(encodeURIComponent("初めに、神が"));
 
   const audienceOpened = context.waitForEvent("page");
@@ -363,14 +367,12 @@ async function organizeAndReopenBookmarks(page: Page) {
   await expect(page.getByLabel("開始節")).toBeEnabled();
   await page.getByLabel("開始節").fill("1");
   await page.getByLabel("終了節（省略可）").fill("2");
-  await page.getByRole("button", { name: "Open", exact: true }).click();
-  await expect(page.getByText("初めに、神が天と地を創造した。")).toBeVisible();
 
   await page.getByLabel("新しいフォルダー名").fill("主日礼拝");
   await page.getByRole("button", { name: "作成" }).click();
   await expect(page.getByRole("heading", { name: "主日礼拝" })).toBeVisible();
   await page.getByLabel("ブックマーク名").fill("創世記 1:1–2");
-  await page.getByRole("button", { name: "現在の検索結果を保存" }).click();
+  await page.getByRole("button", { name: "現在の聖書箇所を保存" }).click();
   await expect(
     page.getByRole("button", { name: "創世記 1:1–2", exact: true }),
   ).toBeVisible();
@@ -380,9 +382,8 @@ async function organizeAndReopenBookmarks(page: Page) {
   await expect(page.getByLabel("開始節")).toBeEnabled();
   await page.getByLabel("開始節").fill("1");
   await page.getByLabel("終了節（省略可）").fill("1");
-  await page.getByRole("button", { name: "Open", exact: true }).click();
   await page.getByLabel("ブックマーク名").fill("出エジプト記 1:1");
-  await page.getByRole("button", { name: "現在の検索結果を保存" }).click();
+  await page.getByRole("button", { name: "現在の聖書箇所を保存" }).click();
   await page.getByRole("button", { name: "出エジプト記 1:1を上へ" }).click();
   await expect(page.getByRole("status")).toContainText(
     "ブックマークの順序を変更しました。",
@@ -426,11 +427,13 @@ async function organizeAndReopenBookmarks(page: Page) {
   ).toBeVisible();
 
   await page.getByRole("button", { name: "創世記 1:1–2", exact: true }).click();
-  await expect(
-    page.getByRole("radio", { name: "創世記/Genesis" }),
-  ).toBeChecked();
-  await expect(page.getByLabel("終了節（省略可）")).toHaveValue("2");
-  await expect(page.getByText("初めに、神が天と地を創造した。")).toBeVisible();
+  await expect(page).toHaveURL(
+    /\/church\/projection\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1$/,
+  );
+  await expect(page.getByRole("heading", { name: "投影操作" })).toBeVisible();
+
+  await page.goto("/church");
+  await page.getByRole("button", { name: "礼拝用", exact: true }).click();
 
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "創世記 1:1–2を削除" }).click();

@@ -29,7 +29,7 @@ test("operator reset revokes the old session and forces a new password", async (
   expect(staleSignIn.ok()).toBe(true);
   await stalePage.goto("/church");
   await expect(
-    stalePage.getByRole("heading", { name: "test.e2e password church" }),
+    stalePage.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();
 
   const operatorSignIn = await page.request.post("/api/auth/sign-in/email", {
@@ -67,6 +67,6 @@ test("operator reset revokes the old session and forces a new password", async (
   await page.getByRole("button", { name: "教会用画面へ" }).click();
   await expect(page).toHaveURL(/\/church$/, { timeout: 20_000 });
   await expect(
-    page.getByRole("heading", { name: "test.e2e password church" }),
+    page.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();
 });
