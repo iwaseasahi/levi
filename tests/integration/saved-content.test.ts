@@ -9,7 +9,6 @@ import {
   reorderBookmarks,
   reorderFolders,
   selectFolder,
-  updateBookmark,
   updateFolder,
 } from "@/application/saved-content/manage-saved-content";
 import { savedContentRepository } from "@/infrastructure/database/saved-content-repository";
@@ -285,22 +284,6 @@ describe("saved-content database contract", () => {
         bookmark.id,
       ),
     ).resolves.toMatchObject({ search: { book: "T54", language: "both" } });
-    await expect(
-      updateBookmark(
-        savedContentRepository,
-        tenant(fixture.secondChurch.id),
-        bookmark.id,
-        { title: "Foreign rename" },
-      ),
-    ).rejects.toMatchObject({ code: "SAVED_CONTENT_NOT_FOUND" });
-    await expect(
-      updateBookmark(
-        savedContentRepository,
-        tenant(fixture.firstChurch.id),
-        bookmark.id,
-        { title: "Renamed range" },
-      ),
-    ).resolves.toMatchObject({ title: "Renamed range" });
     await expect(
       reorderBookmarks(
         savedContentRepository,

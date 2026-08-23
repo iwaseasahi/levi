@@ -60,7 +60,6 @@ const createBookmarkSchema = z
   })
   .strict()
   .refine((value) => value.endVerse >= value.startVerse);
-const updateBookmarkSchema = z.object({ title: nonblankName }).strict();
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -76,8 +75,6 @@ export const parseUpdateFolder = (value: unknown) =>
 export const parseReorder = (value: unknown) => parse(reorderSchema, value);
 export const parseCreateBookmark = (value: unknown) =>
   parse(createBookmarkSchema, value);
-export const parseUpdateBookmark = (value: unknown) =>
-  parse(updateBookmarkSchema, value);
 
 const idSchema = z.uuid();
 const folderIdSchema = z.object({ folderId: idSchema }).strict();
@@ -102,11 +99,6 @@ export type SavedContentCommand =
       input: ReturnType<typeof parseCreateBookmark>;
     }
   | { action: "open-bookmark"; bookmarkId: string }
-  | {
-      action: "update-bookmark";
-      bookmarkId: string;
-      input: ReturnType<typeof parseUpdateBookmark>;
-    }
   | { action: "reorder-bookmarks"; folderId: string; ids: string[] }
   | { action: "delete-bookmark"; bookmarkId: string };
 
@@ -149,14 +141,6 @@ export function parseSavedContentCommand(value: unknown): SavedContentCommand {
         action: command.action,
         ...parse(bookmarkIdSchema, payload),
       };
-    case "update-bookmark": {
-      const { bookmarkId, ...input } = payload;
-      return {
-        action: command.action,
-        bookmarkId: parseSavedContentId(bookmarkId),
-        input: parseUpdateBookmark(input),
-      };
-    }
     case "reorder-bookmarks": {
       const { folderId, ...input } = payload;
       return {

@@ -576,16 +576,7 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await expect(folderEditor.getByRole("status")).toHaveText(
     "フォルダーを更新しました。",
   );
-  await folderEditor.getByRole("link", { name: "編集" }).first().click();
-  await expect(folderEditor).toHaveURL(/\/bookmarks\/[^/]+\/edit\?folderId=/);
-  await folderEditor.getByLabel("お気に入り名").fill("礼拝開始");
-  await expect(folderEditor.getByLabel("お気に入り名")).toHaveValue("礼拝開始");
-  await folderEditor.getByRole("button", { name: "変更を保存" }).click();
-  await expect(folderEditor.getByRole("status")).toHaveText(
-    "お気に入りを更新しました。",
-  );
-  await folderEditor.getByRole("link", { name: "フォルダー編集へ" }).click();
-  await expect(folderEditor).toHaveURL(/\/folders\/[^/]+\/edit$/);
+  await expect(folderEditor.getByRole("link", { name: "編集" })).toHaveCount(0);
   await folderEditor.getByRole("link", { name: "フォルダの一覧へ" }).click();
   await expect(page).toHaveURL(/\/folders$/);
   await page.getByRole("link", { name: "御言葉の検索へ" }).click();
@@ -597,7 +588,9 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await expect(renamedFolder).toHaveAttribute("aria-expanded", "true");
 
   const bookmarkOpened = context.waitForEvent("page");
-  await page.getByRole("link", { name: "礼拝開始", exact: true }).click();
+  await page
+    .getByRole("link", { name: "創世記/Genesis 1:1-2", exact: true })
+    .click();
   const bookmarkedAudience = await bookmarkOpened;
   await expect(page).toHaveURL(/\/scripture$/);
   await expect(bookmarkedAudience).toHaveURL(

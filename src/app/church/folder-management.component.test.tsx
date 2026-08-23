@@ -2,10 +2,8 @@ import "@testing-library/jest-dom/vitest";
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { ScriptureBookmarkView } from "@/domain/saved-content";
-import { BookmarkEditPanel } from "./bookmark-edit-panel";
 import { FolderEditPanel } from "./folder-edit-panel";
 
 const { replaceRoute } = vi.hoisted(() => ({ replaceRoute: vi.fn() }));
@@ -59,16 +57,6 @@ function managementFetcher() {
       };
       return Response.json({ folder });
     }
-    if (command.action === "update-bookmark") {
-      bookmarks = bookmarks.map((bookmark) =>
-        bookmark.id === command.bookmarkId
-          ? { ...bookmark, title: String(command.title) }
-          : bookmark,
-      );
-      return Response.json({
-        bookmark: bookmarks.find(({ id }) => id === command.bookmarkId),
-      });
-    }
     if (command.action === "delete-bookmark") {
       bookmarks = bookmarks.filter(({ id }) => id !== command.bookmarkId);
       return Response.json({ ok: true });
@@ -108,10 +96,10 @@ describe("folder management", () => {
         }),
       ),
     );
-    expect(screen.getAllByRole("link", { name: "編集" })[0]).toHaveAttribute(
-      "href",
-      `/bookmarks/${bookmarkId}/edit?folderId=${folderId}`,
-    );
+    expect(
+      screen.queryByRole("link", { name: "編集" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "削除" })).toHaveLength(2);
 
     const rows =
       document.querySelectorAll<HTMLTableRowElement>("[data-bookmark-id]");
@@ -144,75 +132,5 @@ describe("folder management", () => {
     vi.spyOn(window, "confirm").mockReturnValueOnce(true);
     await user.click(screen.getByRole("button", { name: "フォルダーを削除" }));
     await waitFor(() => expect(replaceRoute).toHaveBeenCalledWith("/folders"));
-  });
-
-  it("updates a favorite title on the linked editing surface", async () => {
-    const fetcher = managementFetcher();
-    render(
-      <BookmarkEditPanel
-        bookmarkId={bookmarkId}
-        folderId={folderId}
-        fetcher={fetcher}
-      />,
-    );
-    const user = userEvent.setup();
-    const title = await screen.findByLabelText("お気に入り名");
-    await user.clear(title);
-    await user.type(title, "礼拝開始");
-    await user.click(screen.getByRole("button", { name: "変更を保存" }));
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "お気に入りを更新しました。",
-    );
-    expect(fetcher).toHaveBeenCalledWith(
-      "/api/saved-content",
-      expect.objectContaining({
-        body: expect.stringContaining('"title":"礼拝開始"'),
-      }),
-    );
-  });
-
-  it("does not overwrite an edit with a discarded strict-mode request", async () => {
-    let resolveDiscardedRequest!: (response: Response) => void;
-    let readCount = 0;
-    const response = {
-      folder: { id: folderId },
-      bookmarks: [
-        {
-          id: bookmarkId,
-          folderId,
-          position: 0,
-          title: "創世記/Genesis 1:1",
-          search,
-        },
-      ],
-    };
-    const fetcher = vi.fn<typeof fetch>(async () => {
-      readCount += 1;
-      if (readCount === 1) {
-        return new Promise<Response>((resolve) => {
-          resolveDiscardedRequest = resolve;
-        });
-      }
-      return Response.json(response);
-    });
-
-    render(
-      <StrictMode>
-        <BookmarkEditPanel
-          bookmarkId={bookmarkId}
-          folderId={folderId}
-          fetcher={fetcher}
-        />
-      </StrictMode>,
-    );
-    const user = userEvent.setup();
-    const title = await screen.findByLabelText("お気に入り名");
-    await user.clear(title);
-    await user.type(title, "礼拝開始");
-
-    resolveDiscardedRequest(Response.json(response));
-
-    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
-    expect(title).toHaveValue("礼拝開始");
   });
 });

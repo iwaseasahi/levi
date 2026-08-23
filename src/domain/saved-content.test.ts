@@ -5,7 +5,6 @@ import {
   parseCreateFolder,
   parseReorder,
   parseSavedContentCommand,
-  parseUpdateBookmark,
   parseUpdateFolder,
   SavedContentError,
 } from "./saved-content";
@@ -29,26 +28,23 @@ describe("saved content input", () => {
     ).toMatchObject({ book: "GEN", language: "both" });
   });
 
-  it("normalizes a strict bookmark title update", () => {
-    expect(parseUpdateBookmark({ title: "  創世記 1:1  " })).toEqual({
-      title: "創世記 1:1",
-    });
-    expect(
+  it("rejects the removed bookmark update command", () => {
+    expect(() =>
       parseSavedContentCommand({
         action: "update-bookmark",
         bookmarkId: "00000000-0000-4000-8000-000000000054",
-        title: "  創世記 1:1  ",
+        title: "変更後",
       }),
-    ).toMatchObject({
-      action: "update-bookmark",
-      input: { title: "創世記 1:1" },
-    });
+    ).toThrow(
+      expect.objectContaining<Partial<SavedContentError>>({
+        code: "INVALID_SAVED_CONTENT_INPUT",
+      }),
+    );
   });
 
   it.each([
     [{ name: " " }, parseCreateFolder],
     [{}, parseUpdateFolder],
-    [{ title: " " }, parseUpdateBookmark],
     [
       {
         ids: [
