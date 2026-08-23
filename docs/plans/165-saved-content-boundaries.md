@@ -34,7 +34,7 @@
 3. [x] folder editor request/state/mutationをcontroller hook、DOMをviewへ分離する。
 4. [x] drag/keyboard reorderを共通order primitive経由に統一してテストする。
 5. [x] folder editorのloading/error/success/delete状態をcomponent testで固定する。
-6. [ ] component/integration/E2E/axe/screenshot、`pnpm check`、security、required CIを通す。
+6. [x] component/integration/E2E/axe/screenshot、`pnpm check`、security、required CIを通す。
 
 ## Progress
 
@@ -42,6 +42,7 @@
 - 2026-08-23 JST — saved-content と folder editor の request/state/mutation/recovery を専用hookへ移し、favorite portalを独立component化。既存componentからlint抑制を除去。
 - 2026-08-23 JST — folder editorのloading/error focus/update success/bookmark delete/folder deleteをcomponent testで固定。unit 195件、component 38件、integration 73件、E2E 9件が合格。
 - 2026-08-23 JST — axe violations 0を維持し、synthetic E2E screenshot `test-results/saved-content-refactor-165.png` を1280x720で目視確認。
+- 2026-08-23 JST — PR #178 の Quality、Database、E2E、Security がすべて合格。
 
 ## Decisions
 
@@ -64,15 +65,15 @@
 - [x] `pnpm check` — pass
 - [x] `pnpm security:check` — pass
 - [x] `git diff --check` — pass
-- [ ] required CI
+- [x] required CI — Quality / Database / E2E / Security pass
 
 ## Handoff or blockers
 
-- Completed: 実装、ローカル検証、E2E screenshot、final diff review。
-- Remaining: PR、required CI、merge。
+- Completed: 実装、ローカル検証、E2E screenshot、final diff review、required CI。
+- Remaining: merge。
 - Blocker: なし。
 - Resume with: saved-content controller hook を抽出する。
 
 ## Result
 
-ローカル検証済み。required CI と merge 待ち。
+受け入れ条件と必須検証を満たし、merge 待ち。
