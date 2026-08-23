@@ -243,7 +243,7 @@
 
 .scripture-range-fields label {
   display: flex;
-  gap: 6px;
+  gap: 2px;
   align-items: center;
   color: #bdbdbd;
   font-weight: 650;

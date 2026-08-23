@@ -142,7 +142,6 @@ export function ScriptureSearchFields({
             <div className="scripture-search-console">
               <div className="scripture-range-fields">
                 <label>
-                  <span>章</span>
                   <input
                     aria-label="章"
                     disabled={!selection.book || loading}
@@ -153,9 +152,9 @@ export function ScriptureSearchFields({
                     type="text"
                     value={selection.chapter}
                   />
+                  <span>章(chapter)</span>
                 </label>
                 <label>
-                  <span>開始節</span>
                   <input
                     aria-label="開始節"
                     disabled={!selection.chapter || loading}
@@ -166,12 +165,12 @@ export function ScriptureSearchFields({
                     type="text"
                     value={selection.startVerse}
                   />
+                  <span>節(verse)</span>
                 </label>
                 <span aria-hidden="true" className="range-separator">
                   〜
                 </span>
                 <label>
-                  <span>終了節</span>
                   <input
                     aria-label="終了節（省略可）"
                     disabled={!selection.startVerse || loading}
@@ -182,6 +181,7 @@ export function ScriptureSearchFields({
                     type="text"
                     value={selection.endVerse}
                   />
+                  <span>節(verse)</span>
                 </label>
               </div>
               <div
