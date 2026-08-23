@@ -54,188 +54,188 @@ export function ScriptureSearchFields({
         disabled={pending || Boolean(catalogError)}
       >
         <legend className="sr-only">御言葉の検索条件</legend>
-        <table className="books ginmaku-books-table">
-          <tbody>
-            {Array.from({ length: 22 }, (_, rowIndex) => (
-              <tr key={rowIndex}>
-                {[0, 22, 44].map((offset) => {
-                  const book = books[rowIndex + offset];
-                  if (!book) return <td key={offset} />;
-                  const names = [book.japaneseName, book.englishName].filter(
-                    (name): name is string => Boolean(name),
-                  );
-                  const label = names.length > 0 ? names.join("/") : book.name;
-                  return (
-                    <td key={book.code}>
-                      <label className="ginmaku-book-choice">
-                        <input
-                          checked={selection.book === book.code}
-                          name="scripture-book"
-                          onChange={() => onBookChange(book.code)}
-                          type="radio"
-                          value={book.code}
-                        />
-                        {label}
-                      </label>
-                    </td>
-                  );
-                })}
-                {rowIndex === 0 ? (
-                  <td className="ginmaku-direct-controls" rowSpan={23}>
-                    <div
-                      aria-label="投影操作"
-                      className="projection-control-panel"
-                      role="group"
-                    >
-                      <p className="projection-control-title">投影操作</p>
-                      <div className="projection-control-group">
-                        <span>文字サイズ</span>
-                        <div className="projection-control-buttons">
-                          <button
-                            aria-label="文字を大きく"
-                            disabled={!audienceReady}
-                            onClick={() => onControl("font-larger")}
-                            type="button"
-                          >
-                            大
-                          </button>
-                          <button
-                            aria-label="文字を小さく"
-                            disabled={!audienceReady}
-                            onClick={() => onControl("font-smaller")}
-                            type="button"
-                          >
-                            小
-                          </button>
-                        </div>
-                      </div>
-                      <div className="projection-control-group ginmaku-scroll-controls">
-                        <span>聖書箇所</span>
-                        <div className="projection-control-buttons">
-                          <button
-                            aria-label="前の御言葉へ"
-                            disabled={!audienceReady}
-                            onClick={() => onControl("previous")}
-                            type="button"
-                          >
-                            ↑
-                          </button>
-                          <button
-                            aria-label="次の御言葉へ"
-                            disabled={!audienceReady}
-                            onClick={() => onControl("next")}
-                            type="button"
-                          >
-                            ↓
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                ) : null}
-              </tr>
-            ))}
-            <tr>
-              <td className="ginmaku-search-toolbar" colSpan={3}>
-                <div className="scripture-range-fields">
-                  <label>
-                    <span>章</span>
-                    <input
-                      aria-label="章"
-                      disabled={!selection.book || loading}
-                      inputMode="numeric"
-                      onChange={(event) => onChapterChange(event.target.value)}
-                      pattern="[0-9]*"
-                      size={3}
-                      type="text"
-                      value={selection.chapter}
-                    />
-                  </label>
-                  <label>
-                    <span>開始節</span>
-                    <input
-                      aria-label="開始節"
-                      disabled={!selection.chapter || loading}
-                      inputMode="numeric"
-                      onChange={(event) =>
-                        onStartVerseChange(event.target.value)
-                      }
-                      pattern="[0-9]*"
-                      size={4}
-                      type="text"
-                      value={selection.startVerse}
-                    />
-                  </label>
-                  <span aria-hidden="true" className="range-separator">
-                    〜
-                  </span>
-                  <label>
-                    <span>終了節</span>
-                    <input
-                      aria-label="終了節（省略可）"
-                      disabled={!selection.startVerse || loading}
-                      inputMode="numeric"
-                      onChange={(event) => onEndVerseChange(event.target.value)}
-                      pattern="[0-9]*"
-                      size={4}
-                      type="text"
-                      value={selection.endVerse}
-                    />
-                  </label>
-                </div>
-                <div
-                  aria-label="表示言語"
-                  className="scripture-language-options"
-                  role="group"
+        <div className="scripture-search-layout">
+          <div className="scripture-books-region">
+            <table className="books ginmaku-books-table">
+              <tbody>
+                {Array.from({ length: 22 }, (_, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {[0, 22, 44].map((offset) => {
+                      const book = books[rowIndex + offset];
+                      if (!book) return <td key={offset} />;
+                      const names = [
+                        book.japaneseName,
+                        book.englishName,
+                      ].filter((name): name is string => Boolean(name));
+                      const label =
+                        names.length > 0 ? names.join("/") : book.name;
+                      return (
+                        <td key={book.code}>
+                          <label className="ginmaku-book-choice">
+                            <input
+                              checked={selection.book === book.code}
+                              name="scripture-book"
+                              onChange={() => onBookChange(book.code)}
+                              type="radio"
+                              value={book.code}
+                            />
+                            {label}
+                          </label>
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div
+            aria-label="投影操作"
+            className="projection-control-panel ginmaku-direct-controls"
+            role="group"
+          >
+            <p className="projection-control-title">投影操作</p>
+            <div className="projection-control-group">
+              <span>文字サイズ</span>
+              <div className="projection-control-buttons">
+                <button
+                  aria-label="文字を大きく"
+                  disabled={!audienceReady}
+                  onClick={() => onControl("font-larger")}
+                  type="button"
                 >
-                  {[
-                    ["both", "日本語 & English"],
-                    ["ja", "日本語のみ"],
-                    ["en", "English Only"],
-                  ].map(([value, label]) => (
-                    <label key={value}>
-                      <input
-                        checked={selection.language === value}
-                        name="scripture-language"
-                        onChange={() =>
-                          onLanguageChange(value as ScriptureLanguage)
-                        }
-                        type="radio"
-                        value={value}
-                      />
-                      <span>{label}</span>
-                    </label>
-                  ))}
-                </div>
-                <div className="scripture-search-actions">
-                  <button
-                    className="search-action-primary"
-                    disabled={pending || Boolean(catalogError)}
-                    type="submit"
-                  >
-                    Open
-                  </button>
-                  <button
-                    className="search-action-secondary"
-                    type="button"
-                    onClick={onReset}
-                  >
-                    Reset
-                  </button>
-                  <button
-                    aria-label="空白と表示を切り替え"
-                    className="search-action-blank"
-                    disabled={!audienceReady}
-                    onClick={() => onControl("toggle-blank")}
-                    type="button"
-                  >
-                    空白⇔表示
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  大
+                </button>
+                <button
+                  aria-label="文字を小さく"
+                  disabled={!audienceReady}
+                  onClick={() => onControl("font-smaller")}
+                  type="button"
+                >
+                  小
+                </button>
+              </div>
+            </div>
+            <div className="projection-control-group ginmaku-scroll-controls">
+              <span>聖書箇所</span>
+              <div className="projection-control-buttons">
+                <button
+                  aria-label="前の御言葉へ"
+                  disabled={!audienceReady}
+                  onClick={() => onControl("previous")}
+                  type="button"
+                >
+                  ↑
+                </button>
+                <button
+                  aria-label="次の御言葉へ"
+                  disabled={!audienceReady}
+                  onClick={() => onControl("next")}
+                  type="button"
+                >
+                  ↓
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="ginmaku-search-toolbar">
+            <div className="scripture-search-console">
+              <div className="scripture-range-fields">
+                <label>
+                  <span>章</span>
+                  <input
+                    aria-label="章"
+                    disabled={!selection.book || loading}
+                    inputMode="numeric"
+                    onChange={(event) => onChapterChange(event.target.value)}
+                    pattern="[0-9]*"
+                    size={3}
+                    type="text"
+                    value={selection.chapter}
+                  />
+                </label>
+                <label>
+                  <span>開始節</span>
+                  <input
+                    aria-label="開始節"
+                    disabled={!selection.chapter || loading}
+                    inputMode="numeric"
+                    onChange={(event) => onStartVerseChange(event.target.value)}
+                    pattern="[0-9]*"
+                    size={4}
+                    type="text"
+                    value={selection.startVerse}
+                  />
+                </label>
+                <span aria-hidden="true" className="range-separator">
+                  〜
+                </span>
+                <label>
+                  <span>終了節</span>
+                  <input
+                    aria-label="終了節（省略可）"
+                    disabled={!selection.startVerse || loading}
+                    inputMode="numeric"
+                    onChange={(event) => onEndVerseChange(event.target.value)}
+                    pattern="[0-9]*"
+                    size={4}
+                    type="text"
+                    value={selection.endVerse}
+                  />
+                </label>
+              </div>
+              <div
+                aria-label="表示言語"
+                className="scripture-language-options"
+                role="group"
+              >
+                {[
+                  ["both", "日本語 & English"],
+                  ["ja", "日本語のみ"],
+                  ["en", "English Only"],
+                ].map(([value, label]) => (
+                  <label key={value}>
+                    <input
+                      checked={selection.language === value}
+                      name="scripture-language"
+                      onChange={() =>
+                        onLanguageChange(value as ScriptureLanguage)
+                      }
+                      type="radio"
+                      value={value}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="scripture-search-actions">
+                <button
+                  className="search-action-primary"
+                  disabled={pending || Boolean(catalogError)}
+                  type="submit"
+                >
+                  Open
+                </button>
+                <button
+                  className="search-action-secondary"
+                  type="button"
+                  onClick={onReset}
+                >
+                  Reset
+                </button>
+                <button
+                  aria-label="空白と表示を切り替え"
+                  className="search-action-blank"
+                  disabled={!audienceReady}
+                  onClick={() => onControl("toggle-blank")}
+                  type="button"
+                >
+                  空白⇔表示
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </fieldset>
       {children}
     </form>

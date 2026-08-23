@@ -72,8 +72,10 @@
 .ginmaku-bookmark-container {
   float: left;
   width: 210px;
+  max-height: calc(100dvh - 16px);
   margin: 0 8px 8px 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-size: 12px;
 }
 
@@ -345,7 +347,8 @@
 }
 
 .ginmaku-add-bookmark {
-  margin-top: 3px;
+  min-height: 24px;
+  margin-top: 2px;
   color: #fff;
   font:
     11px Helvetica,
