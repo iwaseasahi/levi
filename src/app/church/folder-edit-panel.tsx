@@ -162,9 +162,7 @@ export function FolderEditPanel({
         </a>
 
         <header className="folder-page-header">
-          <p className="management-eyebrow">Folder settings</p>
           <h1>フォルダーを編集</h1>
-          <p>名称、固定状態、お気に入りを管理します。</p>
         </header>
 
         {selected ? (
