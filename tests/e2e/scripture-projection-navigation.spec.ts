@@ -240,6 +240,59 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   expect(fittedVerse).not.toBeNull();
   expect(fittedVerse!.y).toBeGreaterThanOrEqual(0);
   expect(fittedVerse!.y + fittedVerse!.height).toBeLessThanOrEqual(720);
+
+  await audience.setViewportSize({ height: 360, width: 640 });
+  await expect
+    .poll(() =>
+      audience.locator(".audience-screen").evaluate((screen) => {
+        const heading = screen.querySelector<HTMLElement>(
+          ".audience-book-name",
+        );
+        const verse = screen.querySelector<HTMLElement>(".audience-verse");
+        if (!heading || !verse) return false;
+        const availableHeight =
+          screen.clientHeight - Math.max(26, heading.offsetHeight) * 2;
+        return (
+          verse.scrollHeight <= availableHeight + 1 &&
+          verse.scrollWidth <= screen.clientWidth + 1 &&
+          screen.scrollHeight <= screen.clientHeight + 1
+        );
+      }),
+    )
+    .toBe(true);
+  const compactFitScale = await audience
+    .locator(".audience-screen")
+    .evaluate((element) =>
+      Number(
+        getComputedStyle(element)
+          .getPropertyValue("--audience-fit-scale")
+          .trim(),
+      ),
+    );
+
+  await audience.setViewportSize({ height: 720, width: 1280 });
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-screen")
+        .evaluate(
+          (element) => element.scrollHeight <= element.clientHeight + 1,
+        ),
+    )
+    .toBe(true);
+  await expect
+    .poll(() =>
+      audience
+        .locator(".audience-screen")
+        .evaluate((element) =>
+          Number(
+            getComputedStyle(element)
+              .getPropertyValue("--audience-fit-scale")
+              .trim(),
+          ),
+        ),
+    )
+    .toBeGreaterThan(compactFitScale);
   await overflowStyle.evaluate((element) =>
     element.parentNode?.removeChild(element),
   );
