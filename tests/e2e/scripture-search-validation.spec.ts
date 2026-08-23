@@ -42,11 +42,11 @@ test("validates the Ginmaku search form and projects each language mode", async 
         columns: element.querySelectorAll("tr:first-child td").length,
         fontFamily: table.fontFamily,
         fontSize: table.fontSize,
-        rows: element.querySelectorAll("tr").length - 1,
+        rows: element.querySelectorAll("tr").length,
       };
     });
   expect(searchLayout).toMatchObject({
-    columns: 4,
+    columns: 3,
     fontSize: "11px",
     rows: 22,
   });
@@ -69,6 +69,57 @@ test("validates the Ginmaku search form and projects each language mode", async 
   );
   await expect(projectionPanel).toHaveCSS("border-radius", "12px");
   await expect(page.getByRole("group", { name: "投影操作" })).toBeVisible();
+
+  await page.setViewportSize({ height: 683, width: 1365 });
+  const viewportLayout = await page.evaluate(() => {
+    const bookChoices = Array.from(
+      document.querySelectorAll<HTMLElement>(".ginmaku-book-choice"),
+    );
+    const trackedSelectors = [
+      ".ginmaku-bookmark-container",
+      ".ginmaku-books-table",
+      ".scripture-search-console",
+      ".projection-control-panel",
+    ];
+    const range = document
+      .querySelector<HTMLElement>(".scripture-range-fields")!
+      .getBoundingClientRect();
+    const languages = document
+      .querySelector<HTMLElement>(".scripture-language-options")!
+      .getBoundingClientRect();
+    const actions = document
+      .querySelector<HTMLElement>(".scripture-search-actions")!
+      .getBoundingClientRect();
+    return {
+      allBooksInsideViewport:
+        bookChoices.length > 0 &&
+        bookChoices.every((book) => {
+          const bounds = book.getBoundingClientRect();
+          return bounds.top >= 0 && bounds.bottom <= window.innerHeight;
+        }),
+      documentHasVerticalScroll:
+        document.documentElement.scrollHeight > window.innerHeight,
+      ginmakuToolbarOrder:
+        range.top < languages.top &&
+        languages.top < actions.top &&
+        Math.abs(range.left - languages.left) < 1 &&
+        Math.abs(languages.left - actions.left) < 1,
+      trackedControlsInsideViewport: trackedSelectors.every((selector) => {
+        const bounds = document
+          .querySelector(selector)!
+          .getBoundingClientRect();
+        return bounds.top >= 0 && bounds.bottom <= window.innerHeight;
+      }),
+    };
+  });
+  expect(viewportLayout).toEqual({
+    allBooksInsideViewport: true,
+    documentHasVerticalScroll: false,
+    ginmakuToolbarOrder: true,
+    trackedControlsInsideViewport: true,
+  });
+  await expect(openButton).toBeInViewport();
+  await expect(page.getByLabel("章")).toBeInViewport();
 
   await page.setViewportSize({ height: 720, width: 800 });
   expect(
