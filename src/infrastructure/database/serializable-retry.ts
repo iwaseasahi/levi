@@ -4,8 +4,14 @@ export const SERIALIZABLE_TRANSACTION_MAX_ATTEMPTS = 3;
 
 function isRetryableSerializableConflict(error: unknown) {
   return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2034"
+    (error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2034") ||
+    (error instanceof Error &&
+      error.name === "DriverAdapterError" &&
+      typeof error.cause === "object" &&
+      error.cause !== null &&
+      "kind" in error.cause &&
+      error.cause.kind === "TransactionWriteConflict")
   );
 }
 
