@@ -91,38 +91,19 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
 
   const firstRow = page.locator(".ginmaku-books-table tr").first();
   await expect(firstRow.locator("td").nth(0)).toContainText("創世記/Genesis");
-  await expect(
-    page.getByRole("button", { name: "Open", exact: true }),
-  ).toBeEnabled();
-
-  const modernControls = await page.evaluate(() => {
-    const open = getComputedStyle(
-      document.querySelector<HTMLElement>(".search-action-primary")!,
-    );
-    const reset = getComputedStyle(
-      document.querySelector<HTMLElement>(".search-action-secondary")!,
-    );
-    const projection = getComputedStyle(
-      document.querySelector<HTMLElement>(".projection-control-panel")!,
-    );
-    return {
-      openBackground: open.backgroundColor,
-      openColor: open.color,
-      openRadius: open.borderRadius,
-      projectionBackground: projection.backgroundImage,
-      projectionRadius: projection.borderRadius,
-      resetBackground: reset.backgroundColor,
-    };
-  });
-  expect(modernControls).toEqual({
-    openBackground: "rgb(210, 165, 104)",
-    openColor: "rgb(23, 17, 10)",
-    openRadius: "8px",
-    projectionBackground:
-      "linear-gradient(145deg, rgb(21, 21, 21), rgb(11, 11, 11))",
-    projectionRadius: "12px",
-    resetBackground: "rgb(32, 32, 32)",
-  });
+  const openButton = page.getByRole("button", { name: "Open", exact: true });
+  const resetButton = page.getByRole("button", { name: "Reset", exact: true });
+  const projectionPanel = page.locator(".projection-control-panel");
+  await expect(openButton).toBeEnabled();
+  await expect(openButton).toHaveCSS("background-color", "rgb(210, 165, 104)");
+  await expect(openButton).toHaveCSS("color", "rgb(23, 17, 10)");
+  await expect(openButton).toHaveCSS("border-radius", "8px");
+  await expect(resetButton).toHaveCSS("background-color", "rgb(32, 32, 32)");
+  await expect(projectionPanel).toHaveCSS(
+    "background-image",
+    "linear-gradient(145deg, rgb(21, 21, 21), rgb(11, 11, 11))",
+  );
+  await expect(projectionPanel).toHaveCSS("border-radius", "12px");
   await expect(page.getByRole("group", { name: "投影操作" })).toBeVisible();
 
   await page.setViewportSize({ height: 720, width: 800 });
