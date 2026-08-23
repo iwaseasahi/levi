@@ -28,7 +28,7 @@
     "db:check": "prisma generate && pnpm db:migrate && pnpm db:schema:check && pnpm db:seed && tsx scripts/verify-database.ts",
     "test": "pnpm test:unit && pnpm test:component",
     "test:unit": "vitest run --config vitest.config.ts",
-    "test:unit:coverage": "vitest run --config vitest.config.ts --coverage",
+    "test:unit:coverage": "DATABASE_URL=postgresql://localhost/levi SHADOW_DATABASE_URL=postgresql://localhost/levi_shadow prisma generate && DATABASE_URL=postgresql://localhost/levi SHADOW_DATABASE_URL=postgresql://localhost/levi_shadow vitest run --config vitest.config.ts --coverage",
     "test:component": "vitest run --config vitest.component.config.ts",
     "test:integration": "tsx scripts/run-integration-tests.ts",
     "test:e2e": "tsx scripts/run-e2e-tests.ts",

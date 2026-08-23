@@ -16,8 +16,11 @@ export default defineConfig({
       exclude: ["src/agent-orchestration/types.ts"],
       include: [
         "src/agent-orchestration/**/*.ts",
+        "src/application/**/*.ts",
+        "src/app/api/**/controller.ts",
         "src/app/api/ready/route.ts",
         "src/config/**/*.ts",
+        "src/domain/**/*.ts",
         "src/infrastructure/observability/**/*.ts",
         "src/proxy.ts",
       ],
