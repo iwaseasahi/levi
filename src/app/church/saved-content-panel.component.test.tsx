@@ -122,6 +122,8 @@ describe("SavedContentPanel", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText("ブックマーク名")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /を上へ/ })).toBeNull();
+    expect(screen.queryByText("フォルダー", { exact: true })).toBeNull();
+    expect(screen.queryByText("一覧", { exact: true })).toBeNull();
     expect(
       screen.getByRole("link", { name: "フォルダの一覧" }),
     ).toHaveAttribute("href", "/folders");
