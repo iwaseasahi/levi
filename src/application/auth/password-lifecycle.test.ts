@@ -1,26 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  generateTemporaryPassword: vi.fn(() => "t".repeat(24)),
-  hashPassword: vi.fn(async (value: string) => `hashed:${value}`),
-  prisma: {
-    $transaction: vi.fn(),
-    platformOperator: { findUnique: vi.fn() },
-  },
-}));
-
-vi.mock("better-auth/crypto", () => ({ hashPassword: mocks.hashPassword }));
-vi.mock("@/infrastructure/database/client", () => ({ prisma: mocks.prisma }));
-vi.mock("@/application/admin/temporary-password", () => ({
-  generateTemporaryPassword: mocks.generateTemporaryPassword,
-}));
-
 import {
-  completeForcedPasswordChange,
+  createPasswordLifecycle,
   PasswordLifecycleAuthorizationError,
   PasswordLifecycleFailedError,
   PasswordLifecycleInputError,
-  resetChurchPassword,
+  type PasswordLifecycleTransaction,
 } from "./password-lifecycle";
 
 const operatorId = "00000000-0000-4000-8000-000000000001";
@@ -28,129 +13,114 @@ const churchId = "00000000-0000-4000-8000-000000000002";
 const userId = "00000000-0000-4000-8000-000000000003";
 const sessionId = "00000000-0000-4000-8000-000000000004";
 
-function resetTransaction() {
+function transaction(): PasswordLifecycleTransaction {
   return {
-    account: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
-    church: {
-      findFirst: vi.fn().mockResolvedValue({
-        id: churchId,
-        membership: {
-          user: {
-            actorState: "ACTIVE",
-            email: "church@example.invalid",
-            id: userId,
-          },
-        },
-        name: "テスト教会",
-      }),
-    },
-    platformOperator: {
-      findUnique: vi.fn().mockResolvedValue({ user: { actorState: "ACTIVE" } }),
-    },
-    session: { deleteMany: vi.fn() },
-    user: { update: vi.fn() },
+    clearForcedPasswordChange: vi.fn(),
+    findActiveOperator: vi.fn().mockResolvedValue(true),
+    findForcedChangeAccount: vi
+      .fn()
+      .mockResolvedValue({ accountId: "account-id" }),
+    findResetTarget: vi.fn().mockResolvedValue({
+      churchId,
+      churchName: "テスト教会",
+      email: "church@example.invalid",
+      userId,
+    }),
+    markForcedPasswordChange: vi.fn(),
+    replaceCredentialPassword: vi.fn().mockResolvedValue(true),
+    revokeAllSessions: vi.fn(),
+    revokeOtherSessions: vi.fn(),
+    updateCredentialPassword: vi.fn(),
   };
 }
 
-function changeTransaction() {
+function dependencies(tx = transaction()) {
   return {
-    account: { update: vi.fn() },
-    session: {
-      deleteMany: vi.fn(),
-      findFirst: vi.fn().mockResolvedValue({ id: sessionId }),
-    },
-    user: {
-      findFirst: vi.fn().mockResolvedValue({
-        accounts: [{ id: "account-id", password: "old-hash" }],
-      }),
-      update: vi.fn(),
-    },
+    findActiveOperator: vi.fn().mockResolvedValue(true),
+    generateTemporaryPassword: vi.fn(() => "t".repeat(24)),
+    hashPassword: vi.fn(async (password: string) => `hashed:${password}`),
+    runTransaction: vi.fn(async (operation) => operation(tx)),
+    tx,
   };
 }
 
-beforeEach(() => {
-  vi.clearAllMocks();
-  mocks.prisma.platformOperator.findUnique.mockResolvedValue({
-    user: { actorState: "ACTIVE" },
-  });
-});
+beforeEach(() => vi.clearAllMocks());
 
 describe("resetChurchPassword", () => {
-  it("rejects malformed identifiers before database access", async () => {
+  it("rejects invalid identifiers before opening a transaction", async () => {
+    const deps = dependencies();
+    const lifecycle = createPasswordLifecycle(deps);
     await expect(
-      resetChurchPassword(operatorId, "invalid"),
+      lifecycle.resetChurchPassword(operatorId, "invalid"),
     ).rejects.toBeInstanceOf(PasswordLifecycleInputError);
     await expect(
-      resetChurchPassword("invalid", churchId),
+      lifecycle.resetChurchPassword("invalid", churchId),
     ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
-    expect(mocks.prisma.platformOperator.findUnique).not.toHaveBeenCalled();
+    expect(deps.runTransaction).not.toHaveBeenCalled();
   });
 
-  it("replaces the credential and revokes sessions for an active church", async () => {
-    const tx = resetTransaction();
-    mocks.prisma.$transaction.mockImplementation(async (callback) =>
-      callback(tx),
-    );
-
-    await expect(resetChurchPassword(operatorId, churchId)).resolves.toEqual({
+  it("replaces the credential and revokes all sessions", async () => {
+    const deps = dependencies();
+    const lifecycle = createPasswordLifecycle(deps);
+    await expect(
+      lifecycle.resetChurchPassword(operatorId, churchId),
+    ).resolves.toEqual({
       churchId,
       churchName: "テスト教会",
       email: "church@example.invalid",
       temporaryPassword: "t".repeat(24),
       userId,
     });
-    expect(tx.account.updateMany).toHaveBeenCalledWith({
-      data: { password: `hashed:${"t".repeat(24)}` },
-      where: { providerId: "credential", userId },
-    });
-    expect(tx.user.update).toHaveBeenCalledWith({
-      data: { mustChangePassword: true },
-      where: { id: userId },
-    });
-    expect(tx.session.deleteMany).toHaveBeenCalledWith({ where: { userId } });
+    expect(deps.tx.replaceCredentialPassword).toHaveBeenCalledWith(
+      userId,
+      `hashed:${"t".repeat(24)}`,
+    );
+    expect(deps.tx.markForcedPasswordChange).toHaveBeenCalledWith(userId);
+    expect(deps.tx.revokeAllSessions).toHaveBeenCalledWith(userId);
   });
 
-  it("fails closed when authorization lookup or transactional state is invalid", async () => {
-    mocks.prisma.platformOperator.findUnique.mockRejectedValueOnce(
-      new Error("db"),
-    );
+  it("fails closed before and during the transaction", async () => {
+    const lookupFailed = dependencies();
+    lookupFailed.findActiveOperator.mockRejectedValue(new Error("db"));
     await expect(
-      resetChurchPassword(operatorId, churchId),
+      createPasswordLifecycle(lookupFailed).resetChurchPassword(
+        operatorId,
+        churchId,
+      ),
     ).rejects.toBeInstanceOf(PasswordLifecycleFailedError);
 
-    mocks.prisma.platformOperator.findUnique.mockResolvedValueOnce({
-      user: { actorState: "SUSPENDED" },
-    });
+    const denied = dependencies();
+    denied.findActiveOperator.mockResolvedValue(false);
     await expect(
-      resetChurchPassword(operatorId, churchId),
+      createPasswordLifecycle(denied).resetChurchPassword(operatorId, churchId),
     ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
 
-    const tx = resetTransaction();
-    tx.platformOperator.findUnique.mockResolvedValueOnce({
-      user: { actorState: "SUSPENDED" },
-    });
-    mocks.prisma.$transaction.mockImplementationOnce(async (callback) =>
-      callback(tx),
-    );
+    const recheckDenied = dependencies();
+    vi.mocked(recheckDenied.tx.findActiveOperator).mockResolvedValue(false);
     await expect(
-      resetChurchPassword(operatorId, churchId),
+      createPasswordLifecycle(recheckDenied).resetChurchPassword(
+        operatorId,
+        churchId,
+      ),
     ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
 
-    const missingAccount = resetTransaction();
-    missingAccount.account.updateMany.mockResolvedValueOnce({ count: 0 });
-    mocks.prisma.$transaction.mockImplementationOnce(async (callback) =>
-      callback(missingAccount),
-    );
+    const missing = dependencies();
+    vi.mocked(missing.tx.findResetTarget).mockResolvedValue(null);
     await expect(
-      resetChurchPassword(operatorId, churchId),
+      createPasswordLifecycle(missing).resetChurchPassword(
+        operatorId,
+        churchId,
+      ),
     ).rejects.toBeInstanceOf(PasswordLifecycleFailedError);
   });
 });
 
 describe("completeForcedPasswordChange", () => {
-  it("validates length and confirmation before database access", async () => {
+  it("validates password length and confirmation before persistence", async () => {
+    const deps = dependencies();
+    const lifecycle = createPasswordLifecycle(deps);
     await expect(
-      completeForcedPasswordChange({
+      lifecycle.completeForcedPasswordChange({
         confirmation: "short",
         newPassword: "short",
         sessionId,
@@ -158,51 +128,41 @@ describe("completeForcedPasswordChange", () => {
       }),
     ).rejects.toBeInstanceOf(PasswordLifecycleInputError);
     await expect(
-      completeForcedPasswordChange({
+      lifecycle.completeForcedPasswordChange({
         confirmation: "y".repeat(12),
         newPassword: "x".repeat(12),
         sessionId,
         userId,
       }),
     ).rejects.toBeInstanceOf(PasswordLifecycleInputError);
+    expect(deps.runTransaction).not.toHaveBeenCalled();
   });
 
-  it("updates the credential, clears the forced state, and keeps this session", async () => {
-    const tx = changeTransaction();
-    mocks.prisma.$transaction.mockImplementation(async (callback) =>
-      callback(tx),
-    );
+  it("updates the credential and revokes only other sessions", async () => {
+    const deps = dependencies();
+    const lifecycle = createPasswordLifecycle(deps);
     const password = "new-password-value";
-
     await expect(
-      completeForcedPasswordChange({
+      lifecycle.completeForcedPasswordChange({
         confirmation: password,
         newPassword: password,
         sessionId,
         userId,
       }),
     ).resolves.toBeUndefined();
-    expect(tx.account.update).toHaveBeenCalledWith({
-      data: { password: `hashed:${password}` },
-      where: { id: "account-id" },
-    });
-    expect(tx.user.update).toHaveBeenCalledWith({
-      data: { mustChangePassword: false },
-      where: { id: userId },
-    });
-    expect(tx.session.deleteMany).toHaveBeenCalledWith({
-      where: { id: { not: sessionId }, userId },
-    });
+    expect(deps.tx.updateCredentialPassword).toHaveBeenCalledWith(
+      "account-id",
+      `hashed:${password}`,
+    );
+    expect(deps.tx.clearForcedPasswordChange).toHaveBeenCalledWith(userId);
+    expect(deps.tx.revokeOtherSessions).toHaveBeenCalledWith(userId, sessionId);
   });
 
-  it("distinguishes ineligible sessions from persistence failures", async () => {
-    const unauthorized = changeTransaction();
-    unauthorized.session.findFirst.mockResolvedValueOnce(null);
-    mocks.prisma.$transaction.mockImplementationOnce(async (callback) =>
-      callback(unauthorized),
-    );
+  it("distinguishes an ineligible session from an adapter failure", async () => {
+    const unauthorized = dependencies();
+    vi.mocked(unauthorized.tx.findForcedChangeAccount).mockResolvedValue(null);
     await expect(
-      completeForcedPasswordChange({
+      createPasswordLifecycle(unauthorized).completeForcedPasswordChange({
         confirmation: "x".repeat(12),
         newPassword: "x".repeat(12),
         sessionId,
@@ -210,9 +170,10 @@ describe("completeForcedPasswordChange", () => {
       }),
     ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
 
-    mocks.prisma.$transaction.mockRejectedValueOnce(new Error("db"));
+    const failed = dependencies();
+    failed.runTransaction.mockRejectedValue(new Error("db"));
     await expect(
-      completeForcedPasswordChange({
+      createPasswordLifecycle(failed).completeForcedPasswordChange({
         confirmation: "x".repeat(12),
         newPassword: "x".repeat(12),
         sessionId,

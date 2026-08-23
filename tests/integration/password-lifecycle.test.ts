@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import { hashPassword, verifyPassword } from "better-auth/crypto";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 
+import { PasswordLifecycleAuthorizationError } from "@/application/auth/password-lifecycle";
+import { auth } from "@/infrastructure/auth/server";
 import {
   completeForcedPasswordChange,
-  PasswordLifecycleAuthorizationError,
   resetChurchPassword,
-} from "@/application/auth/password-lifecycle";
-import { auth } from "@/infrastructure/auth/server";
+} from "@/infrastructure/auth/password-lifecycle";
 import { prisma } from "@/infrastructure/database/client";
 
 const prefix = "test.password45";
