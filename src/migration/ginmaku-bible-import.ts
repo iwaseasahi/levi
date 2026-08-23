@@ -12,6 +12,7 @@ import {
   readGinmakuDump,
   sha256,
 } from "./ginmaku-dump";
+import { evaluateBibleExactness } from "./ginmaku-bible-exactness";
 
 type TranslationCode =
   (typeof GINMAKU_TRANSLATION_MAPPING)[keyof typeof GINMAKU_TRANSLATION_MAPPING];
@@ -418,22 +419,28 @@ async function targetState(client: DbClient, source: ValidatedBibleDump) {
   };
 }
 
+function compareTargetWithSource(
+  source: ValidatedBibleDump,
+  target: Awaited<ReturnType<typeof targetState>>,
+) {
+  return evaluateBibleExactness(source.report, {
+    books: target.books.length,
+    names: target.names,
+    verses: target.verses,
+    bookFingerprint: target.bookFingerprint,
+    nameFingerprint: target.nameFingerprint,
+    locationFingerprint: target.locationFingerprint,
+    contentFingerprint: target.contentFingerprint,
+    sampleFingerprint: target.sampleFingerprint,
+  });
+}
+
 export async function reconcileGinmakuBible(
   client: DbClient,
   source: ValidatedBibleDump,
 ) {
   const target = await targetState(client, source);
-  const exact =
-    target.books.length === source.report.counts.bookNames &&
-    target.names === source.report.counts.bookNames * 2 &&
-    target.verses === source.report.counts.verses &&
-    target.bookFingerprint === source.report.integrity.bookFingerprint &&
-    target.nameFingerprint === source.report.integrity.nameFingerprint &&
-    target.locationFingerprint ===
-      source.report.integrity.locationFingerprint &&
-    target.contentFingerprint === source.report.integrity.contentFingerprint;
-  const sampleExact =
-    target.sampleFingerprint === source.report.integrity.sampleFingerprint;
+  const exactness = compareTargetWithSource(source, target);
   return {
     source: source.report,
     target: {
@@ -447,8 +454,8 @@ export async function reconcileGinmakuBible(
       contentFingerprint: target.contentFingerprint,
       sampleFingerprint: target.sampleFingerprint,
     },
-    exact: exact && sampleExact,
-    sampleExact,
+    exact: exactness.exact,
+    sampleExact: exactness.sampleExact,
   };
 }
 
@@ -464,18 +471,7 @@ export async function dryRunGinmakuBible(
   )
     throw new BibleImportError("IMPORT_TRANSLATION_RIGHTS_NOT_APPROVED");
   if (target.verses > 0) {
-    const exact =
-      target.books.length === source.report.counts.bookNames &&
-      target.names === source.report.counts.bookNames * 2 &&
-      target.verses === source.report.counts.verses &&
-      target.bookFingerprint === source.report.integrity.bookFingerprint &&
-      target.nameFingerprint === source.report.integrity.nameFingerprint &&
-      target.locationFingerprint ===
-        source.report.integrity.locationFingerprint &&
-      target.contentFingerprint === source.report.integrity.contentFingerprint;
-    const sampleExact =
-      target.sampleFingerprint === source.report.integrity.sampleFingerprint;
-    if (!exact || !sampleExact)
+    if (!compareTargetWithSource(source, target).exact)
       throw new BibleImportError("IMPORT_TARGET_CONTENT_MISMATCH");
     return { action: "unchanged" as const, source: source.report };
   }
@@ -525,19 +521,7 @@ export async function importGinmakuBible(
       )
         throw new BibleImportError("IMPORT_TRANSLATION_RIGHTS_NOT_APPROVED");
       if (before.verses > 0) {
-        const exact =
-          before.books.length === source.report.counts.bookNames &&
-          before.names === source.report.counts.bookNames * 2 &&
-          before.verses === source.report.counts.verses &&
-          before.bookFingerprint === source.report.integrity.bookFingerprint &&
-          before.nameFingerprint === source.report.integrity.nameFingerprint &&
-          before.locationFingerprint ===
-            source.report.integrity.locationFingerprint &&
-          before.contentFingerprint ===
-            source.report.integrity.contentFingerprint &&
-          before.sampleFingerprint ===
-            source.report.integrity.sampleFingerprint;
-        if (!exact)
+        if (!compareTargetWithSource(source, before).exact)
           throw new BibleImportError("IMPORT_TARGET_CONTENT_MISMATCH");
         return {
           status: "unchanged" as const,

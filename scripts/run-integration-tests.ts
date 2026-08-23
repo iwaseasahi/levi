@@ -1,4 +1,4 @@
-import { spawnSync } from "node:child_process";
+import { prepareTestDatabase, runPnpm } from "./lib/test-runtime";
 
 const testEnvironment: NodeJS.ProcessEnv = {
   ...process.env,
@@ -13,24 +13,8 @@ const testEnvironment: NodeJS.ProcessEnv = {
     "postgresql://levi:levi@127.0.0.1:55433/levi_shadow?schema=public",
 };
 
-function run(args: string[], env = process.env) {
-  const result = spawnSync("pnpm", args, { env, stdio: "inherit" });
-
-  if (result.error) {
-    throw result.error;
-  }
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
-}
-
-if (process.env.CI !== "true") {
-  run(["db:up"]);
-}
-run(["exec", "prisma", "generate"], testEnvironment);
-run(["exec", "prisma", "migrate", "deploy"], testEnvironment);
-run(
+prepareTestDatabase(testEnvironment);
+runPnpm(
   ["exec", "vitest", "run", "--config", "vitest.integration.config.ts"],
   testEnvironment,
 );
