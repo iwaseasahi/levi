@@ -3,7 +3,7 @@
 ## Issue
 
 - Parent Issue: #189
-- Child Issues: #190, #191, #192, #193, #194, #195, #200
+- Child Issues: #190, #191, #192, #193, #194, #195, #200, #204
 - Base commit: `27b879bac73d08035ea69e007d662593ef79418c`
 
 ## Outcome
@@ -38,7 +38,7 @@
 6. [x] #194 client fetcherのcomponent lifetime契約を統一する。
 7. [x] #195 integration用Bible・tenant fixtureを共通化する。
 8. [x] #204 教会同時作成時のcredential書き込みを安定化する。
-9. [ ] 最終mainのrequired CIを確認し、#189を証跡付きで閉じる。
+9. [x] 最終mainのrequired CIを確認し、#189を証跡付きで閉じる。
 
 ## Progress
 
@@ -60,6 +60,7 @@
 - 2026-08-23 19:40 JST — #195のlocal verification完了。unit 238件、component 40件、integration 77件、E2E 13件、build、coverage、securityが成功した。
 - 2026-08-23 19:45 JST — 最終監査のconcurrent provisioning反復試験で`ProvisioningFailedError`を再現した。Better Auth adapterがinteractive transaction client上でqueryを並行実行する経路を原因候補として#204へ分離した。
 - 2026-08-23 20:15 JST — #204でcredential作成を同一transaction内の明示的なUser/Account書き込みへ変更し、Prisma 7 driver adapterの`TransactionWriteConflict`も有界retry対象へ追加した。同時作成30回、unit 240件、component 40件、integration 77件、E2E 13件、build、coverage、securityが成功した。
+- 2026-08-23 20:20 JST — 最終`main` `c65e9c3a503f514f77b44e20a7df298d61d8665d`のpush CI run `32633333584`でQuality、Database、E2E、Securityがすべて成功した。
 
 ## Decisions
 
@@ -78,21 +79,21 @@
 
 ## Verification
 
-- [ ] `pnpm check`
-- [ ] `pnpm test:unit:coverage`
-- [ ] `pnpm test:integration`
-- [ ] `pnpm test:e2e`
-- [ ] `pnpm security:check`
-- [ ] `git diff --check`
-- [ ] 各PRのQuality / Database / E2E / Securityがexact headで成功
+- [x] `pnpm check`
+- [x] `pnpm test:unit:coverage`
+- [x] `pnpm test:integration`
+- [x] `pnpm test:e2e`
+- [x] `pnpm security:check`
+- [x] `git diff --check`
+- [x] 各PRのQuality / Database / E2E / Securityがexact headで成功
 
 ## Handoff or blockers
 
-- Completed: Issue分割と実装順の確定。
-- Remaining: #190〜#195の実装・検証・merge。
+- Completed: #190、#191、#192、#200、#193、#194、#195、#204の実装・検証・mergeと最終main CI確認。
+- Remaining: なし。
 - Blocker: なし。
-- Resume with: #190のcoverage設定とcontroller testを更新する。
+- Resume with: 新しい要件または運用課題が発生した場合は、独立Issueから開始する。
 
 ## Result
 
-進行中。
+PR #196、#197、#198、#201、#199、#202、#203、#205をrequired CI成功後に順次mergeした。対象の保守性課題を解消し、URL、API response、DB schema、tenant boundary、認証・Ginmaku互換操作を維持したまま、最終`main`の全required CI成功まで確認した。
