@@ -33,7 +33,7 @@
 1. [x] failure artifact、PostgreSQL log、password transaction/test境界を調査する。
 2. [x] Prisma `P2034`だけを最大3試行するpurely bounded helperとunit testを追加する。
 3. [x] password lifecycle adapterへhelperを適用し、異なる2教会の並行reset/change integrationを追加する。
-4. [ ] exhaustion時のfail-closed controller/audit契約とcanonical checksを検証する。
+4. [x] exhaustion時のfail-closed controller/audit契約とcanonical checksを検証する。
 5. [ ] exact-head required CI後にPRをmergeする。
 
 ## Progress
@@ -42,6 +42,8 @@
 - 2026-08-23 16:51 JST — P2034のみ最大3試行するhelperを追加。retry success/exhaustion/nonretryable unit 4、application/controller 15 passed。
 - 2026-08-23 16:52 JST — 2教会のconcurrent reset/changeと最終hash/flag/sessionを追加。full integration 76 passed。
 - 2026-08-23 16:53 JST — E2E連続確認3回目で既存bookmark drag同期flakeを検出。原因をpending解除前のdrag開始と特定し #186 に分離。
+- 2026-08-23 17:00 JST — #186/PR #188をrequired CI後にmergeし、mainを統合。
+- 2026-08-23 17:02 JST — merged headでintegration 76、E2E 13/13を3回連続、unit 231、component 39、build/schema/securityを通過。
 
 ## Decisions
 
@@ -62,24 +64,24 @@
 
 ## Verification
 
-- [ ] bounded retry unit tests
-- [ ] password lifecycle application/controller unit tests
-- [ ] concurrent reset/change integrationとsession/password final state
-- [ ] `pnpm test:integration`
-- [ ] `pnpm test:e2e` — retry 0
-- [ ] `pnpm db:schema:check`
-- [ ] `pnpm check`
-- [ ] `pnpm security:check`
-- [ ] `git diff --check`
+- [x] bounded retry unit tests — 4 passed
+- [x] password lifecycle application/controller unit tests — 15 passed
+- [x] concurrent reset/change integrationとsession/password final state
+- [x] `pnpm test:integration` — 76 passed
+- [x] `pnpm test:e2e` — retry 0、13 passedを3回連続
+- [x] `pnpm db:schema:check` — schema/migration/datasource diffなし
+- [x] `pnpm check` — unit 231、component 39、production build
+- [x] `pnpm security:check` — vulnerabilities 0、approved licenses 314
+- [x] `git diff --check`
 - [ ] required CI
 
 ## Handoff or blockers
 
-- Completed: retry helper、adapter適用、unit/integration、unrelated E2E root-cause調査。
-- Remaining: #186 merge後にmainを統合し、canonical checks、PR、CI、merge。
-- Blocker: #186。現行E2Eがbookmark作成のpending解除前にdragを開始し得る。
-- Resume with: #186を別branch/PRで修正してmergeする。
+- Completed: retry helper、adapter適用、parallel integration、#186統合、local canonical verification。
+- Remaining: plan commit、PR更新、required CI、merge。
+- Blocker: なし。
+- Resume with: planをcommit/pushしdraft PRをreadyにする。
 
 ## Result
 
-未完了。
+実装とローカル検証は完了。required CIとmerge待ち。
