@@ -1650,8 +1650,7 @@ select:focus-visible,
   letter-spacing: -0.025em;
 }
 
-.modern-folder-edit-form,
-.modern-bookmark-edit-form {
+.modern-folder-edit-form {
   display: grid;
   gap: 18px;
 }

@@ -68,8 +68,8 @@ calendar control; its normalized value remains `YYYY-MM-DD`, while leaving it
 empty remains valid. After a successful creation, the form closes and the new
 folder opens. `フォルダの一覧` appears below creation and opens `/folders` in
 the current tab. The modern dark list links to each folder's management surface.
-The list, folder editor, and bookmark editor provide explicit same-tab return
-links. Successful folder deletion returns to `/folders`.
+The list and folder editor provide explicit same-tab return links. Successful
+folder deletion returns to `/folders`.
 
 The open accordion body contains only document icons and saved scripture links;
 rename, pin, delete, and bookmark-title controls never appear there. Bookmarks
@@ -82,9 +82,9 @@ unpersisted order on screen.
 Ginmaku's `お気に入りに追加` control appears immediately after the scripture
 search form. It saves the normalized current selection into the current folder
 using the automatic `日本語/English chapter:start-end` title. Folder management
-supports rename, sticky/pinned state, physical folder deletion, bookmark title
-editing, physical bookmark deletion, and drag ordering without cluttering the
-search screen.
+supports rename, sticky/pinned state, physical folder deletion, physical
+bookmark deletion, and drag ordering without cluttering the search screen.
+Bookmark titles are derived automatically and cannot be edited.
 
 ## Result
 

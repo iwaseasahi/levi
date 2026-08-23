@@ -155,8 +155,8 @@ A folder and its bookmarks belong to one church. The initial release supports:
 - reorder folders deterministically at the data boundary and reorder bookmarks
   within their folder by drag-and-drop, with Alt+ArrowUp/Alt+ArrowDown as the
   non-visual keyboard fallback;
-- open the current folder editor in a separate tab for rename, pin, physical
-  folder/bookmark deletion, bookmark title editing, and bookmark ordering;
+- open the current folder editor in the same tab for rename, pin, physical
+  folder/bookmark deletion, and bookmark ordering;
 - save a typed Bible search from Ginmaku's `お気に入りに追加` action immediately
   after the search form; its title is derived as
   `日本語書巻名/English book chapter:start-end` rather than retyped;
