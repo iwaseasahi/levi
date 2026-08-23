@@ -73,6 +73,25 @@ function managementFetcher() {
 }
 
 describe("folder management", () => {
+  it("shows loading and focuses a recoverable load failure", async () => {
+    let resolveLoad!: (response: Response) => void;
+    const pendingLoad = new Promise<Response>((resolve) => {
+      resolveLoad = resolve;
+    });
+    const { unmount } = render(
+      <FolderEditPanel
+        folderId={folderId}
+        fetcher={vi.fn<typeof fetch>(() => pendingLoad)}
+      />,
+    );
+    expect(screen.getByLabelText("読み込み中")).toBeVisible();
+    resolveLoad(new Response(null, { status: 500 }));
+    const alert = await screen.findByRole("alert");
+    await waitFor(() => expect(alert).toHaveFocus());
+    expect(alert).toHaveTextContent("保存内容を更新できませんでした。");
+    unmount();
+  });
+
   it("keeps folder and bookmark mutations on the separate editing surface", async () => {
     const fetcher = managementFetcher();
     render(<FolderEditPanel folderId={folderId} fetcher={fetcher} />);
@@ -101,6 +120,9 @@ describe("folder management", () => {
           body: expect.stringContaining('"isPinned":true'),
         }),
       ),
+    );
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "フォルダーを更新しました。",
     );
     expect(
       screen.queryByRole("link", { name: "編集" }),
@@ -134,9 +156,18 @@ describe("folder management", () => {
     await waitFor(() =>
       expect(document.querySelectorAll("[data-bookmark-id]")).toHaveLength(1),
     );
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "お気に入りを削除しました。",
+    );
 
     vi.spyOn(window, "confirm").mockReturnValueOnce(true);
     await user.click(screen.getByRole("button", { name: "フォルダーを削除" }));
     await waitFor(() => expect(replaceRoute).toHaveBeenCalledWith("/folders"));
+    expect(fetcher).toHaveBeenCalledWith(
+      "/api/saved-content",
+      expect.objectContaining({
+        body: expect.stringContaining('"action":"delete-folder"'),
+      }),
+    );
   });
 });

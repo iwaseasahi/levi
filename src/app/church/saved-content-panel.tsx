@@ -7,23 +7,11 @@ import {
   useEffect,
   useRef,
   useState,
-  useSyncExternalStore,
 } from "react";
-import { createPortal } from "react-dom";
-import type {
-  FolderSummary,
-  ScriptureBookmarkView,
-} from "@/domain/saved-content";
 import type { ScriptureSearch } from "@/domain/scripture/search";
 import { moveBy, moveTo } from "@/domain/order";
-import { postJson, requestJson } from "./client-api";
-
-type SelectedFolder = {
-  folder: FolderSummary;
-  bookmarks: ScriptureBookmarkView[];
-};
-
-const subscribeToClient = () => () => {};
+import { FavoritePortal } from "./favorite-portal";
+import { useSavedContentController } from "./use-saved-content-controller";
 
 function bookmarkHref(search: ScriptureSearch) {
   return `/scripture/audience?${new URLSearchParams({
@@ -46,8 +34,12 @@ export function SavedContentPanel({
   fetcher: typeof fetch;
   onOpen(search: ScriptureSearch): Promise<void>;
 }) {
-  const [folders, setFolders] = useState<FolderSummary[]>([]);
-  const [selected, setSelected] = useState<SelectedFolder | null>(null);
+  const controller = useSavedContentController({
+    currentSearch,
+    currentSearchTitle,
+    fetcher,
+    onOpen,
+  });
   const [newFolderDate, setNewFolderDate] = useState("");
   const [newFolderMeeting, setNewFolderMeeting] = useState("");
   const [newFolderOpen, setNewFolderOpen] = useState(false);
@@ -57,188 +49,56 @@ export function SavedContentPanel({
   const [dragOverBookmarkId, setDragOverBookmarkId] = useState<string | null>(
     null,
   );
-  const [pending, setPending] = useState(true);
-  const [error, setError] = useState("");
   const feedbackRef = useRef<HTMLDivElement>(null);
-  const isClient = useSyncExternalStore(
-    subscribeToClient,
-    () => true,
-    () => false,
-  );
-  const favoriteTarget = !isClient
-    ? null
-    : document.getElementById("ginmaku-add-bookmark-slot");
-
-  async function request<T>(body: object) {
-    return postJson<T>(
-      fetcher,
-      "/api/saved-content",
-      body,
-      "saved content unavailable",
-    );
-  }
-
-  async function fetchFolders() {
-    const response = await requestJson<{ folders: FolderSummary[] }>(
-      fetcher,
-      "/api/saved-content",
-      {
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      },
-      "saved content unavailable",
-    );
-    setFolders(response.folders);
-    return response.folders;
-  }
-
-  async function loadFolder(folderId: string) {
-    const value = await requestJson<SelectedFolder>(
-      fetcher,
-      `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
-      {
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      },
-      "saved content unavailable",
-    );
-    setSelected(value);
-  }
-
-  async function run(
-    action: () => Promise<void>,
-    recover?: () => Promise<void>,
-  ) {
-    setPending(true);
-    setError("");
-    try {
-      await action();
-    } catch {
-      if (recover) {
-        try {
-          await recover();
-        } catch {
-          // Keep the original update failure visible when recovery also fails.
-        }
-      }
-      setError(
-        "保存内容を更新できませんでした。再読み込みしてお試しください。",
-      );
-    } finally {
-      setPending(false);
-    }
-  }
 
   useEffect(() => {
-    void Promise.resolve().then(() =>
-      run(async () => {
-        const initialFolders = await fetchFolders();
-        if (initialFolders[0]) await loadFolder(initialFolders[0].id);
-      }),
-    );
-    // The injected fetcher is fixed for the component lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (error) feedbackRef.current?.focus();
-  }, [error]);
-
-  async function chooseFolder(folderId: string) {
-    if (selected?.folder.id === folderId) {
-      setSelected(null);
-      return;
-    }
-    await run(async () => {
-      await loadFolder(folderId);
-      await fetchFolders();
-    });
-  }
+    if (controller.error) feedbackRef.current?.focus();
+  }, [controller.error]);
 
   async function createFolder(event: FormEvent) {
     event.preventDefault();
     const meeting = newFolderMeeting.trim();
     if (!meeting) return;
     const name = [newFolderDate.trim(), meeting].filter(Boolean).join(" ");
-    await run(async () => {
-      const { folder } = await request<{ folder: FolderSummary }>({
-        action: "create-folder",
-        name,
-      });
+    if (await controller.createFolder(name)) {
       setNewFolderDate("");
       setNewFolderMeeting("");
       setNewFolderOpen(false);
-      await loadFolder(folder.id);
-      await fetchFolders();
-    });
+    }
   }
 
   async function saveFavorite(event: FormEvent) {
     event.preventDefault();
-    if (!selected || !currentSearch) return;
-    await run(async () => {
-      await request({
-        action: "create-bookmark",
-        folderId: selected.folder.id,
-        title: currentSearchTitle,
-        ...currentSearch,
-      });
-      await loadFolder(selected.folder.id);
-      await fetchFolders();
-    });
-  }
-
-  async function openBookmark(bookmarkId: string) {
-    await run(async () => {
-      const { bookmark } = await request<{ bookmark: ScriptureBookmarkView }>({
-        action: "open-bookmark",
-        bookmarkId,
-      });
-      await onOpen(bookmark.search);
-      await fetchFolders();
-    });
-  }
-
-  async function persistBookmarkOrder(ids: string[]) {
-    if (!selected) return;
-    const folderId = selected.folder.id;
-    await run(
-      async () => {
-        await request({ action: "reorder-bookmarks", folderId, ids });
-        await loadFolder(folderId);
-        await fetchFolders();
-      },
-      () => loadFolder(folderId),
-    );
+    await controller.saveFavorite();
   }
 
   async function reorderBookmarkTo(draggedId: string, targetId: string) {
-    if (!selected) return;
+    if (!controller.selected) return;
     const ids = moveTo(
-      selected.bookmarks.map(({ id }) => id),
+      controller.selected.bookmarks.map(({ id }) => id),
       draggedId,
       targetId,
     );
     setDraggedBookmarkId(null);
     setDragOverBookmarkId(null);
-    if (ids) await persistBookmarkOrder(ids);
+    if (ids) await controller.reorderBookmarks(ids);
   }
 
   async function reorderBookmark(bookmarkId: string, offset: -1 | 1) {
-    if (!selected) return;
+    if (!controller.selected) return;
     const ids = moveBy(
-      selected.bookmarks.map(({ id }) => id),
+      controller.selected.bookmarks.map(({ id }) => id),
       bookmarkId,
       offset,
     );
-    if (ids) await persistBookmarkOrder(ids);
+    if (ids) await controller.reorderBookmarks(ids);
   }
 
   function beginBookmarkDrag(
     event: DragEvent<HTMLLIElement>,
     bookmarkId: string,
   ) {
-    if (pending) return;
+    if (controller.pending) return;
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", bookmarkId);
     setDraggedBookmarkId(bookmarkId);
@@ -259,9 +119,13 @@ export function SavedContentPanel({
     setDragOverBookmarkId(null);
   }
 
+  const selected = controller.selected;
   const favoriteForm = (
     <form className="ginmaku-add-bookmark" onSubmit={saveFavorite}>
-      <button disabled={pending || !selected || !currentSearch} type="submit">
+      <button
+        disabled={controller.pending || !selected || !currentSearch}
+        type="submit"
+      >
         お気に入りに追加
       </button>
       {!selected ? <span> フォルダーを選択してください。</span> : null}
@@ -273,15 +137,15 @@ export function SavedContentPanel({
       <section
         className="saved-content"
         aria-label="フォルダーとお気に入り"
-        aria-busy={pending}
+        aria-busy={controller.pending}
       >
         <div className="folder-sidebar-heading">
           <span>フォルダー</span>
           <a href="/folders">一覧</a>
         </div>
-        {folders.length > 0 ? (
+        {controller.folders.length > 0 ? (
           <div className="folder-list" role="list" aria-label="フォルダー">
-            {folders.map((folder) => {
+            {controller.folders.map((folder) => {
               const open = selected?.folder.id === folder.id;
               return (
                 <div
@@ -293,9 +157,9 @@ export function SavedContentPanel({
                     aria-controls={`folder-content-${folder.id}`}
                     aria-expanded={open}
                     className={`folder-toggle${open ? " selected-folder" : ""}`}
-                    disabled={pending}
+                    disabled={controller.pending}
                     type="button"
-                    onClick={() => void chooseFolder(folder.id)}
+                    onClick={() => void controller.chooseFolder(folder.id)}
                   >
                     <span
                       aria-hidden="true"
@@ -305,7 +169,7 @@ export function SavedContentPanel({
                     </span>
                     <span>{folder.name}</span>
                   </button>
-                  {open ? (
+                  {open && selected ? (
                     <div
                       className="selected-content"
                       id={`folder-content-${folder.id}`}
@@ -326,7 +190,7 @@ export function SavedContentPanel({
                                     : undefined
                               }
                               data-bookmark-id={bookmark.id}
-                              draggable={!pending}
+                              draggable={!controller.pending}
                               key={bookmark.id}
                               tabIndex={0}
                               onDragEnd={finishBookmarkDrag}
@@ -364,7 +228,7 @@ export function SavedContentPanel({
                                 target="projector"
                                 onClick={(event) => {
                                   event.preventDefault();
-                                  void openBookmark(bookmark.id);
+                                  void controller.openBookmark(bookmark.id);
                                 }}
                               >
                                 {bookmark.title}
@@ -386,7 +250,7 @@ export function SavedContentPanel({
             aria-controls="new-folder-form"
             aria-expanded={newFolderOpen}
             className="new-folder-toggle"
-            disabled={pending}
+            disabled={controller.pending}
             onClick={() => setNewFolderOpen((open) => !open)}
             type="button"
           >
@@ -403,7 +267,7 @@ export function SavedContentPanel({
               <label htmlFor="new-folder-date">日付</label>
               <input
                 autoFocus
-                disabled={pending}
+                disabled={controller.pending}
                 id="new-folder-date"
                 type="date"
                 value={newFolderDate}
@@ -413,7 +277,7 @@ export function SavedContentPanel({
             <div>
               <label htmlFor="new-folder-meeting">集会名</label>
               <input
-                disabled={pending}
+                disabled={controller.pending}
                 id="new-folder-meeting"
                 maxLength={189}
                 value={newFolderMeeting}
@@ -421,7 +285,7 @@ export function SavedContentPanel({
               />
             </div>
             <button
-              disabled={pending || !newFolderMeeting.trim()}
+              disabled={controller.pending || !newFolderMeeting.trim()}
               type="submit"
             >
               作成
@@ -436,19 +300,19 @@ export function SavedContentPanel({
         </p>
 
         <div className="saved-feedback" aria-live="polite">
-          {error ? (
+          {controller.error ? (
             <div
               className="notice notice-error"
               role="alert"
               tabIndex={-1}
               ref={feedbackRef}
             >
-              {error}
+              {controller.error}
             </div>
           ) : null}
         </div>
       </section>
-      {favoriteTarget ? createPortal(favoriteForm, favoriteTarget) : null}
+      <FavoritePortal>{favoriteForm}</FavoritePortal>
     </>
   );
 }
