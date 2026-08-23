@@ -9,6 +9,7 @@ import { generateTemporaryPassword } from "@/application/admin/temporary-passwor
 import { getAuthRuntimeConfig } from "@/config/env";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/infrastructure/database/client";
+import { runWithSerializableRetry } from "@/infrastructure/database/serializable-retry";
 import { buildAuthOptions } from "./options";
 
 function credentialWriter(transaction: Prisma.TransactionClient) {
@@ -74,9 +75,11 @@ function transactionAdapter(
 export const provisionChurch = createChurchProvisioner({
   generatePassword: generateTemporaryPassword,
   runTransaction(operation) {
-    return prisma.$transaction(
-      (transaction) => operation(transactionAdapter(transaction)),
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    return runWithSerializableRetry(() =>
+      prisma.$transaction(
+        (transaction) => operation(transactionAdapter(transaction)),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
     );
   },
 });

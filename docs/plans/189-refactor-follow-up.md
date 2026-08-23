@@ -32,7 +32,7 @@
 
 1. [x] #190 unit coverage範囲とsaved-content controller分岐を正確にする。
 2. [x] #191 Church API access・response境界を共通化する。
-3. [ ] #192 Serializable transaction retry policyを統一する。
+3. [x] #192 Serializable transaction retry policyを統一する。
 4. [ ] #193 folder CSSの後勝ちcascadeを整理する。
 5. [ ] #194 client fetcherのcomponent lifetime契約を統一する。
 6. [ ] #195 integration用Bible・tenant fixtureを共通化する。
@@ -46,6 +46,8 @@
 - 2026-08-23 18:25 JST — #190のlocal verification完了。`mise run check`、coverage、integration 76件、E2E 13件（既存dev serverを維持するため一時worktreeで実行）、security、diff checkが成功した。
 - 2026-08-23 18:30 JST — #191でChurch scopeとdenial responseを返す共通API access境界を導入し、scripture/saved-content controllerの重複認証・JSON helperを統合した。
 - 2026-08-23 18:35 JST — #191のlocal verification完了。unit 238件、component 39件、integration 76件、E2E 13件、build、coverage、securityが成功した。
+- 2026-08-23 18:40 JST — #192でchurch provisioningのSerializable transactionを既存の有界P2034 retry policyへ統合し、異なる教会の同時作成をintegration testへ追加した。
+- 2026-08-23 18:45 JST — #192のlocal verification完了。unit 238件、component 39件、integration 77件、E2E 13件、build、coverage、securityが成功した。
 
 ## Decisions
 

@@ -102,6 +102,35 @@ describe("platform operator church provisioning", () => {
     ).resolves.toBe(true);
   });
 
+  it("completes concurrent provisioning for distinct churches", async () => {
+    const operatorUserId = await createOperator();
+
+    const results = await Promise.all(
+      ["first", "second"].map((key) =>
+        provisionChurch(operatorUserId, {
+          accountName: `Concurrent ${key}`,
+          churchName: `${namespace} concurrent ${key}`,
+          email: `${namespace}.concurrent.${key}@example.invalid`,
+        }),
+      ),
+    );
+
+    expect(new Set(results.map(({ churchId }) => churchId))).toHaveProperty(
+      "size",
+      2,
+    );
+    await expect(
+      prisma.user.count({
+        where: { email: { startsWith: `${namespace}.concurrent.` } },
+      }),
+    ).resolves.toBe(2);
+    await expect(
+      prisma.church.count({
+        where: { name: { startsWith: `${namespace} concurrent ` } },
+      }),
+    ).resolves.toBe(2);
+  });
+
   it("denies a church user at the transaction data boundary", async () => {
     const churchUserId = await createChurchUser();
 
