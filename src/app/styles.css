@@ -1857,8 +1857,8 @@ select:focus-visible,
   background: #160d0d;
 }
 
-.danger-zone p:last-child {
-  margin: 7px 0 0;
+.danger-zone-copy {
+  margin: 0;
   color: #bda6a6;
   font-size: 12px;
 }

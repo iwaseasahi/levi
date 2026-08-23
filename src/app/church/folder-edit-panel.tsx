@@ -167,19 +167,7 @@ export function FolderEditPanel({
 
         {selected ? (
           <div className="folder-editor-grid">
-            <section
-              className="management-card"
-              aria-labelledby="folder-settings"
-            >
-              <div className="management-card-heading">
-                <div>
-                  <p className="management-card-kicker">基本設定</p>
-                  <h2 id="folder-settings">フォルダー設定</h2>
-                </div>
-                {selected.folder.isPinned ? (
-                  <span className="status-badge">固定</span>
-                ) : null}
-              </div>
+            <section className="management-card" aria-label="フォルダー設定">
               <form className="modern-folder-edit-form" onSubmit={updateFolder}>
                 <div className="management-field">
                   <label htmlFor="folder-name">フォルダー名</label>
@@ -289,12 +277,13 @@ export function FolderEditPanel({
               )}
             </section>
 
-            <section className="management-card danger-zone">
-              <div>
-                <p className="management-card-kicker">Danger zone</p>
-                <h2>フォルダーの削除</h2>
-                <p>フォルダー内のお気に入りもすべて削除されます。</p>
-              </div>
+            <section
+              aria-label="フォルダーの削除"
+              className="management-card danger-zone"
+            >
+              <p className="danger-zone-copy">
+                フォルダー内のお気に入りもすべて削除されます。
+              </p>
               <button
                 className="danger-button"
                 disabled={pending}

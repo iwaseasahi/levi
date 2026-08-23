@@ -83,6 +83,12 @@ describe("folder management", () => {
         name: "フォルダーを編集",
       }),
     ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "フォルダー設定" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "フォルダーの削除" }),
+    ).not.toBeInTheDocument();
     const name = await screen.findByLabelText("フォルダー名");
     await user.clear(name);
     await user.type(name, "2026-08-30 第一礼拝");
