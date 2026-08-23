@@ -71,7 +71,7 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
     expect(oldRoute.status(), `${oldPath} must not redirect`).toBe(404);
   }
 
-  const legacyFormStyle = await page
+  const searchLayout = await page
     .locator(".ginmaku-books-table")
     .evaluate((element) => {
       const table = getComputedStyle(element);
@@ -82,15 +82,59 @@ test("opens scripture directly, navigates, recovers, and reuses bookmarks", asyn
         rows: element.querySelectorAll("tr").length - 1,
       };
     });
-  expect(legacyFormStyle).toMatchObject({
+  expect(searchLayout).toMatchObject({
     columns: 4,
     fontSize: "11px",
     rows: 22,
   });
-  expect(legacyFormStyle.fontFamily).toContain("Helvetica");
+  expect(searchLayout.fontFamily).toContain("Helvetica");
 
   const firstRow = page.locator(".ginmaku-books-table tr").first();
   await expect(firstRow.locator("td").nth(0)).toContainText("創世記/Genesis");
+  await expect(
+    page.getByRole("button", { name: "Open", exact: true }),
+  ).toBeEnabled();
+
+  const modernControls = await page.evaluate(() => {
+    const open = getComputedStyle(
+      document.querySelector<HTMLElement>(".search-action-primary")!,
+    );
+    const reset = getComputedStyle(
+      document.querySelector<HTMLElement>(".search-action-secondary")!,
+    );
+    const projection = getComputedStyle(
+      document.querySelector<HTMLElement>(".projection-control-panel")!,
+    );
+    return {
+      openBackground: open.backgroundColor,
+      openColor: open.color,
+      openRadius: open.borderRadius,
+      projectionBackground: projection.backgroundImage,
+      projectionRadius: projection.borderRadius,
+      resetBackground: reset.backgroundColor,
+    };
+  });
+  expect(modernControls).toEqual({
+    openBackground: "rgb(210, 165, 104)",
+    openColor: "rgb(23, 17, 10)",
+    openRadius: "8px",
+    projectionBackground:
+      "linear-gradient(145deg, rgb(21, 21, 21), rgb(11, 11, 11))",
+    projectionRadius: "12px",
+    resetBackground: "rgb(32, 32, 32)",
+  });
+  await expect(page.getByRole("group", { name: "投影操作" })).toBeVisible();
+
+  await page.setViewportSize({ height: 720, width: 800 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    ),
+  ).toBe(true);
+  await expect(
+    page.getByRole("radio", { name: "創世記/Genesis" }),
+  ).toBeVisible();
+  await page.setViewportSize({ height: 720, width: 1280 });
 
   const searchAccessibility = await new AxeBuilder({ page }).analyze();
   expect(searchAccessibility.violations).toEqual([]);

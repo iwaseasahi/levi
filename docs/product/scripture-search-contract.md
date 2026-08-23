@@ -27,18 +27,23 @@ optional ending-verse field is empty, it uses the catalog to resolve the last
 contiguous verse at or after `startVerse`; projection and bookmarks therefore
 continue to receive an explicit inclusive `endVerse`.
 
-The `/scripture` screen reproduces Ginmaku's black surface, white 11px Helvetica
+The `/scripture` screen keeps Ginmaku's black surface, white 11px Helvetica
 table, canonical three-column/twenty-two-row book order, inline range controls,
-language labels, and native `Open`/`Reset` controls. It has no Church header,
-logout control, explanatory copy, or result-preview region. A successful
+and language labels. The interaction hierarchy is modernized within that fixed
+layout: selected books and languages have persistent gold-accented states,
+range inputs share a dark toolbar, `Open` is the primary action, and `Reset`
+and `空白⇔表示` are visually distinct secondary actions. Hover, keyboard focus,
+loading, and disabled states remain visibly distinguishable. The screen has no
+Church header, logout control, explanatory copy, or result-preview region. A successful
 `Open` validates the range, keeps the search screen in place, and opens the
 canonical `/scripture/audience` URL directly in an ordinary Chrome tab named
 `projector`. Repeated opens reuse that named tab when it remains open. The URL
 contains only book, chapter, normalized range, and language coordinates; it
 never contains Bible text. Reopening a bookmark uses the same direct-tab flow.
 
-The fourth table column reproduces Ginmaku's `文字 大／小` and `スクロール
-↑／↓` controls, and the Open/Reset row includes Ginmaku's `空白⇔表示` control.
+The fourth table column retains Ginmaku's `文字 大／小` and `スクロール
+↑／↓` behavior in a grouped projection-control panel, and the Open/Reset row
+includes Ginmaku's `空白⇔表示` control.
 They remain disabled until the directly opened audience sends an authenticated
 same-origin readiness message. Text controls adjust the audience font
 immediately. Scroll up/down selects the previous/next canonical scripture item,
