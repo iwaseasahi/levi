@@ -475,9 +475,7 @@ export function SavedContentPanel({
             ▣
           </span>
           {selected ? (
-            <a href={`/folders/${selected.folder.id}/edit`} target="_blank">
-              フォルダの編集
-            </a>
+            <a href={`/folders/${selected.folder.id}/edit`}>フォルダの編集</a>
           ) : (
             <span aria-disabled="true">フォルダの編集</span>
           )}

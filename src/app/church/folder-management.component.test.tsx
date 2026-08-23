@@ -7,6 +7,11 @@ import type { ScriptureBookmarkView } from "@/domain/saved-content";
 import { BookmarkEditPanel } from "./bookmark-edit-panel";
 import { FolderEditPanel } from "./folder-edit-panel";
 
+const { replaceRoute } = vi.hoisted(() => ({ replaceRoute: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: replaceRoute }),
+}));
+
 const folderId = "00000000-0000-4000-8000-000000000101";
 const bookmarkId = "00000000-0000-4000-8000-000000000201";
 const secondBookmarkId = "00000000-0000-4000-8000-000000000202";
@@ -135,6 +140,12 @@ describe("Ginmaku folder management", () => {
     await user.click(screen.getAllByRole("button", { name: "削除/del" })[0]!);
     await waitFor(() =>
       expect(document.querySelectorAll("[data-bookmark-id]")).toHaveLength(1),
+    );
+
+    vi.spyOn(window, "confirm").mockReturnValueOnce(true);
+    await user.click(screen.getByRole("button", { name: "フォルダーを削除" }));
+    await waitFor(() =>
+      expect(replaceRoute).toHaveBeenCalledWith("/scripture"),
     );
   });
 
