@@ -1,22 +1,18 @@
-import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { DirectAudienceDisplay } from "@/app/church/audience/direct-audience-display";
+import { requireChurchPageAccess } from "@/app/church/require-church-page-access";
 import {
   parseScriptureSearch,
   ScriptureSearchError,
 } from "@/domain/scripture/search";
-import { getChurchAccess } from "@/infrastructure/auth/church-session";
 
 export default async function AudiencePage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const access = await getChurchAccess(await headers());
-  if (access.status === "unauthenticated") redirect("/login");
-  if (access.status !== "authorized") notFound();
-  if (access.mustChangePassword) redirect("/change-password");
+  await requireChurchPageAccess();
   const raw = await searchParams;
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(raw)) {

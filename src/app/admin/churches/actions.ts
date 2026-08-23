@@ -6,7 +6,7 @@ import {
   createProvisionChurchController,
   type ProvisionChurchFormState,
 } from "@/application/admin/provision-church-controller";
-import { provisionChurch } from "@/application/admin/provision-church";
+import { provisionChurch } from "@/infrastructure/auth/church-provisioning";
 import { getOperatorAccess } from "@/infrastructure/auth/operator-session";
 import { writeLog } from "@/infrastructure/observability/logger";
 import { REQUEST_ID_HEADER } from "@/infrastructure/observability/request-context";

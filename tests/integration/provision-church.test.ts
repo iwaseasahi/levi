@@ -6,8 +6,8 @@ import {
   ProvisioningAuthorizationError,
   ProvisioningFailedError,
   ProvisioningInputError,
-  provisionChurch,
 } from "@/application/admin/provision-church";
+import { provisionChurch } from "@/infrastructure/auth/church-provisioning";
 import { auth } from "@/infrastructure/auth/server";
 import { prisma } from "@/infrastructure/database/client";
 
