@@ -43,6 +43,7 @@ catalog/search/navigationの共通識別子、query multiplicity、認可respons
 
 - 2026-08-23 JST — identifiers/query multiplicity、controller support、raw row mapperを抽出。unit 213件が合格。
 - 2026-08-23 JST — integration 73件が合格し、bounded range/navigationの代表`EXPLAIN`が既存location/navigation index利用条件を維持。
+- 2026-08-23 JST — `pnpm check`、coverage、DB check、E2E 9件、securityが合格。route一覧とDB schema差分なし。
 
 ## Risks and mitigations
 
@@ -58,18 +59,20 @@ catalog/search/navigationの共通識別子、query multiplicity、認可respons
 - [x] `pnpm test:unit`（213件）
 - [x] `pnpm test:integration`（73件）
 - [x] representative `EXPLAIN`（location/navigation index）
-- [ ] `pnpm check`
-- [ ] `pnpm test:e2e`
-- [ ] `pnpm security:check`
-- [ ] `git diff --check`
+- [x] `pnpm check`（unit 213件、component 39件、build含む）
+- [x] `pnpm test:unit:coverage`（statement 92.58%、branch 84.77%）
+- [x] `pnpm db:check`（schema差分なし）
+- [x] `pnpm test:e2e`（Chromium 9件）
+- [x] `pnpm security:check`（既知の脆弱性0、license 314件承認）
+- [x] `git diff --check`
 - [ ] required CI
 
 ## Handoff or blockers
 
-- Completed: 共通domain/controller/database mapper、unit/integration/query plan確認。
-- Remaining: canonical checks、E2E、PR、CI、merge。
+- Completed: 実装、unit/integration/query plan、canonical checks、coverage、E2E、security。
+- Remaining: PR更新、required CI、merge。
 - Blocker: なし。
-- Resume with: diff review後にfirst coherent commitを作成する。
+- Resume with: verification evidenceをcommit・pushしPRをreadyにする。
 
 ## Result
 
