@@ -32,6 +32,12 @@ test.describe("Church session lifecycle", () => {
   }) => {
     pageErrorGuard.allowConsoleError(expectedUnauthorizedResourceError);
     await login(page);
+    await page.goto("/");
+    const scriptureSearchLink = page.getByRole("link", { name: "聖書検索" });
+    await expect(scriptureSearchLink).toHaveAttribute("href", "/scripture");
+    await expect(page.getByRole("link", { name: "ログイン" })).toHaveCount(0);
+    await scriptureSearchLink.click();
+    await expect(page).toHaveURL(/\/scripture$/);
     await page.reload();
     await expect(
       page.getByRole("radio", { name: "創世記/Genesis" }),
