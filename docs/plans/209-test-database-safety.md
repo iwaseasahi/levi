@@ -37,7 +37,7 @@ test runner.
 2. [x] Make integration and E2E runners resolve only dedicated variables or the
        dedicated default.
 3. [x] Assert the policy again inside direct integration/E2E setup boundaries.
-4. [ ] Update CI and testing documentation, then run canonical verification.
+4. [x] Update CI and testing documentation, then run canonical verification.
 
 ## Progress
 
@@ -50,6 +50,8 @@ test runner.
   development catalog remained at 55,075 verses.
 - 2026-08-24 00:02 JST — An explicit `TEST_DATABASE_URL` targeting `levi`
   failed before database startup with the expected refusal.
+- 2026-08-24 00:03 JST — `mise run check` passed: formatting, lint,
+  typecheck, 251 unit tests, 40 component tests, configuration checks, and build.
 
 ## Decisions
 
@@ -67,20 +69,20 @@ test runner.
 
 ## Verification
 
-- [x] Narrow unit run — 11 new guard cases passed; canonical unit suite pending.
+- [x] `mise run check` — passed, including 251 unit and 40 component tests.
 - [x] `mise exec -- pnpm test:integration` — 77 tests passed.
 - [ ] `mise exec -- pnpm test:e2e`
-- [ ] `mise exec -- pnpm check`
+- [x] `mise run check`
 - [ ] Required CI checks on the exact PR head
 - [ ] Final diff reviewed for unsafe defaults and unrelated changes
 
 ## Handoff or blockers
 
-- Completed: guard, runner/setup enforcement, CI variables, docs, unit and
-  integration verification.
-- Remaining: canonical check, CI, and merge.
+- Completed: guard, runner/setup enforcement, CI variables, docs, canonical
+  check, and integration verification.
+- Remaining: required CI and merge.
 - Blocker: none.
-- Resume with: add the target guard and regression tests.
+- Resume with: inspect required CI on the PR head.
 
 ## Result
 
