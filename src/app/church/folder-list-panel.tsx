@@ -57,9 +57,7 @@ export function FolderListPanel({
         </a>
 
         <header className="folder-page-header">
-          <p className="management-eyebrow">Saved scripture</p>
           <h1>フォルダの一覧</h1>
-          <p>編集するフォルダーを選択してください。</p>
         </header>
 
         <section

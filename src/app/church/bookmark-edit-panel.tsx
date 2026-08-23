@@ -103,9 +103,7 @@ export function BookmarkEditPanel({
         </a>
 
         <header className="folder-page-header">
-          <p className="management-eyebrow">Saved scripture</p>
           <h1>お気に入りを編集</h1>
-          <p>一覧に表示する名前を変更できます。</p>
         </header>
 
         {bookmark ? (
