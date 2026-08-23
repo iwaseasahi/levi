@@ -72,6 +72,9 @@ test("validates the Ginmaku search form and projects each language mode", async 
 
   await page.setViewportSize({ height: 683, width: 1365 });
   const viewportLayout = await page.evaluate(() => {
+    const index = document
+      .querySelector<HTMLElement>("#index_container")!
+      .getBoundingClientRect();
     const bookChoices = Array.from(
       document.querySelectorAll<HTMLElement>(".ginmaku-book-choice"),
     );
@@ -102,6 +105,10 @@ test("validates the Ginmaku search form and projects each language mode", async 
         }),
       documentHasVerticalScroll:
         document.documentElement.scrollHeight > window.innerHeight,
+      ginmakuFixedWorkspace:
+        index.left === 230 &&
+        index.width === 940 &&
+        window.innerWidth - index.right > 0,
       ginmakuToolbarOrder:
         range.top < languages.top &&
         languages.top < actions.top &&
@@ -126,6 +133,7 @@ test("validates the Ginmaku search form and projects each language mode", async 
   expect(viewportLayout).toEqual({
     allBooksInsideViewport: true,
     documentHasVerticalScroll: false,
+    ginmakuFixedWorkspace: true,
     ginmakuToolbarOrder: true,
     rangeUnitsFollowInputs: true,
     trackedControlsInsideViewport: true,
