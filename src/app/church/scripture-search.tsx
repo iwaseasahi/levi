@@ -372,7 +372,7 @@ export function ScriptureSearch({
                         names.length > 0 ? names.join("/") : book.name;
                       return (
                         <td key={book.code}>
-                          <label>
+                          <label className="ginmaku-book-choice">
                             <input
                               checked={selection.book === book.code}
                               name="scripture-book"
@@ -387,50 +387,53 @@ export function ScriptureSearch({
                     })}
                     {rowIndex === 0 ? (
                       <td className="ginmaku-direct-controls" rowSpan={23}>
-                        <div>
-                          文字
-                          <button
-                            aria-label="文字を大きく"
-                            disabled={!audienceReady}
-                            onClick={() => controlAudience("font-larger")}
-                            type="button"
-                          >
-                            大
-                          </button>
-                        </div>
-                        <div>
-                          文字
-                          <button
-                            aria-label="文字を小さく"
-                            disabled={!audienceReady}
-                            onClick={() => controlAudience("font-smaller")}
-                            type="button"
-                          >
-                            小
-                          </button>
-                        </div>
-                        <div className="ginmaku-scroll-controls">
-                          <div>
-                            スクロール
-                            <button
-                              aria-label="前の御言葉へ"
-                              disabled={!audienceReady}
-                              onClick={() => controlAudience("previous")}
-                              type="button"
-                            >
-                              ↑
-                            </button>
+                        <div
+                          aria-label="投影操作"
+                          className="projection-control-panel"
+                          role="group"
+                        >
+                          <p className="projection-control-title">投影操作</p>
+                          <div className="projection-control-group">
+                            <span>文字サイズ</span>
+                            <div className="projection-control-buttons">
+                              <button
+                                aria-label="文字を大きく"
+                                disabled={!audienceReady}
+                                onClick={() => controlAudience("font-larger")}
+                                type="button"
+                              >
+                                大
+                              </button>
+                              <button
+                                aria-label="文字を小さく"
+                                disabled={!audienceReady}
+                                onClick={() => controlAudience("font-smaller")}
+                                type="button"
+                              >
+                                小
+                              </button>
+                            </div>
                           </div>
-                          <div>
-                            スクロール
-                            <button
-                              aria-label="次の御言葉へ"
-                              disabled={!audienceReady}
-                              onClick={() => controlAudience("next")}
-                              type="button"
-                            >
-                              ↓
-                            </button>
+                          <div className="projection-control-group ginmaku-scroll-controls">
+                            <span>聖書箇所</span>
+                            <div className="projection-control-buttons">
+                              <button
+                                aria-label="前の御言葉へ"
+                                disabled={!audienceReady}
+                                onClick={() => controlAudience("previous")}
+                                type="button"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                aria-label="次の御言葉へ"
+                                disabled={!audienceReady}
+                                onClick={() => controlAudience("next")}
+                                type="button"
+                              >
+                                ↓
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </td>
@@ -438,92 +441,110 @@ export function ScriptureSearch({
                   </tr>
                 ))}
                 <tr>
-                  <td colSpan={3}>
-                    <label>
-                      <input
-                        aria-label="章"
-                        disabled={!selection.book || catalogLoading}
-                        inputMode="numeric"
-                        onChange={(event) => updateChapter(event.target.value)}
-                        pattern="[0-9]*"
-                        size={3}
-                        type="text"
-                        value={selection.chapter}
-                      />
-                      章(chapter)
-                    </label>{" "}
-                    <label>
-                      <input
-                        aria-label="開始節"
-                        disabled={!selection.chapter || catalogLoading}
-                        inputMode="numeric"
-                        onChange={(event) =>
-                          updateStartVerse(event.target.value)
-                        }
-                        pattern="[0-9]*"
-                        size={4}
-                        type="text"
-                        value={selection.startVerse}
-                      />
-                      節(verse)
-                    </label>{" "}
-                    <span aria-hidden="true">〜</span>{" "}
-                    <label>
-                      <input
-                        aria-label="終了節（省略可）"
-                        disabled={!selection.startVerse || catalogLoading}
-                        inputMode="numeric"
-                        onChange={(event) => {
-                          setSelection({
-                            ...selection,
-                            endVerse: event.target.value,
-                          });
-                          setStatus({ kind: "idle" });
-                        }}
-                        pattern="[0-9]*"
-                        size={4}
-                        type="text"
-                        value={selection.endVerse}
-                      />
-                      節(verse)
-                    </label>
-                    <br />
-                    {[
-                      ["both", "日本語 & English"],
-                      ["ja", "日本語のみ"],
-                      ["en", "English Only"],
-                    ].map(([value, label]) => (
-                      <label key={value}>
+                  <td className="ginmaku-search-toolbar" colSpan={3}>
+                    <div className="scripture-range-fields">
+                      <label>
+                        <span>章</span>
                         <input
-                          checked={selection.language === value}
-                          name="scripture-language"
-                          onChange={() =>
-                            updateLanguage(value as ScriptureLanguage)
+                          aria-label="章"
+                          disabled={!selection.book || catalogLoading}
+                          inputMode="numeric"
+                          onChange={(event) =>
+                            updateChapter(event.target.value)
                           }
-                          type="radio"
-                          value={value}
+                          pattern="[0-9]*"
+                          size={3}
+                          type="text"
+                          value={selection.chapter}
                         />
-                        {label}
                       </label>
-                    ))}
-                    <br />
-                    <button
-                      disabled={pending || Boolean(catalogError)}
-                      type="submit"
+                      <label>
+                        <span>開始節</span>
+                        <input
+                          aria-label="開始節"
+                          disabled={!selection.chapter || catalogLoading}
+                          inputMode="numeric"
+                          onChange={(event) =>
+                            updateStartVerse(event.target.value)
+                          }
+                          pattern="[0-9]*"
+                          size={4}
+                          type="text"
+                          value={selection.startVerse}
+                        />
+                      </label>
+                      <span aria-hidden="true" className="range-separator">
+                        〜
+                      </span>
+                      <label>
+                        <span>終了節</span>
+                        <input
+                          aria-label="終了節（省略可）"
+                          disabled={!selection.startVerse || catalogLoading}
+                          inputMode="numeric"
+                          onChange={(event) => {
+                            setSelection({
+                              ...selection,
+                              endVerse: event.target.value,
+                            });
+                            setStatus({ kind: "idle" });
+                          }}
+                          pattern="[0-9]*"
+                          size={4}
+                          type="text"
+                          value={selection.endVerse}
+                        />
+                      </label>
+                    </div>
+                    <div
+                      aria-label="表示言語"
+                      className="scripture-language-options"
+                      role="group"
                     >
-                      Open
-                    </button>{" "}
-                    <button type="button" onClick={resetSearch}>
-                      Reset
-                    </button>{" "}
-                    <button
-                      aria-label="空白と表示を切り替え"
-                      disabled={!audienceReady}
-                      onClick={() => controlAudience("toggle-blank")}
-                      type="button"
-                    >
-                      空白⇔表示
-                    </button>
+                      {[
+                        ["both", "日本語 & English"],
+                        ["ja", "日本語のみ"],
+                        ["en", "English Only"],
+                      ].map(([value, label]) => (
+                        <label key={value}>
+                          <input
+                            checked={selection.language === value}
+                            name="scripture-language"
+                            onChange={() =>
+                              updateLanguage(value as ScriptureLanguage)
+                            }
+                            type="radio"
+                            value={value}
+                          />
+                          <span>{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="scripture-search-actions">
+                      <button
+                        className="search-action-primary"
+                        disabled={pending || Boolean(catalogError)}
+                        type="submit"
+                      >
+                        Open
+                      </button>
+                      <button
+                        className="search-action-secondary"
+                        type="button"
+                        onClick={resetSearch}
+                      >
+                        Reset
+                      </button>
+                      <button
+                        aria-label="空白と表示を切り替え"
+                        className="search-action-blank"
+                        disabled={!audienceReady}
+                        onClick={() => controlAudience("toggle-blank")}
+                        type="button"
+                      >
+                        空白⇔表示
+                      </button>
+                    </div>
                   </td>
                 </tr>
               </tbody>
