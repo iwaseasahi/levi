@@ -1,0 +1,351 @@
+.admin-shell {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  background:
+    radial-gradient(
+      circle at 12% 0%,
+      rgb(210 165 104 / 10%),
+      transparent 32rem
+    ),
+    var(--surface-page);
+}
+
+.admin-header,
+.admin-shell > .provisioning-grid,
+.admin-shell > .admin-form {
+  width: min(72rem, 100%);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.admin-header {
+  max-width: 48rem;
+  margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+  font-size: clamp(2.25rem, 6vw, 4rem);
+}
+
+.admin-header > p:last-child {
+  max-width: 42rem;
+  margin-bottom: 0;
+}
+
+.provisioning-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.admin-form,
+.notice {
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  background: var(--surface-panel);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 28%);
+}
+
+.admin-form {
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.admin-shell > .admin-form {
+  margin-top: 1.5rem;
+}
+
+.admin-form h2 {
+  margin: 0 0 1.25rem;
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  letter-spacing: -0.025em;
+}
+
+.admin-form fieldset {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-form label {
+  margin-top: 0.8rem;
+  font-weight: 750;
+  font-size: 0.875rem;
+}
+
+.admin-form input,
+.admin-form select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  background: var(--surface-control);
+  color: var(--text-primary);
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.admin-form input:hover,
+.admin-form select:hover {
+  border-color: #696969;
+  background: var(--surface-control-hover);
+}
+
+.admin-form input:focus-visible,
+.admin-form select:focus-visible {
+  border-color: var(--accent);
+}
+
+.admin-form input[aria-invalid="true"] {
+  border-color: var(--error-border);
+}
+
+.admin-form fieldset:disabled {
+  opacity: 0.7;
+}
+
+.admin-form .confirmation {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin: 0.75rem 0 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.6rem;
+  background: #0d0d0d;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  cursor: pointer;
+}
+
+.admin-form .confirmation input {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  min-height: 1.1rem;
+  margin: 0.15rem 0 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.field-errors {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: var(--error-text);
+  font-size: 0.9rem;
+}
+
+.primary-button,
+.secondary-button {
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.6rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.inline-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-hover);
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.primary-button {
+  margin-top: 0;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.admin-form .primary-button,
+.admin-form .secondary-button,
+.auth-form .primary-button {
+  margin-top: 1rem;
+}
+
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.secondary-button:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: #292015;
+}
+
+.secondary-button {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-control-hover);
+  color: var(--text-primary);
+}
+
+.primary-button:active:not(:disabled),
+.secondary-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.provisioning-feedback {
+  min-height: 8rem;
+}
+
+.notice {
+  padding: 1.5rem;
+}
+
+.auth-form .notice,
+.admin-form .notice {
+  margin-top: 1rem;
+  box-shadow: none;
+}
+
+.notice h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.notice p {
+  margin: 0.8rem 0;
+  font-size: 0.95rem;
+}
+
+.notice-error {
+  border-color: var(--error-border);
+  background: var(--error-surface);
+  color: var(--error-text);
+}
+
+.notice-success {
+  border-color: var(--success-border);
+  background: var(--success-surface);
+  color: var(--success-text);
+}
+
+.notice-error p {
+  color: var(--error-text);
+}
+
+.notice-success p {
+  color: var(--success-text);
+}
+
+.credential-summary {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1.25rem 0;
+}
+
+.credential-summary div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.credential-summary dt {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.credential-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.credential-summary code {
+  font-size: 1.05rem;
+}
+
+.auth-card {
+  width: min(100%, 30rem);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  background: rgb(17 17 17 / 94%);
+  box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 35%);
+}
+
+.auth-card h1 {
+  font-size: clamp(2rem, 8vw, 3.25rem);
+}
+
+.auth-card > p:not(.eyebrow) {
+  margin: 1rem 0 0;
+  font-size: 0.95rem;
+}
+
+.auth-form {
+  margin-top: 1.5rem;
+}
+
+.auth-form fieldset {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.auth-form label {
+  margin-top: 0.45rem;
+  color: #e8e8e8;
+  font-size: 0.875rem;
+  font-weight: 750;
+}
+
+.auth-form input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  background: var(--surface-control);
+  color: var(--text-primary);
+  font: inherit;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.auth-form input:hover {
+  border-color: #696969;
+  background: var(--surface-control-hover);
+}
+
+.auth-form input:focus-visible {
+  border-color: var(--accent);
+}
+
+.auth-form .primary-button {
+  width: 100%;
+}
+
+.auth-form + .secondary-button {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+@media (max-width: 48rem) {
+  .provisioning-grid {
+    grid-template-columns: 1fr;
+  }
+}
