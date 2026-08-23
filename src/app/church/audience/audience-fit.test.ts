@@ -1,37 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { calculateAudienceFitScale } from "./audience-fit";
+import { findAudienceFitScale } from "./audience-fit";
 
 describe("audience fit scale", () => {
   it("keeps content that already fits at full scale", () => {
+    const measuredScales: number[] = [];
+
     expect(
-      calculateAudienceFitScale({
-        availableHeight: 500,
-        availableWidth: 800,
-        contentHeight: 400,
-        contentWidth: 700,
+      findAudienceFitScale((scale) => {
+        measuredScales.push(scale);
+        return true;
       }),
     ).toBe(1);
+    expect(measuredScales).toEqual([1]);
   });
 
-  it("rounds down to the first five-percent step that fits", () => {
-    const scale = calculateAudienceFitScale({
-      availableHeight: 500,
-      availableWidth: 800,
-      contentHeight: 1_000,
-      contentWidth: 400,
+  it("selects the largest five-percent step that actually fits", () => {
+    const measuredScales: number[] = [];
+    const scale = findAudienceFitScale((candidate) => {
+      measuredScales.push(candidate);
+      return candidate <= 0.5;
     });
+
     expect(scale).toBeLessThanOrEqual(0.5);
     expect(scale / 0.95).toBeGreaterThan(0.5);
+    expect(measuredScales.at(-1)).toBe(scale);
   });
 
   it("retains the existing lower fitting bound for extreme content", () => {
-    expect(
-      calculateAudienceFitScale({
-        availableHeight: 1,
-        availableWidth: 1,
-        contentHeight: 10_000,
-        contentWidth: 10_000,
-      }),
-    ).toBeCloseTo(0.1937, 3);
+    expect(findAudienceFitScale(() => false)).toBeCloseTo(0.1937, 3);
   });
 });
