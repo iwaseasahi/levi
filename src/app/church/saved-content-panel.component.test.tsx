@@ -138,7 +138,9 @@ describe("SavedContentPanel", () => {
       name: "新規フォルダ作成",
     });
     await user.click(createToggle);
-    await user.type(screen.getByLabelText("日付"), "2026-08-23");
+    const dateInput = screen.getByLabelText("日付");
+    expect(dateInput).toHaveAttribute("type", "date");
+    await user.type(dateInput, "2026-08-23");
     await user.type(screen.getByLabelText("集会名"), "第二礼拝");
     await user.click(screen.getByRole("button", { name: "作成" }));
     expect(
