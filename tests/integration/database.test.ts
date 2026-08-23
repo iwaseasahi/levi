@@ -5,21 +5,23 @@ import { hashPassword } from "better-auth/crypto";
 import { prisma } from "@/infrastructure/database/client";
 import { buildSystemSetting } from "../helpers/system-setting-factory";
 
+const namespace = "test.database.";
+
 async function clearTestRecords() {
   await prisma.user.deleteMany({
-    where: { email: { startsWith: "test." } },
+    where: { email: { startsWith: namespace } },
   });
   await prisma.church.deleteMany({
-    where: { name: { startsWith: "test." } },
+    where: { name: { startsWith: namespace } },
   });
   await prisma.verification.deleteMany({
-    where: { identifier: { startsWith: "test." } },
+    where: { identifier: { startsWith: namespace } },
   });
   await prisma.rateLimit.deleteMany({
-    where: { key: { startsWith: "test." } },
+    where: { key: { startsWith: namespace } },
   });
   await prisma.systemSetting.deleteMany({
-    where: { key: { startsWith: "test." } },
+    where: { key: { startsWith: namespace } },
   });
 }
 
@@ -43,7 +45,7 @@ describe("database foundation", () => {
 
   it("starts without records left by another test", async () => {
     await expect(
-      prisma.systemSetting.count({ where: { key: { startsWith: "test." } } }),
+      prisma.systemSetting.count({ where: { key: { startsWith: namespace } } }),
     ).resolves.toBe(0);
   });
 });
@@ -57,19 +59,23 @@ describe("auth and tenant constraints", () => {
 
   it("enforces normalized case-insensitive global email uniqueness", async () => {
     await prisma.user.create({
-      data: pendingUser("test.email@example.invalid"),
+      data: pendingUser("test.database.email@example.invalid"),
     });
 
     await expect(
-      prisma.user.create({ data: pendingUser("Test.upper@example.invalid") }),
+      prisma.user.create({
+        data: pendingUser("Test.Database.upper@example.invalid"),
+      }),
     ).rejects.toThrow();
     await expect(
-      prisma.user.create({ data: pendingUser("test.email@example.invalid") }),
+      prisma.user.create({
+        data: pendingUser("test.database.email@example.invalid"),
+      }),
     ).rejects.toThrow();
   });
 
   it("allows only complete exclusive active actor assignments", async () => {
-    const operator = pendingUser("test.operator@example.invalid");
+    const operator = pendingUser("test.database.operator@example.invalid");
     await prisma.$transaction(async (transaction) => {
       await transaction.user.create({
         data: { ...operator, actorState: "ACTIVE" },
@@ -82,17 +88,17 @@ describe("auth and tenant constraints", () => {
     await expect(
       prisma.user.create({
         data: {
-          ...pendingUser("test.unassigned@example.invalid"),
+          ...pendingUser("test.database.unassigned@example.invalid"),
           actorState: "ACTIVE",
         },
       }),
     ).rejects.toThrow();
 
-    const mixed = pendingUser("test.mixed@example.invalid");
+    const mixed = pendingUser("test.database.mixed@example.invalid");
     await expect(
       prisma.$transaction(async (transaction) => {
         const church = await transaction.church.create({
-          data: { name: "test.mixed church" },
+          data: { name: "test.database.mixed church" },
         });
         await transaction.user.create({
           data: { ...mixed, actorState: "ACTIVE" },
@@ -106,10 +112,12 @@ describe("auth and tenant constraints", () => {
       }),
     ).rejects.toThrow();
 
-    const member = pendingUser("test.reassigned-member@example.invalid");
+    const member = pendingUser(
+      "test.database.reassigned-member@example.invalid",
+    );
     await prisma.$transaction(async (transaction) => {
       const church = await transaction.church.create({
-        data: { name: "test.reassigned church" },
+        data: { name: "test.database.reassigned church" },
       });
       await transaction.user.create({
         data: { ...member, actorState: "ACTIVE" },
@@ -133,10 +141,10 @@ describe("auth and tenant constraints", () => {
   });
 
   it("enforces the initial one-user-per-church membership cardinality", async () => {
-    const first = pendingUser("test.first@example.invalid");
+    const first = pendingUser("test.database.first@example.invalid");
     await prisma.$transaction(async (transaction) => {
       const church = await transaction.church.create({
-        data: { name: "test.cardinality church" },
+        data: { name: "test.database.cardinality church" },
       });
       await transaction.user.create({
         data: { ...first, actorState: "ACTIVE" },
@@ -147,9 +155,9 @@ describe("auth and tenant constraints", () => {
     });
 
     const church = await prisma.church.findFirstOrThrow({
-      where: { name: "test.cardinality church" },
+      where: { name: "test.database.cardinality church" },
     });
-    const second = pendingUser("test.second@example.invalid");
+    const second = pendingUser("test.database.second@example.invalid");
     await expect(
       prisma.$transaction(async (transaction) => {
         await transaction.user.create({
@@ -163,7 +171,7 @@ describe("auth and tenant constraints", () => {
   });
 
   it("isolates credential hashes from OAuth and session token fields", async () => {
-    const user = pendingUser("test.credential@example.invalid");
+    const user = pendingUser("test.database.credential@example.invalid");
     const passwordHash = await hashPassword("synthetic-test-password");
     await prisma.user.create({ data: user });
     await prisma.account.create({
@@ -199,35 +207,42 @@ describe("auth and tenant constraints", () => {
   });
 
   it("enforces session and church lifecycle checks", async () => {
-    const user = pendingUser("test.session@example.invalid");
+    const user = pendingUser("test.database.session@example.invalid");
     await prisma.user.create({ data: user });
 
     await expect(
       prisma.session.create({
         data: {
           userId: user.id,
-          token: "test.expired-session-token",
+          token: "test.database.expired-session-token",
           expiresAt: new Date("2000-01-01T00:00:00.000Z"),
         },
       }),
     ).rejects.toThrow();
     await expect(
       prisma.church.create({
-        data: { name: "test.invalid suspension", status: "SUSPENDED" },
+        data: {
+          name: "test.database.invalid suspension",
+          status: "SUSPENDED",
+        },
       }),
     ).rejects.toThrow();
     await expect(
       prisma.rateLimit.create({
-        data: { key: "test.invalid-rate-limit", count: -1, lastRequest: 1n },
+        data: {
+          key: "test.database.invalid-rate-limit",
+          count: -1,
+          lastRequest: 1n,
+        },
       }),
     ).rejects.toThrow();
   });
 
   it("prevents deleting a church while its active user would become unassigned", async () => {
-    const user = pendingUser("test.restrict@example.invalid");
+    const user = pendingUser("test.database.restrict@example.invalid");
     const church = await prisma.$transaction(async (transaction) => {
       const createdChurch = await transaction.church.create({
-        data: { name: "test.restrict church" },
+        data: { name: "test.database.restrict church" },
       });
       await transaction.user.create({
         data: { ...user, actorState: "ACTIVE" },
@@ -250,11 +265,11 @@ describe("auth and tenant constraints", () => {
   });
 
   it("cascades identity-owned rows without deleting the church", async () => {
-    const user = pendingUser("test.cascade@example.invalid");
+    const user = pendingUser("test.database.cascade@example.invalid");
     const passwordHash = await hashPassword("synthetic-cascade-password");
     const churchId = await prisma.$transaction(async (transaction) => {
       const church = await transaction.church.create({
-        data: { name: "test.cascade church" },
+        data: { name: "test.database.cascade church" },
       });
       await transaction.user.create({
         data: { ...user, actorState: "ACTIVE" },
@@ -274,7 +289,7 @@ describe("auth and tenant constraints", () => {
       await transaction.session.create({
         data: {
           userId: user.id,
-          token: "test.cascade-session-token",
+          token: "test.database.cascade-session-token",
           expiresAt: new Date(Date.now() + 60_000),
         },
       });
