@@ -1,6 +1,7 @@
 "use client";
 
 import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type {
   FolderSummary,
   ScriptureBookmarkView,
@@ -34,6 +35,7 @@ export function FolderEditPanel({
   folderId: string;
   fetcher?: typeof fetch;
 }) {
+  const router = useRouter();
   const [selected, setSelected] = useState<SelectedFolder | null>(null);
   const [name, setName] = useState("");
   const [pinned, setPinned] = useState(false);
@@ -117,7 +119,7 @@ export function FolderEditPanel({
       return;
     await run(async () => {
       await request({ action: "delete-folder", folderId });
-      window.close();
+      router.replace("/scripture");
     });
   }
 

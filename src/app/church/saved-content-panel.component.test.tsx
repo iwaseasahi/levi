@@ -127,7 +127,7 @@ describe("SavedContentPanel", () => {
     ).toHaveAttribute("href", `/folders/${folderId}/edit`);
     expect(
       screen.getByRole("link", { name: "フォルダの編集" }),
-    ).toHaveAttribute("target", "_blank");
+    ).not.toHaveAttribute("target");
 
     await user.click(worship);
     expect(worship).toHaveAttribute("aria-expanded", "false");

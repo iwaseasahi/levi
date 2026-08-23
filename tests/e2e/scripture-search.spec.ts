@@ -445,7 +445,7 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   );
   await expect(page.getByRole("button", { name: /を上へ/ })).toHaveCount(0);
   const editFolderLink = page.getByRole("link", { name: "フォルダの編集" });
-  await expect(editFolderLink).toHaveAttribute("target", "_blank");
+  await expect(editFolderLink).not.toHaveAttribute("target");
   await worshipFolder.click();
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "false");
   await worshipFolder.click();
@@ -507,10 +507,9 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
   const worshipEditHref = await editFolderLink.getAttribute("href");
 
-  const folderEditorOpened = context.waitForEvent("page");
   await editFolderLink.click();
-  let folderEditor = await folderEditorOpened;
-  await expect(folderEditor).toHaveURL(
+  const folderEditor = page;
+  await expect(page).toHaveURL(
     new RegExp(`${worshipEditHref!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
   );
   await folderEditor.getByLabel("Title").fill("礼拝用");
@@ -528,9 +527,8 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   );
   await folderEditor.getByRole("link", { name: "Back" }).click();
   await expect(folderEditor).toHaveURL(/\/folders\/[^/]+\/edit$/);
-  await folderEditor.close();
-
-  await page.reload();
+  await folderEditor.getByRole("link", { name: "Back" }).click();
+  await expect(page).toHaveURL(/\/scripture$/);
   const renamedFolder = page.getByRole("button", {
     name: "礼拝用",
     exact: true,
@@ -551,9 +549,7 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   ).toBeVisible();
   await bookmarkedAudience.close();
 
-  const deleteEditorOpened = context.waitForEvent("page");
   await page.getByRole("link", { name: "フォルダの編集" }).click();
-  folderEditor = await deleteEditorOpened;
   folderEditor.once("dialog", (dialog) => dialog.accept());
   await folderEditor.getByRole("button", { name: "削除/del" }).last().click();
   await expect(folderEditor.getByRole("status")).toHaveText(
@@ -561,7 +557,6 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   );
   folderEditor.once("dialog", (dialog) => dialog.accept());
   await folderEditor.getByRole("button", { name: "フォルダーを削除" }).click();
-  await expect.poll(() => folderEditor.isClosed()).toBe(true);
-  await page.reload();
+  await expect(page).toHaveURL(/\/scripture$/);
   await expect(renamedFolder).toHaveCount(0);
 }
