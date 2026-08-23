@@ -5,6 +5,7 @@ import { createSavedContentHandlers } from "./controller";
 
 const churchId = "00000000-0000-4000-8000-000000000054";
 const folderId = "00000000-0000-4000-8000-000000000055";
+const bookmarkId = "00000000-0000-4000-8000-000000000056";
 const scope = { churchId } as ChurchScope;
 const authorized = {
   mustChangePassword: false,
@@ -24,12 +25,42 @@ function repository(): SavedContentRepository {
       position: 0,
       lastUsedAt: null,
     }),
-    updateFolder: vi.fn(),
+    updateFolder: vi.fn().mockResolvedValue({
+      id: folderId,
+      name: "更新後",
+      isPinned: true,
+      position: 0,
+      lastUsedAt: null,
+    }),
     selectFolder: vi.fn().mockResolvedValue({ folder: {}, bookmarks: [] }),
     reorderFolders: vi.fn().mockResolvedValue(true),
     deleteFolder: vi.fn().mockResolvedValue(true),
-    createBookmark: vi.fn(),
-    openBookmark: vi.fn(),
+    createBookmark: vi.fn().mockResolvedValue({
+      id: bookmarkId,
+      folderId,
+      position: 0,
+      title: "創世記 1:1",
+      search: {
+        book: "GEN",
+        chapter: 1,
+        startVerse: 1,
+        endVerse: 1,
+        language: "both",
+      },
+    }),
+    openBookmark: vi.fn().mockResolvedValue({
+      id: bookmarkId,
+      folderId,
+      position: 0,
+      title: "創世記 1:1",
+      search: {
+        book: "GEN",
+        chapter: 1,
+        startVerse: 1,
+        endVerse: 1,
+        language: "both",
+      },
+    }),
     reorderBookmarks: vi.fn().mockResolvedValue(true),
     deleteBookmark: vi.fn().mockResolvedValue(true),
   };
@@ -66,6 +97,98 @@ describe("saved content HTTP handlers", () => {
     expect(response.status).toBe(200);
     expect(saved.createFolder).toHaveBeenCalledWith(scope, "礼拝");
   });
+
+  it.each([
+    [
+      "update-folder",
+      { action: "update-folder", folderId, name: " 更新後 ", isPinned: true },
+      "updateFolder",
+      [scope, folderId, { name: "更新後", isPinned: true }],
+      { folder: expect.objectContaining({ id: folderId, name: "更新後" }) },
+    ],
+    [
+      "reorder-folders",
+      { action: "reorder-folders", ids: [folderId] },
+      "reorderFolders",
+      [scope, [folderId]],
+      { ok: true },
+    ],
+    [
+      "delete-folder",
+      { action: "delete-folder", folderId },
+      "deleteFolder",
+      [scope, folderId],
+      { ok: true },
+    ],
+    [
+      "create-bookmark",
+      {
+        action: "create-bookmark",
+        folderId,
+        title: " 創世記 1:1 ",
+        book: "GEN",
+        chapter: 1,
+        startVerse: 1,
+        endVerse: 1,
+        language: "both",
+      },
+      "createBookmark",
+      [
+        scope,
+        folderId,
+        {
+          title: "創世記 1:1",
+          book: "GEN",
+          chapter: 1,
+          startVerse: 1,
+          endVerse: 1,
+          language: "both",
+        },
+      ],
+      { bookmark: expect.objectContaining({ id: bookmarkId }) },
+    ],
+    [
+      "open-bookmark",
+      { action: "open-bookmark", bookmarkId },
+      "openBookmark",
+      [scope, bookmarkId],
+      { bookmark: expect.objectContaining({ id: bookmarkId }) },
+    ],
+    [
+      "reorder-bookmarks",
+      { action: "reorder-bookmarks", folderId, ids: [bookmarkId] },
+      "reorderBookmarks",
+      [scope, folderId, [bookmarkId]],
+      { ok: true },
+    ],
+    [
+      "delete-bookmark",
+      { action: "delete-bookmark", bookmarkId },
+      "deleteBookmark",
+      [scope, bookmarkId],
+      { ok: true },
+    ],
+  ] as const)(
+    "dispatches the %s command with the server-derived scope",
+    async (_action, body, method, expectedArguments, expectedBody) => {
+      const saved = repository();
+      const handlers = createSavedContentHandlers({
+        getChurchAccess: vi.fn().mockResolvedValue(authorized),
+        repository: saved,
+      });
+
+      const response = await handlers.POST(
+        new Request("https://levi.example/api/saved-content", {
+          method: "POST",
+          body: JSON.stringify(body),
+        }),
+      );
+
+      expect(response.status).toBe(200);
+      expect(saved[method]).toHaveBeenCalledWith(...expectedArguments);
+      await expect(response.json()).resolves.toEqual(expectedBody);
+    },
+  );
 
   it("never accepts a church ID from the command", async () => {
     const saved = repository();

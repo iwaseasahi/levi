@@ -44,19 +44,22 @@ boundary are mapped in
 
 Unit coverage includes every production TypeScript file under `domain`,
 `application`, `config`, and API `controller` boundaries, even when a test does
-not import the file. Agent orchestration, readiness, request logging, and the
-request proxy remain included because they also contain unit-testable policy.
+not import the file. Pure client helpers, authentication policy, database policy,
+migration exactness/guard policy, operational policy, agent orchestration,
+readiness, request logging, and the request proxy remain included when they have
+deterministic unit tests. `vitest.config.ts` lists these boundary files explicitly
+so adding a framework or database adapter does not silently expand the unit gate.
 
 The following code is intentionally outside unit coverage:
 
-| Code                                              | Reason                                                                               | Owning gate                                                                               |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| React components and App Router pages/layouts     | Behavior depends on rendering, hydration, or routing                                 | Component and E2E                                                                         |
-| API `route.ts` adapters other than readiness      | Thin framework adapters delegate to covered controllers                              | Controller unit tests and E2E                                                             |
-| Prisma repositories and database client/readiness | Behavior depends on PostgreSQL constraints and transactions                          | Integration                                                                               |
-| Auth client/server adapters                       | Behavior depends on Better Auth and request/session integration                      | Integration and E2E                                                                       |
-| Migration and operational scripts                 | File/database/process behavior has dedicated suites and destructive-operation guards | Unit or integration tests colocated with each script, outside the product-code percentage |
-| Type-only `agent-orchestration/types.ts`          | Erased at runtime; there are no executable statements                                | Typecheck                                                                                 |
+| Code                                              | Reason                                                                               | Owning gate                                                                                                        |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| React components and App Router pages/layouts     | Behavior depends on rendering, hydration, or routing                                 | Component and E2E                                                                                                  |
+| API `route.ts` adapters other than readiness      | Thin framework adapters delegate to covered controllers                              | Controller unit tests and E2E                                                                                      |
+| Prisma repositories and database client/readiness | Behavior depends on PostgreSQL constraints and transactions                          | Integration                                                                                                        |
+| Auth client/server adapters                       | Behavior depends on Better Auth and request/session integration                      | Integration and E2E                                                                                                |
+| Migration and operational adapters/scripts        | File/database/process behavior has dedicated suites and destructive-operation guards | Unit or integration tests colocated with each script; pure exactness and guard policy under `src` remains included |
+| Type-only `agent-orchestration/types.ts`          | Erased at runtime; there are no executable statements                                | Typecheck                                                                                                          |
 
 Thresholds apply to the combined unit-testable scope and must not be weakened to
 make a change pass.
