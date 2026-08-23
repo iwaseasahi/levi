@@ -182,6 +182,29 @@ describe("ScriptureSearch", () => {
     expect(results.violations).toEqual([]);
   });
 
+  it("keeps controls disabled while loading and announces an empty catalog", async () => {
+    let resolveCatalog!: (response: Response) => void;
+    const pendingCatalog = new Promise<Response>((resolve) => {
+      resolveCatalog = resolve;
+    });
+    const fetcher = vi.fn<typeof fetch>((input) =>
+      String(input).includes("/saved-content")
+        ? response({ folders: [], orderIds: [] })
+        : pendingCatalog,
+    );
+    renderSearch(fetcher);
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "検索候補を読み込んでいます。",
+    );
+    expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
+
+    resolveCatalog(Response.json({ books: [], chapters: [], verses: [] }));
+    expect(
+      await screen.findByText("利用できる聖書データがありません。"),
+    ).toBeVisible();
+  });
+
   it("keeps the search page and opens the audience directly in the projector tab", async () => {
     const fetcher = successfulFetcher();
     renderSearch(fetcher);
@@ -276,6 +299,48 @@ describe("ScriptureSearch", () => {
       ),
     );
     expect(screen.getByRole("button", { name: "文字を大きく" })).toBeDisabled();
+  });
+
+  it("disables controls for a closed audience and reconnects after Open", async () => {
+    renderSearch(successfulFetcher());
+    const user = userEvent.setup();
+    await chooseRange(user);
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            schema: "levi.direct-audience",
+            type: "READY",
+            version: 1,
+          },
+          origin: window.location.origin,
+          source: audienceTarget,
+        }),
+      ),
+    );
+    const larger = screen.getByRole("button", { name: "文字を大きく" });
+    await waitFor(() => expect(larger).toBeEnabled());
+
+    Object.assign(audienceTarget, { closed: true });
+    await waitFor(() => expect(larger).toBeDisabled(), { timeout: 1_500 });
+
+    Object.assign(audienceTarget, { closed: false });
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            schema: "levi.direct-audience",
+            type: "READY",
+            version: 1,
+          },
+          origin: window.location.origin,
+          source: audienceTarget,
+        }),
+      ),
+    );
+    await waitFor(() => expect(larger).toBeEnabled());
   });
 
   it("normalizes an omitted end verse to the contiguous chapter end", async () => {
