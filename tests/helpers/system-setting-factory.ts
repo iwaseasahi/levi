@@ -5,7 +5,7 @@ export function buildSystemSetting() {
 
   return {
     id,
-    key: `test.${id}`,
+    key: `test.database.${id}`,
     value: "fixture-value",
   } as const;
 }
