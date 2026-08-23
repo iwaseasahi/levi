@@ -274,12 +274,6 @@ export function FolderEditPanel({
                         <span>保存した聖書箇所</span>
                       </div>
                       <div className="modern-bookmark-actions">
-                        <a
-                          className="secondary-link"
-                          href={`/bookmarks/${bookmark.id}/edit?folderId=${folderId}`}
-                        >
-                          編集
-                        </a>
                         <button
                           className="danger-button-quiet"
                           disabled={pending}

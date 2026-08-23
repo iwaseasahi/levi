@@ -293,22 +293,6 @@ export const savedContentRepository: SavedContentRepository = {
     });
   },
 
-  async updateBookmark({ churchId }, bookmarkId, input) {
-    return prisma.$transaction(async (transaction) => {
-      const updated = await transaction.bookmark.updateMany({
-        where: { churchId, id: bookmarkId },
-        data: { title: input.title },
-      });
-      if (updated.count !== 1) return null;
-      return bookmarkView(
-        await transaction.bookmark.findUniqueOrThrow({
-          where: { id: bookmarkId },
-          include: bookmarkInclude,
-        }),
-      );
-    });
-  },
-
   async reorderBookmarks({ churchId }, folderId, ids) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockFolder(transaction, churchId, folderId))) return false;

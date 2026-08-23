@@ -1565,8 +1565,7 @@ select:focus-visible,
 }
 
 .folder-card-link,
-.primary-link,
-.secondary-link {
+.primary-link {
   color: #e1b779;
   font-weight: 750;
   text-decoration: none;
@@ -1804,7 +1803,6 @@ select:focus-visible,
   align-items: center;
 }
 
-.secondary-link,
 .danger-button-quiet {
   display: inline-flex;
   min-height: 34px;

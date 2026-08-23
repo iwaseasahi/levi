@@ -10,7 +10,6 @@ import {
   reorderBookmarks,
   reorderFolders,
   selectFolder,
-  updateBookmark,
   updateFolder,
   type SavedContentRepository,
 } from "@/application/saved-content/manage-saved-content";
@@ -147,15 +146,6 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
                 dependencies.repository,
                 access.scope,
                 command.bookmarkId,
-              ),
-            });
-          case "update-bookmark":
-            return json({
-              bookmark: await updateBookmark(
-                dependencies.repository,
-                access.scope,
-                command.bookmarkId,
-                command.input,
               ),
             });
           case "reorder-bookmarks":
