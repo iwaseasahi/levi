@@ -13,8 +13,16 @@ import {
   updateFolder,
 } from "@/application/saved-content/manage-saved-content";
 import { savedContentRepository } from "@/infrastructure/database/saved-content-repository";
+import {
+  clearSyntheticBibleFixture,
+  createSyntheticBibleFixture,
+} from "../helpers/synthetic-bible-fixture";
 
 const codes = ["T54J", "T54E"];
+const bibleCleanup = {
+  bookCodes: ["T54"],
+  deleteTranslationCodes: codes,
+};
 
 function tenant(churchId: string) {
   return { churchId } as ChurchScope;
@@ -27,59 +35,39 @@ async function clearFixture() {
   await prisma.church.deleteMany({
     where: { name: { startsWith: "test.saved-content" } },
   });
-  await prisma.bibleVerse.deleteMany({
-    where: { book: { canonicalCode: "T54" } },
-  });
-  await prisma.bibleBookName.deleteMany({
-    where: { book: { canonicalCode: "T54" } },
-  });
-  await prisma.bibleBook.deleteMany({ where: { canonicalCode: "T54" } });
-  await prisma.bibleTranslation.deleteMany({ where: { code: { in: codes } } });
+  await clearSyntheticBibleFixture(prisma, bibleCleanup);
 }
 
 async function createFixture() {
-  const primary = await prisma.bibleTranslation.create({
-    data: {
-      code: codes[0]!,
-      displayOrder: 50,
-      languageTag: "ja",
-      name: `Synthetic ${codes[0]}`,
-      rightsNotice: "synthetic fixture only",
-      rightsStatus: "APPROVED",
-      sourceReference: "saved-content integration fixture",
-    },
-  });
-  const secondary = await prisma.bibleTranslation.create({
-    data: {
-      code: codes[1]!,
-      displayOrder: 51,
-      languageTag: "en",
-      name: `Synthetic ${codes[1]}`,
-      rightsNotice: "synthetic fixture only",
-      rightsStatus: "APPROVED",
-      sourceReference: "saved-content integration fixture",
-    },
-  });
-  const book = await prisma.bibleBook.create({
-    data: { canonicalCode: "T54", canonicalOrder: 54, testament: "NEW" },
-  });
-  await prisma.bibleBookName.createMany({
-    data: [
-      { bookId: book.id, translationId: primary!.id, name: "架空書54" },
-      { bookId: book.id, translationId: secondary!.id, name: "Synthetic 54" },
+  const bible = await createSyntheticBibleFixture(prisma, {
+    books: [
+      {
+        canonicalCode: "T54",
+        canonicalOrder: 54,
+        names: {
+          T54E: { name: "Synthetic 54" },
+          T54J: { name: "架空書54" },
+        },
+        testament: "NEW",
+        verses: [1, 2, 3].map((verseNumber) => ({
+          chapterNumber: 1,
+          texts: {
+            T54E: `Synthetic text ${verseNumber}`,
+            T54J: `Synthetic text ${verseNumber}`,
+          },
+          verseNumber,
+        })),
+      },
+    ],
+    sourceReference: "saved-content integration fixture",
+    translations: [
+      { code: "T54J", displayOrder: 50, languageTag: "ja" },
+      { code: "T54E", displayOrder: 51, languageTag: "en" },
     ],
   });
-  await prisma.bibleVerse.createMany({
-    data: [primary!, secondary!].flatMap(({ id: translationId }) =>
-      [1, 2, 3].map((verseNumber) => ({
-        bookId: book.id,
-        chapterNumber: 1,
-        text: `Synthetic text ${verseNumber}`,
-        translationId,
-        verseNumber,
-      })),
-    ),
-  });
+  const book = bible.books.get("T54")!;
+  const primary = bible.translations.get("T54J")!;
+  const secondary = bible.translations.get("T54E")!;
   const firstChurch = await prisma.church.create({
     data: { name: "test.saved-content first" },
   });
@@ -172,28 +160,19 @@ describe("saved-content database contract", () => {
 
   it("enforces tenant scope through repository and use-case operations", async () => {
     const fixture = await createFixture();
-    const translations = [];
-    for (const [index, code] of (["JSS3", "NKJV"] as const).entries()) {
-      translations.push(
-        await prisma.bibleTranslation.upsert({
-          where: { code },
-          update: {
-            rightsNotice: "synthetic fixture only",
-            rightsStatus: "APPROVED",
-            sourceReference: "saved-content repository fixture",
-          },
-          create: {
-            code,
-            displayOrder: index + 1,
-            languageTag: index === 0 ? "ja" : "en",
-            name: `Synthetic ${code}`,
-            rightsNotice: "synthetic fixture only",
-            rightsStatus: "APPROVED",
-            sourceReference: "saved-content repository fixture",
-          },
-        }),
-      );
-    }
+    const repositoryBible = await createSyntheticBibleFixture(prisma, {
+      books: [],
+      sourceReference: "saved-content repository fixture",
+      translations: [
+        { code: "JSS3", displayOrder: 1, languageTag: "ja" },
+        { code: "NKJV", displayOrder: 2, languageTag: "en" },
+      ],
+      upsertTranslations: true,
+    });
+    const translations = [
+      repositoryBible.translations.get("JSS3")!,
+      repositoryBible.translations.get("NKJV")!,
+    ];
     await prisma.bibleVerse.createMany({
       data: translations.flatMap(({ id: translationId }) =>
         [1, 2, 3].map((verseNumber) => ({

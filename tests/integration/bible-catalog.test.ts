@@ -2,50 +2,52 @@ import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { prisma } from "@/infrastructure/database/client";
+import {
+  clearSyntheticBibleFixture,
+  createSyntheticBibleFixture,
+  type SyntheticBibleCleanup,
+} from "../helpers/synthetic-bible-fixture";
+
+let activeCleanup: SyntheticBibleCleanup | null = null;
 
 async function clearSyntheticCatalog() {
-  await prisma.bibleVerse.deleteMany({
-    where: { translation: { code: { startsWith: "TEST_" } } },
-  });
-  await prisma.bibleBookName.deleteMany({
-    where: { translation: { code: { startsWith: "TEST_" } } },
-  });
-  await prisma.bibleTranslation.deleteMany({
-    where: { code: { startsWith: "TEST_" } },
-  });
-  await prisma.bibleBook.deleteMany({
-    where: { canonicalCode: { startsWith: "TEST_" } },
-  });
+  if (activeCleanup) await clearSyntheticBibleFixture(prisma, activeCleanup);
+  activeCleanup = null;
 }
 
 async function createCatalogFixture() {
   const token = randomUUID().replaceAll("-", "").slice(0, 8).toUpperCase();
-  const translation = await prisma.bibleTranslation.create({
-    data: {
-      code: `TEST_${token}`,
-      name: `Synthetic translation ${token}`,
-      languageTag: "en",
-      displayOrder: 1000 + Number.parseInt(token.slice(0, 3), 16),
-      rightsStatus: "APPROVED",
-      sourceReference: "synthetic integration fixture",
-      rightsNotice: "not scripture; test use only",
-    },
+  const code = `TEST_${token}`;
+  const fixture = await createSyntheticBibleFixture(prisma, {
+    books: [
+      {
+        canonicalCode: code,
+        canonicalOrder: 1000 + Number.parseInt(token.slice(3, 6), 16),
+        names: {
+          [code]: {
+            name: `Synthetic book ${token}`,
+            shortName: `S${token.slice(0, 4)}`,
+          },
+        },
+        testament: "NEW",
+      },
+    ],
+    sourceReference: "synthetic integration fixture",
+    translations: [
+      {
+        code,
+        displayOrder: 1000 + Number.parseInt(token.slice(0, 3), 16),
+        languageTag: "en",
+        name: `Synthetic translation ${token}`,
+      },
+    ],
   });
-  const book = await prisma.bibleBook.create({
-    data: {
-      canonicalCode: `TEST_${token}`,
-      canonicalOrder: 1000 + Number.parseInt(token.slice(3, 6), 16),
-      testament: "NEW",
-    },
-  });
-  await prisma.bibleBookName.create({
-    data: {
-      translationId: translation.id,
-      bookId: book.id,
-      name: `Synthetic book ${token}`,
-      shortName: `S${token.slice(0, 4)}`,
-    },
-  });
+  activeCleanup = {
+    bookCodes: [code],
+    deleteTranslationCodes: [code],
+  };
+  const book = fixture.books.get(code)!;
+  const translation = fixture.translations.get(code)!;
   return { book, token, translation };
 }
 

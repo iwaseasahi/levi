@@ -36,7 +36,7 @@
 4. [x] #200 integration fixtureのcleanup namespace衝突を解消する。
 5. [x] #193 folder CSSの後勝ちcascadeを整理する。
 6. [x] #194 client fetcherのcomponent lifetime契約を統一する。
-7. [ ] #195 integration用Bible・tenant fixtureを共通化する。
+7. [x] #195 integration用Bible・tenant fixtureを共通化する。
 8. [ ] 最終mainのrequired CIを確認し、#189を証跡付きで閉じる。
 
 ## Progress
@@ -55,6 +55,8 @@
 - 2026-08-23 19:10 JST — #193のlocal verification完了。unit 238件、component 39件、integration 77件、E2E 13件、build、coverage、securityが成功し、desktopと390px幅のfolder画面を実ブラウザで確認した。
 - 2026-08-23 19:20 JST — #194でinjected fetcherを初回renderからunmountまで固定する共通hookを導入し、4つのclient hook/componentへ適用した。Hooks lint抑制を削除し、rerender契約とstale catalog guardをcomponent testへ追加した。
 - 2026-08-23 19:25 JST — #194のlocal verification完了。unit 238件、component 40件、integration 77件、E2E 13件、build、coverage、securityが成功した。
+- 2026-08-23 19:35 JST — #195でsynthetic translation/book/name/verseとexact cleanup targetを扱う共有fixture builderを導入し、saved-content、scripture-search、Bible catalogの重複setupを置換した。対象3 suiteは逆順の単独実行と全integration 77件で成功した。
+- 2026-08-23 19:40 JST — #195のlocal verification完了。unit 238件、component 40件、integration 77件、E2E 13件、build、coverage、securityが成功した。
 
 ## Decisions
 
