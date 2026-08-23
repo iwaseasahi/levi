@@ -136,8 +136,16 @@
   margin: 0 0 6px;
 }
 
+.ginmaku-bookmark-container .folder-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 6px;
+  align-items: stretch;
+}
+
 .ginmaku-bookmark-container .folder-toggle {
   display: flex;
+  min-width: 0;
   gap: 4px;
   align-items: center;
   width: 100%;
@@ -166,6 +174,37 @@
 
 .ginmaku-bookmark-container .folder-toggle:active {
   transform: translateY(1px);
+}
+
+.ginmaku-bookmark-container .folder-edit-link {
+  display: grid;
+  min-height: 38px;
+  place-items: center;
+  border: 1px solid #303030;
+  border-radius: 8px;
+  background: #191919;
+  color: #c8a97e;
+  font-size: 17px;
+  line-height: 1;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.ginmaku-bookmark-container .folder-edit-link:hover {
+  border-color: #816742;
+  background: #242019;
+  color: #f1dfc5;
+}
+
+.ginmaku-bookmark-container .folder-edit-link:focus-visible {
+  border-color: #b18b58;
+  outline: 2px solid #d2a568;
+  outline-offset: 1px;
+  background: #242019;
+  color: #fff;
 }
 
 .folder-toggle-indicator {

@@ -149,22 +149,32 @@ export function SavedContentPanel({
                   key={folder.id}
                   role="listitem"
                 >
-                  <button
-                    aria-controls={`folder-content-${folder.id}`}
-                    aria-expanded={open}
-                    className={`folder-toggle${open ? " selected-folder" : ""}`}
-                    disabled={controller.pending}
-                    type="button"
-                    onClick={() => void controller.chooseFolder(folder.id)}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="folder-toggle-indicator"
+                  <div className="folder-item-row">
+                    <button
+                      aria-controls={`folder-content-${folder.id}`}
+                      aria-expanded={open}
+                      className={`folder-toggle${open ? " selected-folder" : ""}`}
+                      disabled={controller.pending}
+                      type="button"
+                      onClick={() => void controller.chooseFolder(folder.id)}
                     >
-                      {open ? "▾" : "▸"}
-                    </span>
-                    <span>{folder.name}</span>
-                  </button>
+                      <span
+                        aria-hidden="true"
+                        className="folder-toggle-indicator"
+                      >
+                        {open ? "▾" : "▸"}
+                      </span>
+                      <span>{folder.name}</span>
+                    </button>
+                    <a
+                      aria-label={`${folder.name}を編集`}
+                      className="folder-edit-link"
+                      href={`/folders/${folder.id}/edit`}
+                      title={`${folder.name}を編集`}
+                    >
+                      <span aria-hidden="true">✎</span>
+                    </a>
+                  </div>
                   {open && selected ? (
                     <div
                       className="selected-content"
