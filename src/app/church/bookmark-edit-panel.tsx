@@ -28,24 +28,34 @@ export function BookmarkEditPanel({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  async function load() {
-    const selected = await payload<SelectedFolder>(
-      await fetcher(
-        `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
-        { cache: "no-store", headers: { Accept: "application/json" } },
-      ),
-    );
-    const value = selected.bookmarks.find(({ id }) => id === bookmarkId);
-    if (!value) throw new Error("bookmark unavailable");
-    setBookmark(value);
-    setTitle(value.title);
-  }
-
   useEffect(() => {
-    void Promise.resolve()
-      .then(load)
-      .catch(() => setError("お気に入りを読み込めませんでした。"))
-      .finally(() => setPending(false));
+    let active = true;
+
+    void fetcher(
+      `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
+      {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      },
+    )
+      .then((response) => payload<SelectedFolder>(response))
+      .then((selected) => {
+        const value = selected.bookmarks.find(({ id }) => id === bookmarkId);
+        if (!value) throw new Error("bookmark unavailable");
+        if (!active) return;
+        setBookmark(value);
+        setTitle(value.title);
+      })
+      .catch(() => {
+        if (active) setError("お気に入りを読み込めませんでした。");
+      })
+      .finally(() => {
+        if (active) setPending(false);
+      });
+
+    return () => {
+      active = false;
+    };
     // The injected fetcher is fixed for the component lifetime.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookmarkId, folderId]);

@@ -15,7 +15,7 @@ test("minimal home directs users to login while health remains available", async
   ).toBeVisible();
   const loginLink = page.getByRole("link", { name: "ログイン" });
   await expect(loginLink).toHaveAttribute("href", "/login");
-  await expect(loginLink).toHaveCSS("background-color", "rgb(210, 134, 50)");
+  await expect(loginLink).toHaveCSS("background-color", "rgb(210, 165, 104)");
   await expect(page.locator(".card > *")).toHaveCount(2);
   await expect(page.locator(".card p, .card .eyebrow")).toHaveCount(0);
   await expect(page.getByRole("link", { name: /health/i })).toHaveCount(0);
@@ -26,7 +26,7 @@ test("minimal home directs users to login while health remains available", async
   );
   await expect(page.locator(".card")).toHaveCSS(
     "background-color",
-    "rgb(16, 16, 16)",
+    "rgba(17, 17, 17, 0.94)",
   );
   await expect(page.locator(".card")).toHaveCSS("color", "rgb(255, 255, 255)");
 
@@ -38,6 +38,26 @@ test("minimal home directs users to login while health remains available", async
   await expect(
     page.getByRole("heading", { level: 1, name: "ログイン" }),
   ).toBeVisible();
+  await expect(page.locator(".auth-card")).toHaveCSS(
+    "background-color",
+    "rgba(17, 17, 17, 0.94)",
+  );
+  await expect(page.getByLabel("メールアドレス")).toHaveCSS(
+    "background-color",
+    "rgb(27, 27, 27)",
+  );
+  await expect(page.getByRole("button", { name: "ログイン" })).toHaveCSS(
+    "background-color",
+    "rgb(210, 165, 104)",
+  );
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
 
   const healthResponse = await page.request.get("/api/health");
   expect(healthResponse.ok()).toBe(true);
