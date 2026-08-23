@@ -61,7 +61,6 @@ test("operator reset revokes the old session and forces a new password", async (
   await expect(page).toHaveURL(/\/change-password$/, { timeout: 20_000 });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const selected = "z".repeat(16);
-  await page.getByLabel("現在の一時パスワード").fill(temporaryPassword ?? "");
   await page.getByLabel("新しいパスワード", { exact: true }).fill(selected);
   await page.getByLabel("新しいパスワード（確認）").fill(selected);
   await page.getByRole("button", { name: "パスワードを変更" }).click();

@@ -5,7 +5,6 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import {
   completeForcedPasswordChange,
   PasswordLifecycleAuthorizationError,
-  PasswordLifecycleFailedError,
   resetChurchPassword,
 } from "@/application/auth/password-lifecycle";
 import { auth } from "@/infrastructure/auth/server";
@@ -130,7 +129,7 @@ describe("operator reset and forced password change", () => {
     ).resolves.toBe(true);
   });
 
-  it("verifies the temporary password, clears the gate, and keeps only the current session", async () => {
+  it("uses the authenticated session, clears the gate, and keeps only the current session", async () => {
     const target = await fixture();
     const reset = await resetChurchPassword(target.operatorId, target.churchId);
     await signIn(target.email, reset.temporaryPassword);
@@ -140,7 +139,6 @@ describe("operator reset and forced password change", () => {
       orderBy: { createdAt: "asc" },
     });
     await completeForcedPasswordChange({
-      currentPassword: reset.temporaryPassword,
       newPassword: selectedPassword,
       confirmation: selectedPassword,
       sessionId: sessions[0]!.id,
@@ -162,33 +160,11 @@ describe("operator reset and forced password change", () => {
     ).resolves.toBe(true);
   });
 
-  it("rejects a wrong temporary password without clearing the gate", async () => {
-    const target = await fixture();
-    const reset = await resetChurchPassword(target.operatorId, target.churchId);
-    await signIn(target.email, reset.temporaryPassword);
-    const session = await prisma.session.findFirstOrThrow({
-      where: { userId: target.userId },
-    });
-    await expect(
-      completeForcedPasswordChange({
-        currentPassword: "w".repeat(16),
-        newPassword: selectedPassword,
-        confirmation: selectedPassword,
-        sessionId: session.id,
-        userId: target.userId,
-      }),
-    ).rejects.toBeInstanceOf(PasswordLifecycleFailedError);
-    await expect(
-      prisma.user.findUniqueOrThrow({ where: { id: target.userId } }),
-    ).resolves.toMatchObject({ mustChangePassword: true });
-  });
-
   it("rejects a stale session", async () => {
     const target = await fixture();
-    const reset = await resetChurchPassword(target.operatorId, target.churchId);
+    await resetChurchPassword(target.operatorId, target.churchId);
     await expect(
       completeForcedPasswordChange({
-        currentPassword: reset.temporaryPassword,
         newPassword: selectedPassword,
         confirmation: selectedPassword,
         sessionId: randomUUID(),
@@ -205,7 +181,6 @@ describe("operator reset and forced password change", () => {
       where: { userId: target.userId },
     });
     const input = {
-      currentPassword: reset.temporaryPassword,
       newPassword: selectedPassword,
       confirmation: selectedPassword,
       sessionId: session.id,

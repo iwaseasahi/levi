@@ -1,4 +1,4 @@
-import { hashPassword, verifyPassword } from "better-auth/crypto";
+import { hashPassword } from "better-auth/crypto";
 
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/infrastructure/database/client";
@@ -100,19 +100,16 @@ export async function resetChurchPassword(
 }
 
 export async function completeForcedPasswordChange(input: {
-  currentPassword: unknown;
   newPassword: unknown;
   confirmation: unknown;
   sessionId: string;
   userId: string;
 }) {
   if (
-    !validPassword(input.currentPassword) ||
     !validPassword(input.newPassword) ||
     input.newPassword !== input.confirmation
   )
     throw new PasswordLifecycleInputError();
-  const currentPassword = input.currentPassword;
   const newPassword = input.newPassword;
   try {
     await prisma.$transaction(
@@ -141,13 +138,6 @@ export async function completeForcedPasswordChange(input: {
         const account = user?.accounts[0];
         if (!session || !account?.password)
           throw new PasswordLifecycleAuthorizationError();
-        if (
-          !(await verifyPassword({
-            hash: account.password,
-            password: currentPassword,
-          }))
-        )
-          throw new PasswordLifecycleFailedError();
         const newHash = await hashPassword(newPassword);
         await tx.account.update({
           where: { id: account.id },

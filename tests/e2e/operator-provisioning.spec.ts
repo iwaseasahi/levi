@@ -145,7 +145,6 @@ test.describe("operator church provisioning", () => {
     );
 
     const selectedPassword = "n".repeat(16);
-    await page.getByLabel("現在の一時パスワード").fill(temporaryPassword ?? "");
     await page
       .getByLabel("新しいパスワード", { exact: true })
       .fill(selectedPassword);

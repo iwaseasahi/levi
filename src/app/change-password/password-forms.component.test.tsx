@@ -40,20 +40,19 @@ describe("password lifecycle forms", () => {
     expect(screen.queryByText("t".repeat(24))).not.toBeInTheDocument();
   });
 
-  it("submits all password fields and focuses a safe error", async () => {
+  it("submits the new password fields and focuses a safe error", async () => {
     const user = userEvent.setup();
     render(
       <ChangePasswordForm
         action={vi.fn().mockResolvedValue({
           status: "error",
-          message: "変更できませんでした。現在のパスワードを確認してください。",
+          message: "パスワードを変更できませんでした。もう一度お試しください。",
         })}
       />,
     );
-    await user.type(
-      screen.getByLabelText("現在の一時パスワード"),
-      "c".repeat(16),
-    );
+    expect(
+      screen.queryByLabelText("現在の一時パスワード"),
+    ).not.toBeInTheDocument();
     await user.type(
       screen.getByLabelText("新しいパスワード", { exact: true }),
       "n".repeat(16),
@@ -65,6 +64,8 @@ describe("password lifecycle forms", () => {
     await user.click(screen.getByRole("button", { name: "パスワードを変更" }));
     const alert = await screen.findByRole("alert");
     await waitFor(() => expect(alert).toHaveFocus());
-    expect(alert).not.toHaveTextContent("c".repeat(16));
+    expect(alert).toHaveTextContent(
+      "パスワードを変更できませんでした。もう一度お試しください。",
+    );
   });
 });

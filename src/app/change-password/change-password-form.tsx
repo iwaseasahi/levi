@@ -24,16 +24,6 @@ export function ChangePasswordForm({
       <form action={formAction} className="auth-form">
         <fieldset disabled={pending}>
           <legend className="sr-only">パスワード変更</legend>
-          <label htmlFor="current-password">現在の一時パスワード</label>
-          <input
-            autoComplete="current-password"
-            id="current-password"
-            name="currentPassword"
-            required
-            type="password"
-            minLength={12}
-            maxLength={128}
-          />
           <label htmlFor="new-password">新しいパスワード</label>
           <input
             autoComplete="new-password"
