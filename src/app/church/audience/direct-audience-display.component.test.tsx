@@ -243,4 +243,56 @@ describe("DirectAudienceDisplay", () => {
     ).toBeVisible();
     expect(screen.queryByText("架空の日本語 1:1")).not.toBeInTheDocument();
   });
+
+  it("does not restore protected text when navigation finishes after fail-close", async () => {
+    let finishNavigation!: (value: Response) => void;
+    const navigation = new Promise<Response>((resolve) => {
+      finishNavigation = resolve;
+    });
+    const fetcher = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/scripture/search"))
+        return Promise.resolve(Response.json({ items: [item(1)] }));
+      if (url.includes("/api/scripture/navigate")) return navigation;
+      return Promise.resolve(new Response(null, { status: 401 }));
+    });
+    vi.stubGlobal("fetch", fetcher);
+    vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    render(<DirectAudienceDisplay selection={selection} />);
+    await screen.findByText("架空の日本語 1:1");
+
+    act(() =>
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown" })),
+    );
+    await waitFor(() =>
+      expect(
+        fetcher.mock.calls.some(([input]) =>
+          String(input).includes("/api/scripture/navigate"),
+        ),
+      ).toBe(true),
+    );
+    act(() => document.dispatchEvent(new Event("visibilitychange")));
+    expect(
+      await screen.findByText(
+        "セッションを確認できないため、表示を終了しました。",
+      ),
+    ).toBeVisible();
+
+    await act(async () => {
+      finishNavigation(
+        Response.json({
+          crossedBook: false,
+          crossedChapter: false,
+          edge: null,
+          item: item(2),
+        }),
+      );
+      await navigation;
+    });
+    expect(screen.queryByText("架空の日本語 1:1")).not.toBeInTheDocument();
+    expect(screen.queryByText("架空の日本語 1:2")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("セッションを確認できないため、表示を終了しました。"),
+    ).toBeVisible();
+  });
 });
