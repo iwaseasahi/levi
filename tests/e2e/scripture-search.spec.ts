@@ -417,7 +417,11 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
     "rgba(0, 0, 0, 0)",
   );
   await createFolderToggle.click();
-  await page.getByLabel("日付").fill("2026-08-23");
+  const folderDate = page.getByLabel("日付");
+  await expect(folderDate).toHaveAttribute("type", "date");
+  await expect(folderDate).toHaveCSS("color-scheme", "dark");
+  await folderDate.fill("2026-08-23");
+  await expect(folderDate).toHaveValue("2026-08-23");
   await page.getByLabel("集会名").fill("第二礼拝");
   const createFolderButton = page.getByRole("button", {
     name: "作成",

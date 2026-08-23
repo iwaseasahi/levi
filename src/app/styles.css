@@ -772,6 +772,11 @@ select:focus-visible,
   color: #fff;
 }
 
+.ginmaku-bookmark-container .new-folder-form input[type="date"] {
+  min-width: 125px;
+  color-scheme: dark;
+}
+
 .ginmaku-bookmark-container .edit-folder-action a,
 .ginmaku-bookmark-container .edit-folder-action span[aria-disabled="true"] {
   color: #fff;

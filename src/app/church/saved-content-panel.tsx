@@ -446,9 +446,7 @@ export function SavedContentPanel({
               autoFocus
               disabled={pending}
               id="new-folder-date"
-              maxLength={10}
-              placeholder="YYYY-MM-DD"
-              size={12}
+              type="date"
               value={newFolderDate}
               onChange={(event) => setNewFolderDate(event.target.value)}
             />
