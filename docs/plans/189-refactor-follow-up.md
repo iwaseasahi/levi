@@ -47,6 +47,7 @@
 - 2026-08-23 18:30 JST — #191でChurch scopeとdenial responseを返す共通API access境界を導入し、scripture/saved-content controllerの重複認証・JSON helperを統合した。
 - 2026-08-23 18:35 JST — #191のlocal verification完了。unit 238件、component 39件、integration 76件、E2E 13件、build、coverage、securityが成功した。
 - 2026-08-23 18:40 JST — #192でchurch provisioningのSerializable transactionを既存の有界P2034 retry policyへ統合し、異なる教会の同時作成をintegration testへ追加した。
+- 2026-08-23 18:45 JST — #192のlocal verification完了。unit 238件、component 39件、integration 77件、E2E 13件、build、coverage、securityが成功した。
 
 ## Decisions
 
