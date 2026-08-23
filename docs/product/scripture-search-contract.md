@@ -61,9 +61,10 @@ The form follows Ginmaku's separate optional date and required meeting-name
 fields and stores their space-joined title. The date uses latest Chrome's native
 calendar control; its normalized value remains `YYYY-MM-DD`, while leaving it
 empty remains valid. After a successful creation, the form closes and the new
-folder opens. `フォルダの編集` appears below creation and opens the current
-folder's management surface in the current tab. Its `Back` link and successful
-folder deletion return that same tab to `/scripture`.
+folder opens. `フォルダの一覧` appears below creation and opens `/folders` in
+the current tab. The modern dark list links to each folder's management surface.
+The list, folder editor, and bookmark editor provide explicit same-tab return
+links. Successful folder deletion returns to `/folders`.
 
 The open accordion body contains only document icons and saved scripture links;
 rename, pin, delete, and bookmark-title controls never appear there. Bookmarks

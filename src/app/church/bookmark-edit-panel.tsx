@@ -50,9 +50,12 @@ export function BookmarkEditPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookmarkId, folderId]);
 
-  async function update(event: FormEvent) {
+  async function update(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!bookmark || !title.trim()) return;
+    const submittedTitle = String(
+      new FormData(event.currentTarget).get("title") ?? "",
+    ).trim();
+    if (!bookmark || !submittedTitle) return;
     setPending(true);
     setError("");
     setMessage("");
@@ -66,7 +69,7 @@ export function BookmarkEditPanel({
         body: JSON.stringify({
           action: "update-bookmark",
           bookmarkId,
-          title: title.trim(),
+          title: submittedTitle,
         }),
       });
       const result = await payload<{ bookmark: ScriptureBookmarkView }>(
@@ -83,31 +86,61 @@ export function BookmarkEditPanel({
   }
 
   return (
-    <main className="ginmaku-management-page">
-      <h1>Editing bookmark</h1>
-      {bookmark ? (
-        <form onSubmit={update}>
-          <label htmlFor="bookmark-title">Title</label>
-          <br />
-          <input
-            disabled={pending}
-            id="bookmark-title"
-            maxLength={200}
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
+    <main className="folder-management-page">
+      <div className="folder-management-shell folder-management-shell-narrow">
+        <a className="management-back-link" href={`/folders/${folderId}/edit`}>
+          <span aria-hidden="true">←</span> フォルダー編集へ
+        </a>
+
+        <header className="folder-page-header">
+          <p className="management-eyebrow">Saved scripture</p>
+          <h1>お気に入りを編集</h1>
+          <p>一覧に表示する名前を変更できます。</p>
+        </header>
+
+        {bookmark ? (
+          <section className="management-card">
+            <form className="modern-bookmark-edit-form" onSubmit={update}>
+              <div className="management-field">
+                <label htmlFor="bookmark-title">お気に入り名</label>
+                <input
+                  disabled={pending}
+                  id="bookmark-title"
+                  maxLength={200}
+                  name="title"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                />
+                <small>聖書箇所の内容は変更されません。</small>
+              </div>
+              <button
+                className="primary-button"
+                disabled={pending || !title.trim()}
+                type="submit"
+              >
+                変更を保存
+              </button>
+            </form>
+          </section>
+        ) : pending ? (
+          <div
+            className="management-card management-loading"
+            aria-label="読み込み中"
           />
-          <br />
-          <button disabled={pending || !title.trim()} type="submit">
-            更新
-          </button>
-        </form>
-      ) : null}
-      <p>
-        <a href={`/folders/${folderId}/edit`}>Back</a>
-      </p>
-      <div aria-live="polite">
-        {error ? <p role="alert">{error}</p> : null}
-        {message ? <p role="status">{message}</p> : null}
+        ) : null}
+
+        <div className="management-feedback" aria-live="polite">
+          {error ? (
+            <div className="notice notice-error" role="alert">
+              {error}
+            </div>
+          ) : null}
+          {message ? (
+            <div className="notice notice-success" role="status">
+              {message}
+            </div>
+          ) : null}
+        </div>
       </div>
     </main>
   );

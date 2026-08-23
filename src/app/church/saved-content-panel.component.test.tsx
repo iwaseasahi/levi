@@ -123,10 +123,10 @@ describe("SavedContentPanel", () => {
     expect(screen.queryByText("ブックマーク名")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /を上へ/ })).toBeNull();
     expect(
-      screen.getByRole("link", { name: "フォルダの編集" }),
-    ).toHaveAttribute("href", `/folders/${folderId}/edit`);
+      screen.getByRole("link", { name: "フォルダの一覧" }),
+    ).toHaveAttribute("href", "/folders");
     expect(
-      screen.getByRole("link", { name: "フォルダの編集" }),
+      screen.getByRole("link", { name: "フォルダの一覧" }),
     ).not.toHaveAttribute("target");
 
     await user.click(worship);

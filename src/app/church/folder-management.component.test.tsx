@@ -83,7 +83,7 @@ function managementFetcher() {
   });
 }
 
-describe("Ginmaku folder management", () => {
+describe("folder management", () => {
   it("keeps folder and bookmark mutations on the separate editing surface", async () => {
     const fetcher = managementFetcher();
     render(<FolderEditPanel folderId={folderId} fetcher={fetcher} />);
@@ -91,14 +91,14 @@ describe("Ginmaku folder management", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: "お気に入りの編集(EDITING FOLDER)",
+        name: "フォルダーを編集",
       }),
     ).toBeVisible();
-    const name = await screen.findByLabelText("Title");
+    const name = await screen.findByLabelText("フォルダー名");
     await user.clear(name);
     await user.type(name, "2026-08-30 第一礼拝");
-    await user.click(screen.getByLabelText("Sticky"));
-    await user.click(screen.getByRole("button", { name: "更新" }));
+    await user.click(screen.getByLabelText(/^よく使うフォルダーに固定/));
+    await user.click(screen.getByRole("button", { name: "変更を保存" }));
     await waitFor(() =>
       expect(fetcher).toHaveBeenCalledWith(
         "/api/saved-content",
@@ -107,9 +107,7 @@ describe("Ginmaku folder management", () => {
         }),
       ),
     );
-    expect(
-      screen.getAllByRole("link", { name: "編集/edit" })[0],
-    ).toHaveAttribute(
+    expect(screen.getAllByRole("link", { name: "編集" })[0]).toHaveAttribute(
       "href",
       `/bookmarks/${bookmarkId}/edit?folderId=${folderId}`,
     );
@@ -137,16 +135,14 @@ describe("Ginmaku folder management", () => {
     );
 
     vi.spyOn(window, "confirm").mockReturnValueOnce(true);
-    await user.click(screen.getAllByRole("button", { name: "削除/del" })[0]!);
+    await user.click(screen.getAllByRole("button", { name: "削除" })[0]!);
     await waitFor(() =>
       expect(document.querySelectorAll("[data-bookmark-id]")).toHaveLength(1),
     );
 
     vi.spyOn(window, "confirm").mockReturnValueOnce(true);
     await user.click(screen.getByRole("button", { name: "フォルダーを削除" }));
-    await waitFor(() =>
-      expect(replaceRoute).toHaveBeenCalledWith("/scripture"),
-    );
+    await waitFor(() => expect(replaceRoute).toHaveBeenCalledWith("/folders"));
   });
 
   it("updates a favorite title on the linked editing surface", async () => {
@@ -159,10 +155,10 @@ describe("Ginmaku folder management", () => {
       />,
     );
     const user = userEvent.setup();
-    const title = await screen.findByLabelText("Title");
+    const title = await screen.findByLabelText("お気に入り名");
     await user.clear(title);
     await user.type(title, "礼拝開始");
-    await user.click(screen.getByRole("button", { name: "更新" }));
+    await user.click(screen.getByRole("button", { name: "変更を保存" }));
     expect(await screen.findByRole("status")).toHaveTextContent(
       "お気に入りを更新しました。",
     );
