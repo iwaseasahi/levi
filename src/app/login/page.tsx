@@ -12,7 +12,6 @@ export default async function LoginPage() {
       <section className="auth-card" aria-labelledby="login-title">
         <p className="eyebrow">Levi</p>
         <h1 id="login-title">ログイン</h1>
-        <p>教会に登録されたメールアドレスでログインしてください。</p>
         <LoginForm />
       </section>
     </main>
