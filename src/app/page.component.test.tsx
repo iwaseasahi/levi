@@ -13,7 +13,7 @@ describe("Home", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "礼拝投影システム Levi",
+        name: "Leviシステム",
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "ログイン" })).toHaveAttribute(
