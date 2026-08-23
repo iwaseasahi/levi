@@ -90,6 +90,9 @@ test("validates the Ginmaku search form and projects each language mode", async 
     const actions = document
       .querySelector<HTMLElement>(".scripture-search-actions")!
       .getBoundingClientRect();
+    const rangeLabels = Array.from(
+      document.querySelectorAll<HTMLElement>(".scripture-range-fields label"),
+    );
     return {
       allBooksInsideViewport:
         bookChoices.length > 0 &&
@@ -104,6 +107,14 @@ test("validates the Ginmaku search form and projects each language mode", async 
         languages.top < actions.top &&
         Math.abs(range.left - languages.left) < 1 &&
         Math.abs(languages.left - actions.left) < 1,
+      rangeUnitsFollowInputs:
+        rangeLabels.map((label) => label.textContent).join("|") ===
+          "章(chapter)|節(verse)|節(verse)" &&
+        rangeLabels.every((label) => {
+          const input = label.querySelector("input")!.getBoundingClientRect();
+          const unit = label.querySelector("span")!.getBoundingClientRect();
+          return input.right <= unit.left;
+        }),
       trackedControlsInsideViewport: trackedSelectors.every((selector) => {
         const bounds = document
           .querySelector(selector)!
@@ -116,6 +127,7 @@ test("validates the Ginmaku search form and projects each language mode", async 
     allBooksInsideViewport: true,
     documentHasVerticalScroll: false,
     ginmakuToolbarOrder: true,
+    rangeUnitsFollowInputs: true,
     trackedControlsInsideViewport: true,
   });
   await expect(openButton).toBeInViewport();

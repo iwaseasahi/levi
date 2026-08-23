@@ -174,6 +174,13 @@ describe("ScriptureSearch", () => {
     expect(firstRow).toHaveTextContent("架空書巻1/English 1");
     expect(firstRow).toHaveTextContent("架空書巻23/English 23");
     expect(firstRow).toHaveTextContent("架空書巻45/English 45");
+    expect(screen.getByText("章(chapter)")).toBeVisible();
+    expect(screen.getAllByText("節(verse)")).toHaveLength(2);
+    expect(screen.getByLabelText("章")).toHaveAccessibleName("章");
+    expect(screen.getByLabelText("開始節")).toHaveAccessibleName("開始節");
+    expect(screen.getByLabelText("終了節（省略可）")).toHaveAccessibleName(
+      "終了節（省略可）",
+    );
   });
 
   it("supports keyboard navigation and has no detectable accessibility violations", async () => {
