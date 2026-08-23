@@ -10,7 +10,7 @@ test("minimal home directs users to login while health remains available", async
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "礼拝投影システム Levi",
+      name: "Leviシステム",
     }),
   ).toBeVisible();
   const loginLink = page.getByRole("link", { name: "ログイン" });
