@@ -1,5 +1,7 @@
 import { spawnSync } from "node:child_process";
 
+import { assertDedicatedTestEnvironment } from "../../src/infrastructure/database/test-database-guard";
+
 export function runPnpm(
   args: readonly string[],
   environment: NodeJS.ProcessEnv = process.env,
@@ -14,6 +16,7 @@ export function runPnpm(
 }
 
 export function prepareTestDatabase(environment: NodeJS.ProcessEnv) {
+  assertDedicatedTestEnvironment(environment);
   if (process.env.CI !== "true") runPnpm(["db:up"]);
   runPnpm(["exec", "prisma", "generate"], environment);
   runPnpm(["exec", "prisma", "migrate", "deploy"], environment);

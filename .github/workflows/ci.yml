@@ -16,7 +16,11 @@ permissions:
 
 env:
   DATABASE_URL: postgresql://levi:levi@127.0.0.1:5432/levi_test?schema=public
+  TEST_DATABASE_URL: postgresql://levi:levi@127.0.0.1:5432/levi_test?schema=public
+  E2E_DATABASE_URL: postgresql://levi:levi@127.0.0.1:5432/levi_test?schema=public
   SHADOW_DATABASE_URL: postgresql://levi:levi@127.0.0.1:5432/levi_shadow?schema=public
+  TEST_SHADOW_DATABASE_URL: postgresql://levi:levi@127.0.0.1:5432/levi_shadow?schema=public
+  E2E_SHADOW_DATABASE_URL: postgresql://levi:levi@127.0.0.1:5432/levi_shadow?schema=public
   BETTER_AUTH_SECRET: synthetic-ci-only-auth-secret-000000000000
   BETTER_AUTH_BASE_URL: https://levi.example.test
   BETTER_AUTH_TRUSTED_ORIGINS: https://levi.example.test

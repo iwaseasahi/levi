@@ -15,6 +15,12 @@ owns records with a `test.` key and removes that namespace after execution.
 Factories generate unique identifiers; tests must never rely on execution order,
 shared mutable fixtures, or production-derived data.
 
+Integration and E2E runners deliberately ignore the generic `DATABASE_URL`.
+Overrides must use `TEST_DATABASE_URL` or `E2E_DATABASE_URL`; otherwise the
+fixed local `levi_test` default is used. Every destructive setup boundary also
+rejects non-loopback hosts and any database name other than `levi_test` before
+migrations or fixture cleanup begin.
+
 Playwright treats `console.error`, uncaught page errors, unhandled browser
 rejections, and hydration errors as failures. Failed E2E tests retain a trace,
 screenshot, and video in `test-results/`; an HTML report is written to
