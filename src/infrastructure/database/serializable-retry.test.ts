@@ -13,6 +13,14 @@ function prismaError(code: string) {
   });
 }
 
+function driverAdapterWriteConflict() {
+  const error = new Error("TransactionWriteConflict", {
+    cause: { kind: "TransactionWriteConflict" },
+  });
+  error.name = "DriverAdapterError";
+  return error;
+}
+
 describe("runWithSerializableRetry", () => {
   it("retries P2034 and returns the successful transaction result", async () => {
     const operation = vi
@@ -36,9 +44,28 @@ describe("runWithSerializableRetry", () => {
     );
   });
 
+  it("retries a driver adapter transaction write conflict", async () => {
+    const operation = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(driverAdapterWriteConflict())
+      .mockResolvedValue("committed");
+
+    await expect(runWithSerializableRetry(operation)).resolves.toBe(
+      "committed",
+    );
+    expect(operation).toHaveBeenCalledTimes(2);
+  });
+
   it.each([
     ["a different Prisma error", prismaError("P2025")],
     ["an unclassified error", new Error("P2034")],
+    [
+      "a different driver adapter error",
+      Object.assign(new Error("ConnectionClosed"), {
+        cause: { kind: "ConnectionClosed" },
+        name: "DriverAdapterError",
+      }),
+    ],
   ])("does not retry %s", async (_label, error) => {
     const operation = vi.fn<() => Promise<never>>().mockRejectedValue(error);
 

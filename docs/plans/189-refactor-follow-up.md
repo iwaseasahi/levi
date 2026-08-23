@@ -37,7 +37,8 @@
 5. [x] #193 folder CSSの後勝ちcascadeを整理する。
 6. [x] #194 client fetcherのcomponent lifetime契約を統一する。
 7. [x] #195 integration用Bible・tenant fixtureを共通化する。
-8. [ ] 最終mainのrequired CIを確認し、#189を証跡付きで閉じる。
+8. [x] #204 教会同時作成時のcredential書き込みを安定化する。
+9. [ ] 最終mainのrequired CIを確認し、#189を証跡付きで閉じる。
 
 ## Progress
 
@@ -57,6 +58,8 @@
 - 2026-08-23 19:25 JST — #194のlocal verification完了。unit 238件、component 40件、integration 77件、E2E 13件、build、coverage、securityが成功した。
 - 2026-08-23 19:35 JST — #195でsynthetic translation/book/name/verseとexact cleanup targetを扱う共有fixture builderを導入し、saved-content、scripture-search、Bible catalogの重複setupを置換した。対象3 suiteは逆順の単独実行と全integration 77件で成功した。
 - 2026-08-23 19:40 JST — #195のlocal verification完了。unit 238件、component 40件、integration 77件、E2E 13件、build、coverage、securityが成功した。
+- 2026-08-23 19:45 JST — 最終監査のconcurrent provisioning反復試験で`ProvisioningFailedError`を再現した。Better Auth adapterがinteractive transaction client上でqueryを並行実行する経路を原因候補として#204へ分離した。
+- 2026-08-23 20:15 JST — #204でcredential作成を同一transaction内の明示的なUser/Account書き込みへ変更し、Prisma 7 driver adapterの`TransactionWriteConflict`も有界retry対象へ追加した。同時作成30回、unit 240件、component 40件、integration 77件、E2E 13件、build、coverage、securityが成功した。
 
 ## Decisions
 

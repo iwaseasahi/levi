@@ -1,32 +1,13 @@
-import { prismaAdapter } from "@better-auth/prisma-adapter";
-import { betterAuth } from "better-auth";
+import { hashPassword } from "better-auth/crypto";
 
 import {
   createChurchProvisioner,
   type ProvisionChurchTransaction,
 } from "@/application/admin/provision-church";
 import { generateTemporaryPassword } from "@/application/admin/temporary-password";
-import { getAuthRuntimeConfig } from "@/config/env";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/infrastructure/database/client";
 import { runWithSerializableRetry } from "@/infrastructure/database/serializable-retry";
-import { buildAuthOptions } from "./options";
-
-function credentialWriter(transaction: Prisma.TransactionClient) {
-  const options = buildAuthOptions(getAuthRuntimeConfig());
-  return betterAuth({
-    ...options,
-    database: prismaAdapter(transaction, {
-      provider: "postgresql",
-      transaction: false,
-    }),
-    emailAndPassword: {
-      ...options.emailAndPassword,
-      autoSignIn: false,
-      disableSignUp: false,
-    },
-  });
-}
 
 function transactionAdapter(
   transaction: Prisma.TransactionClient,
@@ -50,10 +31,23 @@ function transactionAdapter(
       });
     },
     async createCredential(input) {
-      const result = await credentialWriter(transaction).api.signUpEmail({
-        body: input,
+      const password = await hashPassword(input.password);
+      const user = await transaction.user.create({
+        data: {
+          email: input.email,
+          name: input.name,
+        },
       });
-      return { userId: result.user.id };
+      await transaction.account.create({
+        data: {
+          accountId: user.id,
+          issuer: "local:credential",
+          password,
+          providerId: "credential",
+          userId: user.id,
+        },
+      });
+      return { userId: user.id };
     },
     async findActiveOperator(userId) {
       const operator = await transaction.platformOperator.findUnique({

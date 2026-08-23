@@ -18,8 +18,8 @@ export class ProvisioningInputError extends Error {
 }
 
 export class ProvisioningFailedError extends Error {
-  constructor() {
-    super("Church provisioning failed");
+  constructor(cause?: unknown) {
+    super("Church provisioning failed", { cause });
     this.name = "ProvisioningFailedError";
   }
 }
@@ -91,7 +91,7 @@ export function createChurchProvisioner(
       });
     } catch (error) {
       if (error instanceof ProvisioningAuthorizationError) throw error;
-      throw new ProvisioningFailedError();
+      throw new ProvisioningFailedError(error);
     }
   };
 }
