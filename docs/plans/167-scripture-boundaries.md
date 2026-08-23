@@ -30,7 +30,7 @@ catalog/search/navigationの共通識別子、query multiplicity、認可respons
 1. [x] book/language/translation/smallint/query multiplicityをdomain共通moduleへ抽出しcharacterization testを追加する。
 2. [x] no-store JSONとchurch API access responseをcontroller helperへ抽出し、route固有error mappingを残す。
 3. [x] search/navigationのraw content row validation・mappingをdatabase共通moduleへ抽出しunit/integrationで固定する。
-4. [ ] existing query plan、unit/controller/integration/E2E、canonical checks、required CIを確認する。
+4. [x] existing query plan、unit/controller/integration/E2E、canonical checks、required CIを確認する。
 
 ## Decisions
 
@@ -44,6 +44,7 @@ catalog/search/navigationの共通識別子、query multiplicity、認可respons
 - 2026-08-23 JST — identifiers/query multiplicity、controller support、raw row mapperを抽出。unit 213件が合格。
 - 2026-08-23 JST — integration 73件が合格し、bounded range/navigationの代表`EXPLAIN`が既存location/navigation index利用条件を維持。
 - 2026-08-23 JST — `pnpm check`、coverage、DB check、E2E 9件、securityが合格。route一覧とDB schema差分なし。
+- 2026-08-23 JST — PR #180のrequired CI（Quality、Database、E2E、Security）がcommit `9a1a670`で合格。
 
 ## Risks and mitigations
 
@@ -65,15 +66,15 @@ catalog/search/navigationの共通識別子、query multiplicity、認可respons
 - [x] `pnpm test:e2e`（Chromium 9件）
 - [x] `pnpm security:check`（既知の脆弱性0、license 314件承認）
 - [x] `git diff --check`
-- [ ] required CI
+- [x] required CI（Quality、Database、E2E、Security）
 
 ## Handoff or blockers
 
-- Completed: 実装、unit/integration/query plan、canonical checks、coverage、E2E、security。
-- Remaining: PR更新、required CI、merge。
+- Completed: 実装、local verification、required CI。
+- Remaining: merge。
 - Blocker: なし。
-- Resume with: verification evidenceをcommit・pushしPRをreadyにする。
+- Resume with: PRをmergeする。
 
 ## Result
 
-未完了。
+共通domain schema、controller support、raw row mapperへ責務を集約し、API・SQL・rights・DB契約を維持した。
