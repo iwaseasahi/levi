@@ -41,6 +41,7 @@ Basic Auth 移行前の未使用認証コードと、画面から参照されな
 - 2026-08-23: ソース・テスト参照のない class selector 19 個を抽出。
 - 2026-08-23: resolver/interface/test と dead selector 19 個を削除し、未参照 class の再抽出結果が 0 件であることを確認。
 - 2026-08-23: 全体チェック、coverage、Playwright E2E 9 件、E2E 内 axe、セキュリティチェックが成功。
+- 2026-08-23: CI の低速環境で一括 computed-style snapshot が loading 中の値を取得する競合を検出。各表示契約を Playwright の auto-wait 付き CSS assertion に置き換えた。
 
 ## Decisions
 
