@@ -7,6 +7,7 @@ import type {
 } from "@/domain/saved-content";
 import type { ScriptureSearch } from "@/domain/scripture/search";
 import { postJson, requestJson } from "./client-api";
+import { useComponentLifetimeValue } from "./use-component-lifetime-value";
 
 export type SelectedFolder = {
   folder: FolderSummary;
@@ -24,7 +25,7 @@ export function useSavedContentController({
   fetcher: typeof fetch;
   onOpen(search: ScriptureSearch): Promise<void>;
 }) {
-  const fetcherRef = useRef(fetcher);
+  const lifetimeFetcher = useComponentLifetimeValue(fetcher);
   const onOpenRef = useRef(onOpen);
   const [folders, setFolders] = useState<FolderSummary[]>([]);
   const [selected, setSelected] = useState<SelectedFolder | null>(null);
@@ -35,35 +36,41 @@ export function useSavedContentController({
     onOpenRef.current = onOpen;
   }, [onOpen]);
 
-  const request = useCallback(<T>(body: object) => {
-    return postJson<T>(
-      fetcherRef.current,
-      "/api/saved-content",
-      body,
-      "saved content unavailable",
-    );
-  }, []);
+  const request = useCallback(
+    <T>(body: object) => {
+      return postJson<T>(
+        lifetimeFetcher,
+        "/api/saved-content",
+        body,
+        "saved content unavailable",
+      );
+    },
+    [lifetimeFetcher],
+  );
 
   const fetchFolders = useCallback(async () => {
     const response = await requestJson<{ folders: FolderSummary[] }>(
-      fetcherRef.current,
+      lifetimeFetcher,
       "/api/saved-content",
       { cache: "no-store", headers: { Accept: "application/json" } },
       "saved content unavailable",
     );
     setFolders(response.folders);
     return response.folders;
-  }, []);
+  }, [lifetimeFetcher]);
 
-  const loadFolder = useCallback(async (folderId: string) => {
-    const value = await requestJson<SelectedFolder>(
-      fetcherRef.current,
-      `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
-      { cache: "no-store", headers: { Accept: "application/json" } },
-      "saved content unavailable",
-    );
-    setSelected(value);
-  }, []);
+  const loadFolder = useCallback(
+    async (folderId: string) => {
+      const value = await requestJson<SelectedFolder>(
+        lifetimeFetcher,
+        `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
+        { cache: "no-store", headers: { Accept: "application/json" } },
+        "saved content unavailable",
+      );
+      setSelected(value);
+    },
+    [lifetimeFetcher],
+  );
 
   const run = useCallback(
     async (action: () => Promise<void>, recover?: () => Promise<void>) => {

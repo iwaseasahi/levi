@@ -13,6 +13,7 @@ import {
   scriptureCatalogUrl,
   type ScriptureSelection,
 } from "./scripture-search-selection";
+import { useComponentLifetimeValue } from "./use-component-lifetime-value";
 
 type CatalogState = {
   selection: ScriptureSelection;
@@ -129,27 +130,30 @@ function catalogReducer(
 }
 
 export function useScriptureCatalog(fetcher: typeof fetch) {
-  const fetcherRef = useRef(fetcher);
+  const lifetimeFetcher = useComponentLifetimeValue(fetcher);
   const requestSequence = useRef(0);
   const [state, dispatch] = useReducer(catalogReducer, initialState);
 
-  const loadCatalog = useCallback(async (selection: ScriptureSelection) => {
-    const sequence = ++requestSequence.current;
-    dispatch({ type: "request-started" });
-    try {
-      const catalog = await requestJson<ScriptureCatalog>(
-        fetcherRef.current,
-        scriptureCatalogUrl(selection),
-        { cache: "no-store", headers: { Accept: "application/json" } },
-        "catalog unavailable",
-      );
-      if (sequence !== requestSequence.current) return;
-      dispatch({ catalog, type: "request-succeeded" });
-    } catch {
-      if (sequence !== requestSequence.current) return;
-      dispatch({ type: "request-failed" });
-    }
-  }, []);
+  const loadCatalog = useCallback(
+    async (selection: ScriptureSelection) => {
+      const sequence = ++requestSequence.current;
+      dispatch({ type: "request-started" });
+      try {
+        const catalog = await requestJson<ScriptureCatalog>(
+          lifetimeFetcher,
+          scriptureCatalogUrl(selection),
+          { cache: "no-store", headers: { Accept: "application/json" } },
+          "catalog unavailable",
+        );
+        if (sequence !== requestSequence.current) return;
+        dispatch({ catalog, type: "request-succeeded" });
+      } catch {
+        if (sequence !== requestSequence.current) return;
+        dispatch({ type: "request-failed" });
+      }
+    },
+    [lifetimeFetcher],
+  );
 
   useEffect(() => {
     void Promise.resolve().then(() => loadCatalog(initialScriptureSelection));

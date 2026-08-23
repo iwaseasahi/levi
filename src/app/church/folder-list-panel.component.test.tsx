@@ -59,20 +59,25 @@ describe("FolderListPanel", () => {
     expect(await screen.findByText("フォルダーはまだありません")).toBeVisible();
   });
 
-  it("can retry after a loading failure", async () => {
+  it("keeps the initial fetcher across rerenders and retries", async () => {
     const fetcher = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(new Response(null, { status: 500 }))
       .mockResolvedValueOnce(Response.json({ folders: [] }));
+    const replacementFetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({ folders: [] }),
+    );
     const user = userEvent.setup();
 
-    render(<FolderListPanel fetcher={fetcher} />);
+    const { rerender } = render(<FolderListPanel fetcher={fetcher} />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "フォルダーを読み込めませんでした。",
     );
+    rerender(<FolderListPanel fetcher={replacementFetcher} />);
     await user.click(screen.getByRole("button", { name: "再読み込み" }));
     expect(await screen.findByText("フォルダーはまだありません")).toBeVisible();
     expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(replacementFetcher).not.toHaveBeenCalled();
   });
 });

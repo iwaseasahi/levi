@@ -35,7 +35,7 @@
 3. [x] #192 Serializable transaction retry policyを統一する。
 4. [x] #200 integration fixtureのcleanup namespace衝突を解消する。
 5. [x] #193 folder CSSの後勝ちcascadeを整理する。
-6. [ ] #194 client fetcherのcomponent lifetime契約を統一する。
+6. [x] #194 client fetcherのcomponent lifetime契約を統一する。
 7. [ ] #195 integration用Bible・tenant fixtureを共通化する。
 8. [ ] 最終mainのrequired CIを確認し、#189を証跡付きで閉じる。
 
@@ -53,6 +53,8 @@
 - 2026-08-23 19:05 JST — #200でdatabase foundation fixtureを専用namespaceへ隔離し、integration 77件を3回連続で成功させた。
 - 2026-08-23 19:00 JST — #193でscripture sidebarの旧定義とmodern overrideを単一の宣言群へ統合し、管理画面とのstyle ownershipを明示した。
 - 2026-08-23 19:10 JST — #193のlocal verification完了。unit 238件、component 39件、integration 77件、E2E 13件、build、coverage、securityが成功し、desktopと390px幅のfolder画面を実ブラウザで確認した。
+- 2026-08-23 19:20 JST — #194でinjected fetcherを初回renderからunmountまで固定する共通hookを導入し、4つのclient hook/componentへ適用した。Hooks lint抑制を削除し、rerender契約とstale catalog guardをcomponent testへ追加した。
+- 2026-08-23 19:25 JST — #194のlocal verification完了。unit 238件、component 40件、integration 77件、E2E 13件、build、coverage、securityが成功した。
 
 ## Decisions
 
