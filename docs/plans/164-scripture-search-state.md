@@ -33,7 +33,7 @@
 2. [x] audience window lifecycle と postMessage を controller hook に分離する。
 3. [x] 検索 fieldset と feedback を presentation component に分離する。
 4. [x] loading/empty/error/disabled/keyboard/popup recovery の component coverage を確認・補強する。
-5. [ ] component、E2E、axe、screenshot、`pnpm check`、required CI を通す。
+5. [x] component、E2E、axe、screenshot、`pnpm check`、required CI を通す。
 
 ## Progress
 
@@ -41,6 +41,7 @@
 - 2026-08-23 JST — `ScriptureSearch` を 597 行から 123 行へ縮小し、selection/catalog reducer hook、投影 controller hook、presentation component、純粋 normalization module に分割。
 - 2026-08-23 JST — loading/empty と投影タブ close/reopen の component regression を追加。unit 195件、component 37件、axe、E2E 9件、`pnpm check`、security が合格。
 - 2026-08-23 JST — synthetic E2E fixture で 1280x720 screenshot `test-results/scripture-search-refactor-164.png` を確認し、DOM/CSS の視覚的退行なし。
+- 2026-08-23 JST — PR #177 の Quality、Database、E2E、Security がすべて合格。
 
 ## Decisions
 
@@ -68,11 +69,11 @@
 
 ## Handoff or blockers
 
-- Completed: 実装、ローカル回帰テスト、E2E screenshot、final diff review。
-- Remaining: PR、required CI、merge。
+- Completed: 実装、ローカル回帰テスト、E2E screenshot、final diff review、required CI。
+- Remaining: merge。
 - Blocker: なし。
 - Resume with: catalog/selection hook を追加する。
 
 ## Result
 
-ローカル検証済み。required CI と merge 待ち。
+受け入れ条件と必須検証を満たし、merge 待ち。
