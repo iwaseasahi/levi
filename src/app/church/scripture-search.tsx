@@ -105,13 +105,22 @@ function audienceUrl(search: NormalizedSearch) {
   })}`;
 }
 
-function favoriteTitle(selection: Selection, books: ScriptureCatalogBook[]) {
+function favoriteTitle(
+  selection: Selection,
+  search: NormalizedSearch | null,
+  books: ScriptureCatalogBook[],
+) {
   const book = books.find(({ code }) => code === selection.book);
   if (!book || !selection.chapter || !selection.startVerse) return "聖句検索";
   const names = [book.japaneseName, book.englishName].filter(
     (name): name is string => Boolean(name),
   );
-  const range = selection.endVerse ? `-${selection.endVerse}` : "";
+  const displayedEndVerse =
+    selection.endVerse ||
+    (search && search.endVerse > search.startVerse
+      ? String(search.endVerse)
+      : "");
+  const range = displayedEndVerse ? `-${displayedEndVerse}` : "";
   return `${names.length > 0 ? names.join("/") : book.name} ${selection.chapter}:${selection.startVerse}${range}`;
 }
 
@@ -344,7 +353,7 @@ export function ScriptureSearch({
       <div id="bookmark_container" className="ginmaku-bookmark-container">
         <SavedContentPanel
           currentSearch={currentSearch}
-          currentSearchTitle={favoriteTitle(selection, books)}
+          currentSearchTitle={favoriteTitle(selection, currentSearch, books)}
           fetcher={savedContentFetcher}
           onOpen={reopenBookmark}
         />
