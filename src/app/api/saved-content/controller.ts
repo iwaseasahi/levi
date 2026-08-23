@@ -18,44 +18,32 @@ import {
   parseSavedContentId,
   SavedContentError,
 } from "@/domain/saved-content";
+import { noStoreJson, resolveChurchApiAccess } from "../church-api-support";
 
 type Dependencies = {
   getChurchAccess(headers: Headers): Promise<ChurchAccess>;
   repository: SavedContentRepository;
 };
 
-function json(body: unknown, status = 200) {
-  return Response.json(body, {
-    headers: { "Cache-Control": "no-store" },
-    status,
-  });
-}
-
 function errorResponse(error: unknown) {
   if (!(error instanceof SavedContentError))
-    return json({ error: { code: "SAVED_CONTENT_UNAVAILABLE" } }, 500);
+    return noStoreJson({ error: { code: "SAVED_CONTENT_UNAVAILABLE" } }, 500);
   const status =
     error.code === "INVALID_SAVED_CONTENT_INPUT"
       ? 400
       : error.code === "SAVED_CONTENT_NOT_FOUND"
         ? 404
         : 409;
-  return json({ error: { code: error.code } }, status);
-}
-
-async function authorized(request: Request, dependencies: Dependencies) {
-  const access = await dependencies.getChurchAccess(request.headers);
-  if (access.status === "unauthenticated")
-    return { response: json({ error: { code: "UNAUTHENTICATED" } }, 401) };
-  if (access.status !== "authorized" || access.mustChangePassword)
-    return { response: json({ error: { code: "FORBIDDEN" } }, 403) };
-  return { scope: access.scope };
+  return noStoreJson({ error: { code: error.code } }, status);
 }
 
 export function createSavedContentHandlers(dependencies: Dependencies) {
   return {
     async GET(request: Request) {
-      const access = await authorized(request, dependencies);
+      const access = await resolveChurchApiAccess(
+        request.headers,
+        dependencies.getChurchAccess,
+      );
       if ("response" in access) return access.response;
       try {
         const params = new URL(request.url).searchParams;
@@ -71,11 +59,11 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
             dependencies.repository,
             access.scope,
           );
-          return json({ folders, orderIds });
+          return noStoreJson({ folders, orderIds });
         }
         if (values.length !== 1)
           throw new SavedContentError("INVALID_SAVED_CONTENT_INPUT");
-        return json(
+        return noStoreJson(
           await selectFolder(
             dependencies.repository,
             access.scope,
@@ -88,13 +76,16 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
     },
 
     async POST(request: Request) {
-      const access = await authorized(request, dependencies);
+      const access = await resolveChurchApiAccess(
+        request.headers,
+        dependencies.getChurchAccess,
+      );
       if ("response" in access) return access.response;
       try {
         const command = parseSavedContentCommand(await request.json());
         switch (command.action) {
           case "create-folder":
-            return json({
+            return noStoreJson({
               folder: await createFolder(
                 dependencies.repository,
                 access.scope,
@@ -102,7 +93,7 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
               ),
             });
           case "update-folder":
-            return json({
+            return noStoreJson({
               folder: await updateFolder(
                 dependencies.repository,
                 access.scope,
@@ -123,16 +114,16 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
               access.scope,
               command.ids,
             );
-            return json({ ok: true });
+            return noStoreJson({ ok: true });
           case "delete-folder":
             await deleteFolder(
               dependencies.repository,
               access.scope,
               command.folderId,
             );
-            return json({ ok: true });
+            return noStoreJson({ ok: true });
           case "create-bookmark":
-            return json({
+            return noStoreJson({
               bookmark: await createBookmark(
                 dependencies.repository,
                 access.scope,
@@ -141,7 +132,7 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
               ),
             });
           case "open-bookmark":
-            return json({
+            return noStoreJson({
               bookmark: await openBookmark(
                 dependencies.repository,
                 access.scope,
@@ -155,14 +146,14 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
               command.folderId,
               command.ids,
             );
-            return json({ ok: true });
+            return noStoreJson({ ok: true });
           case "delete-bookmark":
             await deleteBookmark(
               dependencies.repository,
               access.scope,
               command.bookmarkId,
             );
-            return json({ ok: true });
+            return noStoreJson({ ok: true });
         }
       } catch (error) {
         return errorResponse(error);

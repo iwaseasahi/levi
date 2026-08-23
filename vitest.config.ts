@@ -19,7 +19,7 @@ export default defineConfig({
         "src/application/**/*.ts",
         "src/app/api/**/controller.ts",
         "src/app/api/ready/route.ts",
-        "src/app/api/scripture/controller-support.ts",
+        "src/app/api/church-api-support.ts",
         "src/app/church/audience/audience-fit.ts",
         "src/app/church/client-api.ts",
         "src/app/church/scripture-search-selection.ts",

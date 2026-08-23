@@ -2,7 +2,7 @@ import type { ChurchAccess } from "@/application/auth/church-access";
 import type { navigateScripture } from "@/application/scripture/navigate-scripture";
 import { parseScriptureNavigation } from "@/domain/scripture/navigation";
 import { ScriptureSearchError } from "@/domain/scripture/search";
-import { churchAccessFailure, noStoreJson } from "../controller-support";
+import { noStoreJson, resolveChurchApiAccess } from "../../church-api-support";
 
 type Result = Awaited<ReturnType<typeof navigateScripture>>;
 
@@ -25,11 +25,11 @@ function domainError(error: ScriptureSearchError) {
 
 export function createScriptureNavigationHandler(dependencies: Dependencies) {
   return async function handleNavigation(request: Request) {
-    const accessFailure = await churchAccessFailure(
+    const access = await resolveChurchApiAccess(
       request.headers,
       dependencies.getChurchAccess,
     );
-    if (accessFailure) return accessFailure;
+    if ("response" in access) return access.response;
     try {
       const input = parseScriptureNavigation(new URL(request.url).searchParams);
       return noStoreJson(await dependencies.navigate(input), 200);

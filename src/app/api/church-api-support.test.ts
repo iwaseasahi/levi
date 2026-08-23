@@ -3,16 +3,17 @@ import type {
   ChurchAccess,
   ChurchScope,
 } from "@/application/auth/church-access";
-import { churchAccessFailure, noStoreJson } from "./controller-support";
+import { noStoreJson, resolveChurchApiAccess } from "./church-api-support";
 
+const scope = { churchId: "church-1" } as ChurchScope;
 const authorized = (mustChangePassword: boolean): ChurchAccess => ({
   mustChangePassword,
-  scope: { churchId: "church-1" } as ChurchScope,
+  scope,
   status: "authorized",
   userId: "user-1",
 });
 
-describe("scripture controller support", () => {
+describe("church API support", () => {
   it.each([
     [{ status: "unauthenticated" as const }, 401, "UNAUTHENTICATED"],
     [{ status: "forbidden" as const, userId: "user-1" }, 403, "FORBIDDEN"],
@@ -20,27 +21,31 @@ describe("scripture controller support", () => {
   ])(
     "maps an access denial to a no-store response",
     async (access, status, code) => {
-      const response = await churchAccessFailure(
+      const result = await resolveChurchApiAccess(
         new Headers(),
         vi.fn().mockResolvedValue(access),
       );
-      expect(response?.status).toBe(status);
-      expect(response?.headers.get("Cache-Control")).toBe("no-store");
-      await expect(response?.json()).resolves.toEqual({ error: { code } });
+      expect(result).toHaveProperty("response");
+      if (!("response" in result)) throw new Error("expected access denial");
+      expect(result.response.status).toBe(status);
+      expect(result.response.headers.get("Cache-Control")).toBe("no-store");
+      await expect(result.response.json()).resolves.toEqual({
+        error: { code },
+      });
     },
   );
 
-  it("permits an eligible church access", async () => {
+  it("returns the server-derived scope for eligible church access", async () => {
     await expect(
-      churchAccessFailure(
+      resolveChurchApiAccess(
         new Headers(),
         vi.fn().mockResolvedValue(authorized(false)),
       ),
-    ).resolves.toBeNull();
+    ).resolves.toEqual({ scope });
   });
 
   it("creates successful no-store JSON responses", async () => {
-    const response = noStoreJson({ ok: true }, 200);
+    const response = noStoreJson({ ok: true });
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     await expect(response.json()).resolves.toEqual({ ok: true });
