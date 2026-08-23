@@ -31,6 +31,7 @@ export default defineConfig({
         "src/infrastructure/database/saved-content-ordering.ts",
         "src/infrastructure/database/scripture-row-mapper.ts",
         "src/infrastructure/database/serializable-retry.ts",
+        "src/infrastructure/database/test-database-guard.ts",
         "src/infrastructure/observability/**/*.ts",
         "src/migration/ginmaku-bible-exactness.ts",
         "src/migration/ginmaku-bible-mapping.ts",
