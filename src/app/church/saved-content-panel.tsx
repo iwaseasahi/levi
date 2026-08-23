@@ -319,9 +319,6 @@ export function SavedContentPanel({
           <span>フォルダー</span>
           <a href="/folders">一覧</a>
         </div>
-        {!pending && folders.length === 0 ? (
-          <p className="empty-copy">フォルダーはまだありません。</p>
-        ) : null}
         {folders.length > 0 ? (
           <div className="folder-list" role="list" aria-label="フォルダー">
             {folders.map((folder) => {
