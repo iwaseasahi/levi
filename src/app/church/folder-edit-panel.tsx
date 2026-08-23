@@ -2,17 +2,9 @@
 
 import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type {
-  FolderSummary,
-  ScriptureBookmarkView,
-} from "@/domain/saved-content";
+import type { ScriptureBookmarkView } from "@/domain/saved-content";
 import { moveTo } from "@/domain/order";
-import { postJson, requestJson } from "./client-api";
-
-type SelectedFolder = {
-  folder: FolderSummary;
-  bookmarks: ScriptureBookmarkView[];
-};
+import { useFolderEditor } from "./use-folder-editor";
 
 export function FolderEditPanel({
   folderId,
@@ -22,115 +14,53 @@ export function FolderEditPanel({
   fetcher?: typeof fetch;
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<SelectedFolder | null>(null);
-  const [name, setName] = useState("");
-  const [pinned, setPinned] = useState(false);
+  const editor = useFolderEditor({
+    fetcher,
+    folderId,
+    onDeleted: () => router.replace("/folders"),
+  });
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
-  const [pending, setPending] = useState(true);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const feedbackRef = useRef<HTMLDivElement>(null);
 
-  async function request<T>(body: object) {
-    return postJson<T>(
-      fetcher,
-      "/api/saved-content",
-      body,
-      "saved content unavailable",
-    );
-  }
-
-  async function load() {
-    const value = await requestJson<SelectedFolder>(
-      fetcher,
-      `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
-      { cache: "no-store", headers: { Accept: "application/json" } },
-      "saved content unavailable",
-    );
-    setSelected(value);
-    setName(value.folder.name);
-    setPinned(value.folder.isPinned);
-  }
-
-  async function run(action: () => Promise<void>, success?: string) {
-    setPending(true);
-    setError("");
-    setMessage("");
-    try {
-      await action();
-      if (success) setMessage(success);
-    } catch {
-      setError(
-        "保存内容を更新できませんでした。再読み込みしてお試しください。",
-      );
-    } finally {
-      setPending(false);
-    }
-  }
-
   useEffect(() => {
-    void Promise.resolve().then(() => run(load));
-    // The injected fetcher is fixed for the component lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [folderId]);
-
-  useEffect(() => {
-    if (error) feedbackRef.current?.focus();
-  }, [error]);
+    if (editor.error) feedbackRef.current?.focus();
+  }, [editor.error]);
 
   async function updateFolder(event: FormEvent) {
     event.preventDefault();
-    if (!name.trim()) return;
-    await run(async () => {
-      await request({
-        action: "update-folder",
-        folderId,
-        name: name.trim(),
-        isPinned: pinned,
-      });
-      await load();
-    }, "フォルダーを更新しました。");
+    await editor.save();
   }
 
   async function deleteFolder() {
     if (
-      !selected ||
-      !window.confirm(`「${selected.folder.name}」を削除しますか？`)
+      !editor.selected ||
+      !window.confirm(`「${editor.selected.folder.name}」を削除しますか？`)
     )
       return;
-    await run(async () => {
-      await request({ action: "delete-folder", folderId });
-      router.replace("/folders");
-    });
+    await editor.deleteFolder();
   }
 
   async function deleteBookmark(bookmark: ScriptureBookmarkView) {
     if (!window.confirm(`「${bookmark.title}」を削除しますか？`)) return;
-    await run(async () => {
-      await request({ action: "delete-bookmark", bookmarkId: bookmark.id });
-      await load();
-    }, "お気に入りを削除しました。");
+    await editor.deleteBookmark(bookmark.id);
   }
 
   async function reorderBookmarks(dragged: string, target: string) {
-    if (!selected) return;
+    if (!editor.selected) return;
     const ids = moveTo(
-      selected.bookmarks.map(({ id }) => id),
+      editor.selected.bookmarks.map(({ id }) => id),
       dragged,
       target,
     );
     setDraggedId(null);
     setDragOverId(null);
     if (!ids) return;
-    await run(async () => {
-      await request({ action: "reorder-bookmarks", folderId, ids });
-      await load();
-    });
+    await editor.reorderBookmarks(ids);
   }
 
   function beginDrag(event: DragEvent<HTMLElement>, bookmarkId: string) {
-    if (pending) return;
+    if (editor.pending) return;
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", bookmarkId);
     setDraggedId(bookmarkId);
@@ -147,27 +77,27 @@ export function FolderEditPanel({
           <h1>フォルダーを編集</h1>
         </header>
 
-        {selected ? (
+        {editor.selected ? (
           <div className="folder-editor-grid">
             <section className="management-card" aria-label="フォルダー設定">
               <form className="modern-folder-edit-form" onSubmit={updateFolder}>
                 <div className="management-field">
                   <label htmlFor="folder-name">フォルダー名</label>
                   <input
-                    disabled={pending}
+                    disabled={editor.pending}
                     id="folder-name"
                     maxLength={200}
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
+                    value={editor.name}
+                    onChange={(event) => editor.setName(event.target.value)}
                   />
                 </div>
                 <label className="modern-check-row" htmlFor="folder-pinned">
                   <input
-                    checked={pinned}
-                    disabled={pending}
+                    checked={editor.pinned}
+                    disabled={editor.pending}
                     id="folder-pinned"
                     type="checkbox"
-                    onChange={(event) => setPinned(event.target.checked)}
+                    onChange={(event) => editor.setPinned(event.target.checked)}
                   />
                   <span>
                     <strong>よく使うフォルダーに固定</strong>
@@ -176,7 +106,7 @@ export function FolderEditPanel({
                 </label>
                 <button
                   className="primary-button"
-                  disabled={pending || !name.trim()}
+                  disabled={editor.pending || !editor.name.trim()}
                   type="submit"
                 >
                   変更を保存
@@ -194,19 +124,19 @@ export function FolderEditPanel({
                   <h2 id="folder-bookmarks">お気に入り</h2>
                 </div>
                 <span className="count-badge">
-                  {selected.bookmarks.length}件
+                  {editor.selected.bookmarks.length}件
                 </span>
               </div>
               <p className="management-hint">
                 ドラッグすると表示順を変更できます。
               </p>
-              {selected.bookmarks.length === 0 ? (
+              {editor.selected.bookmarks.length === 0 ? (
                 <div className="management-inline-empty">
                   お気に入りはまだありません。
                 </div>
               ) : (
                 <div className="modern-bookmark-list" role="list">
-                  {selected.bookmarks.map((bookmark) => (
+                  {editor.selected.bookmarks.map((bookmark) => (
                     <article
                       className={`modern-bookmark-row${
                         dragOverId === bookmark.id
@@ -216,7 +146,7 @@ export function FolderEditPanel({
                             : ""
                       }`}
                       data-bookmark-id={bookmark.id}
-                      draggable={!pending}
+                      draggable={!editor.pending}
                       key={bookmark.id}
                       role="listitem"
                       onDragEnd={() => {
@@ -246,7 +176,7 @@ export function FolderEditPanel({
                       <div className="modern-bookmark-actions">
                         <button
                           className="danger-button-quiet"
-                          disabled={pending}
+                          disabled={editor.pending}
                           type="button"
                           onClick={() => void deleteBookmark(bookmark)}
                         >
@@ -268,7 +198,7 @@ export function FolderEditPanel({
               </p>
               <button
                 className="danger-button"
-                disabled={pending}
+                disabled={editor.pending}
                 type="button"
                 onClick={() => void deleteFolder()}
               >
@@ -276,7 +206,7 @@ export function FolderEditPanel({
               </button>
             </section>
           </div>
-        ) : pending ? (
+        ) : editor.pending ? (
           <div
             className="management-card management-loading"
             aria-label="読み込み中"
@@ -284,19 +214,19 @@ export function FolderEditPanel({
         ) : null}
 
         <div className="management-feedback" aria-live="polite">
-          {error ? (
+          {editor.error ? (
             <div
               className="notice notice-error"
               ref={feedbackRef}
               role="alert"
               tabIndex={-1}
             >
-              {error}
+              {editor.error}
             </div>
           ) : null}
-          {message ? (
+          {editor.message ? (
             <div className="notice notice-success" role="status">
-              {message}
+              {editor.message}
             </div>
           ) : null}
         </div>
