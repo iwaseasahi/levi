@@ -17,11 +17,11 @@
 .ginmaku-search-page #index_container {
   position: absolute;
   top: 8px;
-  right: 8px;
   bottom: 8px;
   left: 230px;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  width: 940px;
   min-width: 940px;
   min-height: 0;
   padding: 0;
