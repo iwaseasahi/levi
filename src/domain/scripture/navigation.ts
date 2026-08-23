@@ -1,5 +1,12 @@
 import { z } from "zod";
 import {
+  hasExactQueryMultiplicity,
+  nonNegativeSmallIntSchema,
+  positiveSmallIntSchema,
+  scriptureBookCodeSchema,
+  scriptureLanguages,
+} from "./identifiers";
+import {
   assembleScriptureSearchItems,
   type ScriptureLanguage,
   type ScriptureRow,
@@ -16,37 +23,21 @@ export type ScriptureNavigation = {
 
 export type ScriptureNavigationEdge = "book-start" | "book-end";
 
-const positiveSmallInt = z
-  .string()
-  .regex(/^[1-9]\d{0,4}$/)
-  .transform(Number)
-  .refine((value) => value <= 32767);
-const nonNegativeSmallInt = z
-  .string()
-  .regex(/^(?:0|[1-9]\d{0,4})$/)
-  .transform(Number)
-  .refine((value) => value <= 32767);
 const navigationSchema = z
   .object({
-    book: z.string().regex(/^[A-Z0-9][A-Z0-9_-]{0,15}$/),
-    chapter: positiveSmallInt,
-    verse: nonNegativeSmallInt,
+    book: scriptureBookCodeSchema,
+    chapter: positiveSmallIntSchema,
+    verse: nonNegativeSmallIntSchema,
     direction: z.enum(["previous", "next"]),
-    language: z.enum(["ja", "en", "both"]),
+    language: z.enum(scriptureLanguages),
   })
   .strict();
 
 export function parseScriptureNavigation(searchParams: URLSearchParams) {
-  const allowed = new Set([
-    "book",
-    "chapter",
-    "verse",
-    "direction",
-    "language",
-  ]);
   if (
-    [...searchParams.keys()].some((key) => !allowed.has(key)) ||
-    [...allowed].some((key) => searchParams.getAll(key).length !== 1)
+    !hasExactQueryMultiplicity(searchParams, {
+      required: ["book", "chapter", "verse", "direction", "language"],
+    })
   )
     throw new ScriptureSearchError("INVALID_SEARCH_INPUT");
   const result = navigationSchema.safeParse(Object.fromEntries(searchParams));

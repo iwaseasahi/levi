@@ -3,22 +3,19 @@ import type { ScriptureSearchRepository } from "@/application/scripture/search-s
 import {
   requiredTranslations,
   ScriptureSearchError,
-  type ScriptureRow,
   type ScriptureSearch,
 } from "@/domain/scripture/search";
 import { prisma } from "./client";
+import {
+  mapRawScriptureRows,
+  type RawScriptureContentRow,
+} from "./scripture-row-mapper";
 
-type RawScriptureRow = {
+type RawScriptureRow = RawScriptureContentRow & {
   approved_translations: string[];
   book_exists: boolean;
-  book_code: string | null;
-  book_name: string | null;
   chapter_exists: boolean;
   chapter_translations: string[];
-  chapter_number: number | null;
-  text: string | null;
-  translation_code: string | null;
-  verse_number: number | null;
 };
 
 export const scriptureSearchRepository: ScriptureSearchRepository = {
@@ -101,27 +98,10 @@ export const scriptureSearchRepository: ScriptureSearchRepository = {
     `);
     const context = rows[0];
     if (!context) throw new ScriptureSearchError("CATALOG_INTEGRITY_ERROR");
-    const resultRows: ScriptureRow[] = rows
-      .filter((row) => row.verse_number !== null)
-      .map((row): ScriptureRow => {
-        const translation = row.translation_code;
-        if (
-          row.book_code === null ||
-          row.book_name === null ||
-          row.chapter_number === null ||
-          row.text === null ||
-          (translation !== "JSS3" && translation !== "NKJV")
-        )
-          throw new ScriptureSearchError("CATALOG_INTEGRITY_ERROR");
-        return {
-          bookCode: row.book_code,
-          bookName: row.book_name,
-          chapter: row.chapter_number,
-          verse: row.verse_number!,
-          translation,
-          text: row.text,
-        };
-      });
+    const resultRows = mapRawScriptureRows(
+      rows,
+      (row) => row.verse_number !== null,
+    );
     return {
       approvedTranslations: context.approved_translations,
       bookExists: context.book_exists,

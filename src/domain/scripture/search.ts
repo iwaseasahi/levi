@@ -1,7 +1,16 @@
 import { z } from "zod";
+import {
+  hasExactQueryMultiplicity,
+  nonNegativeSmallIntSchema,
+  positiveSmallIntSchema,
+  scriptureBookCodeSchema,
+  scriptureLanguages,
+  type ScriptureLanguage,
+  type ScriptureTranslation,
+} from "./identifiers";
 
-export const scriptureLanguages = ["ja", "en", "both"] as const;
-export type ScriptureLanguage = (typeof scriptureLanguages)[number];
+export { scriptureLanguages } from "./identifiers";
+export type { ScriptureLanguage } from "./identifiers";
 
 export type ScriptureSearch = {
   book: string;
@@ -16,7 +25,7 @@ export type ScriptureRow = {
   bookName: string;
   chapter: number;
   verse: number;
-  translation: "JSS3" | "NKJV";
+  translation: ScriptureTranslation;
   text: string;
 };
 
@@ -47,22 +56,12 @@ export type ScriptureCatalog = {
   verses: number[];
 };
 
-const positiveSmallInt = z
-  .string()
-  .regex(/^[1-9]\d{0,4}$/)
-  .transform(Number)
-  .refine((value) => value <= 32767);
-const nonNegativeSmallInt = z
-  .string()
-  .regex(/^(?:0|[1-9]\d{0,4})$/)
-  .transform(Number)
-  .refine((value) => value <= 32767);
 const searchSchema = z
   .object({
-    book: z.string().regex(/^[A-Z0-9][A-Z0-9_-]{0,15}$/),
-    chapter: positiveSmallInt,
-    startVerse: nonNegativeSmallInt,
-    endVerse: nonNegativeSmallInt,
+    book: scriptureBookCodeSchema,
+    chapter: positiveSmallIntSchema,
+    startVerse: nonNegativeSmallIntSchema,
+    endVerse: nonNegativeSmallIntSchema,
     language: z.enum(scriptureLanguages),
   })
   .strict()
@@ -72,11 +71,8 @@ const searchSchema = z
 
 const catalogSchema = z
   .object({
-    book: z
-      .string()
-      .regex(/^[A-Z0-9][A-Z0-9_-]{0,15}$/)
-      .optional(),
-    chapter: positiveSmallInt.optional(),
+    book: scriptureBookCodeSchema.optional(),
+    chapter: positiveSmallIntSchema.optional(),
     language: z.enum(scriptureLanguages),
   })
   .strict()
@@ -101,16 +97,10 @@ export class ScriptureSearchError extends Error {
 }
 
 export function parseScriptureSearch(searchParams: URLSearchParams) {
-  const allowed = new Set([
-    "book",
-    "chapter",
-    "startVerse",
-    "endVerse",
-    "language",
-  ]);
   if (
-    [...searchParams.keys()].some((key) => !allowed.has(key)) ||
-    [...allowed].some((key) => searchParams.getAll(key).length !== 1)
+    !hasExactQueryMultiplicity(searchParams, {
+      required: ["book", "chapter", "startVerse", "endVerse", "language"],
+    })
   )
     throw new ScriptureSearchError("INVALID_SEARCH_INPUT");
 
@@ -122,12 +112,11 @@ export function parseScriptureSearch(searchParams: URLSearchParams) {
 }
 
 export function parseScriptureCatalogQuery(searchParams: URLSearchParams) {
-  const allowed = new Set(["book", "chapter", "language"]);
   if (
-    [...searchParams.keys()].some((key) => !allowed.has(key)) ||
-    searchParams.getAll("language").length !== 1 ||
-    searchParams.getAll("book").length > 1 ||
-    searchParams.getAll("chapter").length > 1
+    !hasExactQueryMultiplicity(searchParams, {
+      required: ["language"],
+      optional: ["book", "chapter"],
+    })
   )
     throw new ScriptureSearchError("INVALID_SEARCH_INPUT");
 
@@ -144,7 +133,7 @@ export function parseScriptureCatalogQuery(searchParams: URLSearchParams) {
 
 export function requiredTranslations(
   language: ScriptureLanguage,
-): readonly ScriptureRow["translation"][] {
+): readonly ScriptureTranslation[] {
   return language === "ja"
     ? ["JSS3"]
     : language === "en"

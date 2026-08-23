@@ -4,19 +4,13 @@ import {
   parseScriptureSearch,
   ScriptureSearchError,
 } from "@/domain/scripture/search";
+import { churchAccessFailure, noStoreJson } from "../controller-support";
 
 type SearchResult = Awaited<ReturnType<typeof searchScripture>>;
 
 interface ScriptureSearchHandlerDependencies {
   getChurchAccess(headers: Headers): Promise<ChurchAccess>;
   search(input: ReturnType<typeof parseScriptureSearch>): Promise<SearchResult>;
-}
-
-function json(body: unknown, status: number) {
-  return Response.json(body, {
-    headers: { "Cache-Control": "no-store" },
-    status,
-  });
 }
 
 function domainError(error: ScriptureSearchError) {
@@ -29,26 +23,26 @@ function domainError(error: ScriptureSearchError) {
         : error.code === "TRANSLATION_NOT_AVAILABLE"
           ? 409
           : 404;
-  return json({ error: { code: error.code } }, status);
+  return noStoreJson({ error: { code: error.code } }, status);
 }
 
 export function createScriptureSearchHandler(
   dependencies: ScriptureSearchHandlerDependencies,
 ) {
   return async function handleScriptureSearch(request: Request) {
-    const access = await dependencies.getChurchAccess(request.headers);
-    if (access.status === "unauthenticated")
-      return json({ error: { code: "UNAUTHENTICATED" } }, 401);
-    if (access.status !== "authorized" || access.mustChangePassword)
-      return json({ error: { code: "FORBIDDEN" } }, 403);
+    const accessFailure = await churchAccessFailure(
+      request.headers,
+      dependencies.getChurchAccess,
+    );
+    if (accessFailure) return accessFailure;
 
     try {
       const input = parseScriptureSearch(new URL(request.url).searchParams);
-      return json(await dependencies.search(input), 200);
+      return noStoreJson(await dependencies.search(input), 200);
     } catch (error) {
       return error instanceof ScriptureSearchError
         ? domainError(error)
-        : json({ error: { code: "SEARCH_UNAVAILABLE" } }, 500);
+        : noStoreJson({ error: { code: "SEARCH_UNAVAILABLE" } }, 500);
     }
   };
 }
