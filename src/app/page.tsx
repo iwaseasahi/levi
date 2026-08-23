@@ -1,12 +1,8 @@
-export default function Home() {
-  return (
-    <main className="shell">
-      <section className="card" aria-labelledby="page-title">
-        <h1 id="page-title">礼拝投影システム Levi</h1>
-        <a className="home-login-link" href="/login">
-          ログイン
-        </a>
-      </section>
-    </main>
-  );
+import { headers } from "next/headers";
+import { getChurchAccess } from "@/infrastructure/auth/church-session";
+import { HomeContent } from "./home-content";
+
+export default async function Home() {
+  const access = await getChurchAccess(await headers());
+  return <HomeContent isLoggedIn={access.status === "authorized"} />;
 }
