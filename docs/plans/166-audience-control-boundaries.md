@@ -32,7 +32,7 @@
 2. [x] opener message/READY/keyboard/表示controlをmessage controller hookへ分離する。
 3. [x] text fit計算を純粋関数とlayout hookへ分離し、layout read/write回数を制限する。
 4. [x] audience viewをpresentation componentへ分離する。
-5. [ ] unit/component/E2E/Chrome screenshot、`pnpm check`、security、required CIを通す。
+5. [x] unit/component/E2E/Chrome screenshot、`pnpm check`、security、required CIを通す。
 
 ## Progress
 
@@ -40,6 +40,7 @@
 - 2026-08-23 JST — fit scaleを純粋関数化し、寸法read後にCSS writeを一度だけ行うlayout hookへ移行。unit 198件、component 38件、typecheck、lintが合格。
 - 2026-08-23 JST — data、session monitor、navigation queue、opener/keyboard control、presentationを独立moduleへ分離。分離直後のtypecheck、lint、component 38件が合格。
 - 2026-08-23 JST — navigation応答とsession失効の競合回帰を追加。unit 198件、component 39件、integration 73件、E2E 9件、`pnpm check`、security、DB検証、Chrome screenshotが合格。
+- 2026-08-23 JST — PR #179のrequired CI（Quality、Database、E2E、Security）がcommit `b0e099d`で合格。
 
 ## Decisions
 
@@ -65,15 +66,15 @@
 - [x] `pnpm security:check`（脆弱性0、license 314件承認）
 - [x] `pnpm db:check` / `pnpm test:integration`（73件）
 - [x] `git diff --check`
-- [ ] required CI
+- [x] required CI（Quality、Database、E2E、Security）
 
 ## Handoff or blockers
 
-- Completed: 実装、回帰テスト、local canonical checks、E2E、Chrome screenshot。
-- Remaining: PR更新、required CI、merge。
+- Completed: 実装、回帰テスト、local canonical checks、E2E、Chrome screenshot、required CI。
+- Remaining: merge。
 - Blocker: なし。
-- Resume with: PR headをpushしrequired CIを確認する。
+- Resume with: PRをmergeする。
 
 ## Result
 
-未完了。
+投映画面を5つの独立責務へ分離し、挙動・security境界・表示を維持した。
