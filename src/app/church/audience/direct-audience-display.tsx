@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   ScriptureSearch,
   ScriptureSearchItem,
@@ -20,6 +14,7 @@ import {
   type DirectAudienceReady,
 } from "@/domain/projection/direct-audience-control";
 import { parseJsonResponse } from "../client-api";
+import { useAudienceFit } from "./use-audience-fit";
 
 function heading(item: ScriptureSearchItem) {
   const bookName =
@@ -48,6 +43,8 @@ export function DirectAudienceDisplay({
   const readySentRef = useRef(false);
   const screenRef = useRef<HTMLElement>(null);
   const verseRef = useRef<HTMLDivElement>(null);
+
+  useAudienceFit({ blank, current, fontScale, screenRef, verseRef });
 
   const failClosed = useCallback(() => {
     authorizedRef.current = false;
@@ -212,36 +209,6 @@ export function DirectAudienceDisplay({
     window.addEventListener("keydown", navigateWithArrowKey);
     return () => window.removeEventListener("keydown", navigateWithArrowKey);
   }, [navigate]);
-
-  useLayoutEffect(() => {
-    const screen = screenRef.current;
-    const verse = verseRef.current;
-    if (!current || !screen || !verse) return;
-    const activeScreen = screen;
-    const activeVerse = verse;
-    function fitVerse() {
-      activeScreen.style.setProperty("--audience-fit-scale", "1");
-      const headingHeight =
-        activeScreen.querySelector<HTMLElement>(".audience-book-name")
-          ?.offsetHeight ?? 26;
-      const availableHeight = Math.max(
-        1,
-        activeScreen.clientHeight - headingHeight * 2,
-      );
-      let scale = 1;
-      while (
-        (activeVerse.scrollHeight > availableHeight ||
-          activeVerse.scrollWidth > activeScreen.clientWidth) &&
-        scale > 0.2
-      ) {
-        scale *= 0.95;
-        activeScreen.style.setProperty("--audience-fit-scale", String(scale));
-      }
-    }
-    fitVerse();
-    window.addEventListener("resize", fitVerse);
-    return () => window.removeEventListener("resize", fitVerse);
-  }, [blank, current, fontScale]);
 
   if (status !== "ready" || !current)
     return (
