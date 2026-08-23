@@ -71,13 +71,24 @@ test.describe("operator church provisioning", () => {
     ).toBeVisible();
     await expect(page.locator(".admin-form").first()).toHaveCSS(
       "background-color",
-      "rgb(16, 16, 16)",
+      "rgb(17, 17, 17)",
     );
     await expect(page.getByLabel("教会名")).toHaveCSS(
       "background-color",
-      "rgb(36, 36, 36)",
+      "rgb(27, 27, 27)",
     );
+    await expect(
+      page.getByRole("button", { name: "教会と初期アカウントを作成" }),
+    ).toHaveCSS("background-color", "rgb(210, 165, 104)");
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await page.setViewportSize({ width: 1280, height: 720 });
 
     await page.getByLabel("教会名").fill(E2E_CREATED_CHURCH);
     await page.getByLabel("利用者名").fill("Synthetic Created User");
@@ -130,7 +141,7 @@ test.describe("operator church provisioning", () => {
     await expect(page).toHaveURL(/\/change-password$/, { timeout: 20_000 });
     await expect(page.locator(".auth-card")).toHaveCSS(
       "background-color",
-      "rgb(16, 16, 16)",
+      "rgba(17, 17, 17, 0.94)",
     );
 
     const selectedPassword = "n".repeat(16);

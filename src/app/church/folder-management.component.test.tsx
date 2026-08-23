@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { ScriptureBookmarkView } from "@/domain/saved-content";
 import { BookmarkEditPanel } from "./bookmark-edit-panel";
@@ -168,5 +169,50 @@ describe("folder management", () => {
         body: expect.stringContaining('"title":"礼拝開始"'),
       }),
     );
+  });
+
+  it("does not overwrite an edit with a discarded strict-mode request", async () => {
+    let resolveDiscardedRequest!: (response: Response) => void;
+    let readCount = 0;
+    const response = {
+      folder: { id: folderId },
+      bookmarks: [
+        {
+          id: bookmarkId,
+          folderId,
+          position: 0,
+          title: "創世記/Genesis 1:1",
+          search,
+        },
+      ],
+    };
+    const fetcher = vi.fn<typeof fetch>(async () => {
+      readCount += 1;
+      if (readCount === 1) {
+        return new Promise<Response>((resolve) => {
+          resolveDiscardedRequest = resolve;
+        });
+      }
+      return Response.json(response);
+    });
+
+    render(
+      <StrictMode>
+        <BookmarkEditPanel
+          bookmarkId={bookmarkId}
+          folderId={folderId}
+          fetcher={fetcher}
+        />
+      </StrictMode>,
+    );
+    const user = userEvent.setup();
+    const title = await screen.findByLabelText("お気に入り名");
+    await user.clear(title);
+    await user.type(title, "礼拝開始");
+
+    resolveDiscardedRequest(Response.json(response));
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+    expect(title).toHaveValue("礼拝開始");
   });
 });
