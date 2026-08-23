@@ -450,7 +450,6 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await page.getByLabel("章").fill("1");
   await expect(page.getByLabel("開始節")).toBeEnabled();
   await page.getByLabel("開始節").fill("1");
-  await page.getByLabel("終了節（省略可）").fill("2");
 
   const createFolderToggle = page.getByRole("button", {
     name: "新規フォルダ作成",
@@ -508,13 +507,13 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   await favoriteButton.click();
   await expect(
     page.getByRole("link", {
-      name: "創世記/Genesis 1:1-2",
+      name: "創世記/Genesis 1:1-3",
       exact: true,
     }),
   ).toBeVisible();
   await expect(
     page.getByRole("link", {
-      name: "創世記/Genesis 1:1-2",
+      name: "創世記/Genesis 1:1-3",
       exact: true,
     }),
   ).toHaveCSS("color", "rgb(255, 255, 255)");
@@ -539,7 +538,7 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   );
   await bookmarks.getByRole("listitem").nth(1).press("Alt+ArrowUp");
   await expect(bookmarks.getByRole("listitem").first()).toContainText(
-    "創世記/Genesis 1:1-2",
+    "創世記/Genesis 1:1-3",
   );
 
   await page.getByRole("button", { name: "新規フォルダ作成" }).click();
@@ -589,12 +588,12 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
 
   const bookmarkOpened = context.waitForEvent("page");
   await page
-    .getByRole("link", { name: "創世記/Genesis 1:1-2", exact: true })
+    .getByRole("link", { name: "創世記/Genesis 1:1-3", exact: true })
     .click();
   const bookmarkedAudience = await bookmarkOpened;
   await expect(page).toHaveURL(/\/scripture$/);
   await expect(bookmarkedAudience).toHaveURL(
-    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1$/,
+    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=3&language=both&startVerse=1$/,
   );
   await expect(
     bookmarkedAudience.getByRole("heading", {

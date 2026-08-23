@@ -75,13 +75,51 @@ const audienceTarget = {
   postMessage: audiencePostMessage,
 } as unknown as Window;
 
-function renderSearch(fetcher: typeof fetch) {
+function renderSearch(
+  fetcher: typeof fetch,
+  contentFetcher: typeof fetch = savedContentFetcher,
+) {
   return render(
-    <ScriptureSearch
-      fetcher={fetcher}
-      savedContentFetcher={savedContentFetcher}
-    />,
+    <ScriptureSearch fetcher={fetcher} savedContentFetcher={contentFetcher} />,
   );
+}
+
+function statefulSavedContentFetcher() {
+  const folder = {
+    id: "00000000-0000-4000-8000-000000000101",
+    isPinned: false,
+    lastUsedAt: null,
+    name: "主日礼拝",
+    position: 0,
+  };
+  let bookmarks: unknown[] = [];
+  return vi.fn<typeof fetch>(async (input, init) => {
+    const url = new URL(String(input), "https://levi.example");
+    if (init?.method !== "POST") {
+      if (url.searchParams.has("folderId"))
+        return Response.json({ bookmarks, folder });
+      return Response.json({ folders: [folder], orderIds: [folder.id] });
+    }
+    const command = JSON.parse(String(init.body)) as Record<string, unknown>;
+    if (command.action === "create-bookmark") {
+      const bookmark = {
+        folderId: folder.id,
+        id: "00000000-0000-4000-8000-000000000201",
+        position: 0,
+        search: {
+          book: command.book,
+          chapter: command.chapter,
+          endVerse: command.endVerse,
+          language: command.language,
+          startVerse: command.startVerse,
+        },
+        title: command.title,
+      };
+      bookmarks = [bookmark];
+      return Response.json({ bookmark });
+    }
+    return Response.json({ ok: true });
+  });
 }
 
 async function chooseRange(user: ReturnType<typeof userEvent.setup>) {
@@ -259,6 +297,37 @@ describe("ScriptureSearch", () => {
       "/scripture/audience?book=JHN&chapter=3&endVerse=18&language=both&startVerse=16",
       "projector",
     );
+  });
+
+  it("uses the normalized range in the favorite title when the end verse is omitted", async () => {
+    const contentFetcher = statefulSavedContentFetcher();
+    renderSearch(successfulFetcher(), contentFetcher);
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("radio", {
+        name: "架空ヨハネ/Synthetic John",
+      }),
+    );
+    await waitFor(() => expect(screen.getByLabelText("章")).toBeEnabled());
+    await user.type(screen.getByLabelText("章"), "3");
+    await waitFor(() => expect(screen.getByLabelText("開始節")).toBeEnabled());
+    await user.type(screen.getByLabelText("開始節"), "16");
+    const favorite = await screen.findByRole("button", {
+      name: "お気に入りに追加",
+    });
+    await waitFor(() => expect(favorite).toBeEnabled());
+    await user.click(favorite);
+
+    const createBookmarkCall = contentFetcher.mock.calls.find(([, init]) =>
+      String(init?.body).includes('"action":"create-bookmark"'),
+    );
+    expect(JSON.parse(String(createBookmarkCall?.[1]?.body))).toMatchObject({
+      book: "JHN",
+      chapter: 3,
+      endVerse: 18,
+      startVerse: 16,
+      title: "架空ヨハネ/Synthetic John 3:16-18",
+    });
   });
 
   it("announces and focuses the first missing required field", async () => {
