@@ -5,6 +5,7 @@ import type {
   ScriptureCatalog,
   ScriptureCatalogBook,
   ScriptureLanguage,
+  ScriptureSearch as NormalizedSearch,
 } from "@/domain/scripture/search";
 import {
   directAudienceSchema,
@@ -14,14 +15,7 @@ import {
   type DirectAudienceCommand,
 } from "@/domain/projection/direct-audience-control";
 import { SavedContentPanel } from "./saved-content-panel";
-
-type NormalizedSearch = {
-  book: string;
-  chapter: number;
-  startVerse: number;
-  endVerse: number;
-  language: ScriptureLanguage;
-};
+import { requestJson } from "./client-api";
 
 type Status = { kind: "idle" } | { kind: "error"; message: string };
 
@@ -148,12 +142,12 @@ export function ScriptureSearch({
     setCatalogLoading(true);
     setCatalogError("");
     try {
-      const response = await fetcher(catalogUrl(next), {
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      });
-      if (!response.ok) throw new Error("catalog unavailable");
-      const catalog = (await response.json()) as ScriptureCatalog;
+      const catalog = await requestJson<ScriptureCatalog>(
+        fetcher,
+        catalogUrl(next),
+        { cache: "no-store", headers: { Accept: "application/json" } },
+        "catalog unavailable",
+      );
       if (sequence !== requestSequence.current) return;
       setBooks(catalog.books);
       setChapters(catalog.chapters);

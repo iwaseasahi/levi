@@ -2,12 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { FolderSummary } from "@/domain/saved-content";
-
-async function payload<T>(response: Response): Promise<T> {
-  const body = (await response.json()) as T;
-  if (!response.ok) throw new Error("folder list unavailable");
-  return body;
-}
+import { requestJson } from "./client-api";
 
 export function FolderListPanel({
   fetcher = fetch,
@@ -23,11 +18,14 @@ export function FolderListPanel({
     setPending(true);
     setError("");
     try {
-      const result = await payload<{ folders: FolderSummary[] }>(
-        await fetcher("/api/saved-content", {
+      const result = await requestJson<{ folders: FolderSummary[] }>(
+        fetcher,
+        "/api/saved-content",
+        {
           cache: "no-store",
           headers: { Accept: "application/json" },
-        }),
+        },
+        "folder list unavailable",
       );
       setFolders(result.folders);
     } catch {

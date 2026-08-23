@@ -19,6 +19,7 @@ import {
   parseDirectAudienceCommand,
   type DirectAudienceReady,
 } from "@/domain/projection/direct-audience-control";
+import { parseJsonResponse } from "../client-api";
 
 function heading(item: ScriptureSearchItem) {
   const bookName =
@@ -74,10 +75,9 @@ export function DirectAudienceDisplay({
           failClosed();
           return;
         }
-        if (!response.ok) throw new Error("search unavailable");
-        const result = (await response.json()) as {
+        const result = await parseJsonResponse<{
           items: ScriptureSearchItem[];
-        };
+        }>(response, "search unavailable");
         const first = result.items[0];
         if (!first) throw new Error("search empty");
         currentRef.current = first;
@@ -135,11 +135,10 @@ export function DirectAudienceDisplay({
             failClosed();
             return;
           }
-          if (!response.ok) throw new Error("navigation unavailable");
-          const result = (await response.json()) as {
+          const result = await parseJsonResponse<{
             edge: ScriptureNavigationEdge | null;
             item: ScriptureSearchItem | null;
-          };
+          }>(response, "navigation unavailable");
           if (!result.item) return;
           currentRef.current = result.item;
           setCurrent(result.item);

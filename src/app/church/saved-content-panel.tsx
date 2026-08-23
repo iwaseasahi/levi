@@ -14,15 +14,9 @@ import type {
   FolderSummary,
   ScriptureBookmarkView,
 } from "@/domain/saved-content";
-import type { ScriptureLanguage } from "@/domain/scripture/search";
-
-type ScriptureSearch = {
-  book: string;
-  chapter: number;
-  startVerse: number;
-  endVerse: number;
-  language: ScriptureLanguage;
-};
+import type { ScriptureSearch } from "@/domain/scripture/search";
+import { moveBy, moveTo } from "@/domain/order";
+import { postJson, requestJson } from "./client-api";
 
 type SelectedFolder = {
   folder: FolderSummary;
@@ -30,31 +24,6 @@ type SelectedFolder = {
 };
 
 const subscribeToClient = () => () => {};
-
-async function payload<T>(response: Response): Promise<T> {
-  const body = (await response.json()) as T | { error?: { code?: string } };
-  if (!response.ok) throw new Error("saved content unavailable");
-  return body as T;
-}
-
-function moveTo(ids: string[], draggedId: string, targetId: string) {
-  const from = ids.indexOf(draggedId);
-  const target = ids.indexOf(targetId);
-  if (from < 0 || target < 0 || from === target) return null;
-  const next = [...ids];
-  next.splice(from, 1);
-  next.splice(target, 0, draggedId);
-  return next;
-}
-
-function move(ids: string[], id: string, offset: -1 | 1) {
-  const from = ids.indexOf(id);
-  const to = from + offset;
-  if (from < 0 || to < 0 || to >= ids.length) return null;
-  const next = [...ids];
-  [next[from], next[to]] = [next[to]!, next[from]!];
-  return next;
-}
 
 function bookmarkHref(search: ScriptureSearch) {
   return `/scripture/audience?${new URLSearchParams({
@@ -101,38 +70,37 @@ export function SavedContentPanel({
     : document.getElementById("ginmaku-add-bookmark-slot");
 
   async function request<T>(body: object) {
-    return payload<T>(
-      await fetcher("/api/saved-content", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      }),
+    return postJson<T>(
+      fetcher,
+      "/api/saved-content",
+      body,
+      "saved content unavailable",
     );
   }
 
   async function fetchFolders() {
-    const response = await payload<{ folders: FolderSummary[] }>(
-      await fetcher("/api/saved-content", {
+    const response = await requestJson<{ folders: FolderSummary[] }>(
+      fetcher,
+      "/api/saved-content",
+      {
         cache: "no-store",
         headers: { Accept: "application/json" },
-      }),
+      },
+      "saved content unavailable",
     );
     setFolders(response.folders);
     return response.folders;
   }
 
   async function loadFolder(folderId: string) {
-    const value = await payload<SelectedFolder>(
-      await fetcher(
-        `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
-        {
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-        },
-      ),
+    const value = await requestJson<SelectedFolder>(
+      fetcher,
+      `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
+      {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      },
+      "saved content unavailable",
     );
     setSelected(value);
   }
@@ -258,7 +226,7 @@ export function SavedContentPanel({
 
   async function reorderBookmark(bookmarkId: string, offset: -1 | 1) {
     if (!selected) return;
-    const ids = move(
+    const ids = moveBy(
       selected.bookmarks.map(({ id }) => id),
       bookmarkId,
       offset,
