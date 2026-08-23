@@ -45,6 +45,13 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   });
   await expect(worshipFolder).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
+  const folderEditLink = page.getByRole("link", {
+    name: "2026-08-23 第二礼拝を編集",
+  });
+  await expect(folderEditLink).toHaveAttribute("href", /\/folders\/.+\/edit$/);
+  await expect(folderEditLink).not.toHaveAttribute("target");
+  await folderEditLink.focus();
+  await expect(folderEditLink).toBeFocused();
   await expect(page.getByLabel("フォルダー名")).toHaveCount(0);
   await expect(page.getByText("ブックマーク名", { exact: true })).toHaveCount(
     0,

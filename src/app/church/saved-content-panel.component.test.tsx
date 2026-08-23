@@ -125,6 +125,16 @@ describe("SavedContentPanel", () => {
     expect(screen.queryByText("フォルダー", { exact: true })).toBeNull();
     expect(screen.queryByText("一覧", { exact: true })).toBeNull();
     expect(
+      screen.getByRole("link", { name: "主日礼拝を編集" }),
+    ).toHaveAttribute("href", `/folders/${folderId}/edit`);
+    expect(
+      screen.getByRole("link", { name: "主日礼拝を編集" }),
+    ).not.toHaveAttribute("target");
+    expect(screen.getByRole("link", { name: "祈祷会を編集" })).toHaveAttribute(
+      "href",
+      `/folders/${secondFolderId}/edit`,
+    );
+    expect(
       screen.getByRole("link", { name: "フォルダの一覧" }),
     ).toHaveAttribute("href", "/folders");
     expect(
@@ -148,6 +158,9 @@ describe("SavedContentPanel", () => {
     expect(
       await screen.findByRole("button", { name: "2026-08-23 第二礼拝" }),
     ).toHaveAttribute("aria-expanded", "true");
+    expect(
+      screen.getByRole("link", { name: "2026-08-23 第二礼拝を編集" }),
+    ).toHaveAttribute("href", `/folders/${createdFolderId}/edit`);
     expect(
       JSON.parse(
         String(
