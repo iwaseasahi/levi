@@ -160,6 +160,72 @@ describe("operator reset and forced password change", () => {
     ).resolves.toBe(true);
   });
 
+  it("completes concurrent resets and forced changes for different churches", async () => {
+    const targets = [await fixture(), await fixture()];
+    for (const target of targets) await signIn(target.email, originalPassword);
+
+    const resets = await Promise.all(
+      targets.map((target) =>
+        resetChurchPassword(target.operatorId, target.churchId),
+      ),
+    );
+    for (const [index, target] of targets.entries()) {
+      const user = await prisma.user.findUniqueOrThrow({
+        where: { id: target.userId },
+        include: { accounts: true, sessions: true },
+      });
+      expect(user.mustChangePassword).toBe(true);
+      expect(user.sessions).toEqual([]);
+      await expect(
+        verifyPassword({
+          hash: user.accounts[0]?.password ?? "",
+          password: resets[index]!.temporaryPassword,
+        }),
+      ).resolves.toBe(true);
+    }
+
+    for (const [index, target] of targets.entries()) {
+      await signIn(target.email, resets[index]!.temporaryPassword);
+      await signIn(target.email, resets[index]!.temporaryPassword);
+    }
+    const sessions = await Promise.all(
+      targets.map((target) =>
+        prisma.session.findMany({
+          where: { userId: target.userId },
+          orderBy: { createdAt: "asc" },
+        }),
+      ),
+    );
+
+    await Promise.all(
+      targets.map((target, index) =>
+        completeForcedPasswordChange({
+          newPassword: selectedPassword,
+          confirmation: selectedPassword,
+          sessionId: sessions[index]![0]!.id,
+          userId: target.userId,
+        }),
+      ),
+    );
+
+    for (const [index, target] of targets.entries()) {
+      const user = await prisma.user.findUniqueOrThrow({
+        where: { id: target.userId },
+        include: { accounts: true, sessions: true },
+      });
+      expect(user.mustChangePassword).toBe(false);
+      expect(user.sessions.map(({ id }) => id)).toEqual([
+        sessions[index]![0]!.id,
+      ]);
+      await expect(
+        verifyPassword({
+          hash: user.accounts[0]?.password ?? "",
+          password: selectedPassword,
+        }),
+      ).resolves.toBe(true);
+    }
+  });
+
   it("rejects a stale session", async () => {
     const target = await fixture();
     await resetChurchPassword(target.operatorId, target.churchId);

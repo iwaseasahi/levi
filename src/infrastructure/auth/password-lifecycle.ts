@@ -7,6 +7,7 @@ import {
 } from "@/application/auth/password-lifecycle";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/infrastructure/database/client";
+import { runWithSerializableRetry } from "@/infrastructure/database/serializable-retry";
 
 function transactionAdapter(
   transaction: Prisma.TransactionClient,
@@ -113,9 +114,11 @@ export const { completeForcedPasswordChange, resetChurchPassword } =
     generateTemporaryPassword,
     hashPassword,
     runTransaction(operation) {
-      return prisma.$transaction(
-        (transaction) => operation(transactionAdapter(transaction)),
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      return runWithSerializableRetry(() =>
+        prisma.$transaction(
+          (transaction) => operation(transactionAdapter(transaction)),
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
       );
     },
   });
