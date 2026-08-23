@@ -43,6 +43,7 @@
 - 2026-08-23 18:00 JST — #189と子Issue #190〜#195を作成し、sub-issueとして関連付けた。
 - 2026-08-23 18:15 JST — #190を`codex/issue-190`で開始した。
 - 2026-08-23 18:20 JST — #190のcoverage分母を580 statementsから804 statementsへ拡張し、saved-contentの全7 mutation commandを直接検証した。unit 238件、statements 93.28%、branches 88.73%。
+- 2026-08-23 18:25 JST — #190のlocal verification完了。`mise run check`、coverage、integration 76件、E2E 13件（既存dev serverを維持するため一時worktreeで実行）、security、diff checkが成功した。
 
 ## Decisions
 
