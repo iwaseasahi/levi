@@ -8,6 +8,10 @@ import { prisma } from "@/infrastructure/database/client";
 import { scriptureSearchRepository } from "@/infrastructure/database/scripture-search-repository";
 import { scriptureCatalogRepository } from "@/infrastructure/database/scripture-catalog-repository";
 import { scriptureNavigationRepository } from "@/infrastructure/database/scripture-navigation-repository";
+import {
+  clearSyntheticBibleFixture,
+  createSyntheticBibleFixture,
+} from "../helpers/synthetic-bible-fixture";
 
 const baseSearch: ScriptureSearch = {
   book: "JHN",
@@ -17,81 +21,64 @@ const baseSearch: ScriptureSearch = {
   language: "both",
 };
 
-async function clearFixture() {
-  await prisma.bibleVerse.deleteMany({
-    where: { book: { canonicalCode: "JHN" } },
-  });
-  await prisma.bibleBookName.deleteMany({
-    where: { book: { canonicalCode: "JHN" } },
-  });
-  await prisma.bibleBook.deleteMany({ where: { canonicalCode: "JHN" } });
-  await prisma.bibleTranslation.updateMany({
-    where: { code: { in: ["JSS3", "NKJV"] } },
-    data: {
-      rightsStatus: "PENDING",
-      sourceReference: null,
-      rightsNotice: null,
-    },
-  });
-}
+const cleanup = {
+  bookCodes: ["JHN"],
+  resetTranslationCodes: ["JSS3", "NKJV"],
+};
 
-async function translation(code: "JSS3" | "NKJV", displayOrder: number) {
-  return prisma.bibleTranslation.upsert({
-    where: { code },
-    update: {
-      rightsStatus: "APPROVED",
-      sourceReference: "synthetic search fixture",
-      rightsNotice: "not scripture; test use only",
-    },
-    create: {
-      code,
-      name: `Synthetic ${code}`,
-      languageTag: code === "JSS3" ? "ja" : "en",
-      displayOrder,
-      rightsStatus: "APPROVED",
-      sourceReference: "synthetic search fixture",
-      rightsNotice: "not scripture; test use only",
-    },
-  });
-}
+const clearFixture = () => clearSyntheticBibleFixture(prisma, cleanup);
 
 async function createFixture() {
-  const [jss3, nkjv] = await Promise.all([
-    translation("JSS3", 1),
-    translation("NKJV", 2),
-  ]);
-  const book = await prisma.bibleBook.create({
-    data: { canonicalCode: "JHN", canonicalOrder: 43, testament: "NEW" },
-  });
-  await prisma.bibleBookName.createMany({
-    data: [
-      { translationId: jss3.id, bookId: book.id, name: "架空ヨハネ" },
-      { translationId: nkjv.id, bookId: book.id, name: "Synthetic John" },
+  const fixture = await createSyntheticBibleFixture(prisma, {
+    books: [
+      {
+        canonicalCode: "JHN",
+        canonicalOrder: 43,
+        names: {
+          JSS3: { name: "架空ヨハネ" },
+          NKJV: { name: "Synthetic John" },
+        },
+        testament: "NEW",
+        verses: [
+          ...[15, 16, 17, 18, 19].map((verseNumber) => ({
+            chapterNumber: 3,
+            texts: {
+              JSS3: `架空の日本語 3:${verseNumber}`,
+              NKJV: `Synthetic English 3:${verseNumber}`,
+            },
+            verseNumber,
+          })),
+          {
+            chapterNumber: 4,
+            texts: {
+              JSS3: "架空の日本語 4:1",
+              NKJV: "Synthetic English 4:1",
+            },
+            verseNumber: 1,
+          },
+          {
+            chapterNumber: 4,
+            texts: {
+              JSS3: "架空の日本語 4:3",
+              NKJV: "Synthetic English 4:3",
+            },
+            verseNumber: 3,
+          },
+        ],
+      },
     ],
+    sourceReference: "synthetic search fixture",
+    translations: [
+      { code: "JSS3", displayOrder: 1, languageTag: "ja" },
+      { code: "NKJV", displayOrder: 2, languageTag: "en" },
+    ],
+    upsertTranslations: true,
   });
-  await prisma.bibleVerse.createMany({
-    data: [
-      ...[15, 16, 17, 18, 19].map((verse) => ({ chapter: 3, verse })),
-      { chapter: 4, verse: 1 },
-      { chapter: 4, verse: 3 },
-    ].flatMap(({ chapter, verse }) => [
-      {
-        translationId: jss3.id,
-        bookId: book.id,
-        chapterNumber: chapter,
-        verseNumber: verse,
-        text: `架空の日本語 ${chapter}:${verse}`,
-      },
-      {
-        translationId: nkjv.id,
-        bookId: book.id,
-        chapterNumber: chapter,
-        verseNumber: verse,
-        text: `Synthetic English ${chapter}:${verse}`,
-      },
-    ]),
-  });
-  return { book, jss3, nkjv };
+  return {
+    book: fixture.books.get("JHN")!,
+    jss3: fixture.translations.get("JSS3")!,
+    nkjv: fixture.translations.get("NKJV")!,
+  };
 }
 
 beforeEach(async () => {
