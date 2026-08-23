@@ -90,6 +90,9 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   await page.getByLabel("終了節（省略可）").fill("1");
   await favoriteButton.click();
   const bookmarkRows = page.locator("[data-bookmark-id]");
+  await expect(bookmarkRows).toHaveCount(2);
+  await expect(bookmarkRows.nth(0)).toHaveAttribute("draggable", "true");
+  await expect(bookmarkRows.nth(1)).toHaveAttribute("draggable", "true");
   await bookmarkRows.nth(1).dragTo(bookmarkRows.nth(0));
   const bookmarks = page.locator(".bookmark-list");
   await expect(bookmarks.getByRole("listitem").first()).toContainText(
