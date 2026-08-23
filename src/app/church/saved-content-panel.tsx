@@ -139,10 +139,6 @@ export function SavedContentPanel({
         aria-label="フォルダーとお気に入り"
         aria-busy={controller.pending}
       >
-        <div className="folder-sidebar-heading">
-          <span>フォルダー</span>
-          <a href="/folders">一覧</a>
-        </div>
         {controller.folders.length > 0 ? (
           <div className="folder-list" role="list" aria-label="フォルダー">
             {controller.folders.map((folder) => {

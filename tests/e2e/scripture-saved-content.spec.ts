@@ -11,6 +11,7 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   test.setTimeout(60_000);
   await loginToScripture(context, page, scriptureAccount);
   await selectGenesis(page, { endVerse: "" });
+  await expect(page.locator(".folder-sidebar-heading")).toHaveCount(0);
 
   const createFolderToggle = page.getByRole("button", {
     name: "新規フォルダ作成",
