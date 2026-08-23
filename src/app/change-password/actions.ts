@@ -23,7 +23,6 @@ export async function changePasswordAction(
     };
   try {
     await completeForcedPasswordChange({
-      currentPassword: formData.get("currentPassword"),
       newPassword: formData.get("newPassword"),
       confirmation: formData.get("confirmation"),
       ...session,
@@ -43,7 +42,7 @@ export async function changePasswordAction(
       message:
         error instanceof PasswordLifecycleAuthorizationError
           ? "セッションが無効です。再度ログインしてください。"
-          : "変更できませんでした。現在のパスワードを確認してください。",
+          : "パスワードを変更できませんでした。もう一度お試しください。",
     };
   }
 }
