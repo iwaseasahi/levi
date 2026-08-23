@@ -61,6 +61,21 @@ The following code is intentionally outside unit coverage:
 Thresholds apply to the combined unit-testable scope and must not be weakened to
 make a change pass.
 
+## Client request concurrency
+
+Client components accept an injected `fetch` implementation for deterministic
+tests and treat it as fixed for the component lifetime. Protected reads use
+`cache: "no-store"`; JSON success and API error parsing use the shared typed
+client helper.
+
+Scripture catalog requests use a monotonically increasing sequence and discard
+stale responses. Audience navigation is serialized through its existing promise
+queue so rapid previous/next commands cannot commit out of order. These guards
+remain authoritative for the current small same-origin requests; introduce
+`AbortController` only when a component owns cleanup for the complete request
+lifecycle, and retain the sequence/queue guard for responses that may already
+have completed.
+
 ## Initial behavior responsibility map
 
 This table fixes the observable behavior that must survive structural refactors.

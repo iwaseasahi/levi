@@ -6,27 +6,13 @@ import type {
   FolderSummary,
   ScriptureBookmarkView,
 } from "@/domain/saved-content";
+import { moveTo } from "@/domain/order";
+import { postJson, requestJson } from "./client-api";
 
 type SelectedFolder = {
   folder: FolderSummary;
   bookmarks: ScriptureBookmarkView[];
 };
-
-async function payload<T>(response: Response): Promise<T> {
-  const body = (await response.json()) as T;
-  if (!response.ok) throw new Error("saved content unavailable");
-  return body;
-}
-
-function moveTo(ids: string[], draggedId: string, targetId: string) {
-  const from = ids.indexOf(draggedId);
-  const target = ids.indexOf(targetId);
-  if (from < 0 || target < 0 || from === target) return null;
-  const next = [...ids];
-  next.splice(from, 1);
-  next.splice(target, 0, draggedId);
-  return next;
-}
 
 export function FolderEditPanel({
   folderId,
@@ -47,24 +33,20 @@ export function FolderEditPanel({
   const feedbackRef = useRef<HTMLDivElement>(null);
 
   async function request<T>(body: object) {
-    return payload<T>(
-      await fetcher("/api/saved-content", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      }),
+    return postJson<T>(
+      fetcher,
+      "/api/saved-content",
+      body,
+      "saved content unavailable",
     );
   }
 
   async function load() {
-    const value = await payload<SelectedFolder>(
-      await fetcher(
-        `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
-        { cache: "no-store", headers: { Accept: "application/json" } },
-      ),
+    const value = await requestJson<SelectedFolder>(
+      fetcher,
+      `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
+      { cache: "no-store", headers: { Accept: "application/json" } },
+      "saved content unavailable",
     );
     setSelected(value);
     setName(value.folder.name);
