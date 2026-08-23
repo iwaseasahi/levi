@@ -173,6 +173,7 @@ describe("SavedContentPanel", () => {
       name: "お気に入りに追加",
     });
     await user.click(favorite);
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(
       JSON.parse(
         String(
