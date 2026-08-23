@@ -279,14 +279,17 @@ describe("SavedContentPanel", () => {
     );
   });
 
-  it("shows an empty state, disables favorites, and focuses failures", async () => {
+  it("keeps the empty sidebar concise, disables favorites, and focuses failures", async () => {
     const emptyFetcher = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(Response.json({ folders: [], orderIds: [] }));
     const { unmount } = renderPanel(emptyFetcher, null);
-    expect(
-      await screen.findByText("フォルダーはまだありません。"),
-    ).toBeVisible();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("region", { name: "フォルダーとお気に入り" }),
+      ).toHaveAttribute("aria-busy", "false"),
+    );
+    expect(screen.queryByText("フォルダーはまだありません。")).toBeNull();
     expect(
       screen.getByRole("button", { name: "お気に入りに追加" }),
     ).toBeDisabled();
