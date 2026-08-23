@@ -90,7 +90,6 @@ export function SavedContentPanel({
   );
   const [pending, setPending] = useState(true);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const feedbackRef = useRef<HTMLDivElement>(null);
   const isClient = useSyncExternalStore(
     subscribeToClient,
@@ -140,15 +139,12 @@ export function SavedContentPanel({
 
   async function run(
     action: () => Promise<void>,
-    success?: string,
     recover?: () => Promise<void>,
   ) {
     setPending(true);
     setError("");
-    setMessage("");
     try {
       await action();
-      if (success) setMessage(success);
     } catch {
       if (recover) {
         try {
@@ -221,7 +217,7 @@ export function SavedContentPanel({
       });
       await loadFolder(selected.folder.id);
       await fetchFolders();
-    }, "お気に入りに追加しました。");
+    });
   }
 
   async function openBookmark(bookmarkId: string) {
@@ -244,7 +240,6 @@ export function SavedContentPanel({
         await loadFolder(folderId);
         await fetchFolders();
       },
-      undefined,
       () => loadFolder(folderId),
     );
   }
@@ -302,9 +297,6 @@ export function SavedContentPanel({
         お気に入りに追加
       </button>
       {!selected ? <span> フォルダーを選択してください。</span> : null}
-      <div className="saved-feedback" aria-live="polite">
-        {message ? <span role="status">{message}</span> : null}
-      </div>
     </form>
   );
 

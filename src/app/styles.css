@@ -1211,12 +1211,6 @@ select:focus-visible,
   font: revert;
 }
 
-.ginmaku-add-bookmark .saved-feedback {
-  display: inline;
-  min-height: 0;
-  margin-left: 4px;
-}
-
 .bookmark-list > li.bookmark-dragging {
   opacity: 0.45;
 }
