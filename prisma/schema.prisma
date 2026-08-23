@@ -21,13 +21,6 @@ enum ChurchStatus {
   @@map("church_status")
 }
 
-enum BibleRightsStatus {
-  PENDING
-  APPROVED
-
-  @@map("bible_rights_status")
-}
-
 enum BibleTestament {
   OLD
   NEW
@@ -161,7 +154,6 @@ model BibleTranslation {
   name                        String              @db.VarChar(200)
   languageTag                 String              @map("language_tag") @db.VarChar(35)
   displayOrder                Int                 @unique(map: "bible_translations_display_order_uk") @map("display_order") @db.SmallInt
-  rightsStatus                BibleRightsStatus   @map("rights_status")
   sourceReference             String?             @map("source_reference") @db.Text
   rightsNotice                String?             @map("rights_notice") @db.Text
   createdAt                   DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)

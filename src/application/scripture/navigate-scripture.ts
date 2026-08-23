@@ -10,7 +10,7 @@ import {
 } from "@/domain/scripture/search";
 
 export type ScriptureNavigationSnapshot = {
-  approvedTranslations: string[];
+  availableTranslations: string[];
   bookExists: boolean;
   currentExists: boolean;
   location: { book: string; chapter: number; verse: number } | null;
@@ -32,7 +32,7 @@ export async function navigateScripture(
   const required = requiredTranslations(navigation.language);
   if (
     required.some(
-      (translation) => !snapshot.approvedTranslations.includes(translation),
+      (translation) => !snapshot.availableTranslations.includes(translation),
     )
   )
     throw new ScriptureSearchError("TRANSLATION_NOT_AVAILABLE");

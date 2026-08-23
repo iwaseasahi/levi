@@ -51,7 +51,6 @@ async function seed() {
         name: "新改訳聖書第3版",
         languageTag: "ja",
         displayOrder: 1,
-        rightsStatus: "PENDING",
       },
     }),
     prisma.bibleTranslation.upsert({
@@ -63,7 +62,6 @@ async function seed() {
         name: "New King James Version",
         languageTag: "en",
         displayOrder: 2,
-        rightsStatus: "PENDING",
       },
     }),
   ]);

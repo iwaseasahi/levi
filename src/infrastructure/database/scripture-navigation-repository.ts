@@ -12,7 +12,7 @@ import {
 } from "./scripture-row-mapper";
 
 type RawNavigationRow = RawScriptureContentRow & {
-  approved_translations: string[];
+  available_translations: string[];
   book_exists: boolean;
   current_exists: boolean;
 };
@@ -46,13 +46,11 @@ export const scriptureNavigationRepository: ScriptureNavigationRepository = {
         SELECT "id", "code"
         FROM "bible_translations"
         WHERE "code" IN (${Prisma.join(translations)})
-          AND "rights_status" = 'APPROVED'
       ),
-      approved_catalog_translations AS (
+      catalog_translations AS (
         SELECT "id"
         FROM "bible_translations"
         WHERE "code" IN ('JSS3', 'NKJV')
-          AND "rights_status" = 'APPROVED'
       ),
       adjacent_location AS (
         SELECT
@@ -68,7 +66,7 @@ export const scriptureNavigationRepository: ScriptureNavigationRepository = {
           FROM "bible_verses" AS verse
           WHERE verse."book_id" = book."id"
             AND verse."translation_id" IN (
-              SELECT "id" FROM approved_catalog_translations
+              SELECT "id" FROM catalog_translations
             )
             AND (${tuplePredicate})
           GROUP BY verse."chapter_number", verse."verse_number"
@@ -90,19 +88,19 @@ export const scriptureNavigationRepository: ScriptureNavigationRepository = {
             JOIN requested_book AS current_book
               ON current_book."id" = current_verse."book_id"
             WHERE current_verse."translation_id" IN (
-              SELECT "id" FROM approved_catalog_translations
+              SELECT "id" FROM catalog_translations
             )
               AND current_verse."chapter_number" = ${navigation.chapter}
               AND current_verse."verse_number" = ${navigation.verse}
           ) AS current_exists,
           ARRAY(
             SELECT "code" FROM requested_translations ORDER BY "code"
-          ) AS approved_translations
+          ) AS available_translations
       )
       SELECT
         request_context.book_exists,
         request_context.current_exists,
-        request_context.approved_translations,
+        request_context.available_translations,
         adjacent_location.book_code,
         adjacent_location."chapter_number",
         adjacent_location."verse_number",
@@ -132,7 +130,7 @@ export const scriptureNavigationRepository: ScriptureNavigationRepository = {
       (row) => row.translation_code !== null,
     );
     return {
-      approvedTranslations: context.approved_translations,
+      availableTranslations: context.available_translations,
       bookExists: context.book_exists,
       currentExists: context.current_exists,
       location:

@@ -14,13 +14,13 @@ const search: ScriptureSearch = {
 describe("searchScripture", () => {
   it.each([
     [{ bookExists: false }, "BOOK_NOT_FOUND"],
-    [{ approvedTranslations: ["JSS3"] }, "TRANSLATION_NOT_AVAILABLE"],
+    [{ availableTranslations: ["JSS3"] }, "TRANSLATION_NOT_AVAILABLE"],
     [{ chapterExists: false }, "CHAPTER_NOT_FOUND"],
     [{ chapterTranslations: ["JSS3"] }, "TRANSLATION_NOT_AVAILABLE"],
   ] as const)("maps catalog state to %s", async (override, code) => {
     const repository = {
       readRange: vi.fn().mockResolvedValue({
-        approvedTranslations: ["JSS3", "NKJV"],
+        availableTranslations: ["JSS3", "NKJV"],
         bookExists: true,
         chapterExists: true,
         chapterTranslations: ["JSS3", "NKJV"],

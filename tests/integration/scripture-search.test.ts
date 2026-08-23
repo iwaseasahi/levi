@@ -394,7 +394,7 @@ describe("PostgreSQL scripture search", () => {
     },
   );
 
-  it("rejects a missing verse translation and a pending translation", async () => {
+  it("rejects a missing verse translation", async () => {
     await prisma.bibleVerse.delete({
       where: {
         translationId_bookId_chapterNumber_verseNumber: {
@@ -418,21 +418,6 @@ describe("PostgreSQL scripture search", () => {
     ).rejects.toMatchObject({
       code: "TRANSLATION_NOT_AVAILABLE",
     });
-
-    await prisma.bibleTranslation.update({
-      where: { code: "NKJV" },
-      data: {
-        rightsStatus: "PENDING",
-        sourceReference: null,
-        rightsNotice: null,
-      },
-    });
-    await expect(
-      searchScripture(scriptureSearchRepository, {
-        ...baseSearch,
-        language: "en",
-      }),
-    ).rejects.toMatchObject({ code: "TRANSLATION_NOT_AVAILABLE" });
   });
 
   it("uses a Bible location index for the representative bounded range", async () => {

@@ -24,7 +24,6 @@ async function clearImportFixture() {
   await prisma.bibleTranslation.updateMany({
     where: { code: { in: ["JSS3", "NKJV"] } },
     data: {
-      rightsStatus: "PENDING",
       sourceReference: null,
       rightsNotice: null,
     },
@@ -40,7 +39,6 @@ async function ensureTranslationMetadata() {
       name: "Synthetic Japanese translation",
       languageTag: "ja",
       displayOrder: 1,
-      rightsStatus: "PENDING",
     },
   });
   await prisma.bibleTranslation.upsert({
@@ -51,18 +49,6 @@ async function ensureTranslationMetadata() {
       name: "Synthetic English translation",
       languageTag: "en",
       displayOrder: 2,
-      rightsStatus: "PENDING",
-    },
-  });
-}
-
-async function approveSyntheticImport() {
-  await prisma.bibleTranslation.updateMany({
-    where: { code: { in: ["JSS3", "NKJV"] } },
-    data: {
-      rightsStatus: "APPROVED",
-      sourceReference: "synthetic integration fixture",
-      rightsNotice: "not scripture; test use only",
     },
   });
 }
@@ -76,7 +62,6 @@ afterAll(async () => prisma.$disconnect());
 
 describe("Ginmaku Bible import", () => {
   it("preserves empty, verse-zero, and newline values and is idempotent", async () => {
-    await approveSyntheticImport();
     const source = await validateGinmakuBibleDump(fixture);
     expect(source.report.counts).toMatchObject({
       books: 1,
@@ -150,7 +135,6 @@ describe("Ginmaku Bible import", () => {
   });
 
   it("rolls back every catalog write after an injected batch failure", async () => {
-    await approveSyntheticImport();
     const source = await validateGinmakuBibleDump(fixture);
     await expect(
       importGinmakuBible(prisma, source, { batchSize: 2, failAfterBatches: 1 }),
@@ -165,12 +149,8 @@ describe("Ginmaku Bible import", () => {
     ).resolves.toBe(0);
   });
 
-  it("rejects rights, content mismatch, duplicate, gap, and invalid UTF-8", async () => {
+  it("rejects content mismatch, duplicate, gap, and invalid UTF-8", async () => {
     const source = await validateGinmakuBibleDump(fixture);
-    await expect(importGinmakuBible(prisma, source)).rejects.toMatchObject({
-      code: "IMPORT_TRANSLATION_RIGHTS_NOT_APPROVED",
-    });
-    await approveSyntheticImport();
     await importGinmakuBible(prisma, source);
     await prisma.bibleVerse.updateMany({
       where: { translation: { code: "JSS3" }, verseNumber: 1 },

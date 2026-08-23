@@ -85,7 +85,7 @@ describe("shared Bible catalog constraints", () => {
     ).resolves.toMatchObject({ text: "synthetic integration text" });
   });
 
-  it("requires valid stable translation metadata and approved rights evidence", async () => {
+  it("requires valid stable translation metadata", async () => {
     await expect(
       prisma.bibleTranslation.create({
         data: {
@@ -93,7 +93,6 @@ describe("shared Bible catalog constraints", () => {
           name: " ",
           languageTag: "EN_us",
           displayOrder: 0,
-          rightsStatus: "APPROVED",
         },
       }),
     ).rejects.toThrow();
@@ -106,7 +105,6 @@ describe("shared Bible catalog constraints", () => {
           name: "Duplicate synthetic translation",
           languageTag: "en",
           displayOrder: translation.displayOrder + 1,
-          rightsStatus: "PENDING",
         },
       }),
     ).rejects.toThrow();
@@ -217,7 +215,6 @@ describe("shared Bible catalog constraints", () => {
     expect(constraintNames).toEqual(
       expect.arrayContaining([
         "bible_translations_code_ck",
-        "bible_translations_rights_ck",
         "bible_books_canonical_order_ck",
         "bible_book_names_name_nonblank_ck",
         "bible_verses_numbers_ck",
@@ -225,6 +222,7 @@ describe("shared Bible catalog constraints", () => {
         "bible_verses_book_fk",
       ]),
     );
+    expect(constraintNames).not.toContain("bible_translations_rights_ck");
     expect(constraintNames).not.toContain("bible_verses_text_nonblank_ck");
     expect(indexNames).toEqual(
       expect.arrayContaining([

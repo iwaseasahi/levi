@@ -349,7 +349,7 @@ async function targetState(client: DbClient, source: ValidatedBibleDump) {
   const codes = Object.values(GINMAKU_TRANSLATION_MAPPING);
   const translations = await client.bibleTranslation.findMany({
     where: { code: { in: codes } },
-    select: { id: true, code: true, rightsStatus: true },
+    select: { id: true, code: true },
   });
   const books = await client.bibleBook.findMany({
     where: {
@@ -466,10 +466,6 @@ export async function dryRunGinmakuBible(
   const target = await targetState(client, source);
   if (target.translations.length !== 2)
     throw new BibleImportError("IMPORT_TRANSLATION_METADATA_MISSING");
-  if (
-    target.translations.some(({ rightsStatus }) => rightsStatus !== "APPROVED")
-  )
-    throw new BibleImportError("IMPORT_TRANSLATION_RIGHTS_NOT_APPROVED");
   if (target.verses > 0) {
     if (!compareTargetWithSource(source, target).exact)
       throw new BibleImportError("IMPORT_TARGET_CONTENT_MISMATCH");
@@ -514,12 +510,6 @@ export async function importGinmakuBible(
       );
       if (translationByCode.size !== 2)
         throw new BibleImportError("IMPORT_TRANSLATION_METADATA_MISSING");
-      if (
-        [...translationByCode.values()].some(
-          ({ rightsStatus }) => rightsStatus !== "APPROVED",
-        )
-      )
-        throw new BibleImportError("IMPORT_TRANSLATION_RIGHTS_NOT_APPROVED");
       if (before.verses > 0) {
         if (!compareTargetWithSource(source, before).exact)
           throw new BibleImportError("IMPORT_TARGET_CONTENT_MISMATCH");

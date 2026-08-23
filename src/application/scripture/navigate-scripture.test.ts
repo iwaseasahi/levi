@@ -16,7 +16,7 @@ describe("navigate scripture", () => {
   it("reports a canonical book and testament boundary crossing", async () => {
     const repository: ScriptureNavigationRepository = {
       readAdjacent: vi.fn().mockResolvedValue({
-        approvedTranslations: ["JSS3", "NKJV"],
+        availableTranslations: ["JSS3", "NKJV"],
         bookExists: true,
         currentExists: true,
         location: { book: "MAT", chapter: 1, verse: 1 },
@@ -53,7 +53,7 @@ describe("navigate scripture", () => {
   it("returns a stable whole-corpus edge", async () => {
     const repository: ScriptureNavigationRepository = {
       readAdjacent: vi.fn().mockResolvedValue({
-        approvedTranslations: ["JSS3", "NKJV"],
+        availableTranslations: ["JSS3", "NKJV"],
         bookExists: true,
         currentExists: true,
         location: null,
