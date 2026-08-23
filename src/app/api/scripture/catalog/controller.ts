@@ -4,7 +4,7 @@ import {
   parseScriptureCatalogQuery,
   ScriptureSearchError,
 } from "@/domain/scripture/search";
-import { churchAccessFailure, noStoreJson } from "../controller-support";
+import { noStoreJson, resolveChurchApiAccess } from "../../church-api-support";
 
 type CatalogResult = Awaited<ReturnType<typeof readScriptureCatalog>>;
 
@@ -17,11 +17,11 @@ interface Dependencies {
 
 export function createScriptureCatalogHandler(dependencies: Dependencies) {
   return async function handleScriptureCatalog(request: Request) {
-    const accessFailure = await churchAccessFailure(
+    const access = await resolveChurchApiAccess(
       request.headers,
       dependencies.getChurchAccess,
     );
-    if (accessFailure) return accessFailure;
+    if ("response" in access) return access.response;
 
     try {
       const query = parseScriptureCatalogQuery(

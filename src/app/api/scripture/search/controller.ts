@@ -4,7 +4,7 @@ import {
   parseScriptureSearch,
   ScriptureSearchError,
 } from "@/domain/scripture/search";
-import { churchAccessFailure, noStoreJson } from "../controller-support";
+import { noStoreJson, resolveChurchApiAccess } from "../../church-api-support";
 
 type SearchResult = Awaited<ReturnType<typeof searchScripture>>;
 
@@ -30,11 +30,11 @@ export function createScriptureSearchHandler(
   dependencies: ScriptureSearchHandlerDependencies,
 ) {
   return async function handleScriptureSearch(request: Request) {
-    const accessFailure = await churchAccessFailure(
+    const access = await resolveChurchApiAccess(
       request.headers,
       dependencies.getChurchAccess,
     );
-    if (accessFailure) return accessFailure;
+    if ("response" in access) return access.response;
 
     try {
       const input = parseScriptureSearch(new URL(request.url).searchParams);
