@@ -34,13 +34,14 @@
 1. [x] 書巻table、検索操作バー、投影操作をviewport高を配分するgridへ再構成する。
 2. [x] 書巻行と操作バーを高密度化し、フォルダー領域だけ必要時に内部scroll可能にする。
 3. [x] component/E2Eを更新し、1365×683と1280×720でdocument縦scrollなし・66書巻と主要操作の表示を固定する。
-4. [ ] 実ブラウザで視覚確認し、canonical checksとrequired CIを完了する。
+4. [x] 実ブラウザで視覚確認し、canonical checksとrequired CIを完了する。
 
 ## Progress
 
 - 2026-08-24 00:28 JST — Issue #214、現行DOM/CSS、関連component/E2E、Next.js CSS資料を確認した。
 - 2026-08-24 00:36 JST — 3列×22行へ残余高を均等配分し、Ginmakuと同じ検索条件→言語→actionの縦3段配置をcompact化した。component 40件、latest Chromium E2E 13件が成功した。
 - 2026-08-24 00:40 JST — 1365×683のviewport配置とGinmaku由来の縦3段順序をE2Eで固定した。`pnpm check`（unit 251件、component 40件、buildを含む）とlatest Chromium E2E 13件が成功した。
+- 2026-08-24 00:42 JST — PR #215のQuality、Database、E2E、Securityがcommit `71622ba` で全て成功した。
 
 ## Decisions
 
@@ -66,10 +67,10 @@
 ## Handoff or blockers
 
 - Completed: layout、compact CSS、component/E2E回帰。
-- Remaining: PR/required CI/merge。
+- Remaining: merge。
 - Blocker: なし。
 - Resume with: `pnpm check`。
 
 ## Result
 
-未完了。
+66書巻へviewportの残余高を配分し、Ginmakuと同じ下部3段操作と右側投影操作を維持したまま、1365×683でdocument縦scrollをなくした。小さい高さでは検索操作を固定して書巻領域だけを内部scrollする。component 40件、latest Chromium E2E 13件、`pnpm check`、PR #215のrequired CI 4件が成功した。
