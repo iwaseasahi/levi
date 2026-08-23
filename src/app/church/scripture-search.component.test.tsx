@@ -1,10 +1,17 @@
 import "@testing-library/jest-dom/vitest";
 
 import axe from "axe-core";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ScriptureSearch } from "./scripture-search";
+import { useScriptureCatalog } from "./use-scripture-catalog";
 
 const books = [
   {
@@ -203,6 +210,44 @@ describe("ScriptureSearch", () => {
     expect(
       await screen.findByText("利用できる聖書データがありません。"),
     ).toBeVisible();
+  });
+
+  it("ignores a stale catalog response after a newer selection completes", async () => {
+    let resolveStale!: (response: Response) => void;
+    const staleCatalog = new Promise<Response>((resolve) => {
+      resolveStale = resolve;
+    });
+    const fetcher = vi.fn<typeof fetch>((input) => {
+      const url = new URL(String(input), "https://levi.example");
+      if (!url.searchParams.has("book"))
+        return response({ books, chapters: [], verses: [] });
+      if (url.searchParams.get("language") === "both") return staleCatalog;
+      return response({ books, chapters: [4], verses: [] });
+    });
+    const { result } = renderHook(() => useScriptureCatalog(fetcher));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    act(() => {
+      void result.current.loadCatalog({
+        book: "JHN",
+        chapter: "",
+        endVerse: "",
+        language: "both",
+        startVerse: "",
+      });
+      void result.current.loadCatalog({
+        book: "JHN",
+        chapter: "",
+        endVerse: "",
+        language: "ja",
+        startVerse: "",
+      });
+    });
+    await waitFor(() => expect(result.current.chapters).toEqual([4]));
+
+    await act(async () => {
+      resolveStale(Response.json({ books, chapters: [3], verses: [] }));
+    });
+    expect(result.current.chapters).toEqual([4]);
   });
 
   it("keeps the search page and opens the audience directly in the projector tab", async () => {

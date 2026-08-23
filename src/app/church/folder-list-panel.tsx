@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FolderSummary } from "@/domain/saved-content";
 import { requestJson } from "./client-api";
+import { useComponentLifetimeValue } from "./use-component-lifetime-value";
 
 export function FolderListPanel({
   fetcher = fetch,
@@ -13,13 +14,14 @@ export function FolderListPanel({
   const [pending, setPending] = useState(true);
   const [error, setError] = useState("");
   const errorRef = useRef<HTMLDivElement>(null);
+  const lifetimeFetcher = useComponentLifetimeValue(fetcher);
 
-  async function load() {
+  const load = useCallback(async () => {
     setPending(true);
     setError("");
     try {
       const result = await requestJson<{ folders: FolderSummary[] }>(
-        fetcher,
+        lifetimeFetcher,
         "/api/saved-content",
         {
           cache: "no-store",
@@ -35,13 +37,11 @@ export function FolderListPanel({
     } finally {
       setPending(false);
     }
-  }
+  }, [lifetimeFetcher]);
 
   useEffect(() => {
     void Promise.resolve().then(load);
-    // The injected fetcher is fixed for the component lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
 
   useEffect(() => {
     if (error) errorRef.current?.focus();
