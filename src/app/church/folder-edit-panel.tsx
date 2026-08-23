@@ -119,7 +119,7 @@ export function FolderEditPanel({
       return;
     await run(async () => {
       await request({ action: "delete-folder", folderId });
-      router.replace("/scripture");
+      router.replace("/folders");
     });
   }
 
@@ -147,10 +147,7 @@ export function FolderEditPanel({
     });
   }
 
-  function beginDrag(
-    event: DragEvent<HTMLTableRowElement>,
-    bookmarkId: string,
-  ) {
+  function beginDrag(event: DragEvent<HTMLElement>, bookmarkId: string) {
     if (pending) return;
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", bookmarkId);
@@ -158,120 +155,188 @@ export function FolderEditPanel({
   }
 
   return (
-    <main className="ginmaku-management-page">
-      <h1>お気に入りの編集(EDITING FOLDER)</h1>
-      {selected ? (
-        <>
-          <form className="ginmaku-folder-edit-form" onSubmit={updateFolder}>
-            <label htmlFor="folder-name">Title</label>
-            <br />
-            <input
-              disabled={pending}
-              id="folder-name"
-              maxLength={200}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-            <br />
-            <label htmlFor="folder-pinned">Sticky</label>{" "}
-            <input
-              checked={pinned}
-              disabled={pending}
-              id="folder-pinned"
-              type="checkbox"
-              onChange={(event) => setPinned(event.target.checked)}
-            />
-            <br />
-            <button disabled={pending || !name.trim()} type="submit">
-              更新
-            </button>
-          </form>
+    <main className="folder-management-page">
+      <div className="folder-management-shell">
+        <a className="management-back-link" href="/folders">
+          <span aria-hidden="true">←</span> フォルダの一覧へ
+        </a>
 
-          <h3>content</h3>
-          <table className="ginmaku-folder-content-table">
-            <tbody>
-              {selected.bookmarks.map((bookmark) => (
-                <tr
-                  className={
-                    dragOverId === bookmark.id
-                      ? "bookmark-drop-target"
-                      : draggedId === bookmark.id
-                        ? "bookmark-dragging"
-                        : undefined
-                  }
-                  data-bookmark-id={bookmark.id}
-                  draggable={!pending}
-                  key={bookmark.id}
-                  onDragEnd={() => {
-                    setDraggedId(null);
-                    setDragOverId(null);
-                  }}
-                  onDragEnter={() => setDragOverId(bookmark.id)}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                    event.dataTransfer.dropEffect = "move";
-                  }}
-                  onDragStart={(event) => beginDrag(event, bookmark.id)}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    const source =
-                      draggedId || event.dataTransfer.getData("text/plain");
-                    if (source) void reorderBookmarks(source, bookmark.id);
-                  }}
-                >
-                  <td>{bookmark.title}</td>
-                  <td>
-                    [
-                    <a
-                      href={`/bookmarks/${bookmark.id}/edit?folderId=${folderId}`}
-                    >
-                      編集/edit
-                    </a>
-                    ]
-                  </td>
-                  <td>
-                    [
-                    <button
-                      className="ginmaku-link-button"
-                      disabled={pending}
-                      type="button"
-                      onClick={() => void deleteBookmark(bookmark)}
-                    >
-                      削除/del
-                    </button>
-                    ]
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <header className="folder-page-header">
+          <p className="management-eyebrow">Folder settings</p>
+          <h1>フォルダーを編集</h1>
+          <p>名称、固定状態、お気に入りを管理します。</p>
+        </header>
 
-          <p>
-            <button
-              className="ginmaku-link-button danger-link"
-              disabled={pending}
-              type="button"
-              onClick={() => void deleteFolder()}
+        {selected ? (
+          <div className="folder-editor-grid">
+            <section
+              className="management-card"
+              aria-labelledby="folder-settings"
             >
-              フォルダーを削除
-            </button>{" "}
-            | <a href="/scripture">Back</a>
-          </p>
-        </>
-      ) : null}
+              <div className="management-card-heading">
+                <div>
+                  <p className="management-card-kicker">基本設定</p>
+                  <h2 id="folder-settings">フォルダー設定</h2>
+                </div>
+                {selected.folder.isPinned ? (
+                  <span className="status-badge">固定</span>
+                ) : null}
+              </div>
+              <form className="modern-folder-edit-form" onSubmit={updateFolder}>
+                <div className="management-field">
+                  <label htmlFor="folder-name">フォルダー名</label>
+                  <input
+                    disabled={pending}
+                    id="folder-name"
+                    maxLength={200}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                  />
+                </div>
+                <label className="modern-check-row" htmlFor="folder-pinned">
+                  <input
+                    checked={pinned}
+                    disabled={pending}
+                    id="folder-pinned"
+                    type="checkbox"
+                    onChange={(event) => setPinned(event.target.checked)}
+                  />
+                  <span>
+                    <strong>よく使うフォルダーに固定</strong>
+                    <small>一覧の上部に表示されます</small>
+                  </span>
+                </label>
+                <button
+                  className="primary-button"
+                  disabled={pending || !name.trim()}
+                  type="submit"
+                >
+                  変更を保存
+                </button>
+              </form>
+            </section>
 
-      <div className="saved-feedback" aria-live="polite">
-        {error ? (
-          <div
-            className="notice notice-error"
-            ref={feedbackRef}
-            role="alert"
-            tabIndex={-1}
-          >
-            {error}
+            <section
+              className="management-card management-card-wide"
+              aria-labelledby="folder-bookmarks"
+            >
+              <div className="management-card-heading">
+                <div>
+                  <p className="management-card-kicker">Saved scripture</p>
+                  <h2 id="folder-bookmarks">お気に入り</h2>
+                </div>
+                <span className="count-badge">
+                  {selected.bookmarks.length}件
+                </span>
+              </div>
+              <p className="management-hint">
+                ドラッグすると表示順を変更できます。
+              </p>
+              {selected.bookmarks.length === 0 ? (
+                <div className="management-inline-empty">
+                  お気に入りはまだありません。
+                </div>
+              ) : (
+                <div className="modern-bookmark-list" role="list">
+                  {selected.bookmarks.map((bookmark) => (
+                    <article
+                      className={`modern-bookmark-row${
+                        dragOverId === bookmark.id
+                          ? " bookmark-drop-target"
+                          : draggedId === bookmark.id
+                            ? " bookmark-dragging"
+                            : ""
+                      }`}
+                      data-bookmark-id={bookmark.id}
+                      draggable={!pending}
+                      key={bookmark.id}
+                      role="listitem"
+                      onDragEnd={() => {
+                        setDraggedId(null);
+                        setDragOverId(null);
+                      }}
+                      onDragEnter={() => setDragOverId(bookmark.id)}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "move";
+                      }}
+                      onDragStart={(event) => beginDrag(event, bookmark.id)}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const source =
+                          draggedId || event.dataTransfer.getData("text/plain");
+                        if (source) void reorderBookmarks(source, bookmark.id);
+                      }}
+                    >
+                      <span className="drag-handle" aria-hidden="true">
+                        ⠿
+                      </span>
+                      <div className="modern-bookmark-copy">
+                        <strong>{bookmark.title}</strong>
+                        <span>保存した聖書箇所</span>
+                      </div>
+                      <div className="modern-bookmark-actions">
+                        <a
+                          className="secondary-link"
+                          href={`/bookmarks/${bookmark.id}/edit?folderId=${folderId}`}
+                        >
+                          編集
+                        </a>
+                        <button
+                          className="danger-button-quiet"
+                          disabled={pending}
+                          type="button"
+                          onClick={() => void deleteBookmark(bookmark)}
+                        >
+                          削除
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="management-card danger-zone">
+              <div>
+                <p className="management-card-kicker">Danger zone</p>
+                <h2>フォルダーの削除</h2>
+                <p>フォルダー内のお気に入りもすべて削除されます。</p>
+              </div>
+              <button
+                className="danger-button"
+                disabled={pending}
+                type="button"
+                onClick={() => void deleteFolder()}
+              >
+                フォルダーを削除
+              </button>
+            </section>
           </div>
+        ) : pending ? (
+          <div
+            className="management-card management-loading"
+            aria-label="読み込み中"
+          />
         ) : null}
-        {message ? <p role="status">{message}</p> : null}
+
+        <div className="management-feedback" aria-live="polite">
+          {error ? (
+            <div
+              className="notice notice-error"
+              ref={feedbackRef}
+              role="alert"
+              tabIndex={-1}
+            >
+              {error}
+            </div>
+          ) : null}
+          {message ? (
+            <div className="notice notice-success" role="status">
+              {message}
+            </div>
+          ) : null}
+        </div>
       </div>
     </main>
   );

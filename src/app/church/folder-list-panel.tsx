@@ -1,0 +1,144 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { FolderSummary } from "@/domain/saved-content";
+
+async function payload<T>(response: Response): Promise<T> {
+  const body = (await response.json()) as T;
+  if (!response.ok) throw new Error("folder list unavailable");
+  return body;
+}
+
+export function FolderListPanel({
+  fetcher = fetch,
+}: {
+  fetcher?: typeof fetch;
+}) {
+  const [folders, setFolders] = useState<FolderSummary[]>([]);
+  const [pending, setPending] = useState(true);
+  const [error, setError] = useState("");
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  async function load() {
+    setPending(true);
+    setError("");
+    try {
+      const result = await payload<{ folders: FolderSummary[] }>(
+        await fetcher("/api/saved-content", {
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        }),
+      );
+      setFolders(result.folders);
+    } catch {
+      setError(
+        "フォルダーを読み込めませんでした。時間をおいてもう一度お試しください。",
+      );
+    } finally {
+      setPending(false);
+    }
+  }
+
+  useEffect(() => {
+    void Promise.resolve().then(load);
+    // The injected fetcher is fixed for the component lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
+
+  return (
+    <main className="folder-management-page">
+      <div className="folder-management-shell">
+        <a className="management-back-link" href="/scripture">
+          <span aria-hidden="true">←</span> 御言葉の検索へ
+        </a>
+
+        <header className="folder-page-header">
+          <p className="management-eyebrow">Saved scripture</p>
+          <h1>フォルダの一覧</h1>
+          <p>編集するフォルダーを選択してください。</p>
+        </header>
+
+        <section
+          aria-busy={pending}
+          aria-label="フォルダー一覧"
+          className="folder-index-panel"
+        >
+          {pending ? (
+            <div className="folder-loading-grid" aria-label="読み込み中">
+              {[0, 1, 2].map((item) => (
+                <span aria-hidden="true" key={item} />
+              ))}
+            </div>
+          ) : null}
+
+          {error ? (
+            <div
+              className="management-state management-state-error"
+              ref={errorRef}
+              role="alert"
+              tabIndex={-1}
+            >
+              <p>{error}</p>
+              <button className="secondary-button" onClick={() => void load()}>
+                再読み込み
+              </button>
+            </div>
+          ) : null}
+
+          {!pending && !error && folders.length === 0 ? (
+            <div className="management-state">
+              <span aria-hidden="true" className="management-state-icon">
+                ◇
+              </span>
+              <h2>フォルダーはまだありません</h2>
+              <p>御言葉の検索画面から最初のフォルダーを作成できます。</p>
+              <a className="primary-link" href="/scripture">
+                御言葉の検索へ
+              </a>
+            </div>
+          ) : null}
+
+          {!pending && !error && folders.length > 0 ? (
+            <ul className="folder-index-grid">
+              {folders.map((folder) => (
+                <li key={folder.id}>
+                  <article className="folder-index-card">
+                    <div className="folder-card-icon" aria-hidden="true">
+                      ▱
+                    </div>
+                    <div className="folder-card-copy">
+                      <div className="folder-card-title-row">
+                        <h2>{folder.name}</h2>
+                        {folder.isPinned ? (
+                          <span className="status-badge">固定</span>
+                        ) : null}
+                      </div>
+                      <p>
+                        {folder.isPinned
+                          ? "よく使うフォルダー"
+                          : folder.lastUsedAt
+                            ? "最近使用したフォルダー"
+                            : "通常のフォルダー"}
+                      </p>
+                    </div>
+                    <a
+                      aria-label={`${folder.name}を編集`}
+                      className="folder-card-link"
+                      href={`/folders/${folder.id}/edit`}
+                    >
+                      編集する <span aria-hidden="true">→</span>
+                    </a>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      </div>
+    </main>
+  );
+}

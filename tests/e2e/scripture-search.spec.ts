@@ -411,10 +411,10 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   const createFolderToggle = page.getByRole("button", {
     name: "新規フォルダ作成",
   });
-  await expect(createFolderToggle).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(createFolderToggle).toHaveCSS("color", "rgb(241, 223, 197)");
   await expect(createFolderToggle).toHaveCSS(
     "background-color",
-    "rgba(0, 0, 0, 0)",
+    "rgb(24, 20, 15)",
   );
   await createFolderToggle.click();
   const folderDate = page.getByLabel("日付");
@@ -427,10 +427,10 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
     name: "作成",
     exact: true,
   });
-  await expect(createFolderButton).toHaveCSS("color", "rgb(0, 0, 0)");
+  await expect(createFolderButton).toHaveCSS("color", "rgb(23, 17, 10)");
   await expect(createFolderButton).toHaveCSS(
     "background-color",
-    "rgb(239, 239, 239)",
+    "rgb(210, 165, 104)",
   );
   await createFolderButton.click();
   const worshipFolder = page.getByRole("button", {
@@ -444,8 +444,9 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
     0,
   );
   await expect(page.getByRole("button", { name: /を上へ/ })).toHaveCount(0);
-  const editFolderLink = page.getByRole("link", { name: "フォルダの編集" });
-  await expect(editFolderLink).not.toHaveAttribute("target");
+  const folderListLink = page.getByRole("link", { name: "フォルダの一覧" });
+  await expect(folderListLink).toHaveAttribute("href", "/folders");
+  await expect(folderListLink).not.toHaveAttribute("target");
   await worshipFolder.click();
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "false");
   await worshipFolder.click();
@@ -505,29 +506,45 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   ).toHaveAttribute("aria-expanded", "true");
   await worshipFolder.click();
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
-  const worshipEditHref = await editFolderLink.getAttribute("href");
-
-  await editFolderLink.click();
+  await folderListLink.click();
   const folderEditor = page;
-  await expect(page).toHaveURL(
-    new RegExp(`${worshipEditHref!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`),
-  );
-  await folderEditor.getByLabel("Title").fill("礼拝用");
-  await folderEditor.getByLabel("Sticky").check();
-  await folderEditor.getByRole("button", { name: "更新" }).click();
+  await expect(page).toHaveURL(/\/folders$/);
+  await expect(
+    page.getByRole("heading", { name: "フォルダの一覧" }),
+  ).toBeVisible();
+  const folderListAccessibility = await new AxeBuilder({ page })
+    .include(".folder-management-page")
+    .withRules(["color-contrast"])
+    .analyze();
+  expect(folderListAccessibility.violations).toEqual([]);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.getByRole("link", { name: "2026-08-23 第二礼拝を編集" }).click();
+  await expect(page).toHaveURL(/\/folders\/[^/]+\/edit$/);
+  await folderEditor.getByLabel("フォルダー名").fill("礼拝用");
+  await folderEditor.getByLabel("よく使うフォルダーに固定").check();
+  await folderEditor.getByRole("button", { name: "変更を保存" }).click();
   await expect(folderEditor.getByRole("status")).toHaveText(
     "フォルダーを更新しました。",
   );
-  await folderEditor.getByRole("link", { name: "編集/edit" }).first().click();
+  await folderEditor.getByRole("link", { name: "編集" }).first().click();
   await expect(folderEditor).toHaveURL(/\/bookmarks\/[^/]+\/edit\?folderId=/);
-  await folderEditor.getByLabel("Title").fill("礼拝開始");
-  await folderEditor.getByRole("button", { name: "更新" }).click();
+  await folderEditor.getByLabel("お気に入り名").fill("礼拝開始");
+  await expect(folderEditor.getByLabel("お気に入り名")).toHaveValue("礼拝開始");
+  await folderEditor.getByRole("button", { name: "変更を保存" }).click();
   await expect(folderEditor.getByRole("status")).toHaveText(
     "お気に入りを更新しました。",
   );
-  await folderEditor.getByRole("link", { name: "Back" }).click();
+  await folderEditor.getByRole("link", { name: "フォルダー編集へ" }).click();
   await expect(folderEditor).toHaveURL(/\/folders\/[^/]+\/edit$/);
-  await folderEditor.getByRole("link", { name: "Back" }).click();
+  await folderEditor.getByRole("link", { name: "フォルダの一覧へ" }).click();
+  await expect(page).toHaveURL(/\/folders$/);
+  await page.getByRole("link", { name: "御言葉の検索へ" }).click();
   await expect(page).toHaveURL(/\/scripture$/);
   const renamedFolder = page.getByRole("button", {
     name: "礼拝用",
@@ -549,14 +566,18 @@ async function organizeAndReopenBookmarks(context: BrowserContext, page: Page) {
   ).toBeVisible();
   await bookmarkedAudience.close();
 
-  await page.getByRole("link", { name: "フォルダの編集" }).click();
+  await page.getByRole("link", { name: "フォルダの一覧" }).click();
+  await page.getByRole("link", { name: "礼拝用を編集" }).click();
   folderEditor.once("dialog", (dialog) => dialog.accept());
-  await folderEditor.getByRole("button", { name: "削除/del" }).last().click();
+  await folderEditor
+    .getByRole("button", { name: "削除", exact: true })
+    .last()
+    .click();
   await expect(folderEditor.getByRole("status")).toHaveText(
     "お気に入りを削除しました。",
   );
   folderEditor.once("dialog", (dialog) => dialog.accept());
   await folderEditor.getByRole("button", { name: "フォルダーを削除" }).click();
-  await expect(page).toHaveURL(/\/scripture$/);
-  await expect(renamedFolder).toHaveCount(0);
+  await expect(page).toHaveURL(/\/folders$/);
+  await expect(page.getByRole("link", { name: "礼拝用を編集" })).toHaveCount(0);
 }

@@ -315,6 +315,10 @@ export function SavedContentPanel({
         aria-label="フォルダーとお気に入り"
         aria-busy={pending}
       >
+        <div className="folder-sidebar-heading">
+          <span>フォルダー</span>
+          <a href="/folders">一覧</a>
+        </div>
         {!pending && folders.length === 0 ? (
           <p className="empty-copy">フォルダーはまだありません。</p>
         ) : null}
@@ -420,10 +424,7 @@ export function SavedContentPanel({
           </div>
         ) : null}
 
-        <p className="new-folder-action">
-          <span aria-hidden="true" className="ginmaku-action-icon">
-            ⊕
-          </span>
+        <div className="new-folder-action">
           <button
             aria-controls="new-folder-form"
             aria-expanded={newFolderOpen}
@@ -432,35 +433,36 @@ export function SavedContentPanel({
             onClick={() => setNewFolderOpen((open) => !open)}
             type="button"
           >
-            新規フォルダ作成
+            <span aria-hidden="true">＋</span> 新規フォルダ作成
           </button>
-        </p>
+        </div>
         {newFolderOpen ? (
           <form
             className="new-folder-form"
             id="new-folder-form"
             onSubmit={createFolder}
           >
-            <label htmlFor="new-folder-date">日付</label>{" "}
-            <input
-              autoFocus
-              disabled={pending}
-              id="new-folder-date"
-              type="date"
-              value={newFolderDate}
-              onChange={(event) => setNewFolderDate(event.target.value)}
-            />
-            <br />
-            <label htmlFor="new-folder-meeting">集会名</label>{" "}
-            <input
-              disabled={pending}
-              id="new-folder-meeting"
-              maxLength={189}
-              size={22}
-              value={newFolderMeeting}
-              onChange={(event) => setNewFolderMeeting(event.target.value)}
-            />
-            <br />
+            <div>
+              <label htmlFor="new-folder-date">日付</label>
+              <input
+                autoFocus
+                disabled={pending}
+                id="new-folder-date"
+                type="date"
+                value={newFolderDate}
+                onChange={(event) => setNewFolderDate(event.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="new-folder-meeting">集会名</label>
+              <input
+                disabled={pending}
+                id="new-folder-meeting"
+                maxLength={189}
+                value={newFolderMeeting}
+                onChange={(event) => setNewFolderMeeting(event.target.value)}
+              />
+            </div>
             <button
               disabled={pending || !newFolderMeeting.trim()}
               type="submit"
@@ -471,14 +473,9 @@ export function SavedContentPanel({
         ) : null}
 
         <p className="edit-folder-action">
-          <span aria-hidden="true" className="ginmaku-action-icon">
-            ▣
-          </span>
-          {selected ? (
-            <a href={`/folders/${selected.folder.id}/edit`}>フォルダの編集</a>
-          ) : (
-            <span aria-disabled="true">フォルダの編集</span>
-          )}
+          <a href="/folders">
+            フォルダの一覧 <span aria-hidden="true">→</span>
+          </a>
         </p>
 
         <div className="saved-feedback" aria-live="polite">
