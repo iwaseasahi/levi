@@ -7,7 +7,7 @@ import {
 } from "@/domain/scripture/search";
 
 export type ScriptureCatalogSnapshot = {
-  approvedTranslations: string[];
+  availableTranslations: string[];
   bookExists: boolean;
   chapterExists: boolean;
   chapterTranslations: string[];
@@ -27,7 +27,7 @@ export async function searchScripture(
   const required = requiredTranslations(search.language);
   if (
     required.some(
-      (translation) => !snapshot.approvedTranslations.includes(translation),
+      (translation) => !snapshot.availableTranslations.includes(translation),
     )
   )
     throw new ScriptureSearchError("TRANSLATION_NOT_AVAILABLE");

@@ -87,19 +87,6 @@ function databaseClient(databaseUrl: string) {
   });
 }
 
-async function approveDisposableTranslations(client: PrismaClient) {
-  const changed = await client.bibleTranslation.updateMany({
-    where: { code: { in: ["JSS3", "NKJV"] } },
-    data: {
-      rightsNotice: "Disposable migration rehearsal only",
-      rightsStatus: "APPROVED",
-      sourceReference: "Product-owner approved local source; 2026-08-21",
-    },
-  });
-  if (changed.count !== 2)
-    throw new BibleImportError("REHEARSAL_TRANSLATION_METADATA_MISSING");
-}
-
 async function catalogCounts(client: PrismaClient) {
   const [
     translations,
@@ -240,7 +227,6 @@ async function rehearse(source: ValidatedBibleDump) {
   let clientConnected = true;
   let restoreClient: PrismaClient | undefined;
   try {
-    await approveDisposableTranslations(client);
     const before = await catalogCounts(client);
     const dryRun = await dryRunGinmakuBible(client, source);
 

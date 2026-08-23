@@ -13,12 +13,11 @@ writes update `updated_at`.
 
 ## Database enums
 
-| Enum                  | Values                | Owner/use                     |
-| --------------------- | --------------------- | ----------------------------- |
-| `user_actor_state`    | `PENDING`, `ACTIVE`   | safe identity provisioning    |
-| `church_status`       | `ACTIVE`, `SUSPENDED` | tenant access lifecycle       |
-| `bible_rights_status` | `PENDING`, `APPROVED` | content import/display gate   |
-| `bible_testament`     | `OLD`, `NEW`          | canonical book classification |
+| Enum               | Values                | Owner/use                     |
+| ------------------ | --------------------- | ----------------------------- |
+| `user_actor_state` | `PENDING`, `ACTIVE`   | safe identity provisioning    |
+| `church_status`    | `ACTIVE`, `SUSPENDED` | tenant access lifecycle       |
+| `bible_testament`  | `OLD`, `NEW`          | canonical book classification |
 
 Enums are mapped to explicit Prisma enums and physical values. Adding or
 renaming a value requires a forward migration and compatibility review.
@@ -214,17 +213,14 @@ longer exists.
 | `name`             | `varchar(200)` | no   | displayed translation name           |
 | `language_tag`     | `varchar(35)`  | no   | initial BCP 47 tags `ja` and `en`    |
 | `display_order`    | `smallint`     | no   | positive UK                          |
-| `rights_status`    | enum           | no   | `PENDING` or `APPROVED`              |
-| `source_reference` | `text`         | yes  | approved provenance reference        |
-| `rights_notice`    | `text`         | yes  | approved use/attribution constraints |
+| `source_reference` | `text`         | yes  | optional provenance reference        |
+| `rights_notice`    | `text`         | yes  | optional use/attribution information |
 | timestamps         | `timestamptz`  | no   | creation/update                      |
 
 Checks require nonblank name, code matching `^[A-Z0-9][A-Z0-9_-]{0,15}$`, a
 lowercase basic language tag, and positive display order.
-`bible_translations_rights_ck` permits draft references while pending and
-requires both to be nonblank while approved. Import/search use cases require
-`APPROVED`; the repository never stores secret contract documents in these
-fields.
+The source fields do not control catalog availability and never store secret
+contract documents.
 
 ### `bible_books`
 

@@ -12,7 +12,7 @@ import {
 } from "./scripture-row-mapper";
 
 type RawScriptureRow = RawScriptureContentRow & {
-  approved_translations: string[];
+  available_translations: string[];
   book_exists: boolean;
   chapter_exists: boolean;
   chapter_translations: string[];
@@ -31,13 +31,11 @@ export const scriptureSearchRepository: ScriptureSearchRepository = {
         SELECT "id", "code"
         FROM "bible_translations"
         WHERE "code" IN (${Prisma.join(translations)})
-          AND "rights_status" = 'APPROVED'
       ),
-      approved_catalog_translations AS (
+      catalog_translations AS (
         SELECT "id", "code"
         FROM "bible_translations"
         WHERE "code" IN ('JSS3', 'NKJV')
-          AND "rights_status" = 'APPROVED'
       ),
       request_context AS (
         SELECT
@@ -49,15 +47,15 @@ export const scriptureSearchRepository: ScriptureSearchRepository = {
               ON chapter_book."id" = chapter_verse."book_id"
             WHERE chapter_verse."chapter_number" = ${search.chapter}
               AND chapter_verse."translation_id" IN (
-                SELECT "id" FROM approved_catalog_translations
+                SELECT "id" FROM catalog_translations
               )
           ) AS chapter_exists,
           ARRAY(
             SELECT "code" FROM requested_translations ORDER BY "code"
-          ) AS approved_translations,
+          ) AS available_translations,
           ARRAY(
             SELECT catalog_translation."code"
-            FROM approved_catalog_translations AS catalog_translation
+            FROM catalog_translations AS catalog_translation
             WHERE EXISTS (
               SELECT 1
               FROM "bible_verses" AS translated_chapter
@@ -72,7 +70,7 @@ export const scriptureSearchRepository: ScriptureSearchRepository = {
       SELECT
         request_context.book_exists,
         request_context.chapter_exists,
-        request_context.approved_translations,
+        request_context.available_translations,
         request_context.chapter_translations,
         requested_book."canonical_code" AS book_code,
         verse."chapter_number",
@@ -103,7 +101,7 @@ export const scriptureSearchRepository: ScriptureSearchRepository = {
       (row) => row.verse_number !== null,
     );
     return {
-      approvedTranslations: context.approved_translations,
+      availableTranslations: context.available_translations,
       bookExists: context.book_exists,
       chapterExists: context.chapter_exists,
       chapterTranslations: context.chapter_translations,

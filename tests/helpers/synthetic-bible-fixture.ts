@@ -59,7 +59,6 @@ export async function clearSyntheticBibleFixture(
     await client.bibleTranslation.updateMany({
       data: {
         rightsNotice: null,
-        rightsStatus: "PENDING",
         sourceReference: null,
       },
       where: { code: { in: cleanup.resetTranslationCodes } },
@@ -77,7 +76,6 @@ export async function createSyntheticBibleFixture(
       ...translation,
       name: translation.name ?? `Synthetic ${translation.code}`,
       rightsNotice: "not scripture; test use only",
-      rightsStatus: "APPROVED" as const,
       sourceReference: spec.sourceReference,
     };
     const created = spec.upsertTranslations

@@ -40,7 +40,6 @@ export async function clearScriptureFixture() {
     where: { code: { in: ["JSS3", "NKJV"] } },
     data: {
       rightsNotice: null,
-      rightsStatus: "PENDING",
       sourceReference: null,
     },
   });
@@ -53,7 +52,6 @@ export async function seedScriptureFixture() {
       where: { code: "JSS3" },
       update: {
         rightsNotice: "synthetic E2E fixture only",
-        rightsStatus: "APPROVED",
         sourceReference: "synthetic E2E fixture",
       },
       create: {
@@ -62,7 +60,6 @@ export async function seedScriptureFixture() {
         languageTag: "ja",
         name: "Synthetic Japanese translation",
         rightsNotice: "synthetic E2E fixture only",
-        rightsStatus: "APPROVED",
         sourceReference: "synthetic E2E fixture",
       },
     }),
@@ -70,7 +67,6 @@ export async function seedScriptureFixture() {
       where: { code: "NKJV" },
       update: {
         rightsNotice: "synthetic E2E fixture only",
-        rightsStatus: "APPROVED",
         sourceReference: "synthetic E2E fixture",
       },
       create: {
@@ -79,7 +75,6 @@ export async function seedScriptureFixture() {
         languageTag: "en",
         name: "Synthetic English translation",
         rightsNotice: "synthetic E2E fixture only",
-        rightsStatus: "APPROVED",
         sourceReference: "synthetic E2E fixture",
       },
     }),

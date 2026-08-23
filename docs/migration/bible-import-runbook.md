@@ -14,7 +14,7 @@ execution, and rollback/forward-recovery approval remain human gates.
   escape decoding. No trimming, repair, renumbering, or skip occurs.
 - Output contains only counts and SHA-256 fingerprints. Errors expose stable
   reason codes and optional counts, never text or names.
-- `dry-run` performs target and rights checks without writing.
+- `dry-run` performs target metadata and exactness checks without writing.
 - `import` requires the operator to repeat the exact source SHA-256. It uses
   batches of 500 rows by default inside one Serializable transaction. Any
   failure rolls back books, names, and verses together.
@@ -58,8 +58,8 @@ reviewed anonymous summary and the report SHA-256.
 
 Before production import, record the target/environment, backup and restore
 test, exact checksum, expected anonymous counts/fingerprints, translation
-`APPROVED` provenance metadata, human approval, maintenance/locking window, and
-post-import reconciliation. Do not bypass `IMPORT_TRANSLATION_RIGHTS_NOT_APPROVED`.
+provenance metadata, human approval, maintenance/locking window, and post-import
+reconciliation.
 
 Production import requires a human to approve all of the following immediately
 before execution: the exact source SHA-256, translation rights metadata, target

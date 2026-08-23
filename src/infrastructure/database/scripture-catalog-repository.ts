@@ -26,7 +26,6 @@ export const scriptureCatalogRepository: ScriptureCatalogRepository = {
         SELECT "id", "code"
         FROM "bible_translations"
         WHERE "code" IN (${Prisma.join(translations)})
-          AND "rights_status" = 'APPROVED'
       ),
       eligible_locations AS (
         SELECT
@@ -48,7 +47,6 @@ export const scriptureCatalogRepository: ScriptureCatalogRepository = {
           JOIN "bible_translations" AS japanese_translation
             ON japanese_translation."id" = japanese_name."translation_id"
            AND japanese_translation."code" = 'JSS3'
-           AND japanese_translation."rights_status" = 'APPROVED'
           WHERE japanese_name."book_id" = book."id"
         ) AS japanese_name,
         (
@@ -57,7 +55,6 @@ export const scriptureCatalogRepository: ScriptureCatalogRepository = {
           JOIN "bible_translations" AS english_translation
             ON english_translation."id" = english_name."translation_id"
            AND english_translation."code" = 'NKJV'
-           AND english_translation."rights_status" = 'APPROVED'
           WHERE english_name."book_id" = book."id"
         ) AS english_name,
         CASE WHEN book."canonical_code" = ${selectedBook}
@@ -83,7 +80,6 @@ export const scriptureCatalogRepository: ScriptureCatalogRepository = {
       FROM "bible_books" AS book
       JOIN "bible_translations" AS preferred_translation
         ON preferred_translation."code" = ${preferredTranslation}
-       AND preferred_translation."rights_status" = 'APPROVED'
       JOIN "bible_book_names" AS book_name
         ON book_name."book_id" = book."id"
        AND book_name."translation_id" = preferred_translation."id"

@@ -22,7 +22,7 @@ export async function resolveBookmarkCatalog(
   });
   const codes = [...requiredTranslations(input.language)];
   const translations = await transaction.bibleTranslation.findMany({
-    where: { code: { in: codes }, rightsStatus: "APPROVED" },
+    where: { code: { in: codes } },
   });
   if (!book || translations.length !== codes.length)
     throw new SavedContentError("SAVED_CONTENT_CATALOG_ERROR");
