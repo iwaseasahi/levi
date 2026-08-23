@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { ChurchScope } from "@/application/auth/church-access";
 
@@ -368,9 +369,9 @@ describe("saved-content database contract", () => {
       data: { churchId: fixture.firstChurch.id, name: "Second", position: 1 },
     });
     await prisma.$transaction(async (transaction) => {
-      await transaction.$executeRawUnsafe(
-        'SET CONSTRAINTS "folders_church_position_uk" DEFERRED',
-      );
+      await transaction.$executeRaw`
+        SET CONSTRAINTS "folders_church_position_uk" DEFERRED
+      `;
       await transaction.folder.update({
         where: { id: first.id },
         data: { position: 1 },
@@ -448,6 +449,116 @@ describe("saved-content database contract", () => {
     await expect(
       savedContentRepository.listFolderOrder(tenant(fixture.firstChurch.id)),
     ).resolves.toEqual(remaining.map(({ id }) => id));
+  });
+
+  it("rejects foreign and guessed bookmark reorder IDs without a partial update", async () => {
+    const fixture = await createFixture();
+    const ownFolder = await prisma.folder.create({
+      data: { churchId: fixture.firstChurch.id, name: "Own", position: 0 },
+    });
+    const foreignFolder = await prisma.folder.create({
+      data: {
+        churchId: fixture.secondChurch.id,
+        name: "Foreign",
+        position: 0,
+      },
+    });
+    const first = await createBookmark({
+      bookId: fixture.book.id,
+      churchId: fixture.firstChurch.id,
+      folderId: ownFolder.id,
+      position: 0,
+      primaryTranslationId: fixture.primary.id,
+      title: "First",
+    });
+    const second = await createBookmark({
+      bookId: fixture.book.id,
+      churchId: fixture.firstChurch.id,
+      folderId: ownFolder.id,
+      position: 1,
+      primaryTranslationId: fixture.primary.id,
+      title: "Second",
+    });
+    const foreign = await createBookmark({
+      bookId: fixture.book.id,
+      churchId: fixture.secondChurch.id,
+      folderId: foreignFolder.id,
+      position: 0,
+      primaryTranslationId: fixture.primary.id,
+      title: "Foreign",
+    });
+    const scope = tenant(fixture.firstChurch.id);
+    const original = [first.id, second.id];
+
+    await expect(
+      savedContentRepository.reorderBookmarks(scope, ownFolder.id, [
+        first.id,
+        foreign.id,
+      ]),
+    ).resolves.toBe(false);
+    await expect(
+      savedContentRepository.reorderBookmarks(scope, ownFolder.id, [
+        first.id,
+        randomUUID(),
+      ]),
+    ).resolves.toBe(false);
+    await expect(
+      savedContentRepository.reorderBookmarks(scope, ownFolder.id, [
+        first.id,
+        first.id,
+      ]),
+    ).resolves.toBe(false);
+
+    await expect(
+      prisma.bookmark.findMany({
+        where: { churchId: fixture.firstChurch.id, folderId: ownFolder.id },
+        orderBy: { position: "asc" },
+        select: { id: true },
+      }),
+    ).resolves.toEqual(original.map((id) => ({ id })));
+  });
+
+  it("serializes concurrent bookmark reorder and delete without duplicate positions", async () => {
+    const fixture = await createFixture();
+    const folder = await prisma.folder.create({
+      data: { churchId: fixture.firstChurch.id, name: "Own", position: 0 },
+    });
+    const bookmarks: Awaited<ReturnType<typeof createBookmark>>[] = [];
+    for (const [position, title] of ["First", "Second", "Third"].entries()) {
+      bookmarks.push(
+        await createBookmark({
+          bookId: fixture.book.id,
+          churchId: fixture.firstChurch.id,
+          folderId: folder.id,
+          position,
+          primaryTranslationId: fixture.primary.id,
+          title,
+        }),
+      );
+    }
+    const [first, second, third] = bookmarks;
+    const scope = tenant(fixture.firstChurch.id);
+
+    const [reordered, deleted] = await Promise.all([
+      savedContentRepository.reorderBookmarks(scope, folder.id, [
+        third!.id,
+        second!.id,
+        first!.id,
+      ]),
+      savedContentRepository.deleteBookmark(scope, second!.id),
+    ]);
+    expect(deleted).toBe(true);
+    expect([true, false]).toContain(reordered);
+
+    const remaining = await prisma.bookmark.findMany({
+      where: { churchId: fixture.firstChurch.id, folderId: folder.id },
+      orderBy: { position: "asc" },
+      select: { id: true, position: true },
+    });
+    expect(remaining.map(({ position }) => position)).toEqual([0, 1]);
+    expect(new Set(remaining.map(({ id }) => id))).toEqual(
+      new Set([first!.id, third!.id]),
+    );
   });
 
   it("physically deletes only the folder aggregate and restricts Bible endpoints", async () => {

@@ -1,102 +1,19 @@
-import { Prisma } from "@/generated/prisma/client";
 import type { SavedContentRepository } from "@/application/saved-content/manage-saved-content";
-import {
-  languageFromTranslationCodes,
-  SavedContentError,
-  type FolderSummary,
-} from "@/domain/saved-content";
-import { requiredTranslations } from "@/domain/scripture/search";
 import { prisma } from "./client";
-
-type SavedBookmarkRow = Prisma.BookmarkGetPayload<{
-  include: {
-    scripture: {
-      include: {
-        book: true;
-        primaryTranslation: true;
-        secondaryTranslation: true;
-      };
-    };
-  };
-}>;
-
-function folderView(folder: {
-  id: string;
-  name: string;
-  isPinned: boolean;
-  position: number;
-  lastUsedAt: Date | null;
-}): FolderSummary {
-  return {
-    id: folder.id,
-    name: folder.name,
-    isPinned: folder.isPinned,
-    position: folder.position,
-    lastUsedAt: folder.lastUsedAt?.toISOString() ?? null,
-  };
-}
-
-function bookmarkView(bookmark: SavedBookmarkRow) {
-  const scripture = bookmark.scripture;
-  if (!scripture) throw new SavedContentError("SAVED_CONTENT_CATALOG_ERROR");
-  return {
-    id: bookmark.id,
-    folderId: bookmark.folderId,
-    position: bookmark.position,
-    title: bookmark.title,
-    search: {
-      book: scripture.book.canonicalCode,
-      chapter: scripture.chapterNumber,
-      startVerse: scripture.startVerse,
-      endVerse: scripture.endVerse,
-      language: languageFromTranslationCodes(
-        scripture.primaryTranslation.code,
-        scripture.secondaryTranslation?.code ?? null,
-      ),
-    },
-  };
-}
-
-const bookmarkInclude = {
-  scripture: {
-    include: {
-      book: true,
-      primaryTranslation: true,
-      secondaryTranslation: true,
-    },
-  },
-} as const;
-
-async function lockChurch(
-  transaction: Prisma.TransactionClient,
-  churchId: string,
-) {
-  const rows = await transaction.$queryRaw<Array<{ id: string }>>`
-    SELECT "id" FROM "churches" WHERE "id" = ${churchId}::uuid FOR UPDATE
-  `;
-  return rows.length === 1;
-}
-
-async function lockFolder(
-  transaction: Prisma.TransactionClient,
-  churchId: string,
-  folderId: string,
-) {
-  const rows = await transaction.$queryRaw<Array<{ id: string }>>`
-    SELECT "id"
-    FROM "folders"
-    WHERE "id" = ${folderId}::uuid AND "church_id" = ${churchId}::uuid
-    FOR UPDATE
-  `;
-  return rows.length === 1;
-}
-
-function sameIdSet(current: string[], submitted: string[]) {
-  return (
-    current.length === submitted.length &&
-    current.every((id) => submitted.includes(id))
-  );
-}
+import { resolveBookmarkCatalog } from "./saved-content-catalog";
+import { lockChurch, lockFolder } from "./saved-content-locks";
+import {
+  bookmarkInclude,
+  bookmarkView,
+  folderView,
+} from "./saved-content-mappers";
+import {
+  compactBookmarkOrderAfter,
+  compactFolderOrderAfter,
+  containsExactlySameIds,
+  writeBookmarkOrder,
+  writeFolderOrder,
+} from "./saved-content-ordering";
 
 export const savedContentRepository: SavedContentRepository = {
   async listFolders({ churchId }) {
@@ -184,20 +101,13 @@ export const savedContentRepository: SavedContentRepository = {
         select: { id: true },
       });
       if (
-        !sameIdSet(
+        !containsExactlySameIds(
           current.map(({ id }) => id),
           ids,
         )
       )
         return false;
-      await transaction.$executeRawUnsafe(
-        'SET CONSTRAINTS "folders_church_position_uk" DEFERRED',
-      );
-      for (const [position, id] of ids.entries())
-        await transaction.folder.updateMany({
-          where: { churchId, id },
-          data: { position },
-        });
+      await writeFolderOrder(transaction, churchId, ids);
       return true;
     });
   },
@@ -210,14 +120,8 @@ export const savedContentRepository: SavedContentRepository = {
         select: { position: true },
       });
       if (!folder) return false;
-      await transaction.$executeRawUnsafe(
-        'SET CONSTRAINTS "folders_church_position_uk" DEFERRED',
-      );
       await transaction.folder.delete({ where: { id: folderId } });
-      await transaction.folder.updateMany({
-        where: { churchId, position: { gt: folder.position } },
-        data: { position: { decrement: 1 } },
-      });
+      await compactFolderOrderAfter(transaction, churchId, folder.position);
       return true;
     });
   },
@@ -225,47 +129,23 @@ export const savedContentRepository: SavedContentRepository = {
   async createBookmark({ churchId }, folderId, input) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockFolder(transaction, churchId, folderId))) return null;
-      const book = await transaction.bibleBook.findUnique({
-        where: { canonicalCode: input.book },
-      });
-      const codes = [...requiredTranslations(input.language)];
-      const translations = await transaction.bibleTranslation.findMany({
-        where: { code: { in: codes }, rightsStatus: "APPROVED" },
-      });
-      if (!book || translations.length !== codes.length)
-        throw new SavedContentError("SAVED_CONTENT_CATALOG_ERROR");
-      const byCode = new Map(translations.map((item) => [item.code, item]));
-      const expectedCount = input.endVerse - input.startVerse + 1;
-      for (const translation of translations) {
-        const count = await transaction.bibleVerse.count({
-          where: {
-            translationId: translation.id,
-            bookId: book.id,
-            chapterNumber: input.chapter,
-            verseNumber: { gte: input.startVerse, lte: input.endVerse },
-          },
-        });
-        if (count !== expectedCount)
-          throw new SavedContentError("SAVED_CONTENT_CATALOG_ERROR");
-      }
+      const catalog = await resolveBookmarkCatalog(transaction, input);
       const position = await transaction.bookmark.count({
         where: { churchId, folderId },
       });
       const bookmark = await transaction.bookmark.create({
         data: { churchId, folderId, position, title: input.title },
       });
-      const primaryCode = input.language === "en" ? "NKJV" : "JSS3";
-      const secondaryCode = input.language === "both" ? "NKJV" : null;
       await transaction.scriptureBookmark.create({
         data: {
           bookmarkId: bookmark.id,
-          bookId: book.id,
+          bookId: catalog.bookId,
           chapterNumber: input.chapter,
           startVerse: input.startVerse,
           endVerse: input.endVerse,
-          primaryTranslationId: byCode.get(primaryCode)!.id,
-          ...(secondaryCode
-            ? { secondaryTranslationId: byCode.get(secondaryCode)!.id }
+          primaryTranslationId: catalog.primaryTranslationId,
+          ...(catalog.secondaryTranslationId
+            ? { secondaryTranslationId: catalog.secondaryTranslationId }
             : {}),
         },
       });
@@ -302,47 +182,40 @@ export const savedContentRepository: SavedContentRepository = {
         select: { id: true },
       });
       if (
-        !sameIdSet(
+        !containsExactlySameIds(
           current.map(({ id }) => id),
           ids,
         )
       )
         return false;
-      await transaction.$executeRawUnsafe(
-        'SET CONSTRAINTS "bookmarks_folder_position_uk" DEFERRED',
-      );
-      for (const [position, id] of ids.entries())
-        await transaction.bookmark.updateMany({
-          where: { churchId, folderId, id },
-          data: { position },
-        });
+      await writeBookmarkOrder(transaction, churchId, folderId, ids);
       return true;
     });
   },
 
   async deleteBookmark({ churchId }, bookmarkId) {
     return prisma.$transaction(async (transaction) => {
-      const bookmark = await transaction.bookmark.findFirst({
+      const candidate = await transaction.bookmark.findFirst({
         where: { churchId, id: bookmarkId },
-        select: { folderId: true, position: true },
+        select: { folderId: true },
       });
       if (
-        !bookmark ||
-        !(await lockFolder(transaction, churchId, bookmark.folderId))
+        !candidate ||
+        !(await lockFolder(transaction, churchId, candidate.folderId))
       )
         return false;
-      await transaction.$executeRawUnsafe(
-        'SET CONSTRAINTS "bookmarks_folder_position_uk" DEFERRED',
-      );
-      await transaction.bookmark.delete({ where: { id: bookmarkId } });
-      await transaction.bookmark.updateMany({
-        where: {
-          churchId,
-          folderId: bookmark.folderId,
-          position: { gt: bookmark.position },
-        },
-        data: { position: { decrement: 1 } },
+      const bookmark = await transaction.bookmark.findFirst({
+        where: { churchId, folderId: candidate.folderId, id: bookmarkId },
+        select: { folderId: true, position: true },
       });
+      if (!bookmark) return false;
+      await transaction.bookmark.delete({ where: { id: bookmarkId } });
+      await compactBookmarkOrderAfter(
+        transaction,
+        churchId,
+        bookmark.folderId,
+        bookmark.position,
+      );
       return true;
     });
   },
