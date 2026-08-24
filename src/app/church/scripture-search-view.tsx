@@ -262,7 +262,11 @@ export function ScriptureSearchFeedback({
 
   return (
     <div className="search-feedback" aria-live="polite">
-      {loading ? <p role="status">検索候補を読み込んでいます。</p> : null}
+      {loading ? (
+        <p className="sr-only" role="status">
+          検索候補を読み込んでいます。
+        </p>
+      ) : null}
       {catalogError ? (
         <div
           className="notice notice-error"

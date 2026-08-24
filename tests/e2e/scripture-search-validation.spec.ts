@@ -188,7 +188,17 @@ test("validates the Ginmaku search form and projects each language mode", async 
   const loadingCatalog = page
     .locator(".search-feedback")
     .getByText("検索候補を読み込んでいます。", { exact: true });
-  await expect(loadingCatalog).toBeVisible();
+  await expect(loadingCatalog).toHaveClass(/sr-only/);
+  expect(
+    await loadingCatalog.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return {
+        clip: getComputedStyle(element).clip,
+        height: bounds.height,
+        width: bounds.width,
+      };
+    }),
+  ).toEqual({ clip: "rect(0px, 0px, 0px, 0px)", height: 1, width: 1 });
   expect(await captureCatalogLayout()).toEqual(beforeBookSelection);
   releaseBookCatalog();
   await expect(loadingCatalog).toHaveCount(0);
@@ -207,7 +217,7 @@ test("validates the Ginmaku search form and projects each language mode", async 
     { times: 1 },
   );
   await page.getByLabel("章").fill("1");
-  await expect(loadingCatalog).toBeVisible();
+  await expect(loadingCatalog).toHaveClass(/sr-only/);
   expect(await captureCatalogLayout()).toEqual(beforeChapterInput);
   releaseChapterCatalog();
   await expect(loadingCatalog).toHaveCount(0);
