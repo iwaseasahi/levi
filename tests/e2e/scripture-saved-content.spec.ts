@@ -96,7 +96,7 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   );
   await favoriteButton.click();
   const genesisBookmark = page.getByRole("link", {
-    name: "創世記/Genesis 1:1-3",
+    name: "創世記/Genesis 1:1",
     exact: true,
   });
   await expect(genesisBookmark).toBeVisible();
@@ -127,7 +127,7 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   );
   await bookmarks.getByRole("listitem").nth(1).press("Alt+ArrowUp");
   await expect(bookmarks.getByRole("listitem").first()).toContainText(
-    "創世記/Genesis 1:1-3",
+    "創世記/Genesis 1:1",
   );
 
   await createFolderToggle.click();
@@ -191,7 +191,7 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   const bookmarkedAudience = await bookmarkOpened;
   await expect(page).toHaveURL(/\/scripture$/);
   await expect(bookmarkedAudience).toHaveURL(
-    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=3&language=both&startVerse=1$/,
+    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=1&language=both&startVerse=1$/,
   );
   await expect(
     bookmarkedAudience.getByRole("heading", {
