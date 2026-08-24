@@ -34,7 +34,7 @@ deploying it requires the normal separate production approval.
 - Rotate the credential by generating a new verifier, updating the protected
   environment, and completing the approved deployment/restart workflow. Verify
   the old password is rejected and the new password reaches
-  `/admin/churches`.
+  `/admin/churches/new`.
 - An unavailable configuration, database, or bootstrap administrator returns `503` and
   must be repaired rather than bypassed.
 

@@ -1,6 +1,83 @@
+.admin-workspace {
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--surface-page);
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  padding: 2rem 1rem;
+  border-right: 1px solid var(--border-subtle);
+  background: #0d0c0b;
+}
+
+.admin-sidebar-brand {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0 0.75rem 1.5rem;
+  color: var(--text-primary);
+}
+
+.admin-sidebar-brand span {
+  color: var(--accent-hover);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.admin-sidebar-brand strong {
+  font-size: 1.35rem;
+}
+
+.admin-sidebar nav {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.admin-nav-link {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  min-height: 3rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.admin-nav-link:hover {
+  border-color: var(--border-subtle);
+  background: var(--surface-control);
+  color: var(--text-primary);
+}
+
+.admin-nav-link[aria-current="page"] {
+  border-color: #6f512c;
+  background: #241b11;
+  color: var(--accent-hover);
+}
+
+.admin-nav-marker {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.admin-content {
+  min-width: 0;
+}
+
 .admin-shell {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100%;
   margin: 0 auto;
   padding: clamp(1.5rem, 5vw, 4rem);
   background:
@@ -10,6 +87,42 @@
       transparent 32rem
     ),
     var(--surface-page);
+}
+
+@media (max-width: 760px) {
+  .admin-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    z-index: 1;
+    width: 100%;
+    height: auto;
+    padding: 1rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .admin-sidebar-brand {
+    padding-bottom: 0.8rem;
+  }
+
+  .admin-sidebar nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-nav-link {
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.55rem;
+    font-size: 0.78rem;
+    text-align: center;
+  }
+
+  .admin-nav-marker {
+    display: none;
+  }
 }
 
 .admin-header,

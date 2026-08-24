@@ -38,7 +38,7 @@ test("operator reset revokes the old session and forces a new password", async (
     stalePage.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();
 
-  await page.goto("/admin/churches");
+  await page.goto("/admin/churches/password-reset");
   await page
     .getByLabel("対象教会")
     .selectOption({ label: "test.e2e password church" });

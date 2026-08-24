@@ -27,7 +27,7 @@ test.describe("operator administration access", () => {
   test("challenges an unauthenticated visitor with Basic authentication", async ({
     page,
   }) => {
-    const response = await page.request.get("/admin/churches", {
+    const response = await page.request.get("/admin/churches/new", {
       maxRedirects: 0,
     });
 
@@ -42,7 +42,7 @@ test.describe("operator administration access", () => {
   }) => {
     await signIn(page, E2E_CHURCH_USER_EMAIL);
 
-    const response = await page.request.get("/admin/churches");
+    const response = await page.request.get("/admin/churches/new");
 
     expect(response.status()).toBe(401);
     expect(await response.text()).not.toContain("教会アカウントを作成");
@@ -61,12 +61,12 @@ test.describe("operator church provisioning", () => {
   test("provisions an account through first login and password change", async ({
     page,
   }) => {
-    await page.goto("/admin/churches");
+    await page.goto("/admin/churches/new");
 
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "教会アカウントを作成",
+        name: "教会を作成",
       }),
     ).toBeVisible();
     await expect(page.locator(".admin-form").first()).toHaveCSS(
