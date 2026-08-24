@@ -26,7 +26,7 @@ function managementFetcher() {
   let folder = {
     id: folderId,
     name: "2026-08-23 第二礼拝",
-    isPinned: false,
+    isPinned: true,
     position: 0,
     lastUsedAt: null,
   };
@@ -109,9 +109,11 @@ describe("folder management", () => {
       screen.queryByRole("heading", { name: "フォルダーの削除" }),
     ).not.toBeInTheDocument();
     const name = await screen.findByLabelText("フォルダー名");
+    expect(
+      screen.queryByLabelText(/^よく使うフォルダーに固定/),
+    ).not.toBeInTheDocument();
     await user.clear(name);
     await user.type(name, "2026-08-30 第一礼拝");
-    await user.click(screen.getByLabelText(/^よく使うフォルダーに固定/));
     await user.click(screen.getByRole("button", { name: "変更を保存" }));
     await waitFor(() =>
       expect(fetcher).toHaveBeenCalledWith(

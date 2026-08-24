@@ -714,33 +714,6 @@
   font-size: 12px;
 }
 
-.modern-check-row {
-  display: flex;
-  gap: 11px;
-  align-items: flex-start;
-  padding: 13px;
-  border: 1px solid #303030;
-  border-radius: 9px;
-  background: #101010;
-  cursor: pointer;
-}
-
-.modern-check-row input {
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  accent-color: #d2a568;
-}
-
-.modern-check-row span {
-  display: grid;
-  gap: 2px;
-}
-
-.modern-check-row small {
-  color: #919191;
-}
-
 .primary-button,
 .secondary-button,
 .danger-button,

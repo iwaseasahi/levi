@@ -91,19 +91,6 @@ export function FolderEditPanel({
                     onChange={(event) => editor.setName(event.target.value)}
                   />
                 </div>
-                <label className="modern-check-row" htmlFor="folder-pinned">
-                  <input
-                    checked={editor.pinned}
-                    disabled={editor.pending}
-                    id="folder-pinned"
-                    type="checkbox"
-                    onChange={(event) => editor.setPinned(event.target.checked)}
-                  />
-                  <span>
-                    <strong>よく使うフォルダーに固定</strong>
-                    <small>一覧の上部に表示されます</small>
-                  </span>
-                </label>
                 <button
                   className="primary-button"
                   disabled={editor.pending || !editor.name.trim()}

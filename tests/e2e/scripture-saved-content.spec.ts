@@ -169,8 +169,8 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
 
   await page.getByRole("link", { name: "2026-08-23 第二礼拝を編集" }).click();
   await expect(page).toHaveURL(/\/folders\/[^/]+\/edit$/);
+  await expect(page.getByLabel("よく使うフォルダーに固定")).toHaveCount(0);
   await page.getByLabel("フォルダー名").fill("礼拝用");
-  await page.getByLabel("よく使うフォルダーに固定").check();
   await page.getByRole("button", { name: "変更を保存" }).click();
   await expect(page.getByRole("status")).toHaveText(
     "フォルダーを更新しました。",
