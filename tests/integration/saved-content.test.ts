@@ -291,8 +291,8 @@ describe("saved-content database contract", () => {
     await expect(
       savedContentRepository.listFolders(tenant(fixture.firstChurch.id)),
     ).resolves.toEqual([
-      expect.objectContaining({ id: first.id }),
       expect.objectContaining({ id: second.id }),
+      expect.objectContaining({ id: first.id }),
     ]);
     await expect(
       savedContentRepository.listFolders(tenant(fixture.secondChurch.id)),

@@ -117,8 +117,16 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   await expect(
     page.getByRole("button", { name: "祈祷会", exact: true }),
   ).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator(".folder-toggle")).toHaveText([
+    "▸2026-08-23 第二礼拝",
+    "▾祈祷会",
+  ]);
   await worshipFolder.click();
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator(".folder-toggle")).toHaveText([
+    "▾2026-08-23 第二礼拝",
+    "▸祈祷会",
+  ]);
   await folderListLink.click();
   await expect(page).toHaveURL(/\/folders$/);
   await expect(
