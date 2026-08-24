@@ -24,7 +24,7 @@ describe("AdminSidebar", () => {
         .getAttribute("href"),
     ).toBe("/admin/churches/password-reset");
     expect(
-      screen.getByRole("link", { name: "管理者" }).getAttribute("href"),
+      screen.getByRole("link", { name: "管理者一覧" }).getAttribute("href"),
     ).toBe("/admin/admin-users");
   });
 });

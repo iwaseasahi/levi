@@ -10,7 +10,7 @@ const items = [
     href: "/admin/churches/password-reset",
     label: "パスワードを再設定",
   },
-  { href: "/admin/admin-users", label: "管理者" },
+  { href: "/admin/admin-users", label: "管理者一覧" },
 ] as const;
 
 export function AdminSidebar() {
@@ -24,7 +24,8 @@ export function AdminSidebar() {
       </div>
       <nav>
         {items.map((item) => {
-          const current = pathname === item.href;
+          const current =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               aria-current={current ? "page" : undefined}

@@ -35,8 +35,8 @@ export default function AdministrationPage() {
             ◎
           </span>
           <span>
-            <strong>管理者を管理</strong>
-            <small>管理者IDの確認と招待を行います</small>
+            <strong>管理者の一覧</strong>
+            <small>登録済みの管理者IDと状態を確認します</small>
           </span>
           <span aria-hidden="true">→</span>
         </Link>

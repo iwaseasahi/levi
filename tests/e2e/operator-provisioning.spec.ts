@@ -73,7 +73,7 @@ test.describe("administrator invitations", () => {
       dashboard.getByRole("link", { name: /パスワードを再設定/ }),
     ).toBeVisible();
     await expect(
-      dashboard.getByRole("link", { name: /管理者を管理/ }),
+      dashboard.getByRole("link", { name: /管理者の一覧/ }),
     ).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
@@ -88,11 +88,10 @@ test.describe("administrator invitations", () => {
   test("invites an administrator and lists the pending identity", async ({
     page,
   }) => {
-    await page.goto("/admin/admin-users");
+    await page.goto("/admin/admin-users/new");
     await expect(
-      page.getByRole("heading", { level: 1, name: "管理者" }),
+      page.getByRole("heading", { level: 1, name: "管理者を招待" }),
     ).toBeVisible();
-    await expect(page.getByText("basic-bootstrap")).toBeVisible();
     await page.getByLabel("管理者名").fill("Synthetic Invited Administrator");
     await page
       .getByLabel("ログインID")
@@ -104,6 +103,12 @@ test.describe("administrator invitations", () => {
     await page.getByRole("button", { name: "一時パスワードを表示" }).click();
     await expect(page.locator(".credential-summary code")).toHaveText(/.{24}/);
     await page.getByRole("button", { name: "表示を閉じる" }).click();
+    await page.getByRole("link", { name: "管理者の一覧へ" }).click();
+    await expect(page).toHaveURL(/\/admin\/admin-users$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "管理者の一覧" }),
+    ).toBeVisible();
+    await expect(page.getByText("basic-bootstrap")).toBeVisible();
     await expect(page.getByText(E2E_INVITED_ADMIN_LOGIN_ID)).toBeVisible();
     await expect(page.getByText("招待済み（ログイン未対応）")).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
