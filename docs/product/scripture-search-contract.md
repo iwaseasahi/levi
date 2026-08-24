@@ -34,8 +34,11 @@ layout: selected books and languages have persistent gold-accented states,
 range inputs share a dark toolbar, `Open` is the primary action, and `Reset`
 and `空白⇔表示` are visually distinct secondary actions. Hover, keyboard focus,
 loading, and disabled states remain visibly distinguishable. The screen has no
-Church header, logout control, explanatory copy, or result-preview region. A successful
-`Open` validates the range, keeps the search screen in place, and opens the
+Church header, explanatory copy, or result-preview region. A fixed settings icon
+in the bottom-right opens a minimal menu containing `ログアウト`; selecting it
+ends the Church session and returns to `/login`. The menu closes on Escape or an
+outside click without moving the search layout. A successful `Open` validates
+the range, keeps the search screen in place, and opens the
 canonical `/scripture/audience` URL directly in an ordinary Chrome tab named
 `projector`. Repeated opens reuse that named tab when it remains open. The URL
 contains only book, chapter, normalized range, and language coordinates; it

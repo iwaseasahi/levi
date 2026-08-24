@@ -151,6 +151,22 @@ test("validates the Ginmaku search form and projects each language mode", async 
     page.getByRole("radio", { name: "創世記/Genesis" }),
   ).toBeVisible();
   await page.setViewportSize({ height: 720, width: 1280 });
+  const settings = page.getByRole("button", { name: "設定" });
+  await expect(settings).toHaveCSS("position", "static");
+  const settingsContainer = page.locator(".scripture-settings");
+  await expect(settingsContainer).toHaveCSS("position", "fixed");
+  const settingsBox = await settingsContainer.boundingBox();
+  expect(1280 - (settingsBox!.x + settingsBox!.width)).toBe(12);
+  expect(720 - (settingsBox!.y + settingsBox!.height)).toBe(12);
+  await settings.click();
+  await expect(
+    page.getByRole("menuitem", { name: "ログアウト" }),
+  ).toBeVisible();
+  expect(
+    (await new AxeBuilder({ page }).include(".scripture-settings").analyze())
+      .violations,
+  ).toEqual([]);
+  await settings.click();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   const captureCatalogLayout = () =>

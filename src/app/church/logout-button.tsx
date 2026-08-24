@@ -2,13 +2,20 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/infrastructure/auth/client";
-export function LogoutButton() {
+export function LogoutButton({
+  className = "secondary-button",
+  role,
+}: {
+  className?: string;
+  role?: "menuitem";
+} = {}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   return (
     <button
-      className="secondary-button"
+      className={className}
       disabled={pending}
+      role={role}
       onClick={async () => {
         setPending(true);
         try {

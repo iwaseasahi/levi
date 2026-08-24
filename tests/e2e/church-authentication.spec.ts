@@ -47,14 +47,12 @@ test.describe("Church session lifecycle", () => {
     await expect(
       second.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();
-    await page.evaluate(() =>
-      fetch("/api/auth/sign-out", {
-        body: "{}",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        method: "POST",
-      }),
-    );
+    const settings = page.getByRole("button", { name: "設定" });
+    await expect(settings).toHaveAttribute("aria-expanded", "false");
+    await settings.click();
+    await expect(settings).toHaveAttribute("aria-expanded", "true");
+    await page.getByRole("menuitem", { name: "ログアウト" }).click();
+    await expect(page).toHaveURL(/\/login$/);
     await page.goto("/scripture");
     await expect(page).toHaveURL(/\/login$/);
     await second.reload();
