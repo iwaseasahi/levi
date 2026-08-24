@@ -1,8 +1,9 @@
 # Ginmaku Bible import runbook
 
 This runbook prepares an import but does not authorize or execute a production
-change. Production database access, translation provenance approval, backup,
-execution, and rollback/forward-recovery approval remain human gates.
+change. Production database access, confirmation that the operator may display
+both translations, backup, execution, and rollback/forward-recovery approval
+remain human gates.
 
 ## Safety contract
 
@@ -21,6 +22,10 @@ execution, and rollback/forward-recovery approval remain human gates.
 - A retry is a no-op only when metadata, locations, and content fingerprints all
   match. Partial or different target content fails closed.
 - `reconcile` exits 0 only for an exact match and exits 2 for a mismatch.
+
+Levi does not store or activate a Bible rights status. Authorization to display
+JSS3 and NKJV is confirmed outside the database in the approved release record;
+it is not an import option or a catalog availability gate.
 
 ## Prepared sequence
 
@@ -57,16 +62,16 @@ the source dump and full transient report outside the repository. Commit only a
 reviewed anonymous summary and the report SHA-256.
 
 Before production import, record the target/environment, backup and restore
-test, exact checksum, expected anonymous counts/fingerprints, translation
-provenance metadata, human approval, maintenance/locking window, and post-import
-reconciliation.
+test, exact checksum, expected anonymous counts/fingerprints, documented
+confirmation that the operator may display JSS3 and NKJV, human approval,
+maintenance/locking window, and post-import reconciliation.
 
 Production import requires a human to approve all of the following immediately
-before execution: the exact source SHA-256, translation rights metadata, target
-database identity, fresh backup and successful restore rehearsal, maintenance
-window, execution operator, rollback/forward-recovery choice, and post-import
-reconciliation owner. The rehearsal report's `productionExecuted: false` must
-never be treated as cutover approval.
+before execution: the exact source SHA-256, the documented display authorization
+confirmation, target database identity, fresh backup and successful restore
+rehearsal, maintenance window, execution operator, rollback/forward-recovery
+choice, and post-import reconciliation owner. The rehearsal report's
+`productionExecuted: false` must never be treated as cutover approval.
 
 ## Failure recovery
 
