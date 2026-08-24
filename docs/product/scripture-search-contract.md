@@ -39,7 +39,9 @@ Church header, logout control, explanatory copy, or result-preview region. A suc
 canonical `/scripture/audience` URL directly in an ordinary Chrome tab named
 `projector`. Repeated opens reuse that named tab when it remains open. The URL
 contains only book, chapter, normalized range, and language coordinates; it
-never contains Bible text. Reopening a bookmark uses the same direct-tab flow.
+never contains Bible text. Selecting a bookmark restores its book, chapter,
+range, and language into the search form without opening an audience tab. The
+user reviews the restored condition and uses `Open` to project it.
 
 The fourth table column retains Ginmaku's `文字 大／小` and `スクロール
 ↑／↓` behavior in a grouped projection-control panel, and the Open/Reset row
@@ -78,6 +80,10 @@ complete ordered ID set for that folder; the server rejects partial, foreign,
 or cross-folder orders. Alt+ArrowUp and Alt+ArrowDown provide a non-visual
 keyboard fallback. A failed reorder reloads server order instead of leaving an
 unpersisted order on screen.
+
+Selecting a saved scripture link records the folder as recently used and
+restores the bookmark's complete search condition into the form. It does not
+open or update the audience tab until the user selects `Open`.
 
 Ginmaku's `お気に入りに追加` control appears immediately after the scripture
 search form. It saves the normalized current selection into the current folder

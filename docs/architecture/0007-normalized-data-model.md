@@ -115,7 +115,7 @@ of this decision.
   compaction without relying on last-write-wins behavior.
 - Pinned folders display first by position. Remaining folders display by
   `last_used_at DESC NULLS LAST`, then position and UUID, capped at 20 total.
-  `last_used_at` changes only on explicit folder selection or bookmark reopen.
+  `last_used_at` changes only on explicit folder selection or bookmark selection.
 
 ### Physical features beyond Prisma schema
 

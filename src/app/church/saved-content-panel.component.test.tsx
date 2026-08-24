@@ -99,7 +99,7 @@ function renderPanel(
         currentSearch={current}
         currentSearchTitle={searchTitle}
         fetcher={fetcher}
-        onOpen={vi.fn()}
+        onSelectSearch={vi.fn()}
       />,
     ),
   };
@@ -187,15 +187,15 @@ describe("SavedContentPanel", () => {
     ).toMatchObject({ name: "2026-08-23 第二礼拝" });
   });
 
-  it("adds the current search with Ginmaku's automatic title and reopens it", async () => {
-    const onOpen = vi.fn().mockResolvedValue(undefined);
+  it("adds the current search and selects it without opening an audience", async () => {
+    const onSelectSearch = vi.fn().mockResolvedValue(undefined);
     const fetcher = statefulFetcher();
     const { container } = render(
       <SavedContentPanel
         currentSearch={search}
         currentSearchTitle={searchTitle}
         fetcher={fetcher}
-        onOpen={onOpen}
+        onSelectSearch={onSelectSearch}
       />,
     );
     const user = userEvent.setup();
@@ -215,9 +215,10 @@ describe("SavedContentPanel", () => {
     ).toMatchObject({ folderId, title: searchTitle, ...search });
 
     const bookmark = await screen.findByRole("link", { name: searchTitle });
-    expect(bookmark).toHaveAttribute("target", "projector");
+    expect(bookmark).toHaveAttribute("href", "/scripture");
+    expect(bookmark).not.toHaveAttribute("target");
     await user.click(bookmark);
-    await waitFor(() => expect(onOpen).toHaveBeenCalledWith(search));
+    await waitFor(() => expect(onSelectSearch).toHaveBeenCalledWith(search));
     expect(
       await axe.run(container, {
         rules: { "color-contrast": { enabled: false } },

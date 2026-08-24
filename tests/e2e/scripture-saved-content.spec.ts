@@ -3,7 +3,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "./scripture-fixture";
 import { loginToScripture, selectGenesis } from "./scripture-helpers";
 
-test("creates, reorders, reopens, edits, and deletes folders and bookmarks", async ({
+test("creates, reorders, restores, edits, and deletes folders and bookmarks", async ({
   context,
   page,
   scriptureAccount,
@@ -186,10 +186,23 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   });
   await expect(renamedFolder).toHaveAttribute("aria-expanded", "true");
 
-  const bookmarkOpened = context.waitForEvent("page");
+  const pageCountBeforeBookmark = context.pages().length;
   await genesisBookmark.click();
-  const bookmarkedAudience = await bookmarkOpened;
   await expect(page).toHaveURL(/\/scripture$/);
+  expect(context.pages()).toHaveLength(pageCountBeforeBookmark);
+  await expect(
+    page.getByRole("radio", { name: "創世記/Genesis" }),
+  ).toBeChecked();
+  await expect(page.getByLabel("章")).toHaveValue("1");
+  await expect(page.getByLabel("開始節")).toHaveValue("1");
+  await expect(page.getByLabel("終了節（省略可）")).toHaveValue("1");
+  await expect(
+    page.getByRole("radio", { name: "日本語 & English" }),
+  ).toBeChecked();
+
+  const bookmarkOpened = context.waitForEvent("page");
+  await page.getByRole("button", { name: "Open" }).click();
+  const bookmarkedAudience = await bookmarkOpened;
   await expect(bookmarkedAudience).toHaveURL(
     /\/scripture\/audience\?book=GEN&chapter=1&endVerse=1&language=both&startVerse=1$/,
   );

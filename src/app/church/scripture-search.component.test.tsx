@@ -125,6 +125,12 @@ function statefulSavedContentFetcher() {
       bookmarks = [bookmark];
       return Response.json({ bookmark });
     }
+    if (command.action === "open-bookmark")
+      return Response.json({
+        bookmark: bookmarks.find(
+          (bookmark) => (bookmark as { id: string }).id === command.bookmarkId,
+        ),
+      });
     return Response.json({ ok: true });
   });
 }
@@ -488,6 +494,41 @@ describe("ScriptureSearch", () => {
       startVerse: 16,
       title: "架空ヨハネ/Synthetic John 3:16",
     });
+  });
+
+  it("restores a favorite into the search form and waits for Open before projecting", async () => {
+    const contentFetcher = statefulSavedContentFetcher();
+    renderSearch(successfulFetcher(), contentFetcher);
+    const user = userEvent.setup();
+    await chooseRange(user);
+    await user.click(screen.getByRole("radio", { name: "日本語のみ" }));
+    await user.click(
+      await screen.findByRole("button", { name: "お気に入りに追加" }),
+    );
+    const bookmark = await screen.findByRole("link", {
+      name: "架空ヨハネ/Synthetic John 3:16-17",
+    });
+
+    await user.click(screen.getByRole("button", { name: "Reset" }));
+    await waitFor(() => expect(screen.getByLabelText("章")).toHaveValue(""));
+    await user.click(bookmark);
+
+    await waitFor(() => expect(screen.getByLabelText("章")).toHaveValue("3"));
+    expect(
+      screen.getByRole("radio", {
+        name: "架空ヨハネ/Synthetic John",
+      }),
+    ).toBeChecked();
+    expect(screen.getByLabelText("開始節")).toHaveValue("16");
+    expect(screen.getByLabelText("終了節（省略可）")).toHaveValue("17");
+    expect(screen.getByRole("radio", { name: "日本語のみ" })).toBeChecked();
+    expect(window.open).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    expect(window.open).toHaveBeenCalledWith(
+      "/scripture/audience?book=JHN&chapter=3&endVerse=17&language=ja&startVerse=16",
+      "projector",
+    );
   });
 
   it("announces and focuses the first missing required field", async () => {

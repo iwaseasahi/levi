@@ -5,6 +5,7 @@ import type {
   ScriptureCatalog,
   ScriptureCatalogBook,
   ScriptureLanguage,
+  ScriptureSearch,
 } from "@/domain/scripture/search";
 import { requestJson } from "./client-api";
 import {
@@ -35,6 +36,7 @@ type CatalogAction =
   | { type: "chapter-selected"; chapter: string }
   | { type: "start-verse-selected"; startVerse: string }
   | { type: "end-verse-selected"; endVerse: string }
+  | { type: "search-restored"; selection: ScriptureSelection }
   | { type: "reset" };
 
 const initialState: CatalogState = {
@@ -124,6 +126,13 @@ function catalogReducer(
       return {
         ...state,
         selection: { ...state.selection, endVerse: action.endVerse },
+      };
+    case "search-restored":
+      return {
+        ...state,
+        chapters: [],
+        selection: action.selection,
+        verses: [],
       };
     case "reset":
       return { ...initialState };
@@ -231,10 +240,26 @@ export function useScriptureCatalog(fetcher: typeof fetch) {
     void loadCatalog(initialScriptureSelection);
   }, [loadCatalog]);
 
+  const restoreSearch = useCallback(
+    async (search: ScriptureSearch) => {
+      const selection = {
+        book: search.book,
+        chapter: String(search.chapter),
+        endVerse: String(search.endVerse),
+        language: search.language,
+        startVerse: String(search.startVerse),
+      } satisfies ScriptureSelection;
+      dispatch({ selection, type: "search-restored" });
+      await loadCatalog(selection);
+    },
+    [loadCatalog],
+  );
+
   return {
     ...state,
     loadCatalog,
     reset,
+    restoreSearch,
     updateBook,
     updateChapter,
     updateEndVerse,
