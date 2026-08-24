@@ -22,16 +22,12 @@ export const savedContentRepository: SavedContentRepository = {
       orderBy: [{ position: "asc" }, { id: "asc" }],
       take: 20,
     });
-    const recent = await prisma.folder.findMany({
+    const unpinned = await prisma.folder.findMany({
       where: { churchId, isPinned: false },
-      orderBy: [
-        { lastUsedAt: { sort: "desc", nulls: "last" } },
-        { position: "asc" },
-        { id: "asc" },
-      ],
+      orderBy: [{ position: "asc" }, { id: "asc" }],
       take: Math.max(0, 20 - pinned.length),
     });
-    return [...pinned, ...recent].map(folderView);
+    return [...pinned, ...unpinned].map(folderView);
   },
 
   async listFolderOrder({ churchId }) {
