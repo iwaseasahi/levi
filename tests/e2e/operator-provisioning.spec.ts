@@ -28,7 +28,7 @@ test.describe("operator administration access", () => {
   test("challenges an unauthenticated visitor with Basic authentication", async ({
     page,
   }) => {
-    const response = await page.request.get("/admin/churches/new", {
+    const response = await page.request.get("/admin", {
       maxRedirects: 0,
     });
 
@@ -56,6 +56,33 @@ test.describe("administrator invitations", () => {
       password: E2E_PASSWORD,
       username: E2E_ADMIN_BASIC_USERNAME,
     },
+  });
+
+  test("uses the protected administration dashboard as the entry point", async ({
+    page,
+  }) => {
+    await page.goto("/admin");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "管理画面" }),
+    ).toBeVisible();
+    const dashboard = page.getByRole("navigation", { name: "管理機能" });
+    await expect(
+      dashboard.getByRole("link", { name: /教会を作成/ }),
+    ).toBeVisible();
+    await expect(
+      dashboard.getByRole("link", { name: /パスワードを再設定/ }),
+    ).toBeVisible();
+    await expect(
+      dashboard.getByRole("link", { name: /管理者を管理/ }),
+    ).toBeVisible();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 
   test("invites an administrator and lists the pending identity", async ({

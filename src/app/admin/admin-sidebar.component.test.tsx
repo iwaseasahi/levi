@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AdminSidebar } from "./admin-sidebar";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/admin/churches/password-reset",
+  usePathname: () => "/admin",
 }));
 
 describe("AdminSidebar", () => {
@@ -12,13 +12,17 @@ describe("AdminSidebar", () => {
     render(<AdminSidebar />);
 
     expect(
+      screen.getByRole("link", { name: "トップ" }).getAttribute("aria-current"),
+    ).toBe("page");
+
+    expect(
       screen.getByRole("link", { name: "教会を作成" }).getAttribute("href"),
     ).toBe("/admin/churches/new");
     expect(
       screen
         .getByRole("link", { name: "パスワードを再設定" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
+        .getAttribute("href"),
+    ).toBe("/admin/churches/password-reset");
     expect(
       screen.getByRole("link", { name: "管理者" }).getAttribute("href"),
     ).toBe("/admin/admin-users");

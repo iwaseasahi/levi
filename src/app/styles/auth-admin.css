@@ -109,7 +109,7 @@
   }
 
   .admin-sidebar nav {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .admin-nav-link {
@@ -122,6 +122,87 @@
 
   .admin-nav-marker {
     display: none;
+  }
+}
+
+.admin-dashboard {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  width: min(72rem, 100%);
+  margin: 0 auto;
+}
+
+.admin-dashboard > a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  min-height: 9rem;
+  padding: 1.4rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  text-decoration: none;
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 22%);
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.admin-dashboard > a:hover {
+  border-color: #6f512c;
+  background: #17130f;
+  transform: translateY(-2px);
+}
+
+.admin-dashboard > a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.admin-dashboard > a > span:nth-child(2) {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.admin-dashboard strong {
+  font-size: 1.15rem;
+}
+
+.admin-dashboard small {
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.admin-dashboard-icon {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border: 1px solid #6f512c;
+  border-radius: 0.7rem;
+  background: #241b11;
+  color: var(--accent-hover);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+@media (max-width: 64rem) {
+  .admin-dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard > a {
+    min-height: 7rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  .admin-sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

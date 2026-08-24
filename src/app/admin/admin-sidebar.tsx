@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
+  { href: "/admin", label: "トップ" },
   { href: "/admin/churches/new", label: "教会を作成" },
   {
     href: "/admin/churches/password-reset",
