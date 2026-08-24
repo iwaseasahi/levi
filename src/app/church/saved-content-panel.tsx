@@ -155,6 +155,7 @@ export function SavedContentPanel({
                       aria-expanded={open}
                       className={`folder-toggle${open ? " selected-folder" : ""}`}
                       disabled={controller.pending}
+                      title={folder.name}
                       type="button"
                       onClick={() => void controller.chooseFolder(folder.id)}
                     >
@@ -164,7 +165,7 @@ export function SavedContentPanel({
                       >
                         {open ? "▾" : "▸"}
                       </span>
-                      <span>{folder.name}</span>
+                      <span className="folder-name">{folder.name}</span>
                     </button>
                     <a
                       aria-label={`${folder.name}を編集`}

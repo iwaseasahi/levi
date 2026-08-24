@@ -116,6 +116,7 @@ describe("SavedContentPanel", () => {
 
     const worship = await screen.findByRole("button", { name: "主日礼拝" });
     expect(worship).toHaveAttribute("aria-expanded", "true");
+    expect(worship).toHaveAttribute("title", "主日礼拝");
     expect(screen.queryByLabelText("フォルダー名")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "フォルダーを削除" }),
