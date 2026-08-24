@@ -4,6 +4,7 @@ import {
   contiguousEndVerses,
   initialScriptureSelection,
   normalizeScriptureFavorite,
+  normalizeScriptureNumberInput,
   normalizeScriptureSearch,
   scriptureCatalogUrl,
   scriptureFavoriteTitle,
@@ -17,6 +18,12 @@ const book = {
 };
 
 describe("scripture search selection", () => {
+  it("normalizes full-width numeric input and removes non-numeric characters", () => {
+    expect(normalizeScriptureNumberInput("１２３")).toBe("123");
+    expect(normalizeScriptureNumberInput("1２a-３")).toBe("123");
+    expect(normalizeScriptureNumberInput("ＡＢＣ")).toBe("");
+  });
+
   it("builds the catalog request from the current selection", () => {
     expect(scriptureCatalogUrl(initialScriptureSelection)).toBe(
       "/api/scripture/catalog?language=both",

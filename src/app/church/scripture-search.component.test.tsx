@@ -183,6 +183,49 @@ describe("ScriptureSearch", () => {
     );
   });
 
+  it("normalizes full-width chapter and verse input without requesting an invalid catalog", async () => {
+    const fetcher = successfulFetcher();
+    renderSearch(fetcher);
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("radio", {
+        name: "架空ヨハネ/Synthetic John",
+      }),
+    );
+
+    const chapter = screen.getByLabelText("章");
+    await user.type(chapter, "３");
+    await waitFor(() => expect(chapter).toHaveValue("3"));
+    const startVerse = screen.getByLabelText("開始節");
+    await waitFor(() => expect(startVerse).toBeEnabled());
+    await user.type(startVerse, "１６");
+    await user.type(screen.getByLabelText("終了節（省略可）"), "１７");
+
+    expect(startVerse).toHaveValue("16");
+    expect(screen.getByLabelText("終了節（省略可）")).toHaveValue("17");
+    expect(
+      fetcher.mock.calls.some(([input]) =>
+        String(input).includes("book=JHN&chapter=3"),
+      ),
+    ).toBe(true);
+    expect(
+      fetcher.mock.calls.some(([input]) => /[０-９]/.test(String(input))),
+    ).toBe(false);
+
+    const callsBeforeInvalidInput = fetcher.mock.calls.length;
+    await user.type(chapter, "A");
+    expect(chapter).toHaveValue("3");
+    expect(fetcher).toHaveBeenCalledTimes(callsBeforeInvalidInput);
+    expect(
+      screen.queryByText("検索候補を読み込めませんでした。", {
+        exact: false,
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: "架空ヨハネ/Synthetic John" }),
+    ).toBeInTheDocument();
+  });
+
   it("supports keyboard navigation and has no detectable accessibility violations", async () => {
     const { container } = renderSearch(successfulFetcher());
     const book = await screen.findByRole("radio", {
