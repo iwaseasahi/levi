@@ -27,7 +27,7 @@ const expectedSteps = [
 const expectedStopConditions = [
   "approval-or-target-mismatch",
   "backup-or-restore-proof-failed",
-  "source-fingerprint-or-rights-mismatch",
+  "source-fingerprint-or-display-authorization-mismatch",
   "schema-migration-failed",
   "bible-reconciliation-not-exact",
   "readiness-or-smoke-failed",

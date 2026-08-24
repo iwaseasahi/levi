@@ -83,8 +83,9 @@ The machine-checked order is defined in
 Do not skip or reorder it.
 
 1. Confirm Issue #81 is resolved, record all named owners, exact production
-   target, commit/image identifier, approved source SHA-256, rights metadata,
-   change ticket, and immediate approvals.
+   target, commit/image identifier, approved source SHA-256, documented
+   confirmation that JSS3 and NKJV may be displayed, change ticket, and
+   immediate approvals.
 2. Have the communication owner send the approved maintenance notice. This is
    an external action and requires approval.
 3. Freeze the exact approved Bible source and verify its anonymous profile. The
@@ -97,9 +98,9 @@ Do not skip or reorder it.
 7. Stage the exact application release with no user traffic and verify
    liveness/logging. The application tolerates an empty Bible catalog only
    during this closed compatibility window.
-8. Activate the approved JSS3/NKJV rights metadata, import the exact Bible dump,
-   and require full plus safe sample fingerprint reconciliation. A rerun must
-   report `unchanged`.
+8. Import the exact Bible dump and require full plus safe sample fingerprint
+   reconciliation. A rerun must report `unchanged`. There is no database rights
+   status to activate.
 9. Provision only approved platform operators and Church accounts. Transfer
    one-time credentials through the direct process; there is no email service.
 10. Run readiness and every smoke check below against the staged target.
@@ -120,8 +121,8 @@ Stop before the next step when any of these occurs:
 - approval, target, release identifier, source checksum, or owner differs from
   the release record;
 - backup capture, archive validation, isolated restore, RPO, or RTO proof fails;
-- translation rights/provenance is not approved or Bible source/count/fingerprint
-  differs from the signed-off rehearsal;
+- documented authorization to display JSS3 and NKJV is missing or the Bible
+  source/count/fingerprint differs from the signed-off rehearsal;
 - schema migration fails, reports drift, or requires an unreviewed destructive
   change/lock window;
 - Bible reconciliation is not exact or the idempotent rerun changes data;
