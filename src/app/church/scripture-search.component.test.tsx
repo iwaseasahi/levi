@@ -416,7 +416,7 @@ describe("ScriptureSearch", () => {
     );
   });
 
-  it("uses the normalized range in the favorite title when the end verse is omitted", async () => {
+  it("saves only the start verse when the favorite end verse is omitted", async () => {
     const contentFetcher = statefulSavedContentFetcher();
     renderSearch(successfulFetcher(), contentFetcher);
     const user = userEvent.setup();
@@ -441,9 +441,9 @@ describe("ScriptureSearch", () => {
     expect(JSON.parse(String(createBookmarkCall?.[1]?.body))).toMatchObject({
       book: "JHN",
       chapter: 3,
-      endVerse: 18,
+      endVerse: 16,
       startVerse: 16,
-      title: "架空ヨハネ/Synthetic John 3:16-18",
+      title: "架空ヨハネ/Synthetic John 3:16",
     });
   });
 

@@ -74,9 +74,18 @@ export function normalizeScriptureSearch(
   };
 }
 
-export function scriptureFavoriteTitle(
+export function normalizeScriptureFavorite(
   selection: ScriptureSelection,
   search: ScriptureSearch | null,
+): ScriptureSearch | null {
+  if (!search) return null;
+  return selection.endVerse
+    ? search
+    : { ...search, endVerse: search.startVerse };
+}
+
+export function scriptureFavoriteTitle(
+  selection: ScriptureSelection,
   books: ScriptureCatalogBook[],
 ) {
   const book = books.find(({ code }) => code === selection.book);
@@ -84,11 +93,7 @@ export function scriptureFavoriteTitle(
   const names = [book.japaneseName, book.englishName].filter(
     (name): name is string => Boolean(name),
   );
-  const displayedEndVerse =
-    selection.endVerse ||
-    (search && search.endVerse > search.startVerse
-      ? String(search.endVerse)
-      : "");
+  const displayedEndVerse = selection.endVerse;
   const range = displayedEndVerse ? `-${displayedEndVerse}` : "";
   return `${names.length > 0 ? names.join("/") : book.name} ${selection.chapter}:${selection.startVerse}${range}`;
 }

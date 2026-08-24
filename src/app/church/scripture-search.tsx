@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { SavedContentPanel } from "./saved-content-panel";
 import {
+  normalizeScriptureFavorite,
   normalizeScriptureSearch,
   scriptureFavoriteTitle,
 } from "./scripture-search-selection";
@@ -27,6 +28,10 @@ export function ScriptureSearch({
     catalog.selection,
     catalog.chapters,
     catalog.verses,
+  );
+  const currentFavorite = normalizeScriptureFavorite(
+    catalog.selection,
+    currentSearch,
   );
 
   function clearInteractionError() {
@@ -66,10 +71,9 @@ export function ScriptureSearch({
       <h1 className="sr-only">聖句検索</h1>
       <div id="bookmark_container" className="ginmaku-bookmark-container">
         <SavedContentPanel
-          currentSearch={currentSearch}
+          currentSearch={currentFavorite}
           currentSearchTitle={scriptureFavoriteTitle(
             catalog.selection,
-            currentSearch,
             catalog.books,
           )}
           fetcher={savedContentFetcher}

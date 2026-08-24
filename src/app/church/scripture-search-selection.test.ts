@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   contiguousEndVerses,
   initialScriptureSelection,
+  normalizeScriptureFavorite,
   normalizeScriptureSearch,
   scriptureCatalogUrl,
   scriptureFavoriteTitle,
@@ -67,30 +68,37 @@ describe("scripture search selection", () => {
     ).toBeNull();
   });
 
-  it("uses the normalized range in the favorite title", () => {
-    const search = normalizeScriptureSearch(
-      {
-        book: "JHN",
-        chapter: "3",
-        endVerse: "",
-        language: "both",
-        startVerse: "16",
-      },
-      [3],
-      [16, 17],
+  it("keeps an omitted favorite end verse as a single verse", () => {
+    const selection = {
+      book: "JHN",
+      chapter: "3",
+      endVerse: "",
+      language: "both" as const,
+      startVerse: "16",
+    };
+    const search = normalizeScriptureSearch(selection, [3], [16, 17]);
+    expect(normalizeScriptureFavorite(selection, search)).toEqual({
+      book: "JHN",
+      chapter: 3,
+      endVerse: 16,
+      language: "both",
+      startVerse: 16,
+    });
+    expect(scriptureFavoriteTitle(selection, [book])).toBe("ヨハネ/John 3:16");
+  });
+
+  it("keeps an explicitly selected favorite range", () => {
+    const selection = {
+      book: "JHN",
+      chapter: "3",
+      endVerse: "17",
+      language: "both" as const,
+      startVerse: "16",
+    };
+    const search = normalizeScriptureSearch(selection, [3], [16, 17]);
+    expect(normalizeScriptureFavorite(selection, search)).toEqual(search);
+    expect(scriptureFavoriteTitle(selection, [book])).toBe(
+      "ヨハネ/John 3:16-17",
     );
-    expect(
-      scriptureFavoriteTitle(
-        {
-          book: "JHN",
-          chapter: "3",
-          endVerse: "",
-          language: "both",
-          startVerse: "16",
-        },
-        search,
-        [book],
-      ),
-    ).toBe("ヨハネ/John 3:16-17");
   });
 });
