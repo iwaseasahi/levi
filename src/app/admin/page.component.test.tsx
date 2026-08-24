@@ -1,0 +1,34 @@
+import "@testing-library/jest-dom/vitest";
+
+import axe from "axe-core";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import AdministrationPage from "./page";
+
+describe("AdministrationPage", () => {
+  it("offers every primary administration workflow accessibly", async () => {
+    const { container } = render(<AdministrationPage />);
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "管理画面" }),
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: /教会を作成/ })).toHaveAttribute(
+      "href",
+      "/admin/churches/new",
+    );
+    expect(
+      screen.getByRole("link", { name: /パスワードを再設定/ }),
+    ).toHaveAttribute("href", "/admin/churches/password-reset");
+    expect(screen.getByRole("link", { name: /管理者を管理/ })).toHaveAttribute(
+      "href",
+      "/admin/admin-users",
+    );
+    expect(
+      (
+        await axe.run(container, {
+          rules: { "color-contrast": { enabled: false } },
+        })
+      ).violations,
+    ).toEqual([]);
+  });
+});
