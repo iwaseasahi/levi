@@ -41,7 +41,7 @@ interface ProvisionChurchControllerDependencies {
     },
   ): Promise<ProvisionChurchResult>;
   recordEvent(event: {
-    actorUserId?: string;
+    actorAdminUserId?: string;
     outcome: "denied" | "failed" | "succeeded" | "validation_failed";
     requestId?: string;
     targetChurchId?: string;
@@ -64,7 +64,7 @@ export function createProvisionChurchController(
     if (access.status !== "authorized") {
       dependencies.recordEvent({
         ...(access.status === "forbidden"
-          ? { actorUserId: access.userId }
+          ? { actorAdminUserId: access.adminUserId }
           : {}),
         outcome: "denied",
         ...(requestId ? { requestId } : {}),
@@ -78,7 +78,7 @@ export function createProvisionChurchController(
     const parsed = parseProvisioningInput(rawInput);
     if (!parsed.success) {
       dependencies.recordEvent({
-        actorUserId: access.userId,
+        actorAdminUserId: access.adminUserId,
         outcome: "validation_failed",
         ...(requestId ? { requestId } : {}),
       });
@@ -91,11 +91,11 @@ export function createProvisionChurchController(
 
     try {
       const result = await dependencies.provisionChurch(
-        access.userId,
+        access.adminUserId,
         parsed.data,
       );
       dependencies.recordEvent({
-        actorUserId: access.userId,
+        actorAdminUserId: access.adminUserId,
         outcome: "succeeded",
         ...(requestId ? { requestId } : {}),
         targetChurchId: result.churchId,
@@ -117,7 +117,7 @@ export function createProvisionChurchController(
       }
 
       dependencies.recordEvent({
-        actorUserId: access.userId,
+        actorAdminUserId: access.adminUserId,
         outcome:
           error instanceof ProvisioningAuthorizationError ? "denied" : "failed",
         ...(requestId ? { requestId } : {}),

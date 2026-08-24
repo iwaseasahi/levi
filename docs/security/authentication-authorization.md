@@ -5,13 +5,14 @@ whether that actor may perform a specific action on a specific resource. Levi
 must not treat “signed in” as permission to perform every action.
 
 ADR 0006 selects Better Auth with revocable PostgreSQL sessions for church
-users. ADR 0008 protects the single platform operator with HTTPS Basic
-authentication. Levi remains responsible for every authorization decision.
+users. ADR 0008 protects the administration entry with HTTPS Basic
+authentication, while ADR 0009 stores its identity in `admin_users`. Levi
+remains responsible for every authorization decision.
 
 The implemented boundary follows these rules:
 
 - centralize authentication/session verification at the server boundary;
-- distinguish platform operators from church users and deny by default;
+- keep administrator identities separate from church users and deny by default;
 - derive church context from the verified identity and membership, never from a
   client-supplied church ID;
 - represent that context as a branded `ChurchScope`; church-owned use-case and
@@ -33,8 +34,8 @@ The implemented boundary follows these rules:
 
 The `/admin` route is challenged by Proxy, and every administration Server
 Action independently repeats Basic authentication before authorization. A valid
-credential maps only to the deterministic internal platform operator, which is
-active but has no Better Auth account or session. The configured password is a
+credential maps only to the deterministic bootstrap admin user, which has no
+Better Auth account or session. The configured password is a
 Better Auth `scrypt` verifier, never plaintext. Five failures per 60 seconds are
 limited globally in PostgreSQL, and missing configuration or storage fails
 closed. Basic authentication is permitted only behind the production HTTPS

@@ -34,9 +34,10 @@ describe("createProvisionChurchController", () => {
   it("returns field errors without passing invalid values to the use case", async () => {
     const provisionChurch = vi.fn();
     const controller = createProvisionChurchController({
-      getOperatorAccess: vi
-        .fn()
-        .mockResolvedValue({ status: "authorized", userId: "operator-id" }),
+      getOperatorAccess: vi.fn().mockResolvedValue({
+        status: "authorized",
+        adminUserId: "operator-id",
+      }),
       provisionChurch,
       recordEvent: vi.fn(),
     });
@@ -53,9 +54,10 @@ describe("createProvisionChurchController", () => {
   it("returns only the successful operator DTO", async () => {
     const recordEvent = vi.fn();
     const controller = createProvisionChurchController({
-      getOperatorAccess: vi
-        .fn()
-        .mockResolvedValue({ status: "authorized", userId: "operator-id" }),
+      getOperatorAccess: vi.fn().mockResolvedValue({
+        status: "authorized",
+        adminUserId: "operator-id",
+      }),
       provisionChurch: vi.fn().mockResolvedValue({
         churchId: "church-id",
         churchName: "テスト教会",
@@ -76,7 +78,7 @@ describe("createProvisionChurchController", () => {
       temporaryPassword: "t".repeat(24),
     });
     expect(recordEvent).toHaveBeenCalledWith({
-      actorUserId: "operator-id",
+      actorAdminUserId: "operator-id",
       outcome: "succeeded",
       requestId: "req-2",
       targetChurchId: "church-id",
@@ -85,9 +87,10 @@ describe("createProvisionChurchController", () => {
 
   it("maps persistence errors to one existence-safe response", async () => {
     const controller = createProvisionChurchController({
-      getOperatorAccess: vi
-        .fn()
-        .mockResolvedValue({ status: "authorized", userId: "operator-id" }),
+      getOperatorAccess: vi.fn().mockResolvedValue({
+        status: "authorized",
+        adminUserId: "operator-id",
+      }),
       provisionChurch: vi.fn().mockRejectedValue(new ProvisioningFailedError()),
       recordEvent: vi.fn(),
     });

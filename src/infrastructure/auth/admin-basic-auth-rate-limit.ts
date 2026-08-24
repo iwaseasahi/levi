@@ -1,5 +1,3 @@
-import { prisma } from "@/infrastructure/database/client";
-
 const KEY = "admin-basic-auth:global";
 const WINDOW_MILLISECONDS = 60_000;
 export const ADMIN_BASIC_AUTH_MAX_FAILURES = 5;
@@ -12,10 +10,12 @@ export interface AdminBasicAuthFailureStore {
 
 export const adminBasicAuthFailureStore: AdminBasicAuthFailureStore = {
   async clear() {
+    const { prisma } = await import("@/infrastructure/database/client");
     await prisma.rateLimit.deleteMany({ where: { key: KEY } });
   },
 
   async isBlocked(now = Date.now()) {
+    const { prisma } = await import("@/infrastructure/database/client");
     const failure = await prisma.rateLimit.findUnique({ where: { key: KEY } });
     if (!failure) return false;
     return (
@@ -24,7 +24,8 @@ export const adminBasicAuthFailureStore: AdminBasicAuthFailureStore = {
     );
   },
 
-  record(now = Date.now()) {
+  async record(now = Date.now()) {
+    const { prisma } = await import("@/infrastructure/database/client");
     const timestamp = BigInt(now);
     const windowStart = BigInt(now - WINDOW_MILLISECONDS);
     return prisma.$queryRaw<Array<{ count: number }>>`

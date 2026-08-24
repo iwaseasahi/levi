@@ -14,6 +14,9 @@ import { prisma } from "@/infrastructure/database/client";
 const namespace = "test.provision";
 
 async function clearProvisioningRecords() {
+  await prisma.adminUser.deleteMany({
+    where: { loginId: { startsWith: namespace } },
+  });
   await prisma.user.deleteMany({
     where: { email: { startsWith: namespace } },
   });
@@ -24,16 +27,15 @@ async function clearProvisioningRecords() {
 
 async function createOperator() {
   const userId = randomUUID();
-  await prisma.$transaction(async (transaction) => {
-    await transaction.user.create({
-      data: {
-        actorState: "ACTIVE",
-        email: `${namespace}.operator@example.invalid`,
-        id: userId,
-        name: "Test Platform Operator",
-      },
-    });
-    await transaction.platformOperator.create({ data: { userId } });
+  await prisma.adminUser.create({
+    data: {
+      id: userId,
+      loginId: `${namespace}.${userId}`,
+      mustChangePassword: false,
+      name: "Test Administrator",
+      passwordHash: "synthetic-hash",
+      status: "ACTIVE",
+    },
   });
   return userId;
 }
@@ -66,7 +68,7 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("platform operator church provisioning", () => {
+describe("administrator church provisioning", () => {
   it("atomically creates an active forced-change credential account", async () => {
     const operatorUserId = await createOperator();
     const result = await provisionChurch(operatorUserId, {

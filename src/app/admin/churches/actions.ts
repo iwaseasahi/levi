@@ -19,7 +19,9 @@ const handleProvisionChurch = createProvisionChurchController({
       attributes: {
         capability: "church.provision",
         outcome: event.outcome,
-        ...(event.actorUserId ? { actorUserId: event.actorUserId } : {}),
+        ...(event.actorAdminUserId
+          ? { actorAdminUserId: event.actorAdminUserId }
+          : {}),
         ...(event.targetChurchId
           ? { targetChurchId: event.targetChurchId }
           : {}),

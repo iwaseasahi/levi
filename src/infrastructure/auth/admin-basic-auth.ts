@@ -1,7 +1,9 @@
 import { getAdminBasicAuthConfig } from "@/config/env";
 import { verifyAdminBasicAuthorization } from "@/domain/admin/basic-auth";
-import { INTERNAL_PLATFORM_OPERATOR_ID } from "@/domain/admin/platform-operator";
-import { prisma } from "@/infrastructure/database/client";
+import {
+  BASIC_BOOTSTRAP_ADMIN_USER_ID,
+  canAdminUserManagePlatform,
+} from "@/domain/admin/admin-user";
 import {
   ADMIN_BASIC_AUTH_MAX_FAILURES,
   adminBasicAuthFailureStore,
@@ -9,25 +11,26 @@ import {
 } from "./admin-basic-auth-rate-limit";
 
 export type AdminBasicAuthAccess =
-  | { status: "authorized"; userId: string }
+  | { status: "authorized"; adminUserId: string }
   | { status: "unauthenticated" }
   | { status: "rate-limited" }
   | { status: "unavailable" };
 
 interface AdminBasicAuthDependencies {
   failures: AdminBasicAuthFailureStore;
-  findActiveInternalOperator(): Promise<boolean>;
+  findAvailableBootstrapAdmin(): Promise<boolean>;
   verify(authorization: string | null): Promise<boolean>;
 }
 
 const defaultDependencies: AdminBasicAuthDependencies = {
   failures: adminBasicAuthFailureStore,
-  async findActiveInternalOperator() {
-    const operator = await prisma.platformOperator.findUnique({
-      where: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
-      select: { user: { select: { actorState: true } } },
+  async findAvailableBootstrapAdmin() {
+    const { prisma } = await import("@/infrastructure/database/client");
+    const adminUser = await prisma.adminUser.findUnique({
+      where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
+      select: { status: true },
     });
-    return operator?.user.actorState === "ACTIVE";
+    return adminUser ? canAdminUserManagePlatform(adminUser.status) : false;
   },
   verify(authorization) {
     return verifyAdminBasicAuthorization(
@@ -55,13 +58,13 @@ export function createAdminBasicAuthenticator(
           ? { status: "rate-limited" }
           : { status: "unauthenticated" };
       }
-      if (!(await dependencies.findActiveInternalOperator())) {
+      if (!(await dependencies.findAvailableBootstrapAdmin())) {
         return { status: "unavailable" };
       }
       await dependencies.failures.clear();
       return {
         status: "authorized",
-        userId: INTERNAL_PLATFORM_OPERATOR_ID,
+        adminUserId: BASIC_BOOTSTRAP_ADMIN_USER_ID,
       };
     } catch {
       return { status: "unavailable" };

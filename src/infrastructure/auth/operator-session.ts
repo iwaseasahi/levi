@@ -6,6 +6,6 @@ export async function getOperatorAccess(
 ): Promise<OperatorAccess> {
   const access = await authenticateAdminBasic(headers.get("authorization"));
   return access.status === "authorized"
-    ? { status: "authorized", userId: access.userId }
+    ? { status: "authorized", adminUserId: access.adminUserId }
     : { status: "unauthenticated" };
 }

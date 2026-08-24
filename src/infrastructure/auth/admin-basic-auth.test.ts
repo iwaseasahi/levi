@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { INTERNAL_PLATFORM_OPERATOR_ID } from "@/domain/admin/platform-operator";
+import { BASIC_BOOTSTRAP_ADMIN_USER_ID } from "@/domain/admin/admin-user";
 import { createAdminBasicAuthenticator } from "./admin-basic-auth";
 
 function dependencies(overrides: Record<string, unknown> = {}) {
@@ -10,7 +10,7 @@ function dependencies(overrides: Record<string, unknown> = {}) {
       isBlocked: vi.fn(async () => false),
       record: vi.fn(async () => 1),
     },
-    findActiveInternalOperator: vi.fn(async () => true),
+    findAvailableBootstrapAdmin: vi.fn(async () => true),
     verify: vi.fn(async () => true),
     ...overrides,
   };
@@ -23,7 +23,7 @@ describe("createAdminBasicAuthenticator", () => {
 
     await expect(authenticate("Basic valid")).resolves.toEqual({
       status: "authorized",
-      userId: INTERNAL_PLATFORM_OPERATOR_ID,
+      adminUserId: BASIC_BOOTSTRAP_ADMIN_USER_ID,
     });
     expect(deps.failures.clear).toHaveBeenCalledOnce();
   });
@@ -62,7 +62,7 @@ describe("createAdminBasicAuthenticator", () => {
 
   it("fails closed when the fixed operator is absent or a dependency fails", async () => {
     const missing = createAdminBasicAuthenticator(
-      dependencies({ findActiveInternalOperator: vi.fn(async () => false) }),
+      dependencies({ findAvailableBootstrapAdmin: vi.fn(async () => false) }),
     );
     const failed = createAdminBasicAuthenticator(
       dependencies({

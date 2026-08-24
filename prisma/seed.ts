@@ -1,10 +1,10 @@
 import "dotenv/config";
 
 import {
-  INTERNAL_PLATFORM_OPERATOR_EMAIL,
-  INTERNAL_PLATFORM_OPERATOR_ID,
-  INTERNAL_PLATFORM_OPERATOR_NAME,
-} from "../src/domain/admin/platform-operator.js";
+  BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
+  BASIC_BOOTSTRAP_ADMIN_NAME,
+  BASIC_BOOTSTRAP_ADMIN_USER_ID,
+} from "../src/domain/admin/admin-user.js";
 import { prisma } from "../src/infrastructure/database/client.js";
 
 const FOUNDATION_SETTING_ID = "00000000-0000-4000-8000-000000000001";
@@ -22,25 +22,22 @@ async function seed() {
         value: "1",
       },
     }),
-    prisma.user.upsert({
-      where: { id: INTERNAL_PLATFORM_OPERATOR_ID },
+    prisma.adminUser.upsert({
+      where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
       update: {
-        actorState: "ACTIVE",
-        email: INTERNAL_PLATFORM_OPERATOR_EMAIL,
+        loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
         mustChangePassword: false,
-        name: INTERNAL_PLATFORM_OPERATOR_NAME,
+        name: BASIC_BOOTSTRAP_ADMIN_NAME,
+        passwordHash: null,
+        status: "BOOTSTRAP",
       },
       create: {
-        actorState: "ACTIVE",
-        email: INTERNAL_PLATFORM_OPERATOR_EMAIL,
-        id: INTERNAL_PLATFORM_OPERATOR_ID,
-        name: INTERNAL_PLATFORM_OPERATOR_NAME,
+        id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
+        loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
+        mustChangePassword: false,
+        name: BASIC_BOOTSTRAP_ADMIN_NAME,
+        status: "BOOTSTRAP",
       },
-    }),
-    prisma.platformOperator.upsert({
-      where: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
-      update: {},
-      create: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
     }),
     prisma.bibleTranslation.upsert({
       where: { code: "JSS3" },
