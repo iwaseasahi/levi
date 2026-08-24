@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
-import type { ScriptureSearch } from "@/domain/scripture/search";
+import type { ScriptureBookmarkSearch } from "@/domain/saved-content";
 import { moveBy, moveTo } from "@/domain/order";
 import { FavoritePortal } from "./favorite-portal";
 import { useSavedContentController } from "./use-saved-content-controller";
@@ -19,10 +19,10 @@ export function SavedContentPanel({
   fetcher,
   onSelectSearch,
 }: {
-  currentSearch: ScriptureSearch | null;
+  currentSearch: ScriptureBookmarkSearch | null;
   currentSearchTitle: string;
   fetcher: typeof fetch;
-  onSelectSearch(search: ScriptureSearch): Promise<void>;
+  onSelectSearch(search: ScriptureBookmarkSearch): Promise<void>;
 }) {
   const controller = useSavedContentController({
     currentSearch,

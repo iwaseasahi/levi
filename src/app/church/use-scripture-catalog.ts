@@ -5,8 +5,8 @@ import type {
   ScriptureCatalog,
   ScriptureCatalogBook,
   ScriptureLanguage,
-  ScriptureSearch,
 } from "@/domain/scripture/search";
+import type { ScriptureBookmarkSearch } from "@/domain/saved-content";
 import { requestJson } from "./client-api";
 import {
   contiguousEndVerses,
@@ -241,11 +241,11 @@ export function useScriptureCatalog(fetcher: typeof fetch) {
   }, [loadCatalog]);
 
   const restoreSearch = useCallback(
-    async (search: ScriptureSearch) => {
+    async (search: ScriptureBookmarkSearch) => {
       const selection = {
         book: search.book,
         chapter: String(search.chapter),
-        endVerse: String(search.endVerse),
+        endVerse: search.endVerse === null ? "" : String(search.endVerse),
         language: search.language,
         startVerse: String(search.startVerse),
       } satisfies ScriptureSelection;

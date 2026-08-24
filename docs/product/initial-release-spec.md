@@ -154,16 +154,16 @@ A folder and its bookmarks belong to one church. The initial release supports:
   `新規フォルダ作成` action and open the newly created folder;
 - pin or unpin a frequently used folder;
 - show pinned folders first and then recently used folders, up to 20 total;
-- update `last used` when a folder is explicitly selected or one of its
-  bookmarks is reopened;
+- update `last used` when a folder or one of its bookmarks is selected;
 - reorder folders deterministically at the data boundary and reorder bookmarks
   within their folder by drag-and-drop, with Alt+ArrowUp/Alt+ArrowDown as the
   non-visual keyboard fallback;
 - open the current folder editor in the same tab for rename, pin, physical
   folder/bookmark deletion, and bookmark ordering;
 - save a typed Bible search from Ginmaku's `お気に入りに追加` action immediately
-  after the search form; its title is derived as
-  `日本語書巻名/English book chapter:start-end` rather than retyped;
+  after the search form; an omitted ending verse remains absent and its title is
+  derived as `日本語書巻名/English book chapter:start`, while an explicit range
+  uses `日本語書巻名/English book chapter:start-end`;
 - restore a bookmark into the search form without opening an audience tab, then
   project it only after `Open`; and
 - physically delete a bookmark or folder after confirmation.

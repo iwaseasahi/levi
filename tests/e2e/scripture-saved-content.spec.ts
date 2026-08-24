@@ -195,7 +195,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   ).toBeChecked();
   await expect(page.getByLabel("章")).toHaveValue("1");
   await expect(page.getByLabel("開始節")).toHaveValue("1");
-  await expect(page.getByLabel("終了節（省略可）")).toHaveValue("1");
+  await expect(page.getByLabel("終了節（省略可）")).toHaveValue("");
   await expect(
     page.getByRole("radio", { name: "日本語 & English" }),
   ).toBeChecked();
@@ -204,7 +204,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   await page.getByRole("button", { name: "Open" }).click();
   const bookmarkedAudience = await bookmarkOpened;
   await expect(bookmarkedAudience).toHaveURL(
-    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=1&language=both&startVerse=1$/,
+    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=3&language=both&startVerse=1$/,
   );
   await expect(
     bookmarkedAudience.getByRole("heading", {

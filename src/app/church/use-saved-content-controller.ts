@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   FolderSummary,
+  ScriptureBookmarkSearch,
   ScriptureBookmarkView,
 } from "@/domain/saved-content";
-import type { ScriptureSearch } from "@/domain/scripture/search";
 import { postJson, requestJson } from "./client-api";
 import { useComponentLifetimeValue } from "./use-component-lifetime-value";
 
@@ -20,10 +20,10 @@ export function useSavedContentController({
   fetcher,
   onSelectSearch,
 }: {
-  currentSearch: ScriptureSearch | null;
+  currentSearch: ScriptureBookmarkSearch | null;
   currentSearchTitle: string;
   fetcher: typeof fetch;
-  onSelectSearch(search: ScriptureSearch): Promise<void>;
+  onSelectSearch(search: ScriptureBookmarkSearch): Promise<void>;
 }) {
   const lifetimeFetcher = useComponentLifetimeValue(fetcher);
   const onSelectSearchRef = useRef(onSelectSearch);

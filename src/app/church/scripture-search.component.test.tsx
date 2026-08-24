@@ -465,7 +465,7 @@ describe("ScriptureSearch", () => {
     );
   });
 
-  it("saves only the start verse when the favorite end verse is omitted", async () => {
+  it("saves an omitted favorite end verse as null", async () => {
     const contentFetcher = statefulSavedContentFetcher();
     renderSearch(successfulFetcher(), contentFetcher);
     const user = userEvent.setup();
@@ -490,7 +490,7 @@ describe("ScriptureSearch", () => {
     expect(JSON.parse(String(createBookmarkCall?.[1]?.body))).toMatchObject({
       book: "JHN",
       chapter: 3,
-      endVerse: 16,
+      endVerse: null,
       startVerse: 16,
       title: "架空ヨハネ/Synthetic John 3:16",
     });

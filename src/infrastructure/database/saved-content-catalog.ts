@@ -9,7 +9,7 @@ type BookmarkCatalogInput = {
   book: string;
   chapter: number;
   startVerse: number;
-  endVerse: number;
+  endVerse: number | null;
   language: ScriptureLanguage;
 };
 
@@ -27,14 +27,15 @@ export async function resolveBookmarkCatalog(
   if (!book || translations.length !== codes.length)
     throw new SavedContentError("SAVED_CONTENT_CATALOG_ERROR");
 
-  const expectedCount = input.endVerse - input.startVerse + 1;
+  const effectiveEndVerse = input.endVerse ?? input.startVerse;
+  const expectedCount = effectiveEndVerse - input.startVerse + 1;
   for (const translation of translations) {
     const count = await transaction.bibleVerse.count({
       where: {
         translationId: translation.id,
         bookId: book.id,
         chapterNumber: input.chapter,
-        verseNumber: { gte: input.startVerse, lte: input.endVerse },
+        verseNumber: { gte: input.startVerse, lte: effectiveEndVerse },
       },
     });
     if (count !== expectedCount)
