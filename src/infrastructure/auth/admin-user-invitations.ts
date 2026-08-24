@@ -76,5 +76,6 @@ export function listAdminUsers(): Promise<AdminUserSummary[]> {
       name: true,
       status: true,
     },
+    where: { status: { not: "BOOTSTRAP" } },
   });
 }

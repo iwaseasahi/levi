@@ -12,27 +12,35 @@ export function AdminUserList({
 }: {
   adminUsers: AdminUserSummary[];
 }) {
+  const visibleAdminUsers = adminUsers.filter(
+    (adminUser) => adminUser.status !== "BOOTSTRAP",
+  );
+
   return (
     <section
       className="admin-form admin-user-list"
       aria-labelledby="admin-users-heading"
     >
       <h2 id="admin-users-heading">管理者ID</h2>
-      <ul>
-        {adminUsers.map((adminUser) => (
-          <li key={adminUser.id}>
-            <div>
-              <strong>{adminUser.name}</strong>
-              <span>{adminUser.loginId}</span>
-            </div>
-            <span
-              className={`status-badge status-${adminUser.status.toLowerCase()}`}
-            >
-              {statusLabels[adminUser.status]}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {visibleAdminUsers.length === 0 ? (
+        <p className="admin-empty-state">管理者はまだ登録されていません。</p>
+      ) : (
+        <ul>
+          {visibleAdminUsers.map((adminUser) => (
+            <li key={adminUser.id}>
+              <div>
+                <strong>{adminUser.name}</strong>
+                <span>{adminUser.loginId}</span>
+              </div>
+              <span
+                className={`status-badge status-${adminUser.status.toLowerCase()}`}
+              >
+                {statusLabels[adminUser.status]}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

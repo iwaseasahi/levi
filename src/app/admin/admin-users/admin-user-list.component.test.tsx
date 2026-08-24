@@ -28,8 +28,8 @@ describe("AdminUserList", () => {
       />,
     );
 
-    expect(screen.getByText("basic-bootstrap")).toBeVisible();
-    expect(screen.getByText("Basic認証")).toBeVisible();
+    expect(screen.queryByText("basic-bootstrap")).not.toBeInTheDocument();
+    expect(screen.queryByText("Basic認証")).not.toBeInTheDocument();
     expect(screen.getByText("invited.admin")).toBeVisible();
     expect(screen.getByText("招待済み（ログイン未対応）")).toBeVisible();
     expect(
@@ -39,5 +39,24 @@ describe("AdminUserList", () => {
         })
       ).violations,
     ).toEqual([]);
+  });
+
+  it("shows an empty state when only the Basic authentication identity exists", () => {
+    render(
+      <AdminUserList
+        adminUsers={[
+          {
+            createdAt: new Date("2026-08-24T00:00:00Z"),
+            id: "admin-1",
+            loginId: "basic-bootstrap",
+            name: "Levi Administrator",
+            status: "BOOTSTRAP",
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.queryByText("basic-bootstrap")).not.toBeInTheDocument();
+    expect(screen.getByText("管理者はまだ登録されていません。")).toBeVisible();
   });
 });

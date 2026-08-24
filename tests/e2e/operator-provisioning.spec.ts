@@ -108,7 +108,7 @@ test.describe("administrator invitations", () => {
     await expect(
       page.getByRole("heading", { level: 1, name: "管理者の一覧" }),
     ).toBeVisible();
-    await expect(page.getByText("basic-bootstrap")).toBeVisible();
+    await expect(page.getByText("basic-bootstrap")).toHaveCount(0);
     await expect(page.getByText(E2E_INVITED_ADMIN_LOGIN_ID)).toBeVisible();
     await expect(page.getByText("招待済み（ログイン未対応）")).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
