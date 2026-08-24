@@ -26,7 +26,6 @@ export function useFolderEditor({
   const onDeletedRef = useRef(onDeleted);
   const [selected, setSelected] = useState<SelectedFolder | null>(null);
   const [name, setName] = useState("");
-  const [pinned, setPinned] = useState(false);
   const [pending, setPending] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -56,7 +55,6 @@ export function useFolderEditor({
     );
     setSelected(value);
     setName(value.folder.name);
-    setPinned(value.folder.isPinned);
   }, [folderId, lifetimeFetcher]);
 
   const run = useCallback(
@@ -83,17 +81,17 @@ export function useFolderEditor({
   }, [load, run]);
 
   const save = useCallback(async () => {
-    if (!name.trim()) return;
+    if (!name.trim() || !selected) return;
     await run(async () => {
       await request({
         action: "update-folder",
         folderId,
-        isPinned: pinned,
+        isPinned: selected.folder.isPinned,
         name: name.trim(),
       });
       await load();
     }, "フォルダーを更新しました。");
-  }, [folderId, load, name, pinned, request, run]);
+  }, [folderId, load, name, request, run, selected]);
 
   const deleteFolder = useCallback(async () => {
     if (!selected) return;
@@ -130,11 +128,9 @@ export function useFolderEditor({
     message,
     name,
     pending,
-    pinned,
     reorderBookmarks,
     save,
     selected,
     setName,
-    setPinned,
   };
 }
