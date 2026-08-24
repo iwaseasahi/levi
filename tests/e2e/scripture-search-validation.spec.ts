@@ -153,8 +153,66 @@ test("validates the Ginmaku search form and projects each language mode", async 
   await page.setViewportSize({ height: 720, width: 1280 });
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
+  const captureCatalogLayout = () =>
+    page.evaluate(() => {
+      const books = document
+        .querySelector<HTMLElement>(".ginmaku-books-table")!
+        .getBoundingClientRect();
+      const consoleBounds = document
+        .querySelector<HTMLElement>(".scripture-search-console")!
+        .getBoundingClientRect();
+      const fieldset = document.querySelector<HTMLElement>(
+        ".ginmaku-search-fields",
+      )!;
+      return {
+        booksHeight: books.height,
+        booksTop: books.top,
+        consoleTop: consoleBounds.top,
+        fieldsetOpacity: getComputedStyle(fieldset).opacity,
+      };
+    });
+  const beforeBookSelection = await captureCatalogLayout();
+  let releaseBookCatalog = () => {};
+  const bookCatalogGate = new Promise<void>((resolve) => {
+    releaseBookCatalog = resolve;
+  });
+  await page.route(
+    (url) => url.pathname === "/api/scripture/catalog",
+    async (route) => {
+      await bookCatalogGate;
+      await route.continue();
+    },
+    { times: 1 },
+  );
   await page.getByRole("radio", { name: "創世記/Genesis" }).click();
+  const loadingCatalog = page
+    .locator(".search-feedback")
+    .getByText("検索候補を読み込んでいます。", { exact: true });
+  await expect(loadingCatalog).toBeVisible();
+  expect(await captureCatalogLayout()).toEqual(beforeBookSelection);
+  releaseBookCatalog();
+  await expect(loadingCatalog).toHaveCount(0);
+
+  const beforeChapterInput = await captureCatalogLayout();
+  let releaseChapterCatalog = () => {};
+  const chapterCatalogGate = new Promise<void>((resolve) => {
+    releaseChapterCatalog = resolve;
+  });
+  await page.route(
+    (url) => url.pathname === "/api/scripture/catalog",
+    async (route) => {
+      await chapterCatalogGate;
+      await route.continue();
+    },
+    { times: 1 },
+  );
   await page.getByLabel("章").fill("1");
+  await expect(loadingCatalog).toBeVisible();
+  expect(await captureCatalogLayout()).toEqual(beforeChapterInput);
+  releaseChapterCatalog();
+  await expect(loadingCatalog).toHaveCount(0);
+  expect(await captureCatalogLayout()).toEqual(beforeChapterInput);
+
   await openButton.click();
   const missingStartVerse = page.locator(".search-feedback").getByRole("alert");
   await expect(missingStartVerse).toHaveText("開始節を入力してください。");

@@ -44,10 +44,6 @@
   font: inherit;
 }
 
-.scripture-search-form .ginmaku-search-fields:disabled {
-  opacity: 0.65;
-}
-
 .scripture-search-form .ginmaku-search-fields {
   display: grid;
   min-width: 0;
@@ -362,6 +358,7 @@
 }
 
 .scripture-search-form .search-feedback {
+  min-height: 20px;
   max-width: 690px;
   margin-top: 3px;
 }
