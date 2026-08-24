@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { PasswordInput } from "@/app/password-input";
 import type { ChangePasswordState } from "./actions";
 
 export function ChangePasswordForm({
@@ -24,23 +25,21 @@ export function ChangePasswordForm({
       <form action={formAction} className="auth-form">
         <fieldset disabled={pending}>
           <legend className="sr-only">パスワード変更</legend>
-          <label htmlFor="new-password">新しいパスワード</label>
-          <input
+          <PasswordInput
             autoComplete="new-password"
             id="new-password"
+            label="新しいパスワード"
             name="newPassword"
             required
-            type="password"
             minLength={12}
             maxLength={128}
           />
-          <label htmlFor="confirmation">新しいパスワード（確認）</label>
-          <input
+          <PasswordInput
             autoComplete="new-password"
             id="confirmation"
+            label="新しいパスワード（確認）"
             name="confirmation"
             required
-            type="password"
             minLength={12}
             maxLength={128}
           />

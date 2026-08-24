@@ -136,7 +136,14 @@ test.describe("operator church provisioning", () => {
     );
     await page.goto("/login");
     await page.getByLabel("メールアドレス").fill(E2E_CREATED_EMAIL);
-    await page.getByLabel("パスワード").fill(temporaryPassword ?? "");
+    const loginPassword = page.getByLabel("パスワード", { exact: true });
+    await loginPassword.fill(temporaryPassword ?? "");
+    await expect(loginPassword).toHaveAttribute("type", "password");
+    await page.getByRole("button", { name: "パスワードを表示" }).click();
+    await expect(loginPassword).toHaveAttribute("type", "text");
+    await expect(loginPassword).toHaveValue(temporaryPassword ?? "");
+    await page.getByRole("button", { name: "パスワードを隠す" }).click();
+    await expect(loginPassword).toHaveAttribute("type", "password");
     await page.getByRole("button", { name: "ログイン" }).click();
     await expect(page).toHaveURL(/\/change-password$/, { timeout: 20_000 });
     await expect(page.locator(".auth-card")).toHaveCSS(
@@ -145,10 +152,17 @@ test.describe("operator church provisioning", () => {
     );
 
     const selectedPassword = "n".repeat(16);
-    await page
-      .getByLabel("新しいパスワード", { exact: true })
-      .fill(selectedPassword);
-    await page.getByLabel("新しいパスワード（確認）").fill(selectedPassword);
+    const newPassword = page.getByLabel("新しいパスワード", { exact: true });
+    const confirmation = page.getByLabel("新しいパスワード（確認）", {
+      exact: true,
+    });
+    await newPassword.fill(selectedPassword);
+    await confirmation.fill(selectedPassword);
+    await page.getByRole("button", { name: "新しいパスワードを表示" }).click();
+    await expect(newPassword).toHaveAttribute("type", "text");
+    await expect(newPassword).toHaveValue(selectedPassword);
+    await expect(confirmation).toHaveAttribute("type", "password");
+    await page.getByRole("button", { name: "新しいパスワードを隠す" }).click();
     await page.getByRole("button", { name: "パスワードを変更" }).click();
     await page.getByRole("button", { name: "教会用画面へ" }).click();
     await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });

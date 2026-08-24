@@ -199,6 +199,10 @@ the password-change and logout operations. The temporary password is never
 stored or logged in plaintext, and Levi does not transmit it by email; the
 platform operator communicates it through an approved out-of-band method.
 
+The login password and both new-password fields are hidden initially. Each field
+has an independently operable visibility control that reveals the current input
+without clearing or copying it and can hide it again before submission.
+
 The authentication library, session lifetime, administrator reset behavior, and
 temporary-password safeguards are selected through
 [Issue #40](https://github.com/iwaseasahi/levi/issues/40).

@@ -53,14 +53,25 @@ describe("password lifecycle forms", () => {
     expect(
       screen.queryByLabelText("現在の一時パスワード"),
     ).not.toBeInTheDocument();
-    await user.type(
-      screen.getByLabelText("新しいパスワード", { exact: true }),
-      "n".repeat(16),
+    const password = screen.getByLabelText("新しいパスワード", {
+      exact: true,
+    });
+    const confirmation = screen.getByLabelText("新しいパスワード（確認）");
+    await user.type(password, "n".repeat(16));
+    await user.type(confirmation, "n".repeat(16));
+    await user.click(
+      screen.getByRole("button", { name: "新しいパスワードを表示" }),
     );
-    await user.type(
-      screen.getByLabelText("新しいパスワード（確認）"),
-      "n".repeat(16),
+    expect(password).toHaveAttribute("type", "text");
+    expect(confirmation).toHaveAttribute("type", "password");
+    expect(password).toHaveValue("n".repeat(16));
+    await user.click(
+      screen.getByRole("button", {
+        name: "新しいパスワード（確認）を表示",
+      }),
     );
+    expect(confirmation).toHaveAttribute("type", "text");
+    expect(confirmation).toHaveValue("n".repeat(16));
     await user.click(screen.getByRole("button", { name: "パスワードを変更" }));
     const alert = await screen.findByRole("alert");
     await waitFor(() => expect(alert).toHaveFocus());

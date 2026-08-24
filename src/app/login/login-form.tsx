@@ -1,6 +1,7 @@
 "use client";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PasswordInput } from "@/app/password-input";
 import { authClient } from "@/infrastructure/auth/client";
 
 const genericError =
@@ -47,13 +48,12 @@ export function LoginForm() {
           required
           type="email"
         />
-        <label htmlFor="login-password">パスワード</label>
-        <input
+        <PasswordInput
           autoComplete="current-password"
           id="login-password"
+          label="パスワード"
           name="password"
           required
-          type="password"
         />
         <button className="primary-button" type="submit">
           {pending ? "ログイン中…" : "ログイン"}
