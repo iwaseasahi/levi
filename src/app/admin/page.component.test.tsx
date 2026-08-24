@@ -19,7 +19,7 @@ describe("AdministrationPage", () => {
     expect(
       screen.getByRole("link", { name: /パスワードを再設定/ }),
     ).toHaveAttribute("href", "/admin/churches/password-reset");
-    expect(screen.getByRole("link", { name: /管理者を管理/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /管理者の一覧/ })).toHaveAttribute(
       "href",
       "/admin/admin-users",
     );
