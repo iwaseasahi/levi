@@ -44,9 +44,10 @@ describe("FolderListPanel", () => {
     expect(
       screen.getByRole("link", { name: "主日礼拝を編集" }),
     ).not.toHaveAttribute("target");
-    expect(
-      screen.getByRole("link", { name: "御言葉の検索へ" }),
-    ).toHaveAttribute("href", "/scripture");
+    expect(screen.getByRole("link", { name: "聖書検索へ" })).toHaveAttribute(
+      "href",
+      "/scripture",
+    );
   });
 
   it("shows an empty state when no folder exists", async () => {
@@ -57,6 +58,7 @@ describe("FolderListPanel", () => {
     render(<FolderListPanel fetcher={fetcher} />);
 
     expect(await screen.findByText("フォルダーはまだありません")).toBeVisible();
+    expect(screen.getAllByRole("link", { name: "聖書検索へ" })).toHaveLength(2);
   });
 
   it("keeps the initial fetcher across rerenders and retries", async () => {

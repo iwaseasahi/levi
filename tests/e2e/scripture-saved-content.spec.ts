@@ -151,7 +151,7 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   await expect(page.getByRole("link", { name: "編集" })).toHaveCount(0);
   await page.getByRole("link", { name: "フォルダの一覧へ" }).click();
   await expect(page).toHaveURL(/\/folders$/);
-  await page.getByRole("link", { name: "御言葉の検索へ" }).click();
+  await page.getByRole("link", { name: "聖書検索へ" }).click();
   await expect(page).toHaveURL(/\/scripture$/);
   const renamedFolder = page.getByRole("button", {
     name: "礼拝用",
