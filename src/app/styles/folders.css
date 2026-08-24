@@ -138,8 +138,8 @@
 
 .ginmaku-bookmark-container .folder-item-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  gap: 4px;
   align-items: stretch;
 }
 
@@ -149,13 +149,15 @@
   gap: 4px;
   align-items: center;
   width: 100%;
-  min-height: 38px;
-  padding: 8px 10px;
+  min-height: 32px;
+  padding: 6px 7px;
   border: 1px solid #303030;
   border-radius: 8px;
   background: #191919;
   color: #fff;
-  font: inherit;
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1.2;
   text-align: left;
   cursor: pointer;
   transition:
@@ -178,13 +180,13 @@
 
 .ginmaku-bookmark-container .folder-edit-link {
   display: grid;
-  min-height: 38px;
+  min-height: 32px;
   place-items: center;
   border: 1px solid #303030;
   border-radius: 8px;
   background: #191919;
   color: #c8a97e;
-  font-size: 17px;
+  font-size: 13px;
   line-height: 1;
   text-decoration: none;
   transition:
@@ -208,8 +210,16 @@
 }
 
 .folder-toggle-indicator {
+  flex: 0 0 auto;
   width: 1em;
   color: #d2d2d2;
+}
+
+.ginmaku-bookmark-container .folder-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ginmaku-bookmark-container .selected-content {

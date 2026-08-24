@@ -45,9 +45,19 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   });
   await expect(worshipFolder).toHaveCSS("color", "rgb(255, 255, 255)");
   await expect(worshipFolder).toHaveAttribute("aria-expanded", "true");
+  const worshipFolderName = worshipFolder.locator(".folder-name");
+  await expect(worshipFolderName).toHaveCSS("white-space", "nowrap");
+  await expect(worshipFolderName).toHaveCSS("text-overflow", "ellipsis");
+  expect(
+    await worshipFolderName.evaluate(
+      (element) => element.scrollWidth <= element.clientWidth,
+    ),
+  ).toBe(true);
+  expect((await worshipFolder.boundingBox())!.height).toBeLessThanOrEqual(34);
   const folderEditLink = page.getByRole("link", {
     name: "2026-08-23 第二礼拝を編集",
   });
+  expect((await folderEditLink.boundingBox())!.width).toBeLessThanOrEqual(30);
   await expect(folderEditLink).toHaveAttribute("href", /\/folders\/.+\/edit$/);
   await expect(folderEditLink).not.toHaveAttribute("target");
   await folderEditLink.focus();
