@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function ChurchAdministrationPage() {
+export default function AdministrationPage() {
   redirect("/admin/churches/new");
 }

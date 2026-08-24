@@ -174,7 +174,7 @@ as legacy controller/action names or opaque route-parameter JSON.
 
 ## Authentication behavior
 
-The single platform operator enters `/admin/churches` using browser Basic
+The single platform operator enters `/admin/churches/new` using browser Basic
 authentication. That credential does not create a Better Auth login session and
 cannot be used on `/login`. Church users use Better Auth email/password login as
 described below. Adding another platform operator requires replacing the shared
