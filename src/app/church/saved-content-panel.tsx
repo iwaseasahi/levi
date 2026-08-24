@@ -67,8 +67,7 @@ export function SavedContentPanel({
     }
   }
 
-  async function saveFavorite(event: FormEvent) {
-    event.preventDefault();
+  async function saveFavorite() {
     await controller.saveFavorite();
   }
 
@@ -120,16 +119,16 @@ export function SavedContentPanel({
   }
 
   const selected = controller.selected;
-  const favoriteForm = (
-    <form className="ginmaku-add-bookmark" onSubmit={saveFavorite}>
+  const favoriteAction = (
+    <div className="ginmaku-add-bookmark">
       <button
         disabled={controller.pending || !selected || !currentSearch}
-        type="submit"
+        onClick={() => void saveFavorite()}
+        type="button"
       >
         お気に入りに追加
       </button>
-      {!selected ? <span> フォルダーを選択してください。</span> : null}
-    </form>
+    </div>
   );
 
   return (
@@ -319,7 +318,7 @@ export function SavedContentPanel({
           ) : null}
         </div>
       </section>
-      <FavoritePortal>{favoriteForm}</FavoritePortal>
+      <FavoritePortal>{favoriteAction}</FavoritePortal>
     </>
   );
 }

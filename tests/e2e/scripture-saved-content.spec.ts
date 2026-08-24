@@ -77,11 +77,20 @@ test("creates, reorders, reopens, edits, and deletes folders and bookmarks", asy
   const favoriteButton = page.getByRole("button", {
     name: "お気に入りに追加",
   });
+  await expect(
+    page.getByText("フォルダーを選択してください。", { exact: true }),
+  ).toHaveCount(0);
   const searchTableBox = await page
     .locator(".ginmaku-books-table")
     .boundingBox();
+  const searchActionsBox = await page
+    .locator(".scripture-search-actions")
+    .boundingBox();
   const favoriteBox = await favoriteButton.boundingBox();
   expect(Math.abs(favoriteBox!.x - searchTableBox!.x)).toBeLessThan(2);
+  expect(
+    Math.abs(favoriteBox!.y - (searchActionsBox!.y + searchActionsBox!.height)),
+  ).toBeLessThan(2);
   expect(favoriteBox!.y).toBeGreaterThanOrEqual(
     searchTableBox!.y + searchTableBox!.height,
   );
