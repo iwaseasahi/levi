@@ -20,6 +20,14 @@ export const initialScriptureSelection: ScriptureSelection = {
   language: "both",
 };
 
+export function normalizeScriptureNumberInput(value: string) {
+  return value
+    .replace(/[０-９]/g, (character) =>
+      String.fromCharCode(character.charCodeAt(0) - 0xfee0),
+    )
+    .replace(/[^0-9]/g, "");
+}
+
 export function scriptureCatalogUrl(
   selection: Pick<ScriptureSelection, "book" | "chapter" | "language">,
 ) {

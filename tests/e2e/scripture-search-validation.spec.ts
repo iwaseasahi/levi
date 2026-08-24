@@ -216,7 +216,8 @@ test("validates the Ginmaku search form and projects each language mode", async 
     },
     { times: 1 },
   );
-  await page.getByLabel("章").fill("1");
+  await page.getByLabel("章").fill("１");
+  await expect(page.getByLabel("章")).toHaveValue("1");
   await expect(loadingCatalog).toHaveClass(/sr-only/);
   expect(await captureCatalogLayout()).toEqual(beforeChapterInput);
   releaseChapterCatalog();
@@ -239,6 +240,18 @@ test("validates the Ginmaku search form and projects each language mode", async 
     background: "rgb(43, 16, 16)",
     color: "rgb(255, 180, 171)",
   });
+
+  await page.getByLabel("開始節").fill("１");
+  await page.getByLabel("終了節（省略可）").fill("２");
+  await expect(page.getByLabel("開始節")).toHaveValue("1");
+  await expect(page.getByLabel("終了節（省略可）")).toHaveValue("2");
+  const normalizedAudienceOpened = context.waitForEvent("page");
+  await openButton.click();
+  const normalizedAudience = await normalizedAudienceOpened;
+  await expect(normalizedAudience).toHaveURL(
+    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1$/,
+  );
+  await normalizedAudience.close();
 
   const japaneseAudience = await openGenesisAudience(context, page, {
     language: "ja",

@@ -10,6 +10,7 @@ import { requestJson } from "./client-api";
 import {
   contiguousEndVerses,
   initialScriptureSelection,
+  normalizeScriptureNumberInput,
   scriptureCatalogUrl,
   type ScriptureSelection,
 } from "./scripture-search-selection";
@@ -188,7 +189,9 @@ export function useScriptureCatalog(fetcher: typeof fetch) {
   );
 
   const updateChapter = useCallback(
-    (chapter: string) => {
+    (value: string) => {
+      const chapter = normalizeScriptureNumberInput(value);
+      if (chapter === state.selection.chapter) return;
       const next = {
         ...state.selection,
         chapter,
@@ -205,13 +208,23 @@ export function useScriptureCatalog(fetcher: typeof fetch) {
     [loadCatalog, state.selection],
   );
 
-  const updateStartVerse = useCallback((startVerse: string) => {
-    dispatch({ startVerse, type: "start-verse-selected" });
-  }, []);
+  const updateStartVerse = useCallback(
+    (value: string) => {
+      const startVerse = normalizeScriptureNumberInput(value);
+      if (startVerse === state.selection.startVerse) return;
+      dispatch({ startVerse, type: "start-verse-selected" });
+    },
+    [state.selection.startVerse],
+  );
 
-  const updateEndVerse = useCallback((endVerse: string) => {
-    dispatch({ endVerse, type: "end-verse-selected" });
-  }, []);
+  const updateEndVerse = useCallback(
+    (value: string) => {
+      const endVerse = normalizeScriptureNumberInput(value);
+      if (endVerse === state.selection.endVerse) return;
+      dispatch({ endVerse, type: "end-verse-selected" });
+    },
+    [state.selection.endVerse],
+  );
 
   const reset = useCallback(() => {
     dispatch({ type: "reset" });
