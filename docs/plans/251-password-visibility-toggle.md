@@ -32,13 +32,14 @@
 1. [x] 共通のパスワード入力・表示切替コンポーネントを実装する。
 2. [x] ログイン画面と一時パスワード変更画面へ適用する。
 3. [x] component testとChrome E2Eで初期状態、切替、値保持、送信を検証する。
-4. [ ] 全検証と必須CIを通過させてマージする。
+4. [x] 全検証と必須CIを通過させてマージする。
 
 ## Progress
 
 - 2026-08-24 — Issue #251を作成し、対象フォーム、スタイル、既存テストを確認した。
 - 2026-08-24 — uncontrolled inputを維持した共通表示切替componentを両画面へ適用した。
 - 2026-08-24 13:09 JST — `mise run check`（unit 254件、component 46件、production buildを含む）とChrome E2E 13件が通過した。
+- 2026-08-24 — PR #252のDatabase、E2E、Quality、Securityがすべて通過した。
 
 ## Decisions
 
@@ -58,15 +59,15 @@
 - [x] `mise run check`
 - [x] `pnpm test:e2e`
 - [x] `git diff --check`
-- [ ] 最終差分を認証、アクセシビリティ、秘密情報、scopeの観点で確認する。
+- [x] 最終差分を認証、アクセシビリティ、秘密情報、scopeの観点で確認する。
 
 ## Handoff or blockers
 
-- Completed: Issue、共通component、両フォームへの適用、CSS、component/E2E、ローカル検証。
-- Remaining: PR、CI、merge。
+- Completed: Issue、共通component、両フォームへの適用、CSS、component/E2E、ローカル検証、PR必須CI。
+- Remaining: merge。
 - Blocker: なし。
-- Resume with: 最終差分をcommitしてPRを作成する。
+- Resume with: PR #252をマージする。
 
 ## Result
 
-実装とローカル検証は完了。PRと必須CIを待つ。
+ログインと一時パスワード変更の各入力欄へ表示切替を追加し、ローカル検証とPR必須CIが通過した。
