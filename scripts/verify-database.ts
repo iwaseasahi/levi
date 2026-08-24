@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-import { INTERNAL_PLATFORM_OPERATOR_ID } from "../src/domain/admin/platform-operator.js";
+import { BASIC_BOOTSTRAP_ADMIN_USER_ID } from "../src/domain/admin/admin-user.js";
 import { prisma } from "../src/infrastructure/database/client.js";
 
 try {
@@ -12,19 +12,12 @@ try {
     throw new Error("Deterministic foundation seed is missing");
   }
 
-  const operator = await prisma.platformOperator.findUnique({
-    where: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
-    select: {
-      user: {
-        select: { accounts: { select: { id: true } }, actorState: true },
-      },
-    },
+  const administrator = await prisma.adminUser.findUnique({
+    where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
+    select: { passwordHash: true, status: true },
   });
-  if (
-    operator?.user.actorState !== "ACTIVE" ||
-    operator.user.accounts.length !== 0
-  ) {
-    throw new Error("Credential-free internal operator seed is missing");
+  if (administrator?.status !== "BOOTSTRAP" || administrator.passwordHash) {
+    throw new Error("Credential-free bootstrap administrator seed is missing");
   }
 
   const translations = await prisma.bibleTranslation.findMany({

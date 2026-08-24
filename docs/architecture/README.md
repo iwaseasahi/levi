@@ -14,16 +14,17 @@ them in implementation code.
 
 ## Index
 
-| ADR                                           | Status     | Decision                                                 |
-| --------------------------------------------- | ---------- | -------------------------------------------------------- |
-| [0001](0001-full-stack-typescript.md)         | accepted   | Next.js App Router, React, and strict TypeScript         |
-| [0002](0002-prisma-postgresql.md)             | accepted   | Prisma ORM and PostgreSQL                                |
-| [0003](0003-pnpm-and-version-policy.md)       | accepted   | pnpm and explicit version pinning                        |
-| [0004](0004-authentication-selection-gate.md) | superseded | Authentication selection gate                            |
-| [0005](0005-deployment-selection-gate.md)     | accepted   | WebARENA Indigo single-VPS production architecture       |
-| [0006](0006-better-auth-database-sessions.md) | accepted   | Better Auth with database sessions and operator recovery |
-| [0007](0007-normalized-data-model.md)         | accepted   | Normalized ownership-specific relational models          |
-| [0008](0008-single-operator-basic-auth.md)    | accepted   | Basic authentication for the single platform operator    |
+| ADR                                               | Status     | Decision                                                 |
+| ------------------------------------------------- | ---------- | -------------------------------------------------------- |
+| [0001](0001-full-stack-typescript.md)             | accepted   | Next.js App Router, React, and strict TypeScript         |
+| [0002](0002-prisma-postgresql.md)                 | accepted   | Prisma ORM and PostgreSQL                                |
+| [0003](0003-pnpm-and-version-policy.md)           | accepted   | pnpm and explicit version pinning                        |
+| [0004](0004-authentication-selection-gate.md)     | superseded | Authentication selection gate                            |
+| [0005](0005-deployment-selection-gate.md)         | accepted   | WebARENA Indigo single-VPS production architecture       |
+| [0006](0006-better-auth-database-sessions.md)     | accepted   | Better Auth with database sessions and operator recovery |
+| [0007](0007-normalized-data-model.md)             | accepted   | Normalized ownership-specific relational models          |
+| [0008](0008-single-operator-basic-auth.md)        | accepted   | Basic authentication for the single platform operator    |
+| [0009](0009-separate-administrator-identities.md) | accepted   | Separate administrator identities from Church users      |
 
 Implementation-level data rules are documented in
 [`database-conventions.md`](database-conventions.md) and the accepted

@@ -1,10 +1,10 @@
 import { hashPassword } from "better-auth/crypto";
 
 import {
-  INTERNAL_PLATFORM_OPERATOR_EMAIL,
-  INTERNAL_PLATFORM_OPERATOR_ID,
-  INTERNAL_PLATFORM_OPERATOR_NAME,
-} from "@/domain/admin/platform-operator";
+  BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
+  BASIC_BOOTSTRAP_ADMIN_NAME,
+  BASIC_BOOTSTRAP_ADMIN_USER_ID,
+} from "@/domain/admin/admin-user";
 import { prisma } from "@/infrastructure/database/client";
 
 export const E2E_ADMIN_BASIC_USERNAME = "test-e2e-admin";
@@ -165,8 +165,8 @@ export async function seedScriptureFixture() {
 
 export async function clearOperatorFixtures() {
   await prisma.rateLimit.deleteMany();
-  await prisma.user.deleteMany({
-    where: { id: INTERNAL_PLATFORM_OPERATOR_ID },
+  await prisma.adminUser.deleteMany({
+    where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
   });
   await prisma.user.deleteMany({
     where: { email: { startsWith: "test.e2e." } },
@@ -181,16 +181,14 @@ export async function seedOperatorFixtures() {
   const passwordHash = await hashPassword(E2E_PASSWORD);
 
   await prisma.$transaction(async (transaction) => {
-    await transaction.user.create({
+    await transaction.adminUser.create({
       data: {
-        actorState: "ACTIVE",
-        email: INTERNAL_PLATFORM_OPERATOR_EMAIL,
-        id: INTERNAL_PLATFORM_OPERATOR_ID,
-        name: INTERNAL_PLATFORM_OPERATOR_NAME,
+        id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
+        loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
+        mustChangePassword: false,
+        name: BASIC_BOOTSTRAP_ADMIN_NAME,
+        status: "BOOTSTRAP",
       },
-    });
-    await transaction.platformOperator.create({
-      data: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
     });
 
     await transaction.church.create({

@@ -22,6 +22,7 @@ export type ChangePasswordState =
   | { status: "success"; message: string };
 
 export type PasswordLifecycleAuditEvent = {
+  actorAdminUserId?: string;
   actorUserId?: string;
   operation: "change" | "reset";
   outcome: "denied" | "failed" | "succeeded" | "validation_failed";
@@ -51,7 +52,7 @@ export function createResetPasswordController(dependencies: {
     if (access.status !== "authorized") {
       dependencies.recordEvent({
         ...(access.status === "forbidden"
-          ? { actorUserId: access.userId }
+          ? { actorAdminUserId: access.adminUserId }
           : {}),
         operation: "reset",
         outcome: "denied",
@@ -62,7 +63,7 @@ export function createResetPasswordController(dependencies: {
     const churchId = String(input.churchId ?? "");
     if (input.confirmed !== "yes") {
       dependencies.recordEvent({
-        actorUserId: access.userId,
+        actorAdminUserId: access.adminUserId,
         operation: "reset",
         outcome: "validation_failed",
         ...withRequestId(requestId),
@@ -71,11 +72,11 @@ export function createResetPasswordController(dependencies: {
     }
     try {
       const result = await dependencies.resetChurchPassword(
-        access.userId,
+        access.adminUserId,
         churchId,
       );
       dependencies.recordEvent({
-        actorUserId: access.userId,
+        actorAdminUserId: access.adminUserId,
         operation: "reset",
         outcome: "succeeded",
         ...withRequestId(requestId),
@@ -91,7 +92,7 @@ export function createResetPasswordController(dependencies: {
       };
     } catch {
       dependencies.recordEvent({
-        actorUserId: access.userId,
+        actorAdminUserId: access.adminUserId,
         operation: "reset",
         outcome: "failed",
         ...withRequestId(requestId),

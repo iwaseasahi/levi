@@ -19,7 +19,6 @@ const authDependencies: AuthDependencies = {
         churchMembership: {
           select: { church: { select: { status: true } } },
         },
-        platformOperator: { select: { userId: true } },
       },
     });
     return canActorStartSession(actor);

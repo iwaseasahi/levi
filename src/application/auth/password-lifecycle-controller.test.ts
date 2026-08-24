@@ -17,7 +17,7 @@ describe("reset password controller", () => {
     const controller = createResetPasswordController({
       getOperatorAccess: vi.fn().mockResolvedValue({
         status: "forbidden",
-        userId: "operator-id",
+        adminUserId: "operator-id",
       }),
       recordEvent,
       resetChurchPassword,
@@ -31,7 +31,7 @@ describe("reset password controller", () => {
     ).resolves.toMatchObject({ status: "error" });
     expect(resetChurchPassword).not.toHaveBeenCalled();
     expect(recordEvent).toHaveBeenCalledWith({
-      actorUserId: "operator-id",
+      actorAdminUserId: "operator-id",
       operation: "reset",
       outcome: "denied",
       requestId: "req-1",
@@ -42,9 +42,10 @@ describe("reset password controller", () => {
     const resetChurchPassword = vi.fn();
     const recordEvent = vi.fn();
     const controller = createResetPasswordController({
-      getOperatorAccess: vi
-        .fn()
-        .mockResolvedValue({ status: "authorized", userId: "operator-id" }),
+      getOperatorAccess: vi.fn().mockResolvedValue({
+        status: "authorized",
+        adminUserId: "operator-id",
+      }),
       recordEvent,
       resetChurchPassword,
     });
@@ -63,9 +64,10 @@ describe("reset password controller", () => {
   it("returns only the temporary credential DTO and audits success", async () => {
     const recordEvent = vi.fn();
     const controller = createResetPasswordController({
-      getOperatorAccess: vi
-        .fn()
-        .mockResolvedValue({ status: "authorized", userId: "operator-id" }),
+      getOperatorAccess: vi.fn().mockResolvedValue({
+        status: "authorized",
+        adminUserId: "operator-id",
+      }),
       recordEvent,
       resetChurchPassword: vi.fn().mockResolvedValue({
         churchId: "church-id",
@@ -87,7 +89,7 @@ describe("reset password controller", () => {
       temporaryPassword: "t".repeat(24),
     });
     expect(recordEvent).toHaveBeenCalledWith({
-      actorUserId: "operator-id",
+      actorAdminUserId: "operator-id",
       operation: "reset",
       outcome: "succeeded",
       requestId: "req-2",
@@ -99,9 +101,10 @@ describe("reset password controller", () => {
   it("maps use-case failures to an existence-safe response", async () => {
     const recordEvent = vi.fn();
     const controller = createResetPasswordController({
-      getOperatorAccess: vi
-        .fn()
-        .mockResolvedValue({ status: "authorized", userId: "operator-id" }),
+      getOperatorAccess: vi.fn().mockResolvedValue({
+        status: "authorized",
+        adminUserId: "operator-id",
+      }),
       recordEvent,
       resetChurchPassword: vi
         .fn()

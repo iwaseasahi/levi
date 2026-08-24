@@ -44,8 +44,8 @@ Constraints:
 - `users_email_normalized_ck`:
   `email::text = lower(btrim(email::text)) AND length(email::text) <= 320`.
 - `users_name_nonblank_ck`: `length(btrim(name)) > 0`.
-- Deferred actor constraint: `ACTIVE` requires exactly one row across
-  `platform_operators` and `church_memberships`; `PENDING` requires neither.
+- Deferred actor constraint: `ACTIVE` requires exactly one
+  `church_memberships` row; `PENDING` requires none.
 
 Better Auth configuration maps logical `user` fields to this table and declares
 `actorState` and `mustChangePassword` as additional fields with `input: false`.
@@ -168,18 +168,24 @@ Constraints:
 
 No unique church-name rule is imposed; distinct churches may share a name.
 
-### `platform_operators`
+### `admin_users`
 
-| Column       | Type          | Null | Contract                                  |
-| ------------ | ------------- | ---- | ----------------------------------------- |
-| `user_id`    | `uuid`        | no   | PK and FK to `users.id ON DELETE CASCADE` |
-| `created_at` | `timestamptz` | no   | assignment time                           |
+| Column                        | Type           | Null | Contract                                         |
+| ----------------------------- | -------------- | ---- | ------------------------------------------------ |
+| `id`                          | `uuid`         | no   | PK                                               |
+| `login_id`                    | `citext`       | no   | case-insensitive unique administration login ID  |
+| `name`                        | `varchar(200)` | no   | administrator display name                       |
+| `password_hash`               | `text`         | yes  | null only for the Basic bootstrap identity       |
+| `status`                      | enum           | no   | `BOOTSTRAP`, `INVITED`, `ACTIVE`, or `SUSPENDED` |
+| `must_change_password`        | `boolean`      | no   | initial credential change gate                   |
+| `invited_by_admin_user_id`    | `uuid`         | yes  | self FK to the inviter                           |
+| `invited_at` / `activated_at` | `timestamptz`  | yes  | lifecycle timestamps                             |
+| timestamps                    | `timestamptz`  | no   | creation/update                                  |
 
-The initial seed creates exactly one deterministic internal platform operator.
-It has no `accounts` row and therefore cannot authenticate through Better Auth.
-Successful administration Basic authentication is mapped to this actor only so
-existing provisioning, reset, and audit authorization continues to use an
-explicit database identity.
+The deterministic `BOOTSTRAP` row maps the environment-held Basic credential to
+an auditable identity and has no database password. `INVITED` rows require a
+hash and invitation timestamp. Admin users never have Better Auth accounts,
+sessions, or Church memberships.
 
 ### `church_memberships`
 
@@ -194,13 +200,10 @@ explicit database identity.
 initial one-to-one relationship. The first constraint is the only cardinality
 constraint removed when multiple users per church is approved.
 
-`actor_assignment_ck` is implemented as deferred constraint triggers on User,
-PlatformOperator, and ChurchMembership changes. The trigger locks the User row
-before counting assignments, which makes concurrent inserts serialize. Updates
-validate both the old and new User IDs so subtype reassignment cannot orphan the
-source User. It rejects dual subtype rows, active unassigned users, and pending
-assigned users. On cascade deletion it returns successfully when the User row no
-longer exists.
+`actor_assignment_ck` is implemented as deferred constraint triggers on User
+and ChurchMembership changes. The trigger locks the User row before counting
+memberships. It rejects active unassigned users and pending assigned users. On
+cascade deletion it returns successfully when the User row no longer exists.
 
 ## Shared Bible catalog columns
 

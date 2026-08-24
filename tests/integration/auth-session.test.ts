@@ -45,21 +45,19 @@ async function createMember(status: "ACTIVE" | "SUSPENDED" = "ACTIVE") {
   return { email, userId };
 }
 
-async function createNonChurchIdentity(actor: "operator" | "pending") {
+async function createPendingIdentity() {
   const userId = randomUUID();
-  const email = `${prefix}.${actor}.${randomUUID()}@example.invalid`;
+  const email = `${prefix}.pending.${randomUUID()}@example.invalid`;
   const hash = await hashPassword(password);
   await prisma.$transaction(async (tx) => {
     await tx.user.create({
       data: {
-        actorState: actor === "pending" ? "PENDING" : "ACTIVE",
+        actorState: "PENDING",
         email,
         id: userId,
-        name: `Synthetic ${actor}`,
+        name: "Synthetic pending",
       },
     });
-    if (actor === "operator")
-      await tx.platformOperator.create({ data: { userId } });
     await tx.account.create({
       data: {
         accountId: userId,
@@ -128,17 +126,8 @@ describe("Church authentication session lifecycle", () => {
     });
   });
 
-  it("denies an active operator at the Church tenant boundary", async () => {
-    const operator = await createNonChurchIdentity("operator");
-    const { cookie } = await signIn(operator.email);
-    await expect(getChurchAccess(new Headers({ cookie }))).resolves.toEqual({
-      status: "forbidden",
-      userId: operator.userId,
-    });
-  });
-
   it("does not create a session for a pending identity", async () => {
-    const pending = await createNonChurchIdentity("pending");
+    const pending = await createPendingIdentity();
     await expect(signIn(pending.email)).rejects.toThrow();
     await expect(
       prisma.session.count({ where: { userId: pending.userId } }),

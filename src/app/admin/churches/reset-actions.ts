@@ -19,6 +19,9 @@ function recordEvent(event: PasswordLifecycleAuditEvent) {
     attributes: {
       capability: "church.password.reset",
       outcome: event.outcome,
+      ...(event.actorAdminUserId
+        ? { actorAdminUserId: event.actorAdminUserId }
+        : {}),
       ...(event.actorUserId ? { actorUserId: event.actorUserId } : {}),
       ...(event.targetChurchId ? { targetChurchId: event.targetChurchId } : {}),
       ...(event.targetUserId ? { targetUserId: event.targetUserId } : {}),

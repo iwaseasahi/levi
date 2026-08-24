@@ -61,3 +61,9 @@ behavior, and Proxy responses. Database verification proves the deterministic
 internal operator is active and has no credential account. E2E tests prove that
 church sessions cannot enter administration and that Basic-authenticated
 provisioning and reset still work.
+
+## Later evolution
+
+ADR 0009 supersedes this ADR's internal `users` / `platform_operators` actor
+mapping with an independent `admin_users` model. Basic authentication itself
+remains the current administration entry point until #259 is implemented.

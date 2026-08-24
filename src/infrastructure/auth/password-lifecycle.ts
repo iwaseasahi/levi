@@ -6,6 +6,7 @@ import {
   type PasswordLifecycleTransaction,
 } from "@/application/auth/password-lifecycle";
 import { Prisma } from "@/generated/prisma/client";
+import { canAdminUserManagePlatform } from "@/domain/admin/admin-user";
 import { prisma } from "@/infrastructure/database/client";
 import { runWithSerializableRetry } from "@/infrastructure/database/serializable-retry";
 
@@ -20,11 +21,11 @@ function transactionAdapter(
       });
     },
     async findActiveOperator(userId) {
-      const operator = await transaction.platformOperator.findUnique({
-        select: { user: { select: { actorState: true } } },
-        where: { userId },
+      const adminUser = await transaction.adminUser.findUnique({
+        select: { status: true },
+        where: { id: userId },
       });
-      return operator?.user.actorState === "ACTIVE";
+      return adminUser ? canAdminUserManagePlatform(adminUser.status) : false;
     },
     async findForcedChangeAccount({ sessionId, userId }) {
       const session = await transaction.session.findFirst({
@@ -105,11 +106,11 @@ function transactionAdapter(
 export const { completeForcedPasswordChange, resetChurchPassword } =
   createPasswordLifecycle({
     async findActiveOperator(userId) {
-      const operator = await prisma.platformOperator.findUnique({
-        select: { user: { select: { actorState: true } } },
-        where: { userId },
+      const adminUser = await prisma.adminUser.findUnique({
+        select: { status: true },
+        where: { id: userId },
       });
-      return operator?.user.actorState === "ACTIVE";
+      return adminUser ? canAdminUserManagePlatform(adminUser.status) : false;
     },
     generateTemporaryPassword,
     hashPassword,

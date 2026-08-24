@@ -1,7 +1,8 @@
 # Administration Basic authentication runbook
 
-The initial administration UI at `/admin/churches` is for one platform operator
-and uses HTTP Basic authentication. Church users continue to use `/login`.
+The administration UI currently uses HTTP Basic authentication. The credential
+maps to a deterministic `BOOTSTRAP` row in `admin_users`; Church users continue
+to use `/login` and cannot enter administration.
 
 ## Configure credentials
 
@@ -34,8 +35,9 @@ deploying it requires the normal separate production approval.
   environment, and completing the approved deployment/restart workflow. Verify
   the old password is rejected and the new password reaches
   `/admin/churches`.
-- An unavailable configuration, database, or internal operator returns `503` and
+- An unavailable configuration, database, or bootstrap administrator returns `503` and
   must be repaired rather than bypassed.
 
-Before granting administration access to another person, replace this design
-with individual operator accounts and MFA as required by ADR 0008.
+Creating an invited administrator record does not grant access while Basic
+authentication remains active. Individual administrator sessions, activation,
+revocation, and Basic removal are tracked by #259 and ADR 0009.

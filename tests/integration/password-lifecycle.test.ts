@@ -15,6 +15,9 @@ const originalPassword = "o".repeat(16);
 const selectedPassword = "n".repeat(16);
 
 async function clear() {
+  await prisma.adminUser.deleteMany({
+    where: { loginId: { startsWith: prefix } },
+  });
   await prisma.user.deleteMany({ where: { email: { startsWith: prefix } } });
   await prisma.church.deleteMany({ where: { name: { startsWith: prefix } } });
   await prisma.rateLimit.deleteMany();
@@ -26,15 +29,16 @@ async function fixture() {
   const email = `${prefix}.${randomUUID()}@example.invalid`;
   const hash = await hashPassword(originalPassword);
   const church = await prisma.$transaction(async (tx) => {
-    await tx.user.create({
+    await tx.adminUser.create({
       data: {
-        actorState: "ACTIVE",
-        email: `${prefix}.operator.${randomUUID()}@example.invalid`,
         id: operatorId,
-        name: "Operator",
+        loginId: `${prefix}.operator.${randomUUID()}`,
+        mustChangePassword: false,
+        name: "Administrator",
+        passwordHash: "synthetic-hash",
+        status: "ACTIVE",
       },
     });
-    await tx.platformOperator.create({ data: { userId: operatorId } });
     const target = await tx.church.create({
       data: { name: `${prefix}.${randomUUID()}` },
     });

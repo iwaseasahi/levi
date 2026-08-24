@@ -21,6 +21,15 @@ enum ChurchStatus {
   @@map("church_status")
 }
 
+enum AdminUserStatus {
+  BOOTSTRAP
+  INVITED
+  ACTIVE
+  SUSPENDED
+
+  @@map("admin_user_status")
+}
+
 enum BibleTestament {
   OLD
   NEW
@@ -40,7 +49,6 @@ model User {
   updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
   accounts           Account[]
   sessions           Session[]
-  platformOperator   PlatformOperator?
   churchMembership   ChurchMembership?
 
   @@map("users")
@@ -120,12 +128,23 @@ model Church {
   @@map("churches")
 }
 
-model PlatformOperator {
-  userId    String   @id @map("user_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "platform_operators_user_fk")
+model AdminUser {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  loginId              String          @unique(map: "admin_users_login_id_uk") @map("login_id") @db.Citext
+  name                 String          @db.VarChar(200)
+  passwordHash         String?         @map("password_hash") @db.Text
+  status               AdminUserStatus @default(INVITED)
+  mustChangePassword   Boolean         @default(true) @map("must_change_password")
+  invitedByAdminUserId String?         @map("invited_by_admin_user_id") @db.Uuid
+  invitedAt            DateTime?       @map("invited_at") @db.Timestamptz(3)
+  activatedAt          DateTime?       @map("activated_at") @db.Timestamptz(3)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  inviter              AdminUser?      @relation("AdminUserInvitations", fields: [invitedByAdminUserId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "admin_users_inviter_fk")
+  invitees             AdminUser[]     @relation("AdminUserInvitations")
 
-  @@map("platform_operators")
+  @@index([status, createdAt(sort: Desc)], map: "admin_users_status_created_idx")
+  @@map("admin_users")
 }
 
 model ChurchMembership {

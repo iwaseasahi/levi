@@ -58,9 +58,9 @@ of this decision.
 - Store Better Auth rate-limit counters in PostgreSQL through the `RateLimit`
   model so login throttling is shared across application processes. The model
   and its fields remain part of the pinned-version schema review contract.
-- A `PlatformOperator` and a `ChurchMembership` are explicit subtype tables.
-  A deferred PostgreSQL constraint trigger locks the User row and rejects a User
-  present in both tables, including concurrent transactions.
+- `AdminUser` is an independent identity model and is never a Better Auth
+  `User`. A deferred PostgreSQL constraint trigger requires every ACTIVE User
+  to have one `ChurchMembership` and every PENDING User to have none.
 - A valid Better Auth session never implies platform or church authorization.
   Server use cases resolve exactly one actor subtype and, for church users, the
   membership's Church.
@@ -138,7 +138,7 @@ remain immutable and are the only schema deployment artifact.
 erDiagram
   User ||--o{ Account : authenticates_with
   User ||--o{ Session : owns
-  User ||--o| PlatformOperator : may_be
+  AdminUser ||--o{ AdminUser : invites
   User ||--o| ChurchMembership : may_be
   Church ||--o| ChurchMembership : initially_has
   Church ||--o{ Folder : owns
@@ -202,8 +202,8 @@ erDiagram
   }
 ```
 
-`PlatformOperator` and `ChurchMembership` are mutually exclusive for one User;
-the ER cardinalities do not by themselves express that cross-table invariant.
+`AdminUser` has no relationship to Better Auth `User`; this prevents an
+administration identity from acquiring a Church session or tenant scope.
 
 ## Consequences
 

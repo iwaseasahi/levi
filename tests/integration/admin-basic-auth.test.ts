@@ -2,10 +2,10 @@ import { hashPassword } from "better-auth/crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
-  INTERNAL_PLATFORM_OPERATOR_EMAIL,
-  INTERNAL_PLATFORM_OPERATOR_ID,
-  INTERNAL_PLATFORM_OPERATOR_NAME,
-} from "@/domain/admin/platform-operator";
+  BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
+  BASIC_BOOTSTRAP_ADMIN_NAME,
+  BASIC_BOOTSTRAP_ADMIN_USER_ID,
+} from "@/domain/admin/admin-user";
 import { authenticateAdminBasic } from "@/infrastructure/auth/admin-basic-auth";
 import { prisma } from "@/infrastructure/database/client";
 
@@ -20,8 +20,8 @@ async function clearFixture() {
   await prisma.rateLimit.deleteMany({
     where: { key: "admin-basic-auth:global" },
   });
-  await prisma.user.deleteMany({
-    where: { id: INTERNAL_PLATFORM_OPERATOR_ID },
+  await prisma.adminUser.deleteMany({
+    where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
   });
 }
 
@@ -30,16 +30,14 @@ beforeEach(async () => {
   process.env.ADMIN_BASIC_AUTH_USERNAME = username;
   process.env.ADMIN_BASIC_AUTH_PASSWORD_HASH = await hashPassword(password);
   await prisma.$transaction(async (transaction) => {
-    await transaction.user.create({
+    await transaction.adminUser.create({
       data: {
-        actorState: "ACTIVE",
-        email: INTERNAL_PLATFORM_OPERATOR_EMAIL,
-        id: INTERNAL_PLATFORM_OPERATOR_ID,
-        name: INTERNAL_PLATFORM_OPERATOR_NAME,
+        id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
+        loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
+        mustChangePassword: false,
+        name: BASIC_BOOTSTRAP_ADMIN_NAME,
+        status: "BOOTSTRAP",
       },
-    });
-    await transaction.platformOperator.create({
-      data: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
     });
   });
 });
@@ -53,13 +51,13 @@ describe("administration Basic authentication database boundary", () => {
       authenticateAdminBasic(authorization(password)),
     ).resolves.toEqual({
       status: "authorized",
-      userId: INTERNAL_PLATFORM_OPERATOR_ID,
+      adminUserId: BASIC_BOOTSTRAP_ADMIN_USER_ID,
     });
     await expect(
-      prisma.account.count({
-        where: { userId: INTERNAL_PLATFORM_OPERATOR_ID },
+      prisma.adminUser.count({
+        where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID, passwordHash: null },
       }),
-    ).resolves.toBe(0);
+    ).resolves.toBe(1);
   });
 
   it("persists a global failure bucket and blocks the fifth failure", async () => {

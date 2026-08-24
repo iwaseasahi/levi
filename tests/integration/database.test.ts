@@ -8,6 +8,9 @@ import { buildSystemSetting } from "../helpers/system-setting-factory";
 const namespace = "test.database.";
 
 async function clearTestRecords() {
+  await prisma.adminUser.deleteMany({
+    where: { loginId: { startsWith: namespace } },
+  });
   await prisma.user.deleteMany({
     where: { email: { startsWith: namespace } },
   });
@@ -74,41 +77,13 @@ describe("auth and tenant constraints", () => {
     ).rejects.toThrow();
   });
 
-  it("allows only complete exclusive active actor assignments", async () => {
-    const operator = pendingUser("test.database.operator@example.invalid");
-    await prisma.$transaction(async (transaction) => {
-      await transaction.user.create({
-        data: { ...operator, actorState: "ACTIVE" },
-      });
-      await transaction.platformOperator.create({
-        data: { userId: operator.id },
-      });
-    });
-
+  it("allows only complete active Church member assignments", async () => {
     await expect(
       prisma.user.create({
         data: {
           ...pendingUser("test.database.unassigned@example.invalid"),
           actorState: "ACTIVE",
         },
-      }),
-    ).rejects.toThrow();
-
-    const mixed = pendingUser("test.database.mixed@example.invalid");
-    await expect(
-      prisma.$transaction(async (transaction) => {
-        const church = await transaction.church.create({
-          data: { name: "test.database.mixed church" },
-        });
-        await transaction.user.create({
-          data: { ...mixed, actorState: "ACTIVE" },
-        });
-        await transaction.platformOperator.create({
-          data: { userId: mixed.id },
-        });
-        await transaction.churchMembership.create({
-          data: { churchId: church.id, userId: mixed.id },
-        });
       }),
     ).rejects.toThrow();
 
@@ -128,14 +103,33 @@ describe("auth and tenant constraints", () => {
     });
 
     await expect(
-      prisma.$transaction(async (transaction) => {
-        await transaction.platformOperator.delete({
-          where: { userId: operator.id },
-        });
-        await transaction.churchMembership.update({
-          where: { userId: member.id },
-          data: { userId: operator.id },
-        });
+      prisma.churchMembership.delete({ where: { userId: member.id } }),
+    ).rejects.toThrow();
+  });
+
+  it("keeps administrator credentials independent from Church users", async () => {
+    const id = randomUUID();
+    await prisma.adminUser.create({
+      data: {
+        id,
+        loginId: "test.database.admin",
+        mustChangePassword: false,
+        name: "Test Administrator",
+        passwordHash: "synthetic-hash",
+        status: "ACTIVE",
+      },
+    });
+
+    await expect(prisma.user.findUnique({ where: { id } })).resolves.toBeNull();
+    await expect(
+      prisma.adminUser.create({
+        data: {
+          loginId: "TEST.DATABASE.ADMIN",
+          name: "Duplicate Administrator",
+          passwordHash: "synthetic-hash",
+          status: "INVITED",
+          invitedAt: new Date(),
+        },
       }),
     ).rejects.toThrow();
   });
@@ -356,7 +350,6 @@ describe("auth and tenant constraints", () => {
     expect(triggers.map(({ name }) => name)).toEqual(
       expect.arrayContaining([
         "users_actor_assignment_ck",
-        "platform_operators_actor_assignment_ck",
         "church_memberships_actor_assignment_ck",
       ]),
     );
