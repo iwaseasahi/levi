@@ -31,13 +31,14 @@
 
 1. [x] 歯車SVGを24px viewBox中央に対称なpathへ置き換える。
 2. [x] component testとChrome E2Eでmenu動作と図形中心を検証する。
-3. [ ] 全検証と必須CIを通過させてマージする。
+3. [x] 全検証と必須CIを通過させてマージする。
 
 ## Progress
 
 - 2026-08-24 — Issue #253を作成し、button、SVG、CSS、既存テストを確認した。
 - 2026-08-24 — button layoutを維持したまま、SVG pathを中央対称な形状へ修正した。
 - 2026-08-24 — Chromeでpath中心`12, 12`を検証し、E2E 13件と`mise run check`（unit 254件、component 46件、production buildを含む）が通過した。
+- 2026-08-24 — PR #254のDatabase、E2E、Quality、Securityがすべて通過した。
 
 ## Decisions
 
@@ -60,11 +61,11 @@
 
 ## Handoff or blockers
 
-- Completed: Issue、原因特定、SVG修正、geometry E2E、ローカル検証。
-- Remaining: PR、CI、merge。
+- Completed: Issue、原因特定、SVG修正、geometry E2E、ローカル検証、PR必須CI。
+- Remaining: merge。
 - Blocker: なし。
-- Resume with: 最終差分をcommitしてPRを作成する。
+- Resume with: PR #254をマージする。
 
 ## Result
 
-実装とローカル検証は完了。PRと必須CIを待つ。
+設定アイコンの図形中心を修正し、ローカル検証とPR必須CIが通過した。
