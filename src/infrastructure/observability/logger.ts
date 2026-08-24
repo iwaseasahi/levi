@@ -21,6 +21,7 @@ const allowedAttributeKeys = new Set([
   "outcome",
   "status",
   "targetChurchId",
+  "targetAdminUserId",
   "targetUserId",
 ]);
 

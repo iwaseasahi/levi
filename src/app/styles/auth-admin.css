@@ -255,6 +255,69 @@
   font-size: 0.9rem;
 }
 
+.field-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.admin-user-list ul {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-user-list li {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.65rem;
+  background: var(--surface-control);
+}
+
+.admin-user-list li div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.admin-user-list li span {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.status-badge {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.status-bootstrap,
+.status-active {
+  border-color: var(--success-border);
+  color: var(--success-text) !important;
+}
+
+.status-invited {
+  border-color: #6f512c;
+  color: var(--accent-hover) !important;
+}
+
+@media (max-width: 32rem) {
+  .admin-user-list li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 .primary-button,
 .secondary-button {
   min-height: 2.75rem;
