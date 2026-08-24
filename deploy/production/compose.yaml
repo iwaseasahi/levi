@@ -48,7 +48,7 @@ services:
     image: ${LEVI_IMAGE:-levi-production:local}
     build:
       context: ../..
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.production
     user: "1000:1000"
     environment:
       ADMIN_BASIC_AUTH_PASSWORD_HASH: ${ADMIN_BASIC_AUTH_PASSWORD_HASH:?ADMIN_BASIC_AUTH_PASSWORD_HASH is required}
@@ -91,7 +91,7 @@ services:
     image: ${LEVI_MIGRATION_IMAGE:-levi-migration:local}
     build:
       context: ../..
-      dockerfile: Dockerfile.migrate
+      dockerfile: Dockerfile.migrate.production
     user: "1000:1000"
     environment:
       DATABASE_URL: ${MIGRATION_DATABASE_URL:?MIGRATION_DATABASE_URL is required}

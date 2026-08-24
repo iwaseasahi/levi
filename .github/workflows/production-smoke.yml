@@ -20,6 +20,6 @@ jobs:
           PRODUCTION_BASE_URL: ${{ vars.PRODUCTION_BASE_URL }}
         run: |
           set -euo pipefail
-          [[ "$PRODUCTION_BASE_URL" =~ ^https://[^/]+$ ]]
+          [[ "$PRODUCTION_BASE_URL" == "https://levi-system.com" ]]
           response="$(curl --fail --silent --show-error --max-time 10 --retry 1 --retry-delay 5 "${PRODUCTION_BASE_URL}/api/ready")"
           [[ "$(jq -r '.status // empty' <<< "$response")" == "ready" ]]

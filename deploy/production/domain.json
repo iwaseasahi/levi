@@ -1,0 +1,12 @@
+{
+  "domain": "levi-system.com",
+  "canonicalOrigin": "https://levi-system.com",
+  "wwwOrigin": "https://www.levi-system.com",
+  "dnsProvider": "XServer Domain",
+  "nameServers": [
+    "ns1.xdomain.ne.jp",
+    "ns2.xdomain.ne.jp",
+    "ns3.xdomain.ne.jp"
+  ],
+  "ipv6Enabled": false
+}

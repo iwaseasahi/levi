@@ -20,7 +20,7 @@ const packageJson = JSON.parse(read("package.json")) as {
 const mise = read("mise.toml");
 const setup = read("scripts/setup-local.sh");
 const e2eRunner = read("scripts/run-e2e-tests.ts");
-const compose = read("compose.yaml");
+const compose = read("compose.development.yaml");
 const ci = read(".github/workflows/ci.yml");
 
 assert(read(".node-version").trim() === "24.19.0", ".node-version drifted");
@@ -59,16 +59,25 @@ assert(
 );
 
 assert(
-  packageJson.scripts?.["db:up:dev"] === "docker compose up -d --wait postgres",
+  packageJson.scripts?.["db:up:dev"] ===
+    "docker compose --file compose.development.yaml up -d --wait postgres",
   "local setup must target only the development PostgreSQL service",
 );
 assert(
-  packageJson.scripts?.["db:stop:dev"] === "docker compose stop postgres",
+  packageJson.scripts?.["db:stop:dev"] ===
+    "docker compose --file compose.development.yaml stop postgres",
   "local stop must preserve data and target only development PostgreSQL",
 );
 assert(
   compose.startsWith("name: levi\n"),
   "Compose project name must remain stable across repository worktrees",
+);
+assert(
+  packageJson.scripts?.["db:up"] ===
+    "docker compose --file compose.development.yaml up -d --wait postgres postgres-test" &&
+    packageJson.scripts?.["db:down"] ===
+      "docker compose --file compose.development.yaml down",
+  "development and test database commands must name compose.development.yaml explicitly",
 );
 assert(
   e2eRunner.includes(

@@ -1,4 +1,5 @@
 import { execFile as execFileCallback } from "node:child_process";
+import { existsSync } from "node:fs";
 import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
@@ -66,10 +67,14 @@ describe("Codex-only local subscription policy", () => {
   });
 
   it("does not pass provider API keys or invoke provider CLIs in automation", async () => {
-    const { stdout } = await execFile("git", ["ls-files", "-z"], {
-      cwd: repositoryRoot,
-      encoding: "buffer",
-    });
+    const { stdout } = await execFile(
+      "git",
+      ["ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+      {
+        cwd: repositoryRoot,
+        encoding: "buffer",
+      },
+    );
     const files = stdout
       .toString("utf8")
       .split("\0")
@@ -78,7 +83,8 @@ describe("Codex-only local subscription policy", () => {
           file.length > 0 &&
           !file.startsWith("docs/") &&
           !file.endsWith(".md") &&
-          file !== "src/agent-orchestration/local-policy.test.ts",
+          file !== "src/agent-orchestration/local-policy.test.ts" &&
+          existsSync(path.join(repositoryRoot, file)),
       )
       .map((file) => path.join(repositoryRoot, file));
     const contents = await Promise.all(
