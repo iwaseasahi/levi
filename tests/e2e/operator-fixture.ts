@@ -15,6 +15,7 @@ export const E2E_PASSWORD_USER_EMAIL =
 export const E2E_PASSWORD = "e".repeat(16);
 export const E2E_CREATED_EMAIL = "test.e2e.created@example.invalid";
 export const E2E_CREATED_CHURCH = "test.e2e created church";
+export const E2E_INVITED_ADMIN_LOGIN_ID = "test.e2e.invited.admin";
 
 const E2E_CHURCH_USER_ID = "00000000-0000-4000-8000-000000004302";
 const E2E_CHURCH_ID = "00000000-0000-4000-8000-000000004303";
@@ -165,6 +166,9 @@ export async function seedScriptureFixture() {
 
 export async function clearOperatorFixtures() {
   await prisma.rateLimit.deleteMany();
+  await prisma.adminUser.deleteMany({
+    where: { loginId: { startsWith: "test.e2e." } },
+  });
   await prisma.adminUser.deleteMany({
     where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
   });

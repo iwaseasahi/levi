@@ -7,6 +7,7 @@ import {
   E2E_ADMIN_BASIC_USERNAME,
   E2E_CREATED_CHURCH,
   E2E_CREATED_EMAIL,
+  E2E_INVITED_ADMIN_LOGIN_ID,
   E2E_PASSWORD,
 } from "./operator-fixture";
 
@@ -46,6 +47,39 @@ test.describe("operator administration access", () => {
 
     expect(response.status()).toBe(401);
     expect(await response.text()).not.toContain("教会アカウントを作成");
+  });
+});
+
+test.describe("administrator invitations", () => {
+  test.use({
+    httpCredentials: {
+      password: E2E_PASSWORD,
+      username: E2E_ADMIN_BASIC_USERNAME,
+    },
+  });
+
+  test("invites an administrator and lists the pending identity", async ({
+    page,
+  }) => {
+    await page.goto("/admin/admin-users");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "管理者" }),
+    ).toBeVisible();
+    await expect(page.getByText("basic-bootstrap")).toBeVisible();
+    await page.getByLabel("管理者名").fill("Synthetic Invited Administrator");
+    await page
+      .getByLabel("ログインID")
+      .fill(E2E_INVITED_ADMIN_LOGIN_ID.toUpperCase());
+    await page.getByRole("button", { name: "管理者を招待" }).click();
+    await expect(
+      page.getByRole("status").filter({ hasText: "管理者を招待しました。" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "一時パスワードを表示" }).click();
+    await expect(page.locator(".credential-summary code")).toHaveText(/.{24}/);
+    await page.getByRole("button", { name: "表示を閉じる" }).click();
+    await expect(page.getByText(E2E_INVITED_ADMIN_LOGIN_ID)).toBeVisible();
+    await expect(page.getByText("招待済み（ログイン未対応）")).toBeVisible();
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 });
 

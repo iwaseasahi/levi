@@ -38,6 +38,20 @@ deploying it requires the normal separate production approval.
 - An unavailable configuration, database, or bootstrap administrator returns `503` and
   must be repaired rather than bypassed.
 
+## Invite another administrator
+
+1. Open `/admin/admin-users` through the production HTTPS origin.
+2. Enter the administrator name and a unique login ID. Login IDs are normalized
+   to lowercase and may contain ASCII letters, numbers, `.`, `_`, `@`, and `-`.
+3. Select **管理者を招待** and reveal the generated temporary password.
+4. Transfer the login ID and temporary password only through a verified
+   face-to-face or voice channel, then close the one-time display. Levi stores
+   only the password hash and cannot show the temporary password again.
+
+The new row remains `INVITED` and cannot authenticate yet. Do not treat the
+invitation as access being granted until #259 implements individual
+administrator authentication and activation.
+
 Creating an invited administrator record does not grant access while Basic
 authentication remains active. Individual administrator sessions, activation,
 revocation, and Basic removal are tracked by #259 and ADR 0009.
