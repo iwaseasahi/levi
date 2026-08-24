@@ -153,6 +153,17 @@ test("validates the Ginmaku search form and projects each language mode", async 
   await page.setViewportSize({ height: 720, width: 1280 });
   const settings = page.getByRole("button", { name: "設定" });
   await expect(settings).toHaveCSS("position", "static");
+  const settingsIconGeometry = await settings
+    .locator("svg path")
+    .evaluate((path) => {
+      const bounds = (path as SVGGraphicsElement).getBBox();
+      return {
+        centerX: bounds.x + bounds.width / 2,
+        centerY: bounds.y + bounds.height / 2,
+      };
+    });
+  expect(settingsIconGeometry.centerX).toBeCloseTo(12, 2);
+  expect(settingsIconGeometry.centerY).toBeCloseTo(12, 2);
   const settingsContainer = page.locator(".scripture-settings");
   await expect(settingsContainer).toHaveCSS("position", "fixed");
   const settingsBox = await settingsContainer.boundingBox();
