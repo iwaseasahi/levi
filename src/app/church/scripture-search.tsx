@@ -116,7 +116,6 @@ export function ScriptureSearch({
             onRetry={() => void catalog.loadCatalog(catalog.selection)}
           />
         </ScriptureSearchFields>
-        <div id="ginmaku-add-bookmark-slot" />
       </div>
     </section>
   );

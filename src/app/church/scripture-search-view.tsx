@@ -233,6 +233,7 @@ export function ScriptureSearchFields({
                   空白⇔表示
                 </button>
               </div>
+              <div id="ginmaku-add-bookmark-slot" />
             </div>
           </div>
         </div>

@@ -110,6 +110,20 @@ beforeEach(() => {
 });
 
 describe("SavedContentPanel", () => {
+  it("keeps the favorite action disabled without a selected folder and omits the redundant hint", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({ folders: [], orderIds: [] }),
+    );
+    renderPanel(fetcher);
+
+    expect(
+      await screen.findByRole("button", { name: "お気に入りに追加" }),
+    ).toBeDisabled();
+    expect(
+      screen.queryByText("フォルダーを選択してください。"),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows only the Ginmaku accordion content and separate folder actions", async () => {
     const { fetcher } = renderPanel();
     const user = userEvent.setup();
