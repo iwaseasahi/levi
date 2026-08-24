@@ -103,8 +103,12 @@ Projection uses two browser windows in one latest-Chrome session:
 
 - the **search window** at `/scripture` retains the Ginmaku-compatible search
   form; and
-- the **audience window** opens directly from `Open` or a bookmark and contains
-  only audience-facing scripture and display state at `/scripture/audience`.
+- the **audience window** opens directly from `Open` and contains only
+  audience-facing scripture and display state at `/scripture/audience`.
+
+Selecting a bookmark restores its saved book, chapter, range, and language into
+the search window. It does not open the audience window; the user confirms the
+restored condition and selects `Open` to project it.
 
 The former `/scripture/controller`, `/church`, `/church/audience`, and
 `/church/projection` screen routes do not exist and are not redirect aliases.
@@ -160,7 +164,8 @@ A folder and its bookmarks belong to one church. The initial release supports:
 - save a typed Bible search from Ginmaku's `お気に入りに追加` action immediately
   after the search form; its title is derived as
   `日本語書巻名/English book chapter:start-end` rather than retyped;
-- reopen a bookmark directly into the audience-tab flow; and
+- restore a bookmark into the search form without opening an audience tab, then
+  project it only after `Open`; and
 - physically delete a bookmark or folder after confirmation.
 
 Deleting a folder physically deletes only bookmarks owned by that folder. It

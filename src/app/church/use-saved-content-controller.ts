@@ -18,23 +18,23 @@ export function useSavedContentController({
   currentSearch,
   currentSearchTitle,
   fetcher,
-  onOpen,
+  onSelectSearch,
 }: {
   currentSearch: ScriptureSearch | null;
   currentSearchTitle: string;
   fetcher: typeof fetch;
-  onOpen(search: ScriptureSearch): Promise<void>;
+  onSelectSearch(search: ScriptureSearch): Promise<void>;
 }) {
   const lifetimeFetcher = useComponentLifetimeValue(fetcher);
-  const onOpenRef = useRef(onOpen);
+  const onSelectSearchRef = useRef(onSelectSearch);
   const [folders, setFolders] = useState<FolderSummary[]>([]);
   const [selected, setSelected] = useState<SelectedFolder | null>(null);
   const [pending, setPending] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    onOpenRef.current = onOpen;
-  }, [onOpen]);
+    onSelectSearchRef.current = onSelectSearch;
+  }, [onSelectSearch]);
 
   const request = useCallback(
     <T>(body: object) => {
@@ -158,13 +158,13 @@ export function useSavedContentController({
     selected,
   ]);
 
-  const openBookmark = useCallback(
+  const selectBookmark = useCallback(
     async (bookmarkId: string) => {
       await run(async () => {
         const { bookmark } = await request<{
           bookmark: ScriptureBookmarkView;
         }>({ action: "open-bookmark", bookmarkId });
-        await onOpenRef.current(bookmark.search);
+        await onSelectSearchRef.current(bookmark.search);
         await fetchFolders();
       });
     },
@@ -192,10 +192,10 @@ export function useSavedContentController({
     createFolder,
     error,
     folders,
-    openBookmark,
     pending,
     reorderBookmarks,
     saveFavorite,
+    selectBookmark,
     selected,
   };
 }

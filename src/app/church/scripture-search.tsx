@@ -77,7 +77,7 @@ export function ScriptureSearch({
             catalog.books,
           )}
           fetcher={savedContentFetcher}
-          onOpen={async (search) => audience.open(search)}
+          onSelectSearch={catalog.restoreSearch}
         />
       </div>
 

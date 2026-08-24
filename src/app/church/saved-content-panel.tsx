@@ -13,32 +13,22 @@ import { moveBy, moveTo } from "@/domain/order";
 import { FavoritePortal } from "./favorite-portal";
 import { useSavedContentController } from "./use-saved-content-controller";
 
-function bookmarkHref(search: ScriptureSearch) {
-  return `/scripture/audience?${new URLSearchParams({
-    book: search.book,
-    chapter: String(search.chapter),
-    endVerse: String(search.endVerse),
-    language: search.language,
-    startVerse: String(search.startVerse),
-  })}`;
-}
-
 export function SavedContentPanel({
   currentSearch,
   currentSearchTitle,
   fetcher,
-  onOpen,
+  onSelectSearch,
 }: {
   currentSearch: ScriptureSearch | null;
   currentSearchTitle: string;
   fetcher: typeof fetch;
-  onOpen(search: ScriptureSearch): Promise<void>;
+  onSelectSearch(search: ScriptureSearch): Promise<void>;
 }) {
   const controller = useSavedContentController({
     currentSearch,
     currentSearchTitle,
     fetcher,
-    onOpen,
+    onSelectSearch,
   });
   const [newFolderDate, setNewFolderDate] = useState("");
   const [newFolderMeeting, setNewFolderMeeting] = useState("");
@@ -230,11 +220,10 @@ export function SavedContentPanel({
                                 className="bookmark-document-icon"
                               />
                               <a
-                                href={bookmarkHref(bookmark.search)}
-                                target="projector"
+                                href="/scripture"
                                 onClick={(event) => {
                                   event.preventDefault();
-                                  void controller.openBookmark(bookmark.id);
+                                  void controller.selectBookmark(bookmark.id);
                                 }}
                               >
                                 {bookmark.title}

@@ -18,7 +18,7 @@ meaning is verified.
 | Search range         | The inclusive one-chapter range that seeds Bible results; it does not bound later presentation navigation.         | Confirmed replacement behavior in Issue #38.                           |
 | Presentation         | The audience-tab display of the current Bible location and selected translation or translations.                   | Confirmed for the initial release in Issue #106.                       |
 | Pinned folder        | A church-owned folder deliberately prioritized ahead of non-pinned recent folders.                                 | Confirmed retained behavior in Issue #38.                              |
-| Recently used folder | A folder ordered by the time it was explicitly selected or one of its bookmarks was reopened.                      | Confirmed replacement semantics in the initial-release specification.  |
+| Recently used folder | A folder ordered by the time it was explicitly selected or one of its bookmarks was selected for search.           | Confirmed replacement semantics in the initial-release specification.  |
 | Service plan         | Prepared data describing what will be presented during a worship service.                                          | **Provisional**; confirm the legacy term and data model.               |
 | Live mode            | A state in which operator actions may change an audience display.                                                  | **Provisional**; safety and synchronization rules are unknown.         |
 | Rehearsal            | Verification of prepared content without affecting a live service.                                                 | **Provisional**; required workflow is unknown.                         |
