@@ -11,9 +11,9 @@ readonly certificate_path="${backup_root}/recipient.crt"
 readonly private_key_path="${backup_root}/recipient.key"
 
 cleanup() {
-  docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+  docker compose --file "${repository_root}/compose.development.yaml" exec -T postgres-test \
     dropdb --if-exists --force -U levi "$restore_database" >/dev/null 2>&1 || true
-  docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+  docker compose --file "${repository_root}/compose.development.yaml" exec -T postgres-test \
     dropdb --if-exists --force -U levi "$source_database" >/dev/null 2>&1 || true
   if [[ "$backup_root" == "${TMPDIR:-/tmp}/levi-backup-rehearsal."* ]]; then
     rm -rf -- "$backup_root"
@@ -21,8 +21,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-docker compose --file "${repository_root}/compose.yaml" up -d --wait postgres-test
-docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+docker compose --file "${repository_root}/compose.development.yaml" up -d --wait postgres-test
+docker compose --file "${repository_root}/compose.development.yaml" exec -T postgres-test \
   createdb -U levi "$source_database"
 
 export DATABASE_URL="postgresql://levi:levi@127.0.0.1:55433/${source_database}?schema=public"
@@ -31,7 +31,7 @@ export NODE_ENV=test
 pnpm db:migrate >/dev/null
 pnpm db:seed >/dev/null
 
-docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+docker compose --file "${repository_root}/compose.development.yaml" exec -T postgres-test \
   psql --no-psqlrc --set ON_ERROR_STOP=1 -U levi -d "$source_database" >/dev/null <<'SQL'
 INSERT INTO users (id, name, email, email_verified, actor_state, must_change_password)
 VALUES ('00000000-0000-4000-8000-000000000086', 'Restore rehearsal', 'restore-rehearsal@example.invalid', true, 'PENDING', false);
@@ -48,7 +48,7 @@ export LEVI_ALLOW_NON_ROOT_FOR_REHEARSAL=true
 export LEVI_BACKUP_ROOT="$backup_root"
 export LEVI_BACKUP_CERTIFICATE="$certificate_path"
 export LEVI_BACKUP_PRIVATE_KEY="$private_key_path"
-export LEVI_COMPOSE_FILE="${repository_root}/compose.yaml"
+export LEVI_COMPOSE_FILE="${repository_root}/compose.development.yaml"
 export LEVI_ENV_FILE=""
 export LEVI_DATABASE_SERVICE=postgres-test
 export LEVI_DATABASE_NAME="$source_database"
@@ -67,9 +67,9 @@ fi
 "${repository_root}/scripts/production-restore.sh" "$archive_path"
 "${repository_root}/scripts/check-production-backups.sh"
 
-source_sessions="$(docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+source_sessions="$(docker compose --file "${repository_root}/compose.development.yaml" exec -T postgres-test \
   psql -At --no-psqlrc -U levi -d "$source_database" -c 'SELECT count(*) FROM sessions;')"
-restored_sessions="$(docker compose --file "${repository_root}/compose.yaml" exec -T postgres-test \
+restored_sessions="$(docker compose --file "${repository_root}/compose.development.yaml" exec -T postgres-test \
   psql -At --no-psqlrc -U levi -d "$restore_database" -c 'SELECT count(*) FROM sessions;')"
 if [[ "${source_sessions//[[:space:]]/}" != "1" || "${restored_sessions//[[:space:]]/}" != "0" ]]; then
   echo "Session invalidation rehearsal failed." >&2

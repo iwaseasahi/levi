@@ -46,10 +46,10 @@ jobs:
         run: |
           set -euo pipefail
           docker buildx build --platform linux/amd64 --build-arg "VCS_REF=$COMMIT_SHA" \
-            --file Dockerfile --tag "ghcr.io/iwaseasahi/levi:$COMMIT_SHA" \
+            --file Dockerfile.production --tag "ghcr.io/iwaseasahi/levi:$COMMIT_SHA" \
             --metadata-file application-metadata.json --push .
           docker buildx build --platform linux/amd64 --build-arg "VCS_REF=$COMMIT_SHA" \
-            --file Dockerfile.migrate --tag "ghcr.io/iwaseasahi/levi-migrate:$COMMIT_SHA" \
+            --file Dockerfile.migrate.production --tag "ghcr.io/iwaseasahi/levi-migrate:$COMMIT_SHA" \
             --metadata-file migration-metadata.json --push .
           application_digest="$(jq -r '."containerimage.digest"' application-metadata.json)"
           migration_digest="$(jq -r '."containerimage.digest"' migration-metadata.json)"

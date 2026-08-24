@@ -15,13 +15,20 @@ The GitHub workflow and host script independently reject Sunday. There is no eme
 
 ## One-time GitHub configuration
 
-After a domain and VPS exist, the repository owner configures these settings manually:
+After the domain and VPS exist and the live checks in
+[`xserver-domain-cutover.md`](xserver-domain-cutover.md) pass, the repository
+owner configures these settings manually:
 
 - create the Environment named exactly `production`;
 - require the Levi operator as reviewer and enable prevention of self-review when the GitHub plan supports it;
 - restrict deployment branches/tags to `main`;
 - add Environment secrets `PRODUCTION_SSH_HOST`, `PRODUCTION_SSH_USER`, `PRODUCTION_SSH_PRIVATE_KEY`, and pinned `PRODUCTION_SSH_KNOWN_HOSTS`;
-- add repository variable `PRODUCTION_BASE_URL` as the exact HTTPS origin.
+- add repository variable `PRODUCTION_BASE_URL` with the exact value
+  `https://levi-system.com`.
+
+Do not create `PRODUCTION_BASE_URL` before the endpoint is live. Its presence
+enables the scheduled external smoke workflow, and that workflow deliberately
+rejects any other origin.
 
 Before the first administration deployment, generate the Basic password
 verifier with `pnpm admin:hash-password` and configure
@@ -34,7 +41,7 @@ Do not use `ssh-keyscan` inside the deployment workflow as the trust decision. R
 
 ## Publish immutable images
 
-Run `Publish production images` manually with the approved commit. It rechecks the four CI jobs, builds `linux/amd64` images from `Dockerfile` and `Dockerfile.migrate`, labels both with the commit SHA, pushes commit-only tags to GHCR, and prints both immutable digests in the workflow summary. It does not deploy.
+Run `Publish production images` manually with the approved commit. It rechecks the four CI jobs, builds `linux/amd64` images from `Dockerfile.production` and `Dockerfile.migrate.production`, labels both with the commit SHA, pushes commit-only tags to GHCR, and prints both immutable digests in the workflow summary. It does not deploy.
 
 This workflow writes package artifacts and can consume GitHub package storage; confirm the account's current billing/allowance before the first dispatch. Because the source repository is public and neither image contains a database dump, secret, or Bible data, the intended pull model is public GHCR packages without a VPS registry credential. Changing the two package visibilities to public is a separate human action after first publication. Until that is approved and complete, deployment will fail safely at `docker pull`.
 

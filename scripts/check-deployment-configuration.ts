@@ -13,6 +13,10 @@ const healthScript = path.join(
   repositoryRoot,
   "scripts/check-production-health.sh",
 );
+const domainScript = path.join(
+  repositoryRoot,
+  "scripts/check-production-domain.ts",
+);
 const currentCommit = spawnSync("git", ["rev-parse", "HEAD"], {
   cwd: repositoryRoot,
   encoding: "utf8",
@@ -35,6 +39,7 @@ const syntax = spawnSync("bash", ["-n", deployScript, healthScript], {
   encoding: "utf8",
 });
 assert.equal(syntax.status, 0, syntax.stderr);
+assert.match(readFileSync(domainScript, "utf8"), /--live/);
 
 const weekday = spawnSync("bash", [deployScript], {
   cwd: repositoryRoot,
@@ -64,6 +69,15 @@ for (const checkName of ["Quality", "Database", "E2E", "Security"]) {
 assert.match(deployWorkflow, /environment: production/);
 assert.match(deployWorkflow, /workflow_dispatch:/);
 assert.doesNotMatch(deployWorkflow, /^\s+push:/m);
+
+const smokeWorkflow = readFileSync(
+  path.join(repositoryRoot, ".github/workflows/production-smoke.yml"),
+  "utf8",
+);
+assert.match(
+  smokeWorkflow,
+  /PRODUCTION_BASE_URL" == "https:\/\/levi-system\.com"/,
+);
 
 const healthSource = readFileSync(healthScript, "utf8");
 for (const signal of [

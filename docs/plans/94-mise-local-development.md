@@ -16,7 +16,7 @@ development service without assembling commands by hand.
 
 - `.node-version` and `package.json` already pin Node.js 24.19.0 and pnpm
   11.19.0.
-- `compose.yaml` provides separate persistent development and disposable test
+- `compose.development.yaml` provides separate persistent development and disposable test
   PostgreSQL services.
 - `scripts/check-readiness.ts` verifies application and database readiness, but
   the repository does not yet expose a complete local smoke workflow.

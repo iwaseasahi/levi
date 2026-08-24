@@ -5,7 +5,10 @@
 ## ファイル
 
 - `compose.yaml`: Caddy、Levi、PostgreSQL の実行定義
+- `../../Dockerfile.production`: Levi applicationのproduction image定義
+- `../../Dockerfile.migrate.production`: Prisma migration専用のproduction image定義
 - `Caddyfile`: TLS 自動取得、リバースプロキシ、セキュリティヘッダー
+- `domain.json`: 選定済みの公開domain、canonical origin、DNS providerの非secret設定
 - `production.env.example`: シークレットを含まない設定例
 - `backup.env.example`: root 管理のバックアップ設定例
 - `systemd/`: hourly 48時間、daily 14日の暗号化バックアップと監視 timer
@@ -17,7 +20,15 @@
 Docker が動作する開発環境で次を実行します。この操作はコンテナを起動しません。
 
 ```bash
-pnpm production:config:check
+mise exec -- pnpm production:domain:check
+mise exec -- pnpm production:config:check
+```
+
+前者はdomain未取得の状態でもnetworkへ接続せず、production originとCaddyの`www` redirectが選定内容からずれていないことを確認します。取得・DNS設定・TLS発行後の外部検証は、承認済みIPv4をrepositoryへ保存せずに次で実行します。
+
+```bash
+LEVI_EXPECTED_IPV4='<approved WebARENA IPv4>' \
+  mise exec -- pnpm production:domain:verify
 ```
 
 アプリイメージをビルドし、使い捨ての PostgreSQL とともに起動して、非 root 実行、読み取り専用 root filesystem、準備完了 endpoint を確認するには次を実行します。終了時にはコンテナ、ネットワーク、volume、ローカルイメージを削除します。
@@ -44,3 +55,4 @@ sudo docker compose \
 ホスト側の SSH、UFW、更新設定は [WebARENA Indigo ホスト初期構築・堅牢化手順](../../docs/operations/webarena-host-hardening.md) を参照してください。
 バックアップ、隔離復元、全セッション失効、承認済み切替は [Backup, restore, and logical recovery](../../docs/operations/backup-restore.md) を参照してください。
 exact commit／digestの公開・手動デプロイは [Manual production image publication and deployment](../../docs/operations/manual-production-deploy.md)、監視とincident routingは [Production monitoring, logs, and incident routing](../../docs/operations/production-monitoring.md) を参照してください。
+XServer Domainでの購入後のDNS・TLS切替は [XServer Domain DNS and TLS cutover](../../docs/operations/xserver-domain-cutover.md) を参照してください。

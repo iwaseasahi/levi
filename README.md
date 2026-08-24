@@ -10,6 +10,11 @@ with reproducible validation as the basis for accepting changes.
 - pnpm 11.19.0 (see `package.json`)
 - Docker with Compose (for local PostgreSQL)
 
+Local PostgreSQL is defined in `compose.development.yaml`. Production uses the
+separate `deploy/production/compose.yaml`, `Dockerfile.production`, and
+`Dockerfile.migrate.production`; the production definitions are not used by
+the normal `mise run dev` workflow.
+
 `mise install` prepares the pinned Node.js release. Corepack then uses the pnpm
 release declared by `packageManager`; do not substitute npm or regenerate the
 lockfile with a different package manager. `.node-version` remains synchronized

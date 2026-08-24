@@ -15,10 +15,10 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "typecheck": "prisma generate && next typegen && tsc --noEmit",
-    "db:up": "docker compose up -d --wait postgres postgres-test",
-    "db:up:dev": "docker compose up -d --wait postgres",
-    "db:down": "docker compose down",
-    "db:stop:dev": "docker compose stop postgres",
+    "db:up": "docker compose --file compose.development.yaml up -d --wait postgres postgres-test",
+    "db:up:dev": "docker compose --file compose.development.yaml up -d --wait postgres",
+    "db:down": "docker compose --file compose.development.yaml down",
+    "db:stop:dev": "docker compose --file compose.development.yaml stop postgres",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
@@ -40,6 +40,8 @@
     "backup:rehearse": "bash scripts/rehearse-backup.sh",
     "backup:config:check": "tsx scripts/check-backup-configuration.ts",
     "deployment:config:check": "tsx scripts/check-deployment-configuration.ts",
+    "production:domain:check": "tsx scripts/check-production-domain.ts",
+    "production:domain:verify": "tsx scripts/check-production-domain.ts --live",
     "production:config:check": "tsx scripts/check-production-compose.ts",
     "production:rehearse": "bash scripts/rehearse-production-compose.sh",
     "readiness:check": "tsx scripts/check-readiness.ts",
@@ -53,7 +55,7 @@
     "agent:checkpoint": "tsx scripts/agent-handoff.ts checkpoint",
     "agent:checkpoint:verify": "tsx scripts/agent-handoff.ts verify",
     "agent:lease": "tsx scripts/agent-handoff.ts lease",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm local:config:check && pnpm production:config:check && pnpm backup:config:check && pnpm deployment:config:check && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm local:config:check && pnpm production:domain:check && pnpm production:config:check && pnpm backup:config:check && pnpm deployment:config:check && pnpm build"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "1.7.1",

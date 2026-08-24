@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -37,6 +38,9 @@ const exampleEnvironment = path.join(
   "production",
   "production.env.example",
 );
+const composeSource = readFileSync(composeFile, "utf8");
+assert.match(composeSource, /dockerfile: Dockerfile\.production/);
+assert.match(composeSource, /dockerfile: Dockerfile\.migrate\.production/);
 const composeEnvironment = { ...process.env };
 for (const variable of [
   "ACME_EMAIL",
@@ -142,5 +146,6 @@ assert.match(
 const proxy = config.services.proxy!;
 assert.equal(proxy.read_only, true);
 assert(proxy.ports && proxy.ports.length === 3);
+assert.equal(proxy.environment?.LEVI_DOMAIN, "levi-system.com");
 
 console.log("Production Compose configuration passed security invariants.");
