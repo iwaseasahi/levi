@@ -33,7 +33,18 @@ describe("LoginForm", () => {
       screen.getByLabelText("メールアドレス"),
       " MEMBER@EXAMPLE.INVALID ",
     );
-    await user.type(screen.getByLabelText("パスワード"), "p".repeat(16));
+    const password = screen.getByLabelText("パスワード");
+    await user.type(password, "p".repeat(16));
+    expect(password).toHaveAttribute("type", "password");
+    await user.click(screen.getByRole("button", { name: "パスワードを表示" }));
+    expect(password).toHaveAttribute("type", "text");
+    expect(password).toHaveValue("p".repeat(16));
+    expect(
+      screen.getByRole("button", { name: "パスワードを隠す" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "パスワードを隠す" }));
+    expect(password).toHaveAttribute("type", "password");
+    expect(password).toHaveValue("p".repeat(16));
     await user.click(screen.getByRole("button", { name: "ログイン" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/scripture"));
     expect(refresh).not.toHaveBeenCalled();

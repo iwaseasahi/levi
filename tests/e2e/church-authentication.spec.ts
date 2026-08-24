@@ -9,7 +9,7 @@ import {
 async function login(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.getByLabel("メールアドレス").fill(E2E_AUTH_USER_EMAIL);
-  await page.getByLabel("パスワード").fill(E2E_PASSWORD);
+  await page.getByLabel("パスワード", { exact: true }).fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "ログイン" }).click();
   // Better Auth's scrypt verification can consume most of Playwright's
   // default assertion budget on a two-core CI runner.

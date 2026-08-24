@@ -22,7 +22,7 @@ test("operator reset revokes the old session and forces a new password", async (
   const signIn = async (email: string, password: string) => {
     await page.goto("/login");
     await page.getByLabel("メールアドレス").fill(email);
-    await page.getByLabel("パスワード").fill(password);
+    await page.getByLabel("パスワード", { exact: true }).fill(password);
     await page.getByRole("button", { name: "ログイン" }).click();
   };
 
@@ -62,7 +62,9 @@ test("operator reset revokes the old session and forces a new password", async (
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   const selected = "z".repeat(16);
   await page.getByLabel("新しいパスワード", { exact: true }).fill(selected);
-  await page.getByLabel("新しいパスワード（確認）").fill(selected);
+  await page
+    .getByLabel("新しいパスワード（確認）", { exact: true })
+    .fill(selected);
   await page.getByRole("button", { name: "パスワードを変更" }).click();
   await page.getByRole("button", { name: "教会用画面へ" }).click();
   await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
