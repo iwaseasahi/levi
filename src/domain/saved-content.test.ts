@@ -26,6 +26,16 @@ describe("saved content input", () => {
         language: "both",
       }),
     ).toMatchObject({ book: "GEN", language: "both" });
+    expect(
+      parseCreateBookmark({
+        title: "創世記",
+        book: "GEN",
+        chapter: 1,
+        startVerse: 1,
+        endVerse: null,
+        language: "both",
+      }),
+    ).toMatchObject({ endVerse: null });
   });
 
   it("rejects the removed bookmark update command", () => {

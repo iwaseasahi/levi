@@ -32,7 +32,7 @@ export type SavedContentRepository = {
       book: string;
       chapter: number;
       startVerse: number;
-      endVerse: number;
+      endVerse: number | null;
       language: ScriptureLanguage;
     },
   ): Promise<ScriptureBookmarkView | null>;

@@ -1,5 +1,9 @@
 import { z } from "zod";
-import type { ScriptureLanguage } from "./scripture/search";
+import type { ScriptureLanguage, ScriptureSearch } from "./scripture/search";
+
+export type ScriptureBookmarkSearch = Omit<ScriptureSearch, "endVerse"> & {
+  endVerse: number | null;
+};
 
 export type FolderSummary = {
   id: string;
@@ -14,13 +18,7 @@ export type ScriptureBookmarkView = {
   folderId: string;
   position: number;
   title: string;
-  search: {
-    book: string;
-    chapter: number;
-    startVerse: number;
-    endVerse: number;
-    language: ScriptureLanguage;
-  };
+  search: ScriptureBookmarkSearch;
 };
 
 export type SavedContentErrorCode =
@@ -55,11 +53,13 @@ const createBookmarkSchema = z
     book: z.string().regex(/^[A-Z0-9][A-Z0-9_-]{0,15}$/),
     chapter: locationNumber.min(1),
     startVerse: locationNumber,
-    endVerse: locationNumber,
+    endVerse: locationNumber.nullable(),
     language: z.enum(["ja", "en", "both"]),
   })
   .strict()
-  .refine((value) => value.endVerse >= value.startVerse);
+  .refine(
+    (value) => value.endVerse === null || value.endVerse >= value.startVerse,
+  );
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);

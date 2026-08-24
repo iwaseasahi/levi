@@ -3,6 +3,7 @@ import type {
   ScriptureLanguage,
   ScriptureSearch,
 } from "@/domain/scripture/search";
+import type { ScriptureBookmarkSearch } from "@/domain/saved-content";
 
 export type ScriptureSelection = {
   book: string;
@@ -85,11 +86,9 @@ export function normalizeScriptureSearch(
 export function normalizeScriptureFavorite(
   selection: ScriptureSelection,
   search: ScriptureSearch | null,
-): ScriptureSearch | null {
+): ScriptureBookmarkSearch | null {
   if (!search) return null;
-  return selection.endVerse
-    ? search
-    : { ...search, endVerse: search.startVerse };
+  return selection.endVerse ? search : { ...search, endVerse: null };
 }
 
 export function scriptureFavoriteTitle(

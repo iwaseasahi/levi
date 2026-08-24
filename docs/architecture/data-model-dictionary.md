@@ -322,24 +322,25 @@ Constraints and indexes:
 
 ### `scripture_bookmarks`
 
-| Column                     | Type       | Null | Contract                               |
-| -------------------------- | ---------- | ---- | -------------------------------------- |
-| `bookmark_id`              | `uuid`     | no   | PK, FK to Bookmark `ON DELETE CASCADE` |
-| `book_id`                  | `uuid`     | no   | canonical book                         |
-| `chapter_number`           | `smallint` | no   | positive                               |
-| `start_verse`              | `smallint` | no   | non-negative inclusive start           |
-| `end_verse`                | `smallint` | no   | inclusive end, at or after start       |
-| `primary_translation_id`   | `uuid`     | no   | first/only displayed translation       |
-| `secondary_translation_id` | `uuid`     | yes  | optional paired translation            |
+| Column                     | Type       | Null | Contract                                 |
+| -------------------------- | ---------- | ---- | ---------------------------------------- |
+| `bookmark_id`              | `uuid`     | no   | PK, FK to Bookmark `ON DELETE CASCADE`   |
+| `book_id`                  | `uuid`     | no   | canonical book                           |
+| `chapter_number`           | `smallint` | no   | positive                                 |
+| `start_verse`              | `smallint` | no   | non-negative inclusive start             |
+| `end_verse`                | `smallint` | yes  | omitted, or inclusive end at/after start |
+| `primary_translation_id`   | `uuid`     | no   | first/only displayed translation         |
+| `secondary_translation_id` | `uuid`     | yes  | optional paired translation              |
 
 Constraints:
 
-- `scripture_bookmarks_range_ck`: positive chapter, non-negative verses, and
-  `end_verse >= start_verse`.
+- `scripture_bookmarks_range_ck`: positive chapter, non-negative start verse,
+  and an omitted end or `end_verse >= start_verse`.
 - `scripture_bookmarks_translations_ck`: secondary is null or differs from
   primary.
-- Four composite FKs validate primary start/end and optional secondary
-  start/end against `bible_verses_location_uk`, all `ON DELETE RESTRICT`.
+- Four composite FKs validate primary start, an explicit primary end, and
+  optional secondary start/end against `bible_verses_location_uk`, all
+  `ON DELETE RESTRICT`. An omitted end is validated through its required start.
 - A deferred `bookmark_scripture_total_ck` constraint trigger requires every
   Bookmark to have exactly one ScriptureBookmark at commit and rejects deleting
   the subtype without its parent. The trigger permits parent/subtype insertion

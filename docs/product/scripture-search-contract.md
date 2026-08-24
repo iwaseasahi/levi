@@ -82,15 +82,18 @@ keyboard fallback. A failed reorder reloads server order instead of leaving an
 unpersisted order on screen.
 
 Selecting a saved scripture link records the folder as recently used and
-restores the bookmark's complete search condition into the form. It does not
-open or update the audience tab until the user selects `Open`.
+restores the bookmark's complete search condition into the form. An ending verse
+that was omitted when saved remains empty. It does not open or update the
+audience tab until the user selects `Open`.
 
 Ginmaku's `お気に入りに追加` control appears immediately after the scripture
-search form. It saves the normalized current selection into the current folder
-using the automatic `日本語/English chapter:start-end` title. Folder management
-supports rename, sticky/pinned state, physical folder deletion, physical
-bookmark deletion, and drag ordering without cluttering the search screen.
-Bookmark titles are derived automatically and cannot be edited.
+search form. It saves the current selection into the current folder. An omitted
+ending verse is stored as absence and uses the automatic `日本語/English
+chapter:start` title; an explicit ending verse uses
+`日本語/English chapter:start-end`. Folder management supports rename,
+sticky/pinned state, physical folder deletion, physical bookmark deletion, and
+drag ordering without cluttering the search screen. Bookmark titles are derived
+automatically and cannot be edited.
 
 ## Result
 

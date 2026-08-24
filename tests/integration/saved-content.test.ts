@@ -251,6 +251,26 @@ describe("saved-content database contract", () => {
         language: "both",
       },
     );
+    const omittedEndBookmark = await createBookmarkUseCase(
+      savedContentRepository,
+      tenant(fixture.firstChurch.id),
+      first.id,
+      {
+        title: "Omitted end",
+        book: "T54",
+        chapter: 1,
+        startVerse: 1,
+        endVerse: null,
+        language: "both",
+      },
+    );
+    expect(omittedEndBookmark.search.endVerse).toBeNull();
+    await expect(
+      prisma.scriptureBookmark.findUniqueOrThrow({
+        where: { bookmarkId: omittedEndBookmark.id },
+        select: { endVerse: true },
+      }),
+    ).resolves.toEqual({ endVerse: null });
     await expect(
       savedContentRepository.openBookmark(
         tenant(fixture.secondChurch.id),
@@ -276,7 +296,7 @@ describe("saved-content database contract", () => {
       savedContentRepository,
       tenant(fixture.firstChurch.id),
       first.id,
-      [secondBookmark.id, bookmark.id],
+      [secondBookmark.id, bookmark.id, omittedEndBookmark.id],
     );
     const selected = await selectFolder(
       savedContentRepository,
@@ -287,6 +307,7 @@ describe("saved-content database contract", () => {
     expect(selected.bookmarks.map(({ id }) => id)).toEqual([
       secondBookmark.id,
       bookmark.id,
+      omittedEndBookmark.id,
     ]);
     await expect(
       savedContentRepository.listFolders(tenant(fixture.firstChurch.id)),

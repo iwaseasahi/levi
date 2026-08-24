@@ -75,7 +75,7 @@ describe("scripture search selection", () => {
     ).toBeNull();
   });
 
-  it("keeps an omitted favorite end verse as a single verse", () => {
+  it("preserves an omitted favorite end verse", () => {
     const selection = {
       book: "JHN",
       chapter: "3",
@@ -87,7 +87,7 @@ describe("scripture search selection", () => {
     expect(normalizeScriptureFavorite(selection, search)).toEqual({
       book: "JHN",
       chapter: 3,
-      endVerse: 16,
+      endVerse: null,
       language: "both",
       startVerse: 16,
     });
