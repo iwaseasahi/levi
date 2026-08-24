@@ -208,9 +208,9 @@ describe("ScriptureSearch", () => {
     );
     renderSearch(fetcher);
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "検索候補を読み込んでいます。",
-    );
+    const loadingStatus = screen.getByRole("status");
+    expect(loadingStatus).toHaveTextContent("検索候補を読み込んでいます。");
+    expect(loadingStatus).toHaveClass("sr-only");
     expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
 
     resolveCatalog(Response.json({ books: [], chapters: [], verses: [] }));
