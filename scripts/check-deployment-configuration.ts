@@ -16,6 +16,14 @@ const repositoryRoot = path.resolve(
   "..",
 );
 const deployScript = path.join(repositoryRoot, "scripts/production-deploy.sh");
+const deployEntrypoint = path.join(
+  repositoryRoot,
+  "scripts/production-deploy-entrypoint.sh",
+);
+const deployEntrypointInstaller = path.join(
+  repositoryRoot,
+  "scripts/install-production-deploy-entrypoint.sh",
+);
 const healthScript = path.join(
   repositoryRoot,
   "scripts/check-production-health.sh",
@@ -52,7 +60,15 @@ const baseEnvironment = {
 
 const syntax = spawnSync(
   "bash",
-  ["-n", deployScript, healthScript, secretCheckScript, bibleImportScript],
+  [
+    "-n",
+    deployScript,
+    deployEntrypoint,
+    deployEntrypointInstaller,
+    healthScript,
+    secretCheckScript,
+    bibleImportScript,
+  ],
   { encoding: "utf8" },
 );
 assert.equal(syntax.status, 0, syntax.stderr);
@@ -86,6 +102,39 @@ for (const checkName of ["Quality", "Database", "E2E", "Security"]) {
 assert.match(deployWorkflow, /environment: production/);
 assert.match(deployWorkflow, /workflow_dispatch:/);
 assert.doesNotMatch(deployWorkflow, /^\s+push:/m);
+assert.match(
+  deployWorkflow,
+  /sudo -n \/usr\/local\/sbin\/levi-production-deploy/,
+);
+assert.doesNotMatch(deployWorkflow, /sudo git/);
+assert.doesNotMatch(deployWorkflow, /sudo env/);
+
+const deployEntrypointSource = readFileSync(deployEntrypoint, "utf8");
+assert.match(
+  deployEntrypointSource,
+  /expected_operator="levi-system-operator"/,
+);
+assert.match(deployEntrypointSource, /repository="\/opt\/levi"/);
+assert.match(deployEntrypointSource, /\$#" -ne 4/);
+assert.match(deployEntrypointSource, /merge-base --is-ancestor/);
+assert.match(deployEntrypointSource, /exec \/usr\/bin\/env -i/);
+assert.match(deployEntrypointSource, /production-deploy\.sh/);
+assert.doesNotMatch(deployEntrypointSource, /LEVI_ALLOW_TEST_OVERRIDES/);
+
+const deployEntrypointInstallerSource = readFileSync(
+  deployEntrypointInstaller,
+  "utf8",
+);
+assert.match(deployEntrypointInstallerSource, /visudo -cf/);
+assert.match(
+  deployEntrypointInstallerSource,
+  /NOPASSWD: %s.*entrypoint_target/,
+);
+assert.match(deployEntrypointInstallerSource, /-m 0440/);
+assert.doesNotMatch(
+  deployEntrypointInstallerSource,
+  /NOPASSWD:.*(?:git|env|docker|bash|sh\b)/,
+);
 
 const smokeWorkflow = readFileSync(
   path.join(repositoryRoot, ".github/workflows/production-smoke.yml"),

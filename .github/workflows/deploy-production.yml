@@ -88,4 +88,4 @@ jobs:
         run: |
           set -euo pipefail
           ssh -o BatchMode=yes "$SSH_USER@$SSH_HOST" \
-            "sudo git -C /opt/levi fetch --quiet origin main && sudo git -C /opt/levi switch --detach '$COMMIT_SHA' && sudo env LEVI_DEPLOY_COMMIT='$COMMIT_SHA' LEVI_IMAGE='$APPLICATION_IMAGE' LEVI_MIGRATION_IMAGE='$MIGRATION_IMAGE' LEVI_DEPLOY_APPROVAL_REFERENCE='$APPROVAL_COMMENT' /opt/levi/scripts/production-deploy.sh"
+            "sudo -n /usr/local/sbin/levi-production-deploy '$COMMIT_SHA' '$APPLICATION_IMAGE' '$MIGRATION_IMAGE' '$APPROVAL_COMMENT'"
