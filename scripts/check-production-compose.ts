@@ -39,6 +39,10 @@ const exampleEnvironment = path.join(
   "production.env.example",
 );
 const composeSource = readFileSync(composeFile, "utf8");
+const caddySource = readFileSync(
+  path.join(repositoryRoot, "deploy", "production", "Caddyfile"),
+  "utf8",
+);
 const rehearsalSource = readFileSync(
   path.join(repositoryRoot, "scripts", "rehearse-production-compose.sh"),
   "utf8",
@@ -62,6 +66,11 @@ assert.match(
 );
 assert.match(workloadSource, /synthetic-two-church/);
 assert.match(workloadSource, /tenantIsolation: "passed"/);
+assert.equal(
+  caddySource.match(/X-Robots-Tag "noindex, nofollow, noarchive"/g)?.length,
+  2,
+  "Both the canonical and www sites must prevent search indexing",
+);
 assert.match(rehearsalSource, /production-backup\.sh/);
 assert.match(rehearsalSource, /production-restore\.sh/);
 assert.match(rehearsalSource, /restored_sessions=0/);

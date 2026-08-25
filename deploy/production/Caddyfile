@@ -13,6 +13,7 @@
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
+		X-Robots-Tag "noindex, nofollow, noarchive"
 	}
 
 	reverse_proxy app:3000 {
@@ -28,5 +29,6 @@
 }
 
 www.{$LEVI_DOMAIN} {
+	header X-Robots-Tag "noindex, nofollow, noarchive"
 	redir https://{$LEVI_DOMAIN}{uri} permanent
 }
