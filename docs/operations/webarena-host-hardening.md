@@ -10,24 +10,25 @@
 
 - Ubuntu 24.04、東京リージョン、4 GB プランを選ぶ。
 - 管理用 SSH 公開鍵だけを登録する。パスワードログインは使わない。
-- セキュリティグループは TCP 22、80、443 と UDP 443 の受信だけを許可する。
-- 22 番ポートの送信元は、運用上可能なら管理者の固定 IP に限定する。
+- WebARENA firewall は TCP 22、80、443 と UDP 443 の受信だけを許可する。
+- 22 番ポートの送信元は、運用端末の現在の public IPv4 を `/32` で指定する。固定 IP でない場合は、変更のたびに WebARENA 管理画面から更新する。
 - PostgreSQL の 5432 番ポートは公開しない。
+- WebARENA firewall は IPv6 rule に対応しないため、host 側の UFW を `IPV6=yes` で有効にする。初回 DNS には AAAA record を追加しない。
 
 ## 2. SSH と管理ユーザー
 
 初回接続後、別のターミナルで新しい接続を確認するまで現在の SSH セッションを閉じません。
 
 ```bash
-sudo adduser levi-operator
-sudo usermod -aG sudo levi-operator
-sudo install -d -m 700 -o levi-operator -g levi-operator /home/levi-operator/.ssh
-sudo cp /root/.ssh/authorized_keys /home/levi-operator/.ssh/authorized_keys
-sudo chown levi-operator:levi-operator /home/levi-operator/.ssh/authorized_keys
-sudo chmod 600 /home/levi-operator/.ssh/authorized_keys
+sudo adduser levi-system-operator
+sudo usermod -aG sudo,users levi-system-operator
+sudo install -d -m 700 -o levi-system-operator -g levi-system-operator /home/levi-system-operator/.ssh
+sudo cp /home/ubuntu/.ssh/authorized_keys /home/levi-system-operator/.ssh/authorized_keys
+sudo chown levi-system-operator:levi-system-operator /home/levi-system-operator/.ssh/authorized_keys
+sudo chmod 600 /home/levi-system-operator/.ssh/authorized_keys
 ```
 
-`levi-operator` で公開鍵ログインできたことを確認してから、次を `/etc/ssh/sshd_config.d/90-levi-hardening.conf` に置きます。
+`levi-system-operator` で公開鍵ログインと `sudo whoami` が成功することを確認してから、次を `/etc/ssh/sshd_config.d/90-levi-hardening.conf` に置きます。初期 `ubuntu` account は console recovery のため削除しませんが、SSH login は許可しません。
 
 ```text
 PermitRootLogin no
@@ -35,7 +36,7 @@ PasswordAuthentication no
 KbdInteractiveAuthentication no
 PubkeyAuthentication yes
 X11Forwarding no
-AllowUsers levi-operator
+AllowUsers levi-system-operator
 ```
 
 構文を検証してから反映します。
@@ -52,12 +53,14 @@ sudo apt update
 sudo apt full-upgrade -y
 sudo apt install -y ca-certificates curl git jq openssl unattended-upgrades ufw
 sudo dpkg-reconfigure -plow unattended-upgrades
+grep '^IPV6=yes$' /etc/default/ufw
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
-sudo ufw allow OpenSSH
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow 443/udp
+sudo ufw limit 22/tcp comment 'SSH'
+sudo ufw allow 80/tcp comment 'HTTP'
+sudo ufw allow 443/tcp comment 'HTTPS'
+sudo ufw allow 443/udp comment 'HTTP/3'
+sudo ufw logging low
 sudo ufw enable
 sudo ufw status verbose
 ```
@@ -66,7 +69,7 @@ OS 更新後に再起動が必要かを確認し、日曜の利用時間外に�
 
 ## 4. Docker と配置ディレクトリ
 
-Docker Engine と Compose plugin は Docker 公式の Ubuntu 向け手順で導入し、バージョンを記録します。`levi-operator` は Docker グループへ追加しません。Docker ソケットは root 相当の権限を持つため、デプロイ時だけ `sudo docker compose` を使います。
+Docker Engine と Compose plugin は Docker 公式の Ubuntu 向け APT repository から導入し、バージョンを記録します。convenience script は production で使用しません。`levi-system-operator` は Docker グループへ追加しません。Docker ソケットは root 相当の権限を持つため、デプロイ時だけ `sudo docker compose` を使います。
 
 ```bash
 sudo install -d -m 755 -o root -g root /opt/levi
