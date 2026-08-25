@@ -53,14 +53,15 @@ DNS change, migration, or deploy. Each remains an immediate human gate.
 The initial recovery objective applies only while the VPS and its disk remain
 available:
 
-- RPO: no more than 60 minutes of accepted mutable Levi data for operator or
+- RPO: no more than seven days of accepted mutable Levi data for operator or
   application error;
 - RTO: restore an isolated database, invalidate restored sessions, reconcile,
   pass readiness and critical smoke checks, and make the go/no-go decision
   within 120 minutes;
-- hourly on-host database archives are retained for 48 hours;
 - weekly on-host database archives are created every Monday and retained for 30
-  days.
+  days;
+- event-driven operational archives are created before deploys and imports and
+  retained for 48 hours.
 
 VPS loss, disk loss, provider-wide loss, and Tokyo-region loss have no recovery
 objective. Provider operational backups are not treated as user restore points.

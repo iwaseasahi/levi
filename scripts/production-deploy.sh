@@ -84,7 +84,7 @@ for image in "$application_image" "$migration_image"; do
 done
 
 compose config --quiet
-"${repository}/scripts/production-backup.sh" hourly
+"${repository}/scripts/production-backup.sh" operational
 compose --profile migration run --rm migrate
 compose up --detach --wait postgres app proxy
 

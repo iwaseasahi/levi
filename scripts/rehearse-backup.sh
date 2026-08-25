@@ -57,7 +57,7 @@ export LEVI_RESTORE_DATABASE="$restore_database"
 export LEVI_ENFORCE_RECOVERY_OBJECTIVES=true
 
 started_epoch="$(date -u +%s)"
-"${repository_root}/scripts/production-backup.sh" hourly
+"${repository_root}/scripts/production-backup.sh" operational
 "${repository_root}/scripts/production-backup.sh" weekly
 archive_path="$(find "${backup_root}/weekly" -type f -name '*.tar.cms' -print -quit)"
 if [[ -z "$archive_path" ]]; then
