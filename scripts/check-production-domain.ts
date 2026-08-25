@@ -78,7 +78,7 @@ function assertConfiguration() {
 
   assert.match(caddyfile, /^\{\$LEVI_DOMAIN\} \{/m);
   assert.match(caddyfile, /^www\.\{\$LEVI_DOMAIN\} \{/m);
-  assert.match(caddyfile, /redir https:\/\/\{\$LEVI_DOMAIN\}\{uri\} permanent/);
+  assert.match(caddyfile, /redir https:\/\/\{\$LEVI_DOMAIN\}\{uri\} 308/);
   assert.match(
     smokeWorkflow,
     /PRODUCTION_BASE_URL" == "https:\/\/levi-system\.com"/,

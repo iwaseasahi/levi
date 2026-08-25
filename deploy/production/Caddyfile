@@ -30,5 +30,5 @@
 
 www.{$LEVI_DOMAIN} {
 	header X-Robots-Tag "noindex, nofollow, noarchive"
-	redir https://{$LEVI_DOMAIN}{uri} permanent
+	redir https://{$LEVI_DOMAIN}{uri} 308
 }
