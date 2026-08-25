@@ -15,7 +15,7 @@ readonly database_service="${LEVI_DATABASE_SERVICE:-postgres}"
 readonly database_user="${LEVI_DATABASE_USER:-levi_admin}"
 
 if [[ -z "$archive_path" ]]; then
-  echo "Usage: production-restore.sh /var/backups/levi/hourly|weekly|daily/<archive>.tar.cms" >&2
+  echo "Usage: production-restore.sh /var/backups/levi/operational|weekly|hourly|daily/<archive>.tar.cms" >&2
   exit 2
 fi
 if [[ "${EUID}" -ne 0 && "${LEVI_ALLOW_NON_ROOT_FOR_REHEARSAL:-false}" != "true" ]]; then
@@ -35,11 +35,12 @@ backup_root_real="$(cd "$backup_root" && pwd -P)"
 archive_directory_real="$(cd "$(dirname "$archive_path")" && pwd -P)"
 archive_real="${archive_directory_real}/$(basename "$archive_path")"
 case "$archive_real" in
-  "${backup_root_real}/hourly/"*.tar.cms | \
+  "${backup_root_real}/operational/"*.tar.cms | \
     "${backup_root_real}/weekly/"*.tar.cms | \
+    "${backup_root_real}/hourly/"*.tar.cms | \
     "${backup_root_real}/daily/"*.tar.cms) ;;
   *)
-    echo "Archive must be an hourly, weekly, or legacy daily file below LEVI_BACKUP_ROOT." >&2
+    echo "Archive must be an operational, weekly, legacy hourly, or legacy daily file below LEVI_BACKUP_ROOT." >&2
     exit 2
     ;;
 esac

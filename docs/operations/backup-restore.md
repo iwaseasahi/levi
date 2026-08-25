@@ -4,9 +4,10 @@
 
 This workflow protects against operator error and logical database corruption while the single WebARENA Indigo VPS and its disk remain available.
 
-- encrypted hourly archives are retained for 48 hours;
 - encrypted weekly archives are created every Monday and retained for 30 days;
-- backup freshness target (logical RPO) is 60 minutes;
+- encrypted operational archives are created before deploys and imports and
+  retained for 48 hours, but are not scheduled;
+- scheduled backup freshness target (logical RPO) is seven days;
 - isolated restore and approved promotion target (logical RTO) is 120 minutes;
 - every restored database session is deleted before traffic can return.
 
@@ -43,19 +44,22 @@ sudo install -m 644 -o root -g root \
   deploy/production/systemd/levi-backup-* /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now \
-  levi-backup-hourly.timer \
   levi-backup-weekly.timer \
   levi-backup-health.timer
 ```
 
-When updating a host that still has the former daily timer installed, stop the
-old schedule before enabling the weekly timer. This changes the production
-backup schedule and allows legacy daily archives older than 30 days to be
-pruned by the next weekly run, so obtain immediate production approval first.
+When updating a host that still has former hourly or daily timers installed,
+stop the old schedules before enabling the weekly timer. This changes the
+production backup schedule and allows legacy hourly archives older than 48
+hours and legacy daily archives older than 30 days to be pruned by the next
+backup run, so obtain immediate production approval first.
 
 ```bash
+sudo systemctl disable --now levi-backup-hourly.timer
 sudo systemctl disable --now levi-backup-daily.timer
 sudo rm -f \
+  /etc/systemd/system/levi-backup-hourly.service \
+  /etc/systemd/system/levi-backup-hourly.timer \
   /etc/systemd/system/levi-backup-daily.service \
   /etc/systemd/system/levi-backup-daily.timer
 sudo install -m 644 -o root -g root \
@@ -67,24 +71,26 @@ sudo systemctl enable --now levi-backup-weekly.timer
 sudo systemctl list-timers 'levi-backup-*'
 ```
 
-New long-term archives are written below `weekly/`. Existing `daily/` archives
-remain accepted restore inputs and age out at the new 30-day retention boundary;
-the transition does not relabel or rewrite an encrypted archive.
+New scheduled archives are written below `weekly/`; deploy and import safety
+points are written below `operational/`. Existing `hourly/` and `daily/`
+archives remain accepted restore inputs and age out at their 48-hour and 30-day
+retention boundaries; the transition does not relabel or rewrite an encrypted
+archive.
 
 Before enabling timers, confirm `/etc/levi/backup.env` points to the intended Compose file, production environment file, backup root, and public certificate. `production-backup.sh` uses a single-writer lock, validates the custom-format dump, records an anonymous reconciliation signature, encrypts atomically, writes a SHA-256 sidecar, prunes retention, and fails if backup filesystem use reaches 80%.
 
-The health timer fails when no hourly archive is newer than 60 minutes, storage reaches the limit, or no isolated restore proof is newer than 90 days. Issue #87 connects these systemd failures to the operational alert path.
+The health timer fails when no weekly archive is newer than eight days, storage reaches the limit, or no isolated restore proof is newer than 90 days. The eight-day detection threshold allows timer jitter and operational response without changing the seven-day scheduled objective. Issue #87 connects these systemd failures to the operational alert path.
 
 ```bash
 sudo systemctl list-timers 'levi-backup-*'
-sudo systemctl status levi-backup-hourly.service
-sudo journalctl -u levi-backup-hourly.service --since today
+sudo systemctl status levi-backup-weekly.service
+sudo journalctl -u levi-backup-weekly.service --since '8 days ago'
 sudo /opt/levi/scripts/check-production-backups.sh
 ```
 
 ## Local disposable rehearsal
 
-`pnpm backup:rehearse` resets only the local `levi_test` database, inserts one synthetic session, creates an ephemeral RSA certificate, creates hourly and weekly archives, restores the weekly archive, reconciles all critical tables and Bible hashes, proves that the restored session count is zero while the source remains one, and reports elapsed RTO. Temporary archives, key material, and the isolated database are removed on exit.
+`pnpm backup:rehearse` resets only the local `levi_test` database, inserts one synthetic session, creates an ephemeral RSA certificate, creates operational and weekly archives, restores the weekly archive, reconciles all critical tables and Bible hashes, proves that the restored session count is zero while the source remains one, and reports elapsed RTO. Temporary archives, key material, and the isolated database are removed on exit.
 
 ```bash
 pnpm backup:rehearse
@@ -101,7 +107,7 @@ Confirm the encrypted archive's checksum and temporarily install the approved pr
 ```bash
 sudo LEVI_BACKUP_PRIVATE_KEY=/etc/levi/temporary-backup-private.pem \
   /opt/levi/scripts/production-restore.sh \
-  /var/backups/levi/hourly/levi-hourly-YYYYMMDDTHHMMSSZ.tar.cms
+  /var/backups/levi/weekly/levi-weekly-YYYYMMDDTHHMMSSZ.tar.cms
 ```
 
 The script decrypts into a root-only temporary directory, restores to a new `levi_restore_*` database, compares the stored critical-table/Bible signature, deletes every restored session, verifies zero sessions, and records RPO/RTO evidence. It does not stop the application, rename the live database, or switch traffic. If verification fails, it drops the isolated database and leaves production untouched.

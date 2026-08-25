@@ -130,8 +130,9 @@ if [[ "$backup_restore" == "true" ]]; then
     exit 1
   fi
 
-  "${repository_root}/scripts/production-backup.sh" hourly
-  archive_path="$(find "${backup_root}/hourly" -type f -name '*.tar.cms' -print -quit)"
+  "${repository_root}/scripts/production-backup.sh" operational
+  "${repository_root}/scripts/production-backup.sh" weekly
+  archive_path="$(find "${backup_root}/weekly" -type f -name '*.tar.cms' -print -quit)"
   if [[ -z "$archive_path" ]]; then
     echo "Production rehearsal did not create an encrypted archive." >&2
     exit 1

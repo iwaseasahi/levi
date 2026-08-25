@@ -98,7 +98,7 @@ readonly postgres_container="$(compose ps --quiet postgres)"
 compose --profile migration run --rm migrate
 compose --profile migration run --rm --no-deps \
   --entrypoint /app/scripts/run-production-database-bootstrap.sh migrate
-"${repository}/scripts/production-backup.sh" hourly
+"${repository}/scripts/production-backup.sh" operational
 
 import_cli validate >"$validate_report"
 jq -e --arg sha "$expected_source_sha" \
@@ -121,7 +121,7 @@ import_cli import --confirm-source-sha "$expected_source_sha" --batch-size 500 >
 jq -e '.mode == "import" and .status == "unchanged" and .report.exact == true and .report.sampleExact == true' \
   "$retry_report" >/dev/null
 
-"${repository}/scripts/production-backup.sh" hourly
+"${repository}/scripts/production-backup.sh" operational
 
 chmod 600 "$execution_root"/*.json
 {

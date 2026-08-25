@@ -6,7 +6,7 @@
 
 - public `/api/ready` is not HTTP 200 with `status=ready` within 10 seconds;
 - PostgreSQL `pg_isready` fails;
-- no encrypted hourly backup is newer than 60 minutes;
+- no encrypted weekly backup is newer than eight days;
 - the newest isolated restore proof is older than 90 days;
 - root disk or backup filesystem use reaches 80%;
 - host memory use reaches 90%;

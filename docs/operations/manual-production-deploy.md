@@ -120,7 +120,7 @@ invokes `production-deploy.sh`. The host script:
 
 - validates the commit, digests, approval URL, and Sunday freeze again;
 - verifies each OCI revision label equals the commit;
-- validates Compose and takes a fresh encrypted hourly backup;
+- validates Compose and takes a fresh encrypted operational backup;
 - runs forward-only Prisma migrations through the isolated admin migration image;
 - starts Caddy, application, and PostgreSQL and waits for readiness;
 - records commit, digests, approval, and UTC time in immutable-by-convention history under `/var/lib/levi-deploy/history/` and updates `/var/lib/levi-deploy/current.env`.

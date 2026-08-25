@@ -9,9 +9,9 @@ if [[ "${EUID}" -ne 0 && "${LEVI_ALLOW_NON_ROOT_FOR_REHEARSAL:-false}" != "true"
   exit 2
 fi
 
-latest_hourly="$(find "${backup_root}/hourly" -type f -name '*.tar.cms' -mmin -60 -print -quit 2>/dev/null || true)"
-if [[ -z "$latest_hourly" ]]; then
-  echo "No encrypted hourly Levi backup is newer than 60 minutes." >&2
+latest_weekly="$(find "${backup_root}/weekly" -type f -name '*.tar.cms' -mmin -11520 -print -quit 2>/dev/null || true)"
+if [[ -z "$latest_weekly" ]]; then
+  echo "No encrypted weekly Levi backup is newer than 8 days." >&2
   exit 1
 fi
 
@@ -32,4 +32,4 @@ if [[ -z "$recent_restore_proof" ]]; then
   exit 1
 fi
 
-echo "Backup health passed: hourly=${latest_hourly} capacity_percent=${capacity_used} restore_proof=${latest_restore_proof}"
+echo "Backup health passed: weekly=${latest_weekly} capacity_percent=${capacity_used} restore_proof=${latest_restore_proof}"

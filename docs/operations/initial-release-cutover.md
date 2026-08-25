@@ -19,18 +19,18 @@ release.
 The selected single-VPS implementation must prove these entry criteria before
 traffic is enabled:
 
-- recovery point objective (RPO): no more than 60 minutes of accepted mutable
+- recovery point objective (RPO): no more than seven days of accepted mutable
   Levi data;
 - recovery time objective (RTO): restore a clean environment, reconcile data,
   pass readiness and critical smoke checks, and make the go/no-go decision
   within 120 minutes;
-- an encrypted on-host database archive at least hourly, retained for 48 hours,
-  plus a weekly Monday archive retained for 30 days;
+- an encrypted weekly Monday archive retained for 30 days, plus event-driven
+  operational archives retained for 48 hours before deploys and imports;
 - archive ownership and permissions that prevent the application container from
   reading, modifying, or deleting backups;
 - a successful restore into an isolated environment before first release and
   at least quarterly thereafter;
-- alert when the newest usable recovery point exceeds 60 minutes or the newest
+- alert when the newest weekly recovery point exceeds eight days or the newest
   successful restore proof exceeds 90 days.
 
 These RPO/RTO objectives cover operator or application error only while the VPS
@@ -158,7 +158,7 @@ show redaction before it receives production data. Minimum alerts are:
 | Login failures                | Sudden baseline deviation or sustained 5xx/429 | Distinguish attack/rate limit from auth or DB failure.      |
 | Database connectivity         | Any sustained failure over 1 minute            | Remove traffic and evaluate provider status/recovery.       |
 | Bible query or saved mutation | More than 1% failures for 5 minutes            | Stop affected workflow; preserve anonymous codes.           |
-| Backup age                    | Newest usable point older than 60 minutes      | Block release and restore claims.                           |
+| Backup age                    | Newest weekly point older than eight days      | Block release and restore claims.                           |
 | Restore proof age             | Older than 90 days                             | Block release until a new isolated restore passes.          |
 
 ## Recovery decision
