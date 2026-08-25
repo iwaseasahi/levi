@@ -143,8 +143,18 @@ The command fails unless all of the following are true:
 - `www` HTTPS redirects to apex HTTPS with HTTP 308 while preserving path and
   query;
 - `https://levi-system.com/api/ready` returns `{"status":"ready"}`;
+- apex HTML, API responses, and the `www` redirect return
+  `X-Robots-Tag: noindex, nofollow, noarchive`;
+- apex HTML contains a robots `noindex` meta directive and `/robots.txt` allows
+  crawlers to fetch pages so they can observe that directive;
 - both TLS hostnames validate through the system trust store and their
   certificates have at least 30 days remaining.
+
+Do not block the application pages in `robots.txt`. Google documents that a URL
+blocked from crawling can still appear in search results because the crawler
+cannot observe its `noindex` directive. Search exclusion therefore relies on the
+HTML robots metadata and the `X-Robots-Tag` response header, while `robots.txt`
+keeps crawling allowed.
 
 Then restart only the Caddy container once and run the live check again. This
 proves the persisted certificate is reusable. Inspect Caddy logs for certificate
