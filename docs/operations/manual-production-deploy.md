@@ -39,6 +39,39 @@ or verifier in GitHub Issues, workflow inputs, or repository files.
 
 Do not use `ssh-keyscan` inside the deployment workflow as the trust decision. Record the host key through the WebARENA console/out-of-band setup and pin it. Environment secrets are created only after VPS provisioning is separately approved.
 
+## One-time host entrypoint installation
+
+GitHub Actions must not receive a reusable root password or unrestricted sudo
+access. After `/opt/levi` has been checked out at the reviewed release commit,
+the operator installs the root-owned deployment entrypoint once from an
+interactive SSH session:
+
+```bash
+sudo /opt/levi/scripts/install-production-deploy-entrypoint.sh
+sudo visudo -cf /etc/sudoers.d/levi-production-deploy
+sudo -l
+```
+
+The resulting sudoers policy grants `levi-system-operator` passwordless access
+only to `/usr/local/sbin/levi-production-deploy`. The wrapper accepts exactly a
+commit, two immutable image digests, and an approval comment URL. It validates
+all four values, requires the commit to be on `origin/main`, checks out that
+commit in the fixed root-owned `/opt/levi` repository, clears the caller's
+environment, and then invokes the fixed production deployment script. It does
+not grant passwordless access to `git`, `env`, `docker`, a shell, or arbitrary
+scripts.
+
+To revoke GitHub Actions deployment access, use an interactive sudo session and
+remove only these exact installed files:
+
+```bash
+sudo rm /etc/sudoers.d/levi-production-deploy
+sudo rm /usr/local/sbin/levi-production-deploy
+```
+
+This rollback removes the automation entrypoint; it does not stop the running
+application or remove production data.
+
 ## Publish immutable images
 
 Run `Publish production images` manually with the approved commit. It rechecks the four CI jobs, builds `linux/amd64` images from `Dockerfile.production` and `Dockerfile.migrate.production`, labels both with the commit SHA, pushes commit-only tags to GHCR, and prints both immutable digests in the workflow summary. It does not deploy.
@@ -51,7 +84,7 @@ Copy the two digest references into the release Issue. Never deploy a mutable ta
 
 The immediate approval comment must state the commit, application digest, migration digest, backup status, expected user impact, forward-recovery plan, and responsible operator. Then manually run `Deploy production` with those exact values and the comment URL.
 
-The workflow checks CI and main ancestry before it reaches the protected `production` Environment. After the Environment reviewer approves, it connects with pinned SSH host keys, checks out the exact commit, and invokes `production-deploy.sh`. The host script:
+The workflow checks CI and main ancestry before it reaches the protected `production` Environment. After the Environment reviewer approves, it connects with pinned SSH host keys and calls the command-scoped deployment entrypoint with `sudo -n`. The entrypoint independently validates the inputs and main ancestry, checks out the exact commit, clears the SSH caller's environment, and invokes `production-deploy.sh`. The host script:
 
 - validates the commit, digests, approval URL, and Sunday freeze again;
 - verifies each OCI revision label equals the commit;
