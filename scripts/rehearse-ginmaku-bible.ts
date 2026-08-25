@@ -78,7 +78,15 @@ function postgresContainerArgs(args: string[], input = false) {
   const container = process.env.REHEARSAL_POSTGRES_CONTAINER;
   return container
     ? ["exec", ...(input ? ["-i"] : []), container, ...args]
-    : ["compose", "exec", "-T", "postgres", ...args];
+    : [
+        "compose",
+        "--file",
+        "compose.development.yaml",
+        "exec",
+        "-T",
+        "postgres",
+        ...args,
+      ];
 }
 
 function databaseClient(databaseUrl: string) {

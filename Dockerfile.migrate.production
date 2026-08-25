@@ -14,5 +14,16 @@ ENV NODE_ENV=production
 LABEL org.opencontainers.image.revision=$VCS_REF
 COPY --chown=node:node prisma ./prisma
 COPY --chown=node:node prisma.config.ts ./prisma.config.ts
+COPY --chown=node:node tsconfig.json ./tsconfig.json
+COPY --chown=node:node src/config ./src/config
+COPY --chown=node:node src/domain/admin ./src/domain/admin
+COPY --chown=node:node src/infrastructure/database ./src/infrastructure/database
+COPY --chown=node:node src/migration ./src/migration
+COPY --chown=node:node scripts/import-ginmaku-bible.ts ./scripts/import-ginmaku-bible.ts
+COPY --chown=node:node --chmod=0555 scripts/run-production-database-bootstrap.sh ./scripts/run-production-database-bootstrap.sh
+COPY --chown=node:node --chmod=0555 scripts/run-production-bible-import.sh ./scripts/run-production-bible-import.sh
+RUN DATABASE_URL=postgresql://levi:levi@localhost:5432/levi \
+    SHADOW_DATABASE_URL=postgresql://levi:levi@localhost:5432/levi_shadow \
+    pnpm db:generate
 USER node
 ENTRYPOINT ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
