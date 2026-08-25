@@ -15,6 +15,11 @@ credential. Its creation, rotation, and production injection require an
 exact human-approved operation. Local and CI authentication tests use only a
 synthetic secret. The initial release has no transactional-email credential.
 
+On the production host, run `scripts/check-production-secrets.sh` after every
+credential installation or rotation. It checks ownership, mode, role
+separation, URL consistency, placeholders, the public backup certificate, and
+Compose configuration while deliberately returning no credential values.
+
 If exposure is suspected, stop copying the value, preserve only redacted
 evidence, notify the human security owner, identify scope from provider audit
 logs, and request an approved rotation/revocation. Secret creation, access
