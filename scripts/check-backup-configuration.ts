@@ -32,11 +32,13 @@ assert.match(backupScript, /rsa_padding_mode:oaep/);
 assert.match(backupScript, /hourly" -type f -mmin \+2880 -delete/);
 assert.match(backupScript, /daily" -type f -mmin \+20160 -delete/);
 assert.match(backupScript, /capacity_limit.*80/);
+assert.match(backupScript, /LEVI_COMPOSE_PROJECT_NAME/);
 
 const restoreScript = readFileSync(scriptPaths[1]!, "utf8");
 assert.match(restoreScript, /Restored database reconciliation failed/);
 assert.match(restoreScript, /DELETE FROM sessions/);
 assert.match(restoreScript, /remaining_sessions.*!= "0"/s);
+assert.match(restoreScript, /LEVI_COMPOSE_PROJECT_NAME/);
 
 const promoteScript = readFileSync(scriptPaths[2]!, "utf8");
 assert.match(promoteScript, /approval_reference/);
