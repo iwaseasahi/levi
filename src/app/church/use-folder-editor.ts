@@ -29,6 +29,8 @@ export function useFolderEditor({
   const [pending, setPending] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const loadSequenceRef = useRef(0);
+  const runSequenceRef = useRef(0);
 
   useEffect(() => {
     onDeletedRef.current = onDeleted;
@@ -47,30 +49,34 @@ export function useFolderEditor({
   );
 
   const load = useCallback(async () => {
+    const sequence = ++loadSequenceRef.current;
     const value = await requestJson<SelectedFolder>(
       lifetimeFetcher,
       `/api/saved-content?folderId=${encodeURIComponent(folderId)}`,
       { cache: "no-store", headers: { Accept: "application/json" } },
       "saved content unavailable",
     );
+    if (sequence !== loadSequenceRef.current) return;
     setSelected(value);
     setName(value.folder.name);
   }, [folderId, lifetimeFetcher]);
 
   const run = useCallback(
     async (action: () => Promise<void>, success?: string) => {
+      const sequence = ++runSequenceRef.current;
       setPending(true);
       setError("");
       setMessage("");
       try {
         await action();
-        if (success) setMessage(success);
+        if (sequence === runSequenceRef.current && success) setMessage(success);
       } catch {
-        setError(
-          "保存内容を更新できませんでした。再読み込みしてお試しください。",
-        );
+        if (sequence === runSequenceRef.current)
+          setError(
+            "保存内容を更新できませんでした。再読み込みしてお試しください。",
+          );
       } finally {
-        setPending(false);
+        if (sequence === runSequenceRef.current) setPending(false);
       }
     },
     [],

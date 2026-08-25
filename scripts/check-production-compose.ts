@@ -39,8 +39,35 @@ const exampleEnvironment = path.join(
   "production.env.example",
 );
 const composeSource = readFileSync(composeFile, "utf8");
+const rehearsalSource = readFileSync(
+  path.join(repositoryRoot, "scripts", "rehearse-production-compose.sh"),
+  "utf8",
+);
 assert.match(composeSource, /dockerfile: Dockerfile\.production/);
 assert.match(composeSource, /dockerfile: Dockerfile\.migrate\.production/);
+assert.match(
+  rehearsalSource,
+  /Remote rehearsal requires digest-pinned LEVI_IMAGE and LEVI_MIGRATION_IMAGE/,
+);
+assert.match(rehearsalSource, /compose --profile migration pull app migrate/);
+const postgresStart = rehearsalSource.indexOf(
+  "compose up --detach --wait postgres",
+);
+const migrationRun = rehearsalSource.indexOf(
+  "compose --profile migration run --rm migrate",
+);
+const applicationStart = rehearsalSource.indexOf(
+  "compose up --detach --wait app",
+);
+assert(postgresStart >= 0, "Rehearsal must start PostgreSQL");
+assert(
+  migrationRun > postgresStart,
+  "Rehearsal must migrate after PostgreSQL is ready",
+);
+assert(
+  applicationStart > migrationRun,
+  "Rehearsal must start the application after migration",
+);
 const composeEnvironment = { ...process.env };
 for (const variable of [
   "ACME_EMAIL",

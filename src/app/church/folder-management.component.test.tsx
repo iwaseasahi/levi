@@ -2,6 +2,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { ScriptureBookmarkView } from "@/domain/saved-content";
 import { FolderEditPanel } from "./folder-edit-panel";
@@ -73,6 +74,50 @@ function managementFetcher() {
 }
 
 describe("folder management", () => {
+  it("does not overwrite edits with a stale Strict Mode load", async () => {
+    let resolveFirstLoad!: (response: Response) => void;
+    const firstLoad = new Promise<Response>((resolve) => {
+      resolveFirstLoad = resolve;
+    });
+    const currentFolder = {
+      id: folderId,
+      name: "2026-08-23 第二礼拝",
+      isPinned: false,
+      position: 0,
+      lastUsedAt: null,
+    };
+    let loadCount = 0;
+    const fetcher = vi.fn<typeof fetch>(async (_input, init) => {
+      if (init?.method === "POST")
+        return Response.json({ folder: currentFolder });
+      loadCount += 1;
+      if (loadCount === 1) return firstLoad;
+      return Response.json({ folder: currentFolder, bookmarks: [] });
+    });
+
+    render(
+      <StrictMode>
+        <FolderEditPanel folderId={folderId} fetcher={fetcher} />
+      </StrictMode>,
+    );
+    const user = userEvent.setup();
+    const name = await screen.findByLabelText("フォルダー名");
+    await user.clear(name);
+    await user.type(name, "礼拝用");
+
+    resolveFirstLoad(Response.json({ folder: currentFolder, bookmarks: [] }));
+    await waitFor(() => expect(name).toHaveValue("礼拝用"));
+    await user.click(screen.getByRole("button", { name: "変更を保存" }));
+    await waitFor(() =>
+      expect(fetcher).toHaveBeenCalledWith(
+        "/api/saved-content",
+        expect.objectContaining({
+          body: expect.stringContaining('"name":"礼拝用"'),
+        }),
+      ),
+    );
+  });
+
   it("shows loading and focuses a recoverable load failure", async () => {
     let resolveLoad!: (response: Response) => void;
     const pendingLoad = new Promise<Response>((resolve) => {
