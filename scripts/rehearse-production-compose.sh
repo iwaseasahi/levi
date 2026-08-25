@@ -7,6 +7,7 @@ environment_file="${repository_root}/deploy/production/production.env.example"
 project_name="levi-production-rehearsal"
 application_image="${LEVI_IMAGE:-}"
 migration_image="${LEVI_MIGRATION_IMAGE:-}"
+synthetic_workload="${LEVI_RUN_SYNTHETIC_WORKLOAD:-false}"
 
 if [[ -n "$application_image" || -n "$migration_image" ]]; then
   if [[ ! "$application_image" =~ ^[^[:space:]]+@sha256:[a-f0-9]{64}$ ]] ||
@@ -19,6 +20,10 @@ else
   export LEVI_IMAGE="levi-production:rehearsal"
   export LEVI_MIGRATION_IMAGE="levi-migration:rehearsal"
   readonly artifact_mode="local"
+fi
+if [[ "$synthetic_workload" != "true" && "$synthetic_workload" != "false" ]]; then
+  echo "LEVI_RUN_SYNTHETIC_WORKLOAD must be true or false." >&2
+  exit 2
 fi
 
 compose() {
@@ -71,6 +76,15 @@ application_table_access="${application_table_access//[[:space:]]/}"
 if [[ "$application_table_access" != "SET0" ]]; then
   echo "Application database role cannot read migrated tables: ${application_table_access}" >&2
   exit 1
+fi
+
+if [[ "$synthetic_workload" == "true" ]]; then
+  compose --profile migration run --rm --no-deps \
+    --entrypoint node \
+    --env "LEVI_POC_ROUNDS=${LEVI_POC_ROUNDS:-20}" \
+    --volume "${repository_root}/scripts/lib/production-workload.mjs:/app/production-workload.mjs:ro" \
+    migrate /app/production-workload.mjs
+  compose stats --no-stream
 fi
 
 echo "Production application, migration, and least-privilege PostgreSQL rehearsal passed: artifact_mode=${artifact_mode}."

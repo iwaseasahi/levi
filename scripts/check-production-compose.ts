@@ -43,6 +43,10 @@ const rehearsalSource = readFileSync(
   path.join(repositoryRoot, "scripts", "rehearse-production-compose.sh"),
   "utf8",
 );
+const workloadSource = readFileSync(
+  path.join(repositoryRoot, "scripts", "lib", "production-workload.mjs"),
+  "utf8",
+);
 assert.match(composeSource, /dockerfile: Dockerfile\.production/);
 assert.match(composeSource, /dockerfile: Dockerfile\.migrate\.production/);
 assert.match(
@@ -50,6 +54,13 @@ assert.match(
   /Remote rehearsal requires digest-pinned LEVI_IMAGE and LEVI_MIGRATION_IMAGE/,
 );
 assert.match(rehearsalSource, /compose --profile migration pull app migrate/);
+assert.match(rehearsalSource, /LEVI_RUN_SYNTHETIC_WORKLOAD/);
+assert.match(
+  rehearsalSource,
+  /production-workload\.mjs:\/app\/production-workload\.mjs:ro/,
+);
+assert.match(workloadSource, /synthetic-two-church/);
+assert.match(workloadSource, /tenantIsolation: "passed"/);
 const postgresStart = rehearsalSource.indexOf(
   "compose up --detach --wait postgres",
 );

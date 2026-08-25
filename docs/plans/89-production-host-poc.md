@@ -26,9 +26,11 @@ dump reaches the VPS.
 4. Start the application only after migration and verify readiness.
 5. Verify the application UID, read-only root filesystem, writable `/tmp`, and
    the non-elevated `levi_app` PostgreSQL role.
-6. Add two synthetic churches and the minimum synthetic scripture catalog in a
-   later PoC phase, then measure login, search, audience, folder, and bookmark
-   operations under two-account concurrency.
+6. With `LEVI_RUN_SYNTHETIC_WORKLOAD=true`, add two synthetic churches and the
+   minimum synthetic scripture catalog, then measure login, search, audience,
+   folder, and bookmark operations under two-account concurrency. The report
+   contains only anonymous counts, error count, latency percentiles, and DB
+   connection count.
 7. Measure encrypted backup and isolated restore RPO/RTO and prove restored
    sessions are removed.
 8. Record only anonymous counts, timings, resource measurements, commit, and
@@ -41,6 +43,7 @@ references, not credentials.
 
 ```bash
 sudo \
+  LEVI_RUN_SYNTHETIC_WORKLOAD=true \
   LEVI_IMAGE='ghcr.io/iwaseasahi/levi@sha256:<application-digest>' \
   LEVI_MIGRATION_IMAGE='ghcr.io/iwaseasahi/levi-migrate@sha256:<migration-digest>' \
   ./scripts/rehearse-production-compose.sh
