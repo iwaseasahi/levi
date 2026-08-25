@@ -65,6 +65,17 @@ sudo ufw enable
 sudo ufw status verbose
 ```
 
+WebARENA側のfirewallでは、TCP 22をoperator回線の現在のglobal IPv4
+address 1件だけ（`/32`）に制限します。GitHub-hosted runner向けに
+`0.0.0.0/0`やGitHubの巨大な動的rangeを許可しません。デプロイはGitHubで
+exact artifactとEnvironment承認を記録した後、allowlist済みoperator Macから
+`pnpm production:deploy:authorized -- RUN_ID`を実行します。
+
+operator回線のIPが変わった場合は、Macで`curl -4 https://ifconfig.me`を実行し、
+WebARENA consoleからSSH ruleを新しい`/32`へ更新します。既存のSSH sessionを
+閉じる前に別terminalから新規接続を確認します。console accessをこの復旧経路
+として維持し、復旧目的でもSSHを全世界へ公開しません。
+
 OS 更新後に再起動が必要かを確認し、日曜の利用時間外に再起動します。
 
 ## 4. Docker と配置ディレクトリ

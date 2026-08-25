@@ -22,9 +22,15 @@ owner configures these settings manually:
 - create the Environment named exactly `production`;
 - require the Levi operator as reviewer and enable prevention of self-review when the GitHub plan supports it;
 - restrict deployment branches/tags to `main`;
-- add Environment secrets `PRODUCTION_SSH_HOST`, `PRODUCTION_SSH_USER`, `PRODUCTION_SSH_PRIVATE_KEY`, and pinned `PRODUCTION_SSH_KNOWN_HOSTS`;
 - add repository variable `PRODUCTION_BASE_URL` with the exact value
   `https://levi-system.com`.
+
+GitHub does not hold a production SSH private key or connect to the production
+host. The protected Environment authorizes an immutable, one-day artifact that
+the operator retrieves from an allowlisted workstation. Remove legacy
+`PRODUCTION_SSH_HOST`, `PRODUCTION_SSH_USER`, `PRODUCTION_SSH_PRIVATE_KEY`, and
+`PRODUCTION_SSH_KNOWN_HOSTS` secrets after this two-stage flow is deployed and
+rehearsed.
 
 Do not create `PRODUCTION_BASE_URL` before the endpoint is live. Its presence
 enables the scheduled external smoke workflow, and that workflow deliberately
@@ -37,7 +43,9 @@ protected `production.env`. Follow
 [`admin-basic-auth.md`](admin-basic-auth.md); never store the plaintext password
 or verifier in GitHub Issues, workflow inputs, or repository files.
 
-Do not use `ssh-keyscan` inside the deployment workflow as the trust decision. Record the host key through the WebARENA console/out-of-band setup and pin it. Environment secrets are created only after VPS provisioning is separately approved.
+The operator's SSH client must continue to use the host key recorded through
+the WebARENA console/out-of-band setup. Do not replace that trust decision with
+an unattended `ssh-keyscan`.
 
 ## One-time host entrypoint installation
 
@@ -61,8 +69,8 @@ environment, and then invokes the fixed production deployment script. It does
 not grant passwordless access to `git`, `env`, `docker`, a shell, or arbitrary
 scripts.
 
-To revoke GitHub Actions deployment access, use an interactive sudo session and
-remove only these exact installed files:
+To revoke use of the command-scoped deployment entrypoint, use an interactive
+sudo session and remove only these exact installed files:
 
 ```bash
 sudo rm /etc/sudoers.d/levi-production-deploy
@@ -80,11 +88,35 @@ This workflow writes package artifacts and can consume GitHub package storage; c
 
 Copy the two digest references into the release Issue. Never deploy a mutable tag such as `latest` or a bare commit tag.
 
-## Approve and deploy
+## Authorize and deploy
 
-The immediate approval comment must state the commit, application digest, migration digest, backup status, expected user impact, forward-recovery plan, and responsible operator. Then manually run `Deploy production` with those exact values and the comment URL.
+The immediate approval comment must state the commit, application digest,
+migration digest, backup status, expected user impact, forward-recovery plan,
+and responsible operator. Then manually run `Authorize production deploy` with
+those exact values and the comment URL.
 
-The workflow checks CI and main ancestry before it reaches the protected `production` Environment. After the Environment reviewer approves, it connects with pinned SSH host keys and calls the command-scoped deployment entrypoint with `sudo -n`. The entrypoint independently validates the inputs and main ancestry, checks out the exact commit, clears the SSH caller's environment, and invokes `production-deploy.sh`. The host script:
+The workflow checks CI and main ancestry before it reaches the protected
+`production` Environment. After the Environment reviewer approves, it uploads
+an immutable authorization record retained for one day. It does not connect to
+the VPS. From the operator Mac whose current public IP is allowlisted by the
+WebARENA firewall, verify and execute that exact successful run:
+
+```bash
+pnpm production:deploy:authorized -- RUN_ID
+```
+
+The command uses the authenticated GitHub CLI to verify that the run succeeded,
+came from `main`, and used the canonical authorization workflow. It downloads
+the current run attempt's authorization artifact, validates every field, and
+then connects through the operator's pinned SSH alias
+`levi-system-production`. No production SSH key is stored in GitHub. If the
+operator's public IP changed, update the single `/32` WebARENA SSH rule from a
+separate trusted recovery path before retrying; never temporarily use
+`0.0.0.0/0`.
+
+The command-scoped host entrypoint independently validates the inputs and main
+ancestry, checks out the exact commit, clears the SSH caller's environment, and
+invokes `production-deploy.sh`. The host script:
 
 - validates the commit, digests, approval URL, and Sunday freeze again;
 - verifies each OCI revision label equals the commit;
@@ -92,6 +124,11 @@ The workflow checks CI and main ancestry before it reaches the protected `produc
 - runs forward-only Prisma migrations through the isolated admin migration image;
 - starts Caddy, application, and PostgreSQL and waits for readiness;
 - records commit, digests, approval, and UTC time in immutable-by-convention history under `/var/lib/levi-deploy/history/` and updates `/var/lib/levi-deploy/current.env`.
+
+Record both the successful GitHub authorization run URL and the host deployment
+result in the release Issue. An authorization artifact that expires, belongs to
+an unsuccessful or superseded attempt, or cannot be verified fails closed and
+must not be copied or reconstructed manually.
 
 ## Failed deployment and recovery
 

@@ -24,6 +24,10 @@ const deployEntrypointInstaller = path.join(
   repositoryRoot,
   "scripts/install-production-deploy-entrypoint.sh",
 );
+const authorizedDeployScript = path.join(
+  repositoryRoot,
+  "scripts/run-authorized-production-deploy.sh",
+);
 const healthScript = path.join(
   repositoryRoot,
   "scripts/check-production-health.sh",
@@ -65,6 +69,7 @@ const syntax = spawnSync(
     deployScript,
     deployEntrypoint,
     deployEntrypointInstaller,
+    authorizedDeployScript,
     healthScript,
     secretCheckScript,
     bibleImportScript,
@@ -104,10 +109,141 @@ assert.match(deployWorkflow, /workflow_dispatch:/);
 assert.doesNotMatch(deployWorkflow, /^\s+push:/m);
 assert.match(
   deployWorkflow,
-  /sudo -n \/usr\/local\/sbin\/levi-production-deploy/,
+  /production-deploy-authorization-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/,
 );
+assert.match(deployWorkflow, /retention-days: 1/);
+assert.match(deployWorkflow, /actions\/upload-artifact@[a-f0-9]{40}/);
+assert.doesNotMatch(deployWorkflow, /\bssh\b/);
+assert.doesNotMatch(deployWorkflow, /PRODUCTION_SSH_/);
 assert.doesNotMatch(deployWorkflow, /sudo git/);
 assert.doesNotMatch(deployWorkflow, /sudo env/);
+
+const authorizedDeploySource = readFileSync(authorizedDeployScript, "utf8");
+assert.match(authorizedDeploySource, /\.conclusion.*success/s);
+assert.match(authorizedDeploySource, /\.head_branch.*main/s);
+assert.match(authorizedDeploySource, /deploy-production\.yml/);
+assert.match(authorizedDeploySource, /gh run download/);
+assert.match(authorizedDeploySource, /production-deploy-authorization/);
+assert.match(authorizedDeploySource, /ssh -o BatchMode=yes/);
+assert.match(
+  authorizedDeploySource,
+  /sudo -n \/usr\/local\/sbin\/levi-production-deploy/,
+);
+assert.doesNotMatch(authorizedDeploySource, /PRODUCTION_SSH_PRIVATE_KEY/);
+
+const authorizationFixture = mkdtempSync(
+  path.join(tmpdir(), "levi-deploy-authorization."),
+);
+try {
+  const fakeGh = path.join(authorizationFixture, "gh");
+  const fakeSsh = path.join(authorizationFixture, "ssh");
+  const authorizationRecord = path.join(
+    authorizationFixture,
+    "authorization.json",
+  );
+  const sshCapture = path.join(authorizationFixture, "ssh-arguments.txt");
+  const runId = 123456;
+  const runAttempt = 2;
+
+  writeFileSync(
+    authorizationRecord,
+    JSON.stringify({
+      schema_version: 1,
+      repository: "iwaseasahi/levi",
+      run_id: runId,
+      run_attempt: runAttempt,
+      commit_sha: "a".repeat(40),
+      application_image: `ghcr.io/iwaseasahi/levi@sha256:${"b".repeat(64)}`,
+      migration_image: `ghcr.io/iwaseasahi/levi-migrate@sha256:${"c".repeat(64)}`,
+      approval_comment:
+        "https://github.com/iwaseasahi/levi/issues/292#issuecomment-123",
+      authorized_at: "2026-08-25T00:00:00Z",
+    }),
+  );
+  writeFileSync(
+    fakeGh,
+    `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$1 $2" == "api repos/iwaseasahi/levi/actions/runs/${runId}" ]]; then
+  printf '{"event":"workflow_dispatch","status":"completed","conclusion":"%s","head_branch":"main","workflow_id":99,"run_attempt":${runAttempt}}\\n' "\${FAKE_RUN_CONCLUSION:-success}"
+elif [[ "$1 $2" == "api repos/iwaseasahi/levi/actions/workflows/99" ]]; then
+  printf '.github/workflows/deploy-production.yml\\n'
+elif [[ "$1 $2" == "run download" ]]; then
+  destination=""
+  while [[ $# -gt 0 ]]; do
+    if [[ "$1" == "--dir" ]]; then destination="$2"; break; fi
+    shift
+  done
+  cp "$AUTHORIZATION_FIXTURE" "$destination/production-deploy-authorization.json"
+else
+  exit 70
+fi
+`,
+  );
+  writeFileSync(
+    fakeSsh,
+    `#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\\n' "$*" > "$SSH_CAPTURE"
+`,
+  );
+  chmodSync(fakeGh, 0o755);
+  chmodSync(fakeSsh, 0o755);
+
+  const authorizationEnvironment = {
+    ...process.env,
+    PATH: `${authorizationFixture}:${process.env.PATH ?? ""}`,
+    AUTHORIZATION_FIXTURE: authorizationRecord,
+    SSH_CAPTURE: sshCapture,
+  };
+  const authorized = spawnSync("bash", [authorizedDeployScript, `${runId}`], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: authorizationEnvironment,
+  });
+  assert.equal(authorized.status, 0, authorized.stderr);
+  assert.match(readFileSync(sshCapture, "utf8"), /levi-system-production/);
+  assert.match(
+    readFileSync(sshCapture, "utf8"),
+    /sudo -n \/usr\/local\/sbin\/levi-production-deploy/,
+  );
+
+  const rejected = spawnSync("bash", [authorizedDeployScript, `${runId}`], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: {
+      ...authorizationEnvironment,
+      FAKE_RUN_CONCLUSION: "failure",
+    },
+  });
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stderr, /did not succeed/);
+
+  writeFileSync(
+    authorizationRecord,
+    JSON.stringify({
+      schema_version: 1,
+      repository: "iwaseasahi/levi",
+      run_id: runId,
+      run_attempt: runAttempt,
+      commit_sha: "not-an-exact-commit",
+      application_image: `ghcr.io/iwaseasahi/levi@sha256:${"b".repeat(64)}`,
+      migration_image: `ghcr.io/iwaseasahi/levi-migrate@sha256:${"c".repeat(64)}`,
+      approval_comment:
+        "https://github.com/iwaseasahi/levi/issues/292#issuecomment-123",
+      authorized_at: "2026-08-25T00:00:00Z",
+    }),
+  );
+  const tampered = spawnSync("bash", [authorizedDeployScript, `${runId}`], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: authorizationEnvironment,
+  });
+  assert.notEqual(tampered.status, 0);
+  assert.match(tampered.stderr, /authorization record is invalid/);
+} finally {
+  rmSync(authorizationFixture, { recursive: true, force: true });
+}
 
 const deployEntrypointSource = readFileSync(deployEntrypoint, "utf8");
 assert.match(
