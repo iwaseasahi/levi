@@ -1,4 +1,4 @@
-name: Deploy production
+name: Authorize production deploy
 
 on:
   workflow_dispatch:
@@ -60,32 +60,57 @@ jobs:
             [[ "$result" == $'completed\tsuccess' ]] || { echo "Latest ${required} check is not successful for ${COMMIT_SHA}" >&2; exit 1; }
           done
 
-  deploy:
-    name: Deploy approved digest
+  authorize:
+    name: Authorize approved digest
     needs: verify
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     environment: production
     steps:
-      - name: Configure SSH
-        env:
-          SSH_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
-        run: |
-          set -euo pipefail
-          install -d -m 700 ~/.ssh
-          install -m 600 /dev/null ~/.ssh/id_ed25519
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-      - name: Deploy exact approved release
+      - name: Create immutable authorization record
         env:
           APPROVAL_COMMENT: ${{ inputs.approval_comment }}
           APPLICATION_IMAGE: ${{ inputs.application_image }}
           COMMIT_SHA: ${{ inputs.commit_sha }}
           MIGRATION_IMAGE: ${{ inputs.migration_image }}
-          SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
-          SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
         run: |
           set -euo pipefail
-          ssh -o BatchMode=yes "$SSH_USER@$SSH_HOST" \
-            "sudo -n /usr/local/sbin/levi-production-deploy '$COMMIT_SHA' '$APPLICATION_IMAGE' '$MIGRATION_IMAGE' '$APPROVAL_COMMENT'"
+          jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --argjson run_id "$GITHUB_RUN_ID" \
+            --argjson run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg commit_sha "$COMMIT_SHA" \
+            --arg application_image "$APPLICATION_IMAGE" \
+            --arg migration_image "$MIGRATION_IMAGE" \
+            --arg approval_comment "$APPROVAL_COMMENT" \
+            --arg authorized_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              schema_version: 1,
+              repository: $repository,
+              run_id: $run_id,
+              run_attempt: $run_attempt,
+              commit_sha: $commit_sha,
+              application_image: $application_image,
+              migration_image: $migration_image,
+              approval_comment: $approval_comment,
+              authorized_at: $authorized_at
+            }' > production-deploy-authorization.json
+      - name: Upload authorization record
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: production-deploy-authorization-${{ github.run_id }}-${{ github.run_attempt }}
+          path: production-deploy-authorization.json
+          if-no-files-found: error
+          retention-days: 1
+      - name: Record operator handoff
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Production deploy authorized
+
+          GitHub validation and the protected \`production\` Environment approval completed.
+          No network connection to the production host was attempted.
+
+          The operator can execute the exact authorization from an allowlisted workstation:
+
+          \`pnpm production:deploy:authorized -- $GITHUB_RUN_ID\`
+          EOF

@@ -34,6 +34,14 @@ target:
 - SSH uses public-key authentication and host/network firewall rules expose
   only the approved administration and web paths.
 
+GitHub Actions validates the exact commit and image digests and records approval
+through the protected `production` Environment, but does not hold a production
+SSH key or connect to the VPS. It emits a one-day immutable authorization
+artifact. The operator retrieves and verifies that artifact from the
+allowlisted workstation, then invokes the fixed command-scoped host entrypoint.
+This keeps TCP 22 restricted to the operator's current `/32` while preserving
+CI, Issue approval, Environment approval, and host deployment history.
+
 Issue #81 records the product owner's acceptance of no SLA, one application and
 database failure domain, and no cross-region recovery. This ADR approves the
 architecture, not a provider contract, billed resource, production credential,
