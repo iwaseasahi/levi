@@ -58,9 +58,10 @@ export LEVI_ENFORCE_RECOVERY_OBJECTIVES=true
 
 started_epoch="$(date -u +%s)"
 "${repository_root}/scripts/production-backup.sh" hourly
-archive_path="$(find "${backup_root}/hourly" -type f -name '*.tar.cms' -print -quit)"
+"${repository_root}/scripts/production-backup.sh" weekly
+archive_path="$(find "${backup_root}/weekly" -type f -name '*.tar.cms' -print -quit)"
 if [[ -z "$archive_path" ]]; then
-  echo "Rehearsal did not create an encrypted archive." >&2
+  echo "Rehearsal did not create an encrypted weekly archive." >&2
   exit 1
 fi
 

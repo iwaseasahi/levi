@@ -11,7 +11,7 @@
 - `domain.json`: 選定済みの公開domain、canonical origin、DNS providerの非secret設定
 - `production.env.example`: シークレットを含まない設定例
 - `backup.env.example`: root 管理のバックアップ設定例
-- `systemd/`: hourly 48時間、daily 14日の暗号化バックアップと監視 timer
+- `systemd/`: hourly 48時間、毎週月曜日・30日保持のweekly暗号化バックアップと監視timer
 - `monitoring.env.example`: readiness、DB、容量、5xx、backup age の監視設定例
 - `journald-levi.conf`: 圧縮、200 MB、14日間の journal retention
 

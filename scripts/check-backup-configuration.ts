@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -30,7 +30,8 @@ const backupScript = readFileSync(scriptPaths[0]!, "utf8");
 assert.match(backupScript, /-aes-256-gcm/);
 assert.match(backupScript, /rsa_padding_mode:oaep/);
 assert.match(backupScript, /hourly" -type f -mmin \+2880 -delete/);
-assert.match(backupScript, /daily" -type f -mmin \+20160 -delete/);
+assert.match(backupScript, /weekly" -type f -mmin \+43200 -delete/);
+assert.match(backupScript, /daily" -type f -mmin \+43200 -delete/);
 assert.match(backupScript, /capacity_limit.*80/);
 assert.match(backupScript, /LEVI_COMPOSE_PROJECT_NAME/);
 
@@ -39,6 +40,8 @@ assert.match(restoreScript, /Restored database reconciliation failed/);
 assert.match(restoreScript, /DELETE FROM sessions/);
 assert.match(restoreScript, /remaining_sessions.*!= "0"/s);
 assert.match(restoreScript, /LEVI_COMPOSE_PROJECT_NAME/);
+assert.match(restoreScript, /backup_root_real}\/weekly/);
+assert.match(restoreScript, /backup_root_real}\/daily/);
 
 const promoteScript = readFileSync(scriptPaths[2]!, "utf8");
 assert.match(promoteScript, /approval_reference/);
@@ -52,14 +55,28 @@ const hourlyTimer = readFileSync(
   ),
   "utf8",
 );
-const dailyTimer = readFileSync(
+const weeklyTimer = readFileSync(
   path.join(
     repositoryRoot,
-    "deploy/production/systemd/levi-backup-daily.timer",
+    "deploy/production/systemd/levi-backup-weekly.timer",
   ),
   "utf8",
 );
 assert.match(hourlyTimer, /OnCalendar=hourly/);
-assert.match(dailyTimer, /OnCalendar=\*-\*-\* 03:20:00/);
+assert.match(weeklyTimer, /OnCalendar=Mon \*-\*-\* 03:20:00/);
+assert.doesNotMatch(weeklyTimer, /OnCalendar=\*-\*-\* 03:20:00/);
+assert.equal(
+  existsSync(
+    path.join(
+      repositoryRoot,
+      "deploy/production/systemd/levi-backup-daily.timer",
+    ),
+  ),
+  false,
+);
+
+const rehearsalScript = readFileSync(scriptPaths[4]!, "utf8");
+assert.match(rehearsalScript, /production-backup\.sh" weekly/);
+assert.match(rehearsalScript, /backup_root}\/weekly/);
 
 console.log("Backup and restore configuration passed safety invariants.");

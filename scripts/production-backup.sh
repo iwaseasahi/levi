@@ -15,8 +15,8 @@ readonly database_name="${LEVI_DATABASE_NAME:-levi}"
 readonly database_user="${LEVI_DATABASE_USER:-levi_admin}"
 readonly capacity_limit="${LEVI_BACKUP_CAPACITY_PERCENT:-80}"
 
-if [[ "$backup_tier" != "hourly" && "$backup_tier" != "daily" ]]; then
-  echo "Usage: production-backup.sh hourly|daily" >&2
+if [[ "$backup_tier" != "hourly" && "$backup_tier" != "weekly" ]]; then
+  echo "Usage: production-backup.sh hourly|weekly" >&2
   exit 2
 fi
 if [[ "${EUID}" -ne 0 && "${LEVI_ALLOW_NON_ROOT_FOR_REHEARSAL:-false}" != "true" ]]; then
@@ -47,7 +47,7 @@ prepare_directory() {
 
 prepare_directory "$backup_root"
 prepare_directory "${backup_root}/hourly"
-prepare_directory "${backup_root}/daily"
+prepare_directory "${backup_root}/weekly"
 prepare_directory "${backup_root}/restore-proofs"
 
 readonly lock_directory="${backup_root}/.backup.lock"
@@ -108,7 +108,10 @@ printf '%s  %s\n' "$archive_hash" "$archive_name" >"${archive_path}.sha256"
 chmod 600 "$archive_path" "${archive_path}.sha256"
 
 find "${backup_root}/hourly" -type f -mmin +2880 -delete
-find "${backup_root}/daily" -type f -mmin +20160 -delete
+find "${backup_root}/weekly" -type f -mmin +43200 -delete
+if [[ -d "${backup_root}/daily" ]]; then
+  find "${backup_root}/daily" -type f -mmin +43200 -delete
+fi
 
 capacity_used="$(df -Pk "$backup_root" | awk 'NR == 2 {gsub("%", "", $5); print $5}')"
 if [[ ! "$capacity_used" =~ ^[0-9]+$ ]] || (( capacity_used >= capacity_limit )); then
