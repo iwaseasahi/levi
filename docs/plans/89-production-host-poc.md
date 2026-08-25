@@ -56,11 +56,31 @@ it fails before starting a container.
 
 ## Evidence checklist
 
-- [ ] exact commit and both immutable digests
-- [ ] remote image pull from the VPS
-- [ ] migration before application startup
-- [ ] readiness and container hardening
-- [ ] two synthetic church workflows and tenant isolation
-- [ ] latency, error rate, CPU, memory, disk, and DB connections
-- [ ] encrypted backup, isolated restore, zero restored sessions, measured RPO/RTO
-- [ ] PoC container, network, volume, and temporary-secret cleanup
+- [x] exact commit and both immutable digests
+- [x] remote image pull from the VPS
+- [x] migration before application startup
+- [x] readiness and container hardening
+- [x] two synthetic church workflows and tenant isolation
+- [x] latency, error rate, CPU, memory, disk, and DB connections
+- [x] encrypted backup, isolated restore, zero restored sessions, measured RPO/RTO
+- [x] PoC container, network, volume, and temporary-secret cleanup
+
+## VPS result
+
+The final rehearsal ran on the selected WebARENA Indigo 4 vCPU / 4 GB host at
+commit `c22190406b20f758f99e2e4639354f4e6c5f9d94`, using application and migration
+images pinned by SHA-256 digest.
+
+- 2 churches, 2 accounts, 166 requests, and 0 errors
+- tenant isolation passed; Chrome E2E separately covers the popup projection
+  interaction using the same audience route exercised by this workload
+- latency: p50 72.8 ms, p95 702.2 ms, maximum 941.1 ms
+- 9 database connections
+- application: 150.1 MiB, PostgreSQL: 54.79 MiB
+- encrypted archive: 62,012 bytes; backup filesystem usage: 7%
+- measured recovery-point age: 2 seconds; isolated restore: 2 seconds
+- 2 source sessions and 0 restored sessions
+
+The successful exit trap removed the disposable containers, network, volume,
+archive, and temporary private key. No production credential, production Bible
+dump, public port, DNS record, certificate, or production traffic was used.
