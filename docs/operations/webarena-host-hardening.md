@@ -87,10 +87,11 @@ sudo docker compose \
   --env-file /etc/levi/production.env \
   -f /opt/levi/deploy/production/compose.yaml \
   config --quiet
+sudo /opt/levi/scripts/check-production-secrets.sh
 sudo ss -lntup
 ```
 
-期待値は、環境ファイルが `600 root:root`、外部待受が SSH、HTTP、HTTPS だけであることです。デプロイ後も PostgreSQL は Compose の `private` 内部ネットワークにだけ接続し、ホストへポートを公開しません。
+期待値は、環境ファイルが `600 root:root`、secret検証が値を表示せず成功し、外部待受が SSH、HTTP、HTTPS だけであることです。デプロイ後も PostgreSQL は Compose の `private` 内部ネットワークにだけ接続し、ホストへポートを公開しません。
 
 ## 6. 定期確認
 
