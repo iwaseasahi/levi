@@ -5,7 +5,21 @@ repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 compose_file="${repository_root}/deploy/production/compose.yaml"
 environment_file="${repository_root}/deploy/production/production.env.example"
 project_name="levi-production-rehearsal"
-export LEVI_IMAGE="levi-production:rehearsal"
+application_image="${LEVI_IMAGE:-}"
+migration_image="${LEVI_MIGRATION_IMAGE:-}"
+
+if [[ -n "$application_image" || -n "$migration_image" ]]; then
+  if [[ ! "$application_image" =~ ^[^[:space:]]+@sha256:[a-f0-9]{64}$ ]] ||
+    [[ ! "$migration_image" =~ ^[^[:space:]]+@sha256:[a-f0-9]{64}$ ]]; then
+    echo "Remote rehearsal requires digest-pinned LEVI_IMAGE and LEVI_MIGRATION_IMAGE." >&2
+    exit 2
+  fi
+  readonly artifact_mode="remote"
+else
+  export LEVI_IMAGE="levi-production:rehearsal"
+  export LEVI_MIGRATION_IMAGE="levi-migration:rehearsal"
+  readonly artifact_mode="local"
+fi
 
 compose() {
   docker compose \
@@ -21,9 +35,14 @@ cleanup() {
 trap cleanup EXIT
 
 cleanup
-compose --profile migration build app migrate
-compose up --detach --wait postgres app
+if [[ "$artifact_mode" == "remote" ]]; then
+  compose --profile migration pull app migrate
+else
+  compose --profile migration build app migrate
+fi
+compose up --detach --wait postgres
 compose --profile migration run --rm migrate
+compose up --detach --wait app
 
 compose exec --no-TTY app node -e \
   "if(process.getuid?.()!==1000)throw new Error('app is not running as uid 1000')"
@@ -54,4 +73,4 @@ if [[ "$application_table_access" != "SET0" ]]; then
   exit 1
 fi
 
-echo "Production application, migration, and least-privilege PostgreSQL rehearsal passed."
+echo "Production application, migration, and least-privilege PostgreSQL rehearsal passed: artifact_mode=${artifact_mode}."
