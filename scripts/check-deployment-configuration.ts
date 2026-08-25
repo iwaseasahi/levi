@@ -24,6 +24,10 @@ const secretCheckScript = path.join(
   repositoryRoot,
   "scripts/check-production-secrets.sh",
 );
+const bibleImportScript = path.join(
+  repositoryRoot,
+  "scripts/production-bible-import.sh",
+);
 const domainScript = path.join(
   repositoryRoot,
   "scripts/check-production-domain.ts",
@@ -48,7 +52,7 @@ const baseEnvironment = {
 
 const syntax = spawnSync(
   "bash",
-  ["-n", deployScript, healthScript, secretCheckScript],
+  ["-n", deployScript, healthScript, secretCheckScript, bibleImportScript],
   { encoding: "utf8" },
 );
 assert.equal(syntax.status, 0, syntax.stderr);
@@ -114,6 +118,36 @@ assert.match(secretCheckSource, /ADMIN_BASIC_AUTH_PASSWORD_HASH/);
 assert.match(secretCheckSource, /PRIVATE KEY/);
 assert.match(secretCheckSource, /config --quiet/);
 assert.doesNotMatch(secretCheckSource, /set -x/);
+
+const bibleImportSource = readFileSync(bibleImportScript, "utf8");
+assert.match(bibleImportSource, /LEVI_IMPORT_APPROVAL_REFERENCE/);
+assert.match(bibleImportSource, /LEVI_IMPORT_SOURCE_SHA/);
+assert.match(bibleImportSource, /frozen on Sunday/);
+assert.match(bibleImportSource, /\/var\/lib\/levi-import/);
+assert.match(bibleImportSource, /ginmaku\.sql:ro/);
+assert.match(bibleImportSource, /production-backup\.sh/);
+assert.match(bibleImportSource, /run-production-database-bootstrap\.sh/);
+assert.match(bibleImportSource, /\.status == "unchanged"/);
+assert.match(bibleImportSource, /\.exact == true/);
+assert.doesNotMatch(bibleImportSource, /set -x/);
+
+const migrationDockerfile = readFileSync(
+  path.join(repositoryRoot, "Dockerfile.migrate.production"),
+  "utf8",
+);
+assert.match(migrationDockerfile, /scripts\/import-ginmaku-bible\.ts/);
+assert.match(
+  migrationDockerfile,
+  /scripts\/run-production-database-bootstrap\.sh/,
+);
+assert.match(migrationDockerfile, /scripts\/run-production-bible-import\.sh/);
+assert.match(migrationDockerfile, /pnpm db:generate/);
+
+const bibleRehearsalSource = readFileSync(
+  path.join(repositoryRoot, "scripts/rehearse-ginmaku-bible.ts"),
+  "utf8",
+);
+assert.match(bibleRehearsalSource, /compose\.development\.yaml/);
 
 const secretFixture = mkdtempSync(path.join(tmpdir(), "levi-secret-check."));
 try {

@@ -73,6 +73,34 @@ rehearsal, maintenance window, execution operator, rollback/forward-recovery
 choice, and post-import reconciliation owner. The rehearsal report's
 `productionExecuted: false` must never be treated as cutover approval.
 
+## Production immutable import
+
+Production does not install pnpm dependencies on the host and does not build an
+ad-hoc importer. The CI-built `levi-migrate` image retains Prisma migrate as its
+default entrypoint and also contains the existing import CLI. Place the approved
+dump directly below `/var/lib/levi-import` in a root-only directory, owned by
+container uid 1000 and root group with mode 400. The host path is mounted into
+the one-off migration container read-only; it is never copied into an image or
+the repository.
+
+After recording the immediate approval URL and exact source SHA-256, run:
+
+```bash
+sudo \
+  LEVI_IMPORT_SOURCE_SHA='<approved-sha256>' \
+  LEVI_IMPORT_APPROVAL_REFERENCE='https://github.com/iwaseasahi/levi/issues/278#issuecomment-NN' \
+  /opt/levi/scripts/production-bible-import.sh \
+  /var/lib/levi-import/ginmaku-production.sql
+```
+
+The command fails on Sunday in Asia/Tokyo, rejects any other source path,
+requires PostgreSQL to have no published host port, runs migrations and the
+idempotent foundation bootstrap, takes an encrypted backup before and after
+import, performs validate/dry-run/import/full reconciliation, and repeats the
+import to require `unchanged`. Root-only JSON reports below
+`/var/lib/levi-import/reports` contain counts and fingerprints but no Bible text.
+Do not redirect container output to an ordinary user-owned log.
+
 ## Failure recovery
 
 An import error leaves no partial catalog because all batches share one
