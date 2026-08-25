@@ -6,6 +6,7 @@ readonly repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly reconciliation_sql="${repository_root}/scripts/lib/backup-reconciliation.sql"
 readonly backup_tier="${1:-}"
 readonly compose_file="${LEVI_COMPOSE_FILE:-/opt/levi/deploy/production/compose.yaml}"
+readonly compose_project_name="${LEVI_COMPOSE_PROJECT_NAME:-}"
 readonly environment_file="${LEVI_ENV_FILE-/etc/levi/production.env}"
 readonly backup_root="${LEVI_BACKUP_ROOT:-/var/backups/levi}"
 readonly backup_certificate="${LEVI_BACKUP_CERTIFICATE:-/etc/levi/backup-recipient.crt}"
@@ -29,6 +30,9 @@ fi
 
 compose() {
   local -a arguments=(--file "$compose_file")
+  if [[ -n "$compose_project_name" ]]; then
+    arguments=(--project-name "$compose_project_name" "${arguments[@]}")
+  fi
   if [[ -n "$environment_file" ]]; then
     arguments=(--env-file "$environment_file" "${arguments[@]}")
   fi

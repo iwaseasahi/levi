@@ -44,6 +44,7 @@ references, not credentials.
 ```bash
 sudo \
   LEVI_RUN_SYNTHETIC_WORKLOAD=true \
+  LEVI_RUN_BACKUP_RESTORE=true \
   LEVI_IMAGE='ghcr.io/iwaseasahi/levi@sha256:<application-digest>' \
   LEVI_MIGRATION_IMAGE='ghcr.io/iwaseasahi/levi-migrate@sha256:<migration-digest>' \
   ./scripts/rehearse-production-compose.sh

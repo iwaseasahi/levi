@@ -55,12 +55,16 @@ assert.match(
 );
 assert.match(rehearsalSource, /compose --profile migration pull app migrate/);
 assert.match(rehearsalSource, /LEVI_RUN_SYNTHETIC_WORKLOAD/);
+assert.match(rehearsalSource, /LEVI_RUN_BACKUP_RESTORE/);
 assert.match(
   rehearsalSource,
   /production-workload\.mjs:\/app\/production-workload\.mjs:ro/,
 );
 assert.match(workloadSource, /synthetic-two-church/);
 assert.match(workloadSource, /tenantIsolation: "passed"/);
+assert.match(rehearsalSource, /production-backup\.sh/);
+assert.match(rehearsalSource, /production-restore\.sh/);
+assert.match(rehearsalSource, /restored_sessions=0/);
 const postgresStart = rehearsalSource.indexOf(
   "compose up --detach --wait postgres",
 );
