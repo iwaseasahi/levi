@@ -25,7 +25,7 @@ traffic is enabled:
   pass readiness and critical smoke checks, and make the go/no-go decision
   within 120 minutes;
 - an encrypted on-host database archive at least hourly, retained for 48 hours,
-  plus a daily archive retained for 14 days;
+  plus a weekly Monday archive retained for 30 days;
 - archive ownership and permissions that prevent the application container from
   reading, modifying, or deleting backups;
 - a successful restore into an isolated environment before first release and

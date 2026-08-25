@@ -4,6 +4,7 @@
 - Date: 2026-08-21
 - Decision owners: product owner and operations owner
 - Decision record: Issue #81
+- Recovery-policy amendment: Issue #297 (2026-08-26)
 - Supersedes: none
 - Superseded by: none
 
@@ -58,7 +59,8 @@ available:
   pass readiness and critical smoke checks, and make the go/no-go decision
   within 120 minutes;
 - hourly on-host database archives are retained for 48 hours;
-- daily on-host database archives are retained for 14 days.
+- weekly on-host database archives are created every Monday and retained for 30
+  days.
 
 VPS loss, disk loss, provider-wide loss, and Tokyo-region loss have no recovery
 objective. Provider operational backups are not treated as user restore points.

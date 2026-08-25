@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Levi encrypted weekly backups every Monday
+
+[Timer]
+OnCalendar=Mon *-*-* 03:20:00
+Persistent=true
+RandomizedDelaySec=10m
+Unit=levi-backup-weekly.service
+
+[Install]
+WantedBy=timers.target
