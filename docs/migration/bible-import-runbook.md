@@ -1,9 +1,10 @@
 # Ginmaku Bible import runbook
 
-This runbook prepares an import but does not authorize or execute a production
-change. Production database access, confirmation that the operator may display
-both translations, backup, execution, and rollback/forward-recovery approval
-remain human gates.
+This runbook documents the completed initial import and retains the local
+validation and disposable rehearsal procedures for reproducibility. It does not
+authorize a new production import. Production database access, confirmation
+that the operator may display both translations, backup, execution, and
+rollback/forward-recovery approval remain human gates.
 
 ## Safety contract
 
@@ -61,45 +62,21 @@ backup archive fingerprint, restored counts, and restored reconciliation. Keep
 the source dump and full transient report outside the repository. Commit only a
 reviewed anonymous summary and the report SHA-256.
 
-Before production import, record the target/environment, backup and restore
-test, exact checksum, expected anonymous counts/fingerprints, documented
-confirmation that the operator may display JSS3 and NKJV, human approval,
-maintenance/locking window, and post-import reconciliation.
+## Production import status
 
-Production import requires a human to approve all of the following immediately
-before execution: the exact source SHA-256, the documented display authorization
-confirmation, target database identity, fresh backup and successful restore
-rehearsal, maintenance window, execution operator, rollback/forward-recovery
-choice, and post-import reconciliation owner. The rehearsal report's
-`productionExecuted: false` must never be treated as cutover approval.
+The initial production Bible import and reconciliation are complete. Bible dump
+import is not part of an ordinary application deployment. The current
+`levi-migrate` image contains only the Prisma migration runtime and intentionally
+does not include the importer CLI or its container entrypoints.
 
-## Production immutable import
-
-Production does not install pnpm dependencies on the host and does not build an
-ad-hoc importer. The CI-built `levi-migrate` image retains Prisma migrate as its
-default entrypoint and also contains the existing import CLI. Place the approved
-dump directly below `/var/lib/levi-import` in a root-only directory, owned by
-container uid 1000 and root group with mode 400. The host path is mounted into
-the one-off migration container read-only; it is never copied into an image or
-the repository.
-
-After recording the immediate approval URL and exact source SHA-256, run:
-
-```bash
-sudo \
-  LEVI_IMPORT_SOURCE_SHA='<approved-sha256>' \
-  LEVI_IMPORT_APPROVAL_REFERENCE='https://github.com/iwaseasahi/levi/issues/278#issuecomment-NN' \
-  /opt/levi/scripts/production-bible-import.sh \
-  /var/lib/levi-import/ginmaku-production.sql
-```
-
-The command fails on Sunday in Asia/Tokyo, rejects any other source path,
-requires PostgreSQL to have no published host port, runs migrations and the
-idempotent foundation bootstrap, takes an encrypted backup before and after
-import, performs validate/dry-run/import/full reconciliation, and repeats the
-import to require `unchanged`. Root-only JSON reports below
-`/var/lib/levi-import/reports` contain counts and fingerprints but no Bible text.
-Do not redirect container output to an ordinary user-owned log.
+The three production import wrapper scripts remain in the repository only as an
+auditable starting point for a possible future re-import. They are dormant and
+must not be invoked with the current migration image. If a production re-import
+is ever required, create a separately scoped migration issue, pin the exact
+source checksum and a newly reviewed immutable importer image, repeat the
+disposable rehearsal and restore test, obtain explicit human approval, and
+document post-import reconciliation before changing production. The rehearsal
+report's `productionExecuted: false` must never be treated as cutover approval.
 
 ## Failure recovery
 
