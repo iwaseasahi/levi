@@ -6,6 +6,9 @@ readonly repository="iwaseasahi/levi"
 readonly workflow_path=".github/workflows/deploy-production.yml"
 readonly ssh_host_alias="${LEVI_PRODUCTION_SSH_ALIAS:-levi-system-production}"
 
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
 if [[ $# -ne 1 || ! "$1" =~ ^[0-9]+$ ]]; then
   echo "Usage: pnpm production:deploy:authorized -- RUN_ID" >&2
   exit 64

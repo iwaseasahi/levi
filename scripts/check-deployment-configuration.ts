@@ -214,6 +214,7 @@ assert.doesNotMatch(prepareSource, /ssh /);
 const deployReleaseSource = readFileSync(deployRelease, "utf8");
 assert.match(deployReleaseSource, /release_candidate_run_id/);
 assert.match(deployReleaseSource, /run-authorized-production-deploy\.sh/);
+assert.match(deployReleaseSource, /\$\{1:-\}.*==.*--/);
 assert.doesNotMatch(
   deployReleaseSource,
   /gh issue|approval_comment|release_issue/,
@@ -223,7 +224,46 @@ const authorizedSource = readFileSync(authorizedDeploy, "utf8");
 assert.match(authorizedSource, /\.schema_version == 4/);
 assert.match(authorizedSource, /authorization_run_url/);
 assert.match(authorizedSource, /ssh -o BatchMode=yes/);
+assert.match(authorizedSource, /\$\{1:-\}.*==.*--/);
 assert.doesNotMatch(authorizedSource, /issuecomment/);
+
+const releaseArgumentFixture = mkdtempSync(
+  path.join(tmpdir(), "levi-release-arguments."),
+);
+try {
+  const fakeGh = path.join(releaseArgumentFixture, "gh");
+  writeFileSync(
+    fakeGh,
+    `#!/usr/bin/env bash
+exit 70
+`,
+  );
+  chmodSync(fakeGh, 0o755);
+  const fixtureEnvironment = {
+    ...process.env,
+    PATH: `${releaseArgumentFixture}:${process.env.PATH ?? ""}`,
+  };
+  for (const arguments_ of [["123456"], ["--", "123456"]]) {
+    const accepted = spawnSync("bash", [deployRelease, ...arguments_], {
+      cwd: root,
+      encoding: "utf8",
+      env: fixtureEnvironment,
+    });
+    assert.equal(accepted.status, 70, accepted.stderr);
+    assert.doesNotMatch(accepted.stderr, /Usage:/);
+  }
+  for (const arguments_ of [[], ["--"], ["--", "invalid"], ["1", "2"]]) {
+    const rejected = spawnSync("bash", [deployRelease, ...arguments_], {
+      cwd: root,
+      encoding: "utf8",
+      env: fixtureEnvironment,
+    });
+    assert.equal(rejected.status, 64);
+    assert.match(rejected.stderr, /Usage:/);
+  }
+} finally {
+  rmSync(releaseArgumentFixture, { recursive: true, force: true });
+}
 
 const authorizationFixture = mkdtempSync(
   path.join(tmpdir(), "levi-deploy-authorization."),
@@ -297,6 +337,33 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
   assert.equal(authorized.status, 0, authorized.stderr);
   assert.match(readFileSync(capture, "utf8"), /actions\/runs\/123456/);
   assert.match(readFileSync(capture, "utf8"), /'none'/);
+
+  const authorizedWithSeparator = spawnSync(
+    "bash",
+    [authorizedDeploy, "--", `${runId}`],
+    {
+      cwd: root,
+      encoding: "utf8",
+      env: fixtureEnvironment,
+    },
+  );
+  assert.equal(
+    authorizedWithSeparator.status,
+    0,
+    authorizedWithSeparator.stderr,
+  );
+
+  const malformedArguments = spawnSync(
+    "bash",
+    [authorizedDeploy, "--", "invalid"],
+    {
+      cwd: root,
+      encoding: "utf8",
+      env: fixtureEnvironment,
+    },
+  );
+  assert.equal(malformedArguments.status, 64);
+  assert.match(malformedArguments.stderr, /Usage:/);
 
   writeFileSync(
     record,
