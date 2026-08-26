@@ -28,7 +28,7 @@ export async function sendAdminPasswordResetMail(input: PasswordResetMail) {
       "Levi管理画面のパスワードを設定または再設定するには、次のURLを開いてください。",
       input.resetUrl,
       "",
-      "このURLの有効期限は1時間です。心当たりがない場合は、このメールを破棄してください。",
+      "このURLの有効期限は24時間です。心当たりがない場合は、このメールを破棄してください。",
     ].join("\n"),
   });
 }

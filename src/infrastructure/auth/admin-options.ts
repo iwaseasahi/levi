@@ -7,6 +7,7 @@ import {
 } from "./options";
 
 export const ADMIN_AUTH_BASE_PATH = "/api/admin-auth";
+export const ADMIN_PASSWORD_RESET_EXPIRES_IN_SECONDS = 24 * 60 * 60;
 
 export function buildAdminAuthOptions(
   config: AdminAuthRuntimeConfig,
@@ -31,7 +32,7 @@ export function buildAdminAuthOptions(
       autoSignIn: false,
       minPasswordLength: 12,
       maxPasswordLength: 128,
-      resetPasswordTokenExpiresIn: 60 * 60,
+      resetPasswordTokenExpiresIn: ADMIN_PASSWORD_RESET_EXPIRES_IN_SECONDS,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) =>
         callbacks?.sendResetPassword?.({
