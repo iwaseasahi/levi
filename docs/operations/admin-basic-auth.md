@@ -60,6 +60,35 @@ The row remains `INVITED` until the password change completes, then becomes
 current session; suspension, deletion, or expiry is rejected on the next
 request.
 
+## Recover a lost individual administrator password
+
+The one-time temporary password cannot be recovered because Levi stores only
+its password hash. If no individual administrator session is available, use
+the SSH and `sudo` protected recovery path. Do not add a Basic-only bypass to
+the web UI.
+
+First, choose a new temporary password and generate its hash on the operator
+Mac from an interactive terminal:
+
+```sh
+mise exec -- pnpm admin:hash-password
+```
+
+Keep the entered password in the approved password manager. Copy only the
+printed `ADMIN_BASIC_AUTH_PASSWORD_HASH=...` assignment, then run:
+
+```sh
+ssh -t levi-system-production \
+  'sudo /opt/levi/scripts/reset-production-admin-user-password.sh'
+```
+
+Enter the target login ID and paste the generated hash at the hidden prompt.
+The command accepts only an existing `INVITED` or `ACTIVE` administrator,
+creates an encrypted operational backup before the write, restores the account
+to `INVITED`, requires a password change, and revokes all of that
+administrator's existing sessions. The `BOOTSTRAP` identity and suspended
+administrators cannot be reset through this command.
+
 ## Deployment prerequisite
 
 Before deploying the migration that requires individual login, create at least
