@@ -187,11 +187,6 @@ an auditable identity and has no individual Better Auth account. `INVITED` rows
 have invitation metadata and a credential in `admin_accounts`. Admin users never
 have Church memberships and cannot authenticate through the Church auth realm.
 
-The physical `login_id` column is temporarily retained as nullable rollback
-compatibility after the email-login migration. Application code neither reads
-nor writes it; a later forward migration removes the column and its legacy
-index after the rollback window.
-
 ### `admin_accounts`
 
 Better Auth credential records for administrator identities. The table mirrors

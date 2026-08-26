@@ -351,4 +351,24 @@ describe("auth and tenant constraints", () => {
       ]),
     );
   });
+
+  it("does not retain the deprecated administrator login identifier", async () => {
+    const columns = await prisma.$queryRaw<Array<{ name: string }>>`
+      SELECT column_name AS name
+      FROM information_schema.columns
+      WHERE table_schema = current_schema()
+        AND table_name = 'admin_users'
+    `;
+    const indexes = await prisma.$queryRaw<Array<{ name: string }>>`
+      SELECT indexname AS name
+      FROM pg_indexes
+      WHERE schemaname = current_schema()
+        AND tablename = 'admin_users'
+    `;
+
+    expect(columns.map(({ name }) => name)).not.toContain("login_id");
+    expect(indexes.map(({ name }) => name)).not.toContain(
+      "admin_users_login_id_uk",
+    );
+  });
 });
