@@ -1,0 +1,9 @@
+{
+  "name": "@levi/production-migration",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "prisma": "7.9.1"
+  }
+}

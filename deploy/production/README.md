@@ -6,7 +6,7 @@
 
 - `compose.yaml`: Caddy、Levi、PostgreSQL の実行定義
 - `../../Dockerfile.production`: Levi applicationのproduction image定義
-- `../../Dockerfile.migrate.production`: Prisma migrationを既定動作とし、承認済みdump向けの既存Bible import CLIも同梱するproduction image定義
+- `../../Dockerfile.migrate.production`: Prisma schema migrationだけを実行する最小production image定義。完了済みのBible import CLIや開発依存は同梱しない
 - `Caddyfile`: TLS 自動取得、リバースプロキシ、セキュリティヘッダー
 - `domain.json`: 選定済みの公開domain、canonical origin、DNS providerの非secret設定
 - `production.env.example`: シークレットを含まない設定例

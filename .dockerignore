@@ -7,6 +7,8 @@
 !.env.example
 coverage
 deploy
+!deploy/migration
+!deploy/migration/**
 docs
 node_modules
 playwright-report

@@ -79,8 +79,24 @@ compose() {
     docker compose --env-file "$environment_file" --file "$compose_file" "$@"
 }
 
-docker pull "$application_image"
-docker pull "$migration_image"
+echo "Pulling approved application and migration images in parallel."
+docker pull "$application_image" &
+readonly application_pull_pid=$!
+docker pull "$migration_image" &
+readonly migration_pull_pid=$!
+pull_failed=false
+if ! wait "$application_pull_pid"; then
+  echo "Failed to pull the approved application image." >&2
+  pull_failed=true
+fi
+if ! wait "$migration_pull_pid"; then
+  echo "Failed to pull the approved migration image." >&2
+  pull_failed=true
+fi
+if [[ "$pull_failed" == "true" ]]; then
+  exit 1
+fi
+echo "Approved application and migration images are available locally."
 for image in "$application_image" "$migration_image"; do
   image_commit="$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$image")"
   if [[ "$image_commit" != "$deploy_commit" ]]; then
