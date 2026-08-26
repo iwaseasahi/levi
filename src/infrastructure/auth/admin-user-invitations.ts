@@ -6,13 +6,16 @@ import {
   type InviteAdminUserStore,
 } from "@/application/admin/invite-admin-user";
 import { generateTemporaryPassword } from "@/application/admin/temporary-password";
+import { getAdminAuthRuntimeConfig } from "@/config/env";
 import { canAdminUserManagePlatform } from "@/domain/admin/admin-user";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/infrastructure/database/client";
 import { runWithSerializableRetry } from "@/infrastructure/database/serializable-retry";
+import { adminAuth } from "./admin-server";
 
 export interface AdminUserSummary {
   createdAt: Date;
+  email: string;
   id: string;
   loginId: string;
   name: string;
@@ -30,18 +33,27 @@ function store(transaction: Prisma.TransactionClient): InviteAdminUserStore {
     },
     async create(input) {
       try {
-        return await transaction.adminUser.create({
+        const adminUser = await transaction.adminUser.create({
           data: {
+            email: input.email,
             invitedAt: new Date(),
             invitedByAdminUserId: input.invitedByAdminUserId,
             loginId: input.loginId,
-            mustChangePassword: true,
             name: input.name,
-            passwordHash: input.passwordHash,
             status: "INVITED",
           },
-          select: { id: true, loginId: true, name: true },
+          select: { email: true, id: true, loginId: true, name: true },
         });
+        await transaction.adminAccount.create({
+          data: {
+            accountId: adminUser.id,
+            issuer: "local:credential",
+            password: input.passwordHash,
+            providerId: "credential",
+            userId: adminUser.id,
+          },
+        });
+        return adminUser;
       } catch (error) {
         if (
           error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -54,17 +66,38 @@ function store(transaction: Prisma.TransactionClient): InviteAdminUserStore {
   };
 }
 
-export const inviteAdminUser = createAdminUserInviter({
-  generatePassword: generateTemporaryPassword,
-  hashPassword,
-  runTransaction(operation) {
-    return runWithSerializableRetry(() =>
-      prisma.$transaction((transaction) => operation(store(transaction)), {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      }),
-    );
+export function createAdminUserInvitationService(
+  sendInvitation: (email: string) => Promise<void>,
+) {
+  return createAdminUserInviter({
+    generatePassword: generateTemporaryPassword,
+    hashPassword,
+    async removeUnsentInvitation(adminUserId) {
+      await prisma.adminUser.deleteMany({
+        where: { id: adminUserId, status: "INVITED" },
+      });
+    },
+    sendInvitation,
+    runTransaction(operation) {
+      return runWithSerializableRetry(() =>
+        prisma.$transaction((transaction) => operation(store(transaction)), {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        }),
+      );
+    },
+  });
+}
+
+export const inviteAdminUser = createAdminUserInvitationService(
+  async (email) => {
+    await adminAuth.api.requestPasswordReset({
+      body: {
+        email,
+        redirectTo: `${getAdminAuthRuntimeConfig().baseURL}/admin/reset-password`,
+      },
+    });
   },
-});
+);
 
 export function listAdminUsers(): Promise<AdminUserSummary[]> {
   return prisma.adminUser.findMany({
@@ -73,6 +106,7 @@ export function listAdminUsers(): Promise<AdminUserSummary[]> {
       createdAt: true,
       id: true,
       loginId: true,
+      email: true,
       name: true,
       status: true,
     },

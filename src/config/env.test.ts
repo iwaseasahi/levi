@@ -4,6 +4,7 @@ import {
   getDatabaseUrl,
   parseAdminBasicAuthConfig,
   parseAuthRuntimeConfig,
+  parseMailRuntimeConfig,
   parseNodeEnvironment,
 } from "./env";
 
@@ -15,6 +16,67 @@ afterEach(() => {
   } else {
     process.env.DATABASE_URL = originalDatabaseUrl;
   }
+});
+
+describe("parseMailRuntimeConfig", () => {
+  it("accepts unauthenticated Mailpit in local development", () => {
+    expect(
+      parseMailRuntimeConfig(
+        {
+          from: "levi-system@localhost.test",
+          host: "127.0.0.1",
+          password: undefined,
+          port: "1125",
+          secure: "false",
+          user: undefined,
+        },
+        "development",
+      ),
+    ).toEqual({
+      from: "levi-system@localhost.test",
+      host: "127.0.0.1",
+      port: 1125,
+      secure: false,
+    });
+  });
+
+  it("accepts authenticated Gmail submission in production", () => {
+    expect(
+      parseMailRuntimeConfig(
+        {
+          from: "levi-system@gmail.com",
+          host: "smtp.gmail.com",
+          password: "gmail-app-password",
+          port: "587",
+          secure: "false",
+          user: "levi-system@gmail.com",
+        },
+        "production",
+      ),
+    ).toMatchObject({ host: "smtp.gmail.com", port: 587, secure: false });
+  });
+
+  it.each([
+    [{ host: "mail.example.com" }, "authenticated Gmail"],
+    [{ port: "465", secure: "true" }, "authenticated Gmail"],
+    [{ password: undefined }, "set together"],
+    [{ secure: "sometimes" }, "true or false"],
+  ])("rejects unsafe mail configuration", (overrides, message) => {
+    expect(() =>
+      parseMailRuntimeConfig(
+        {
+          from: "levi-system@gmail.com",
+          host: "smtp.gmail.com",
+          password: "gmail-app-password",
+          port: "587",
+          secure: "false",
+          user: "levi-system@gmail.com",
+          ...overrides,
+        },
+        "production",
+      ),
+    ).toThrow(message);
+  });
 });
 
 describe("parseAdminBasicAuthConfig", () => {

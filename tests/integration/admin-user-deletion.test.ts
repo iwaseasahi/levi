@@ -19,10 +19,9 @@ async function clear() {
 async function createAdmin(status: "ACTIVE" | "INVITED" = "ACTIVE") {
   return prisma.adminUser.create({
     data: {
+      email: `${namespace}${randomUUID()}@example.com`,
       loginId: `${namespace}${randomUUID()}`,
-      mustChangePassword: status === "INVITED",
       name: "Deletion test administrator",
-      passwordHash: "synthetic",
       status,
     },
   });
@@ -38,20 +37,19 @@ describe("admin user deletion", () => {
     const target = await createAdmin();
     const invitee = await prisma.adminUser.create({
       data: {
+        email: `${namespace}${randomUUID()}@example.com`,
         invitedAt: new Date(),
         invitedByAdminUserId: target.id,
         loginId: `${namespace}${randomUUID()}`,
-        mustChangePassword: true,
         name: "Preserved invitee",
-        passwordHash: "synthetic",
         status: "INVITED",
       },
     });
     await prisma.adminSession.create({
       data: {
-        adminUserId: target.id,
+        userId: target.id,
         expiresAt: new Date(Date.now() + 60_000),
-        tokenHash: "a".repeat(64),
+        token: "a".repeat(64),
       },
     });
 
@@ -61,7 +59,7 @@ describe("admin user deletion", () => {
       prisma.adminUser.findUnique({ where: { id: target.id } }),
     ).resolves.toBeNull();
     await expect(
-      prisma.adminSession.count({ where: { adminUserId: target.id } }),
+      prisma.adminSession.count({ where: { userId: target.id } }),
     ).resolves.toBe(0);
     await expect(
       prisma.adminUser.findUniqueOrThrow({ where: { id: invitee.id } }),

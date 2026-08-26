@@ -9,6 +9,17 @@ export interface AuthRuntimeConfig {
   nodeEnvironment: NodeEnvironment;
 }
 
+export type AdminAuthRuntimeConfig = AuthRuntimeConfig;
+
+export interface MailRuntimeConfig {
+  from: string;
+  host: string;
+  password?: string;
+  port: number;
+  secure: boolean;
+  user?: string;
+}
+
 export interface AdminBasicAuthConfig {
   passwordHash: string;
   username: string;
@@ -152,6 +163,82 @@ export function getAuthRuntimeConfig(): AuthRuntimeConfig {
       secret: process.env.BETTER_AUTH_SECRET,
       baseURL: process.env.BETTER_AUTH_BASE_URL,
       trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS,
+    },
+    env.nodeEnv,
+  );
+}
+
+export function getAdminAuthRuntimeConfig(): AdminAuthRuntimeConfig {
+  return parseAuthRuntimeConfig(
+    {
+      secret:
+        process.env.ADMIN_BETTER_AUTH_SECRET ??
+        (env.nodeEnv === "production"
+          ? undefined
+          : process.env.BETTER_AUTH_SECRET),
+      baseURL: process.env.BETTER_AUTH_BASE_URL,
+      trustedOrigins: process.env.BETTER_AUTH_TRUSTED_ORIGINS,
+    },
+    env.nodeEnv,
+  );
+}
+
+export function parseMailRuntimeConfig(
+  values: {
+    from: string | undefined;
+    host: string | undefined;
+    password: string | undefined;
+    port: string | undefined;
+    secure: string | undefined;
+    user: string | undefined;
+  },
+  nodeEnvironment: NodeEnvironment,
+): MailRuntimeConfig {
+  const host = values.host?.trim();
+  const from = values.from?.trim();
+  const port = Number(values.port ?? "");
+  if (!host) throw new Error("SMTP_HOST is required");
+  if (!from || !/^\S+@\S+\.\S+$/.test(from))
+    throw new Error("MAIL_FROM must be an email address");
+  if (!Number.isInteger(port) || port < 1 || port > 65_535)
+    throw new Error("SMTP_PORT is invalid");
+  if (!["true", "false"].includes(values.secure ?? "false"))
+    throw new Error("SMTP_SECURE must be true or false");
+  const user = values.user?.trim() || undefined;
+  const password = values.password || undefined;
+  if ((user && !password) || (!user && password))
+    throw new Error("SMTP_USER and SMTP_PASSWORD must be set together");
+  if (nodeEnvironment === "production") {
+    if (
+      host !== "smtp.gmail.com" ||
+      port !== 587 ||
+      values.secure !== "false" ||
+      !user ||
+      !password
+    )
+      throw new Error(
+        "Production SMTP must use authenticated Gmail on port 587",
+      );
+  }
+  return {
+    from,
+    host,
+    port,
+    secure: values.secure === "true",
+    ...(password ? { password } : {}),
+    ...(user ? { user } : {}),
+  };
+}
+
+export function getMailRuntimeConfig(): MailRuntimeConfig {
+  return parseMailRuntimeConfig(
+    {
+      from: process.env.MAIL_FROM,
+      host: process.env.SMTP_HOST,
+      password: process.env.SMTP_PASSWORD,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_SECURE,
+      user: process.env.SMTP_USER,
     },
     env.nodeEnv,
   );

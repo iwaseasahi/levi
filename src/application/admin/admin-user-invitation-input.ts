@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 const schema = z.object({
+  email: z
+    .string()
+    .trim()
+    .pipe(z.email("有効なメールアドレスを入力してください。"))
+    .transform((value) => value.toLowerCase()),
   loginId: z
     .string()
     .trim()
@@ -24,6 +29,7 @@ export type AdminUserInvitationFieldErrors = Partial<
 >;
 
 export function parseAdminUserInvitationInput(input: {
+  email: unknown;
   loginId: unknown;
   name: unknown;
 }) {

@@ -6,8 +6,8 @@ must not treat “signed in” as permission to perform every action.
 
 ADR 0006 selects Better Auth with revocable PostgreSQL sessions for church
 users. ADR 0008 protects the administration entry with HTTPS Basic
-authentication, ADR 0009 stores its identities in `admin_users`, and ADR 0010
-adds revocable database sessions inside the Basic boundary. Levi
+authentication, ADR 0009 stores its identities in `admin_users`, and ADR 0012
+uses a dedicated Better Auth realm inside the Basic boundary. Levi
 remains responsible for every authorization decision.
 
 The implemented boundary follows these rules:
@@ -26,8 +26,8 @@ The implemented boundary follows these rules:
 - keep public sign-up disabled and account creation behind the platform-operator
   use case;
 - hash passwords with Better Auth's `scrypt`, revoke all sessions after
-  administrator reset/suspension, force a user-selected password after a
-  temporary password, and never log their secret values;
+  administrator password reset/suspension, require a one-hour email setup link
+  for invitations, and never log secret values;
 - use exact trusted origins, host-only secure cookies, database-backed rate
   limits, and no initial session cookie cache; and
 - record security-relevant actions without recording credentials, tokens, or
@@ -37,13 +37,12 @@ The `/admin` route is challenged by Proxy. The login page then requires an
 individual `admin_users` credential, and every protected page and administration
 Server Action independently repeats Basic and individual-session verification.
 A valid Basic credential maps only to the deterministic bootstrap admin user,
-which has no Better Auth account or individual session. The configured password is a
+which has no individual Better Auth account or session. The configured password is a
 Better Auth `scrypt` verifier, never plaintext. Five failures per 60 seconds are
 limited globally in PostgreSQL, and missing configuration or storage fails
-closed. Individual login has a separate five-per-minute limit keyed by a digest
-of the normalized login ID. Its host-only, HttpOnly, SameSite=Lax cookie contains
-the raw opaque token; `admin_sessions` stores only the SHA-256 digest and fixed
-30-day expiry. Basic authentication is permitted only behind the production
+closed. Individual Better Auth login is independently database-rate-limited.
+Its host-only, HttpOnly, SameSite=Lax cookie maps to a dedicated
+`admin_sessions` row with rolling 30-day expiry. Basic authentication is permitted only behind the production
 HTTPS edge. See [`../operations/admin-basic-auth.md`](../operations/admin-basic-auth.md).
 
 Every protected capability needs separate automated cases for unauthenticated,
@@ -69,9 +68,9 @@ fixtures.
   at most once per day.
 - Logout revokes the current session. Administrator reset, suspension, and
   explicit revoke-all revoke every applicable session.
-- Administrator reset produces a generated temporary password visible once and
-  sets a persistent `must change password` state. A temporary-password session
-  can perform only password change and logout.
+- Administrator invitation and self-service reset use one-hour email links.
+  Successful setup/reset activates an invited identity and revokes existing
+  administrator sessions.
 - Expired session rows are removed on a bounded schedule; they are not retained
   as an authentication history.
 

@@ -60,13 +60,13 @@ assert(
 
 assert(
   packageJson.scripts?.["db:up:dev"] ===
-    "docker compose --file compose.development.yaml up -d --wait postgres",
-  "local setup must target only the development PostgreSQL service",
+    "docker compose --file compose.development.yaml up -d --wait mailpit postgres",
+  "local setup must target Mailpit and only the development PostgreSQL service",
 );
 assert(
   packageJson.scripts?.["db:stop:dev"] ===
-    "docker compose --file compose.development.yaml stop postgres",
-  "local stop must preserve data and target only development PostgreSQL",
+    "docker compose --file compose.development.yaml stop mailpit postgres",
+  "local stop must preserve data and target Mailpit plus development PostgreSQL",
 );
 assert(
   compose.startsWith("name: levi\n"),
@@ -74,7 +74,7 @@ assert(
 );
 assert(
   packageJson.scripts?.["db:up"] ===
-    "docker compose --file compose.development.yaml up -d --wait postgres postgres-test" &&
+    "docker compose --file compose.development.yaml up -d --wait mailpit postgres postgres-test" &&
     packageJson.scripts?.["db:down"] ===
       "docker compose --file compose.development.yaml down",
   "development and test database commands must name compose.development.yaml explicitly",

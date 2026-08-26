@@ -112,10 +112,9 @@ describe("auth and tenant constraints", () => {
     await prisma.adminUser.create({
       data: {
         id,
+        email: "test.database.admin@example.com",
         loginId: "test.database.admin",
-        mustChangePassword: false,
         name: "Test Administrator",
-        passwordHash: "synthetic-hash",
         status: "ACTIVE",
       },
     });
@@ -124,9 +123,9 @@ describe("auth and tenant constraints", () => {
     await expect(
       prisma.adminUser.create({
         data: {
+          email: "test.database.other-admin@example.com",
           loginId: "TEST.DATABASE.ADMIN",
           name: "Duplicate Administrator",
-          passwordHash: "synthetic-hash",
           status: "INVITED",
           invitedAt: new Date(),
         },

@@ -1,33 +1,39 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { PasswordInput } from "@/app/password-input";
-import type { AdminLoginState } from "./auth-actions";
+import { adminAuthClient } from "@/infrastructure/auth/admin-client";
 
-export function AdminLoginForm({
-  action,
-}: {
-  action: (
-    state: AdminLoginState,
-    formData: FormData,
-  ) => Promise<AdminLoginState>;
-}) {
-  const [state, formAction, pending] = useActionState(action, {
-    status: "idle",
-  });
+export function AdminLoginForm() {
+  const [message, setMessage] = useState<string>();
+  const [pending, setPending] = useState(false);
   const feedback = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  useEffect(() => {
-    if (state.status === "error") feedback.current?.focus();
-    if (state.status === "success") {
-      router.replace(state.destination);
-      router.refresh();
+
+  async function submit(formData: FormData) {
+    setPending(true);
+    setMessage(undefined);
+    const result = await adminAuthClient.signIn.username({
+      username: String(formData.get("loginId") ?? "")
+        .trim()
+        .toLowerCase(),
+      password: String(formData.get("password") ?? ""),
+      rememberMe: true,
+    });
+    if (result.error) {
+      setPending(false);
+      setMessage("ログインIDまたはパスワードを確認してください。");
+      requestAnimationFrame(() => feedback.current?.focus());
+      return;
     }
-  }, [router, state]);
+    router.replace("/admin");
+    router.refresh();
+  }
+
   return (
-    <form action={formAction} className="auth-form">
+    <form action={submit} className="auth-form">
       <fieldset disabled={pending}>
         <legend className="sr-only">管理者ログイン</legend>
         <label htmlFor="admin-login-id">ログインID</label>
@@ -42,7 +48,7 @@ export function AdminLoginForm({
           autoComplete="current-password"
           id="admin-login-password"
           label="パスワード"
-          maxLength={256}
+          maxLength={128}
           name="password"
           required
         />
@@ -50,14 +56,14 @@ export function AdminLoginForm({
           {pending ? "ログイン中…" : "ログイン"}
         </button>
       </fieldset>
-      {state.status === "error" ? (
+      {message ? (
         <div
           className="notice notice-error"
           ref={feedback}
           role="alert"
           tabIndex={-1}
         >
-          {state.message}
+          {message}
         </div>
       ) : null}
     </form>

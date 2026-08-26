@@ -2,7 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 import { AdminUserInvitationDuplicateError } from "./invite-admin-user";
 import { createInviteAdminUserController } from "./invite-admin-user-controller";
 
-const input = { loginId: "next.admin", name: "次の管理者" };
+const input = {
+  email: "next.admin@example.com",
+  loginId: "next.admin",
+  name: "次の管理者",
+};
 
 describe("createInviteAdminUserController", () => {
   it("reauthenticates before mutation", async () => {
@@ -20,7 +24,7 @@ describe("createInviteAdminUserController", () => {
     expect(inviteAdminUser).not.toHaveBeenCalled();
   });
 
-  it("returns the one-time credential after success", async () => {
+  it("returns the invited administrator after sending email", async () => {
     const controller = createInviteAdminUserController({
       getOperatorAccess: vi
         .fn()
@@ -28,15 +32,13 @@ describe("createInviteAdminUserController", () => {
       inviteAdminUser: vi.fn().mockResolvedValue({
         adminUserId: "admin-2",
         ...input,
-        temporaryPassword: "t".repeat(24),
       }),
       recordEvent: vi.fn(),
     });
     await expect(controller(new Headers(), input)).resolves.toEqual({
       ...input,
-      message: "管理者を招待しました。",
+      message: "管理者へ招待メールを送信しました。",
       status: "success",
-      temporaryPassword: "t".repeat(24),
     });
   });
 

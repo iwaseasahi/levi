@@ -8,9 +8,10 @@ with reproducible validation as the basis for accepting changes.
 
 - [mise](https://mise.jdx.dev/) (Node.js 24.19.0 is pinned in `mise.toml`)
 - pnpm 11.19.0 (see `package.json`)
-- Docker with Compose (for local PostgreSQL)
+- Docker with Compose (for local PostgreSQL and Mailpit)
 
-Local PostgreSQL is defined in `compose.development.yaml`. Production uses the
+Local PostgreSQL and the local-only Mailpit mail catcher are defined in
+`compose.development.yaml`. Production uses the
 separate `deploy/production/compose.yaml`, `Dockerfile.production`, and
 `Dockerfile.migrate.production`; the production definitions are not used by
 the normal `mise run dev` workflow.
@@ -30,12 +31,15 @@ mise run dev
 
 `mise run setup` installs locked dependencies, creates `.env` when absent (or
 adds only missing `.env.example` keys without replacing existing values), starts
-only the development PostgreSQL service, generates the Prisma Client, applies
+the development PostgreSQL and Mailpit services, generates the Prisma Client, applies
 migrations, and runs the deterministic seed. It is safe to run again and does
 not reset the database. The fixed local Compose project name also lets repository
 worktrees reuse this development database instead of competing for its port.
 
 Open <http://localhost:3000> for the application shell and
+<http://localhost:8026> for the Mailpit inbox. Local administrator invitations
+and password-reset mail are captured by Mailpit and are never delivered to an
+external recipient. Also open
 <http://localhost:3000/api/health> for process liveness,
 <http://localhost:3000/api/ready> for traffic readiness, and
 <http://localhost:3000/api/health/database> for focused database diagnostics.
@@ -64,8 +68,8 @@ pnpm typecheck    # Next.js route types and TypeScript
 pnpm test         # unit and component tests
 pnpm build        # production build
 pnpm check        # all currently available required checks
-pnpm db:up        # start development and test PostgreSQL instances
-pnpm db:up:dev    # start only the development PostgreSQL instance
+pnpm db:up        # start Mailpit and development/test PostgreSQL instances
+pnpm db:up:dev    # start Mailpit and the development PostgreSQL instance
 pnpm db:check     # migrate, detect drift, seed, and query the configured DB
 pnpm db:down      # stop the local PostgreSQL instances
 pnpm security:check  # production dependency and license gates

@@ -68,10 +68,17 @@ readonly shadow_database_url="$(value_for "$production_environment" MIGRATION_SH
 readonly postgres_password="$(value_for "$production_environment" POSTGRES_PASSWORD)"
 readonly app_password="$(value_for "$production_environment" LEVI_APP_DATABASE_PASSWORD)"
 readonly better_auth_secret="$(value_for "$production_environment" BETTER_AUTH_SECRET)"
+readonly admin_better_auth_secret="$(value_for "$production_environment" ADMIN_BETTER_AUTH_SECRET)"
 readonly admin_hash="$(value_for "$production_environment" ADMIN_BASIC_AUTH_PASSWORD_HASH)"
 readonly admin_username="$(value_for "$production_environment" ADMIN_BASIC_AUTH_USERNAME)"
 readonly app_image="$(value_for "$production_environment" LEVI_IMAGE)"
 readonly migration_image="$(value_for "$production_environment" LEVI_MIGRATION_IMAGE)"
+readonly smtp_host="$(value_for "$production_environment" SMTP_HOST)"
+readonly smtp_port="$(value_for "$production_environment" SMTP_PORT)"
+readonly smtp_secure="$(value_for "$production_environment" SMTP_SECURE)"
+readonly smtp_user="$(value_for "$production_environment" SMTP_USER)"
+readonly smtp_password="$(value_for "$production_environment" SMTP_PASSWORD)"
+readonly mail_from="$(value_for "$production_environment" MAIL_FROM)"
 
 [[ "$(value_for "$production_environment" LEVI_DOMAIN)" == "levi-system.com" ]] || fail
 [[ "$(value_for "$production_environment" NODE_ENV)" == "production" ]] || fail
@@ -83,6 +90,8 @@ readonly migration_image="$(value_for "$production_environment" LEVI_MIGRATION_I
 [[ "$admin_username" =~ ^[A-Za-z0-9._@-]{3,64}$ ]] || fail
 [[ "$admin_hash" =~ ^[a-f0-9]{32}:[a-f0-9]{128}$ ]] || fail
 [[ "$better_auth_secret" =~ ^[a-f0-9]{64,128}$ ]] || fail
+[[ "$admin_better_auth_secret" =~ ^[a-f0-9]{64,128}$ ]] || fail
+[[ "$admin_better_auth_secret" != "$better_auth_secret" ]] || fail
 [[ "$postgres_password" =~ ^[a-f0-9]{64}$ ]] || fail
 [[ "$app_password" =~ ^[a-f0-9]{64}$ ]] || fail
 [[ "$postgres_password" != "$app_password" ]] || fail
@@ -91,6 +100,12 @@ readonly migration_image="$(value_for "$production_environment" LEVI_MIGRATION_I
 [[ "$app_database_url" == "postgresql://levi_app:${app_password}@postgres:5432/levi?schema=public" ]] || fail
 [[ "$migration_database_url" == "postgresql://levi_admin:${postgres_password}@postgres:5432/levi?schema=public" ]] || fail
 [[ "$shadow_database_url" == "postgresql://levi_admin:${postgres_password}@postgres:5432/levi_shadow?schema=public" ]] || fail
+[[ "$smtp_host" == "smtp.gmail.com" ]] || fail
+[[ "$smtp_port" == "587" ]] || fail
+[[ "$smtp_secure" == "false" ]] || fail
+[[ "$smtp_user" == "levi-system@gmail.com" ]] || fail
+[[ "$mail_from" == "$smtp_user" ]] || fail
+[[ "$smtp_password" =~ ^[^[:space:]]{16,128}$ ]] || fail
 
 [[ "$(value_for "$backup_environment" LEVI_ENV_FILE)" == "$production_environment" ]] || fail
 [[ "$(value_for "$backup_environment" LEVI_BACKUP_CERTIFICATE)" == "$backup_certificate" ]] || fail

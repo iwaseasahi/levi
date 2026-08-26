@@ -30,10 +30,9 @@ async function createOperator() {
   await prisma.adminUser.create({
     data: {
       id: userId,
+      email: `${namespace}.${userId}@example.com`,
       loginId: `${namespace}.${userId}`,
-      mustChangePassword: false,
       name: "Test Administrator",
-      passwordHash: "synthetic-hash",
       status: "ACTIVE",
     },
   });

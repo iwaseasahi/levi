@@ -3,190 +3,125 @@ import { hashPassword } from "better-auth/crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
-  ADMIN_SESSION_COOKIE,
-  hashAdminSessionToken,
-} from "@/domain/admin/admin-session";
-import {
-  changeAdminPassword,
-  getAdminSessionAccess,
-  loginAdminUser,
-  logoutAdminSession,
-} from "@/infrastructure/auth/admin-session";
+  activateInvitedAdminUserAfterPasswordReset,
+  adminAuth,
+} from "@/infrastructure/auth/admin-server";
+import { getAdminSessionAccess } from "@/infrastructure/auth/admin-session";
 import { prisma } from "@/infrastructure/database/client";
 
 const namespace = "test.admin-session.";
 const password = "valid-admin-password";
+const origin = "http://localhost:3000";
 
 async function clear() {
   await prisma.adminUser.deleteMany({
-    where: {
-      invitedByAdminUserId: { not: null },
-      loginId: { startsWith: namespace },
-    },
-  });
-  await prisma.adminUser.deleteMany({
     where: { loginId: { startsWith: namespace } },
   });
-  await prisma.rateLimit.deleteMany();
+  await prisma.adminRateLimit.deleteMany();
 }
 
 async function createAdmin(
   status: "ACTIVE" | "INVITED" | "SUSPENDED" = "ACTIVE",
 ) {
-  const inviter =
-    status === "INVITED"
-      ? await prisma.adminUser.create({
-          data: {
-            loginId: `${namespace}inviter.${randomUUID()}`,
-            mustChangePassword: false,
-            name: "Session test inviter",
-            passwordHash: await hashPassword(password),
-            status: "ACTIVE",
-          },
-        })
-      : null;
+  const id = randomUUID();
+  const loginId = `${namespace}${id}`;
   return prisma.adminUser.create({
     data: {
-      ...(inviter
-        ? { invitedAt: new Date(), invitedByAdminUserId: inviter.id }
-        : {}),
-      loginId: `${namespace}${randomUUID()}`,
-      mustChangePassword: status === "INVITED",
+      activatedAt: status === "ACTIVE" ? new Date() : null,
+      email: `${loginId}@example.com`,
+      id,
+      loginId,
       name: "Session test administrator",
-      passwordHash: await hashPassword(password),
       status,
+      accounts: {
+        create: {
+          accountId: id,
+          issuer: "local:credential",
+          password: await hashPassword(password),
+          providerId: "credential",
+        },
+      },
     },
   });
 }
 
-function sessionHeaders(token: string) {
-  return new Headers({ cookie: `${ADMIN_SESSION_COOKIE}=${token}` });
+async function signIn(loginId: string, selectedPassword = password) {
+  const response = await adminAuth.api.signInUsername({
+    asResponse: true,
+    body: { password: selectedPassword, username: loginId },
+    headers: new Headers({ origin }),
+  });
+  const cookie = response.headers
+    .getSetCookie()
+    .map((value) => value.split(";", 1)[0])
+    .join("; ");
+  return { cookie, response };
 }
 
 beforeEach(clear);
 afterEach(clear);
 afterAll(() => prisma.$disconnect());
 
-describe("administrator database sessions", () => {
-  it("stores only a token hash and authenticates the 30-day session", async () => {
+describe("administrator Better Auth sessions", () => {
+  it("authenticates an active administrator with an isolated 30-day session", async () => {
     const admin = await createAdmin();
-    const login = await loginAdminUser(admin.loginId.toUpperCase(), password);
-    expect(login.status).toBe("success");
-    if (login.status !== "success") return;
+    const login = await signIn(admin.loginId.toUpperCase());
 
+    expect(login.response.status).toBe(200);
+    expect(login.cookie).toContain("levi-admin-auth.session_token=");
     const record = await prisma.adminSession.findFirstOrThrow({
-      where: { adminUserId: admin.id },
+      where: { userId: admin.id },
     });
-    expect(record.tokenHash).toBe(hashAdminSessionToken(login.token));
-    expect(record.tokenHash).not.toBe(login.token);
     expect(record.expiresAt.getTime()).toBeGreaterThan(
       Date.now() + 29 * 24 * 60 * 60 * 1_000,
     );
     await expect(
-      getAdminSessionAccess(sessionHeaders(login.token)),
+      getAdminSessionAccess(new Headers({ cookie: login.cookie })),
     ).resolves.toMatchObject({
       adminUserId: admin.id,
-      mustChangePassword: false,
       status: "authorized",
-    });
-
-    await logoutAdminSession(sessionHeaders(login.token));
-    await expect(
-      getAdminSessionAccess(sessionHeaders(login.token)),
-    ).resolves.toEqual({
-      status: "unauthenticated",
     });
   });
 
-  it("rejects expired sessions and immediately rejects suspended administrators", async () => {
-    const admin = await createAdmin();
-    const expired = await loginAdminUser(admin.loginId, password);
-    expect(expired.status).toBe("success");
-    if (expired.status !== "success") return;
-    await prisma.adminSession.updateMany({
-      data: { expiresAt: new Date(Date.now() - 1_000) },
-      where: { adminUserId: admin.id },
-    });
-    await expect(
-      getAdminSessionAccess(sessionHeaders(expired.token)),
-    ).resolves.toEqual({
-      status: "unauthenticated",
-    });
+  it("rejects invalid credentials and suspended administrators", async () => {
+    const active = await createAdmin();
+    const invalid = await signIn(active.loginId, "wrong-password");
+    expect(invalid.response.status).toBe(401);
 
-    const active = await loginAdminUser(admin.loginId, password);
-    expect(active.status).toBe("success");
-    if (active.status !== "success") return;
+    const suspended = await createAdmin("SUSPENDED");
+    const denied = await signIn(suspended.loginId);
+    expect(denied.response.status).toBeGreaterThanOrEqual(400);
+  });
+
+  it("invalidates an existing session as soon as the administrator is suspended", async () => {
+    const admin = await createAdmin();
+    const login = await signIn(admin.loginId);
+    expect(login.response.status).toBe(200);
+
     await prisma.adminUser.update({
       data: { status: "SUSPENDED" },
       where: { id: admin.id },
     });
     await expect(
-      getAdminSessionAccess(sessionHeaders(active.token)),
-    ).resolves.toEqual({
-      status: "unauthenticated",
-    });
+      getAdminSessionAccess(new Headers({ cookie: login.cookie })),
+    ).resolves.toEqual({ status: "unauthenticated" });
   });
 
-  it("activates an invited administrator and revokes their other sessions", async () => {
-    const admin = await createAdmin("INVITED");
-    const current = await loginAdminUser(admin.loginId, password);
-    const other = await loginAdminUser(admin.loginId, password);
-    expect(current.status).toBe("success");
-    expect(other.status).toBe("success");
-    if (current.status !== "success" || other.status !== "success") return;
-    const access = await getAdminSessionAccess(sessionHeaders(current.token));
-    expect(access.status).toBe("authorized");
-    if (access.status !== "authorized") return;
+  it("activates only an invited administrator after password setup", async () => {
+    const invited = await createAdmin("INVITED");
+    const suspended = await createAdmin("SUSPENDED");
 
-    const newPassword = "newly-activated-admin-password";
+    await activateInvitedAdminUserAfterPasswordReset(invited.id);
+    await activateInvitedAdminUserAfterPasswordReset(suspended.id);
+
     await expect(
-      changeAdminPassword({
-        adminUserId: admin.id,
-        confirmation: newPassword,
-        newPassword,
-        sessionId: access.sessionId,
-      }),
-    ).resolves.toEqual({ status: "success" });
-    await expect(
-      getAdminSessionAccess(sessionHeaders(other.token)),
-    ).resolves.toEqual({
-      status: "unauthenticated",
-    });
-    await expect(
-      loginAdminUser(admin.loginId, password),
+      prisma.adminUser.findUniqueOrThrow({ where: { id: invited.id } }),
     ).resolves.toMatchObject({
-      status: "invalid",
-    });
-    await expect(
-      loginAdminUser(admin.loginId, newPassword),
-    ).resolves.toMatchObject({
-      mustChangePassword: false,
-      status: "success",
-    });
-    await expect(
-      prisma.adminUser.findUniqueOrThrow({ where: { id: admin.id } }),
-    ).resolves.toMatchObject({
-      mustChangePassword: false,
+      activatedAt: expect.any(Date),
       status: "ACTIVE",
     });
-  });
-
-  it("rate limits repeated invalid passwords without exposing identity existence", async () => {
-    const admin = await createAdmin();
-    for (let attempt = 1; attempt < 5; attempt += 1) {
-      await expect(
-        loginAdminUser(admin.loginId, "wrong-password"),
-      ).resolves.toEqual({
-        status: "invalid",
-      });
-    }
     await expect(
-      loginAdminUser(admin.loginId, "wrong-password"),
-    ).resolves.toEqual({
-      status: "rate-limited",
-    });
-    await expect(loginAdminUser(admin.loginId, password)).resolves.toEqual({
-      status: "rate-limited",
-    });
+      prisma.adminUser.findUniqueOrThrow({ where: { id: suspended.id } }),
+    ).resolves.toMatchObject({ activatedAt: null, status: "SUSPENDED" });
   });
 });

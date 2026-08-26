@@ -32,10 +32,9 @@ async function fixture() {
     await tx.adminUser.create({
       data: {
         id: operatorId,
+        email: `${prefix}.operator.${operatorId}@example.com`,
         loginId: `${prefix}.operator.${randomUUID()}`,
-        mustChangePassword: false,
         name: "Administrator",
-        passwordHash: "synthetic-hash",
         status: "ACTIVE",
       },
     });

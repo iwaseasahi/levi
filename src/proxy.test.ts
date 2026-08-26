@@ -33,6 +33,20 @@ describe("proxy", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
+  it("keeps the administrator Better Auth API behind Basic authentication", async () => {
+    const handle = createProxy({
+      authenticateAdmin: async () => ({ status: "unauthenticated" }),
+    });
+    const response = await handle(
+      new NextRequest("https://levi.example/api/admin-auth/sign-in/username"),
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("www-authenticate")).toContain(
+      "Levi Administration",
+    );
+  });
+
   it("returns retry guidance when Basic authentication is rate limited", async () => {
     const handle = createProxy({
       authenticateAdmin: async () => ({ status: "rate-limited" }),
