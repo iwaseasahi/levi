@@ -49,7 +49,8 @@ allowlist済みoperator Mac → pinned SSH alias → VPS entrypoint
         ├─ 暗号化backup
         ├─ forward-only migration
         ├─ app・database・proxy readiness
-        └─ Actions run URLをdeploy historyへ記録
+        ├─ Actions run URLをdeploy historyへ記録
+        └─ 稼働中digestをrepository variableへ記録
 ```
 
 GitHub Actions runnerはproduction VPSへSSHしません。WebARENA firewallのSSH sourceは
@@ -82,6 +83,9 @@ repository ownerが次を設定します。
   - deployment branchを`main`に制限
   - 日曜の追加承認専用であることを説明へ明記
 - repository variable `PRODUCTION_BASE_URL=https://levi-system.com`
+- repository variable `LEVI_PRODUCTION_DEPLOYMENT`
+  - operator scriptがdeploy開始時に`deploying`、成功時に`ready`を自動記録する
+  - 手入力で更新しない
 
 利用プランで可能ならself-reviewを禁止します。GitHubへproduction SSH private keyは
 保存しません。Environment作成・reviewer変更はrepositoryの権限変更なので、実施前に
@@ -105,6 +109,19 @@ sudo /opt/levi/scripts/check-production-secrets.sh
 表示する`docker compose config`を使いません。deployはDB password、Better Auth
 secret、Basic認証情報を転送せず、承認済みの2つのimage digestだけを実行時に上書き
 します。
+
+## GHCR image lifecycle
+
+`.github/workflows/cleanup-ghcr.yml`は毎週月曜14:00（Asia/Tokyo）に実行されます。
+現在productionで稼働中のapplication・migration digestは常に保持し、7日を超えた
+commit tag付き旧versionを削除します。直近7日間の未deploy candidateは承認待ちのため
+保持します。Buildxが生成するtagなしのchild manifestやattestationは、参照関係を壊さない
+ため、このworkflowでは削除しません。
+
+cleanupはrepository variable `LEVI_PRODUCTION_DEPLOYMENT`が`ready`かつ厳密に妥当な場合
+だけ削除します。deploy前にoperator scriptが状態を`deploying`へ変更するため、deploy中や
+失敗後はfail-closedで何も削除しません。手動確認ではActionsの
+`Cleanup GHCR production images`を`dry_run=true`で実行します。
 
 ## 一度だけ行うVPS設定
 

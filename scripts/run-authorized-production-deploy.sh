@@ -91,7 +91,37 @@ readonly migration_image="$(jq -r '.migration_image' "$authorization_file")"
 readonly authorization_run_url="$(jq -r '.authorization_run_url' "$authorization_file")"
 readonly sunday_authorization_run_url="$(jq -r '.sunday_authorization_run_url // "none"' "$authorization_file")"
 
+record_deployment_state() {
+  local status="$1"
+  local recorded_at
+  local state_json
+  recorded_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  state_json="$(jq -cn \
+    --arg status "$status" \
+    --arg commit_sha "$commit_sha" \
+    --arg application_image "$application_image" \
+    --arg migration_image "$migration_image" \
+    --arg authorization_run_url "$authorization_run_url" \
+    --arg recorded_at "$recorded_at" \
+    '{
+      schema_version: 1,
+      status: $status,
+      commit_sha: $commit_sha,
+      application_image: $application_image,
+      migration_image: $migration_image,
+      authorization_run_url: $authorization_run_url,
+      recorded_at: $recorded_at
+    }')"
+  gh variable set LEVI_PRODUCTION_DEPLOYMENT \
+    --repo "$repository" \
+    --body "$state_json"
+}
+
 echo "Authorization verified: ${repository} Actions run ${run_id}, attempt ${run_attempt}."
+record_deployment_state "deploying"
+echo "GHCR cleanup is suspended until this deploy succeeds."
 echo "Connecting through the operator's allowlisted SSH path."
 ssh -o BatchMode=yes "$ssh_host_alias" \
   "sudo -n /usr/local/sbin/levi-production-deploy '$commit_sha' '$application_image' '$migration_image' '$authorization_run_url' '$sunday_authorization_run_url'"
+record_deployment_state "ready"
+echo "Current production image digests were recorded for GHCR retention."
