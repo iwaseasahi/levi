@@ -38,7 +38,7 @@ Operatorがcommit SHAやimage digestを転記せず、現在の`origin/main`を�
 2. [x] exact owner approvalの共通validatorとworkflow検証を追加する。
 3. [x] `prepare ISSUE_NUMBER`と`deploy PUBLISH_RUN_ID`のoperator commandを実装する。
 4. [x] configuration regression testとrunbookを更新する。
-5. [ ] canonical checksとGitHub CIを通し、PRをmergeする。
+5. [x] canonical checksとGitHub CIを通し、PRをmergeする。
 
 ## Progress
 
@@ -49,6 +49,8 @@ Operatorがcommit SHAやimage digestを転記せず、現在の`origin/main`を�
   誤認されないよう、通常承認本文をexact 4行（Sunday併記時は5行）へ制限した。
 - 2026-08-26 12:15 JST — CI相当のsynthetic HTTPS設定で`pnpm check`が成功した。
   unit 52 files/264 tests、component 15 files/53 tests、production buildを含む。
+- 2026-08-26 12:25 JST — PR #308のQuality、Database、E2E、Securityがすべて
+  成功した。計画の完了記録を最終headへ反映し、同じrequired CIを再確認する。
 
 ## Decisions
 
@@ -82,4 +84,7 @@ Operatorがcommit SHAやimage digestを転記せず、現在の`origin/main`を�
 
 ## Result
 
-Pending.
+`origin/main`を準備開始時にexact SHAへ固定する2コマンドreleaseフローを実装した。
+operatorはIssue番号とpublish run IDだけを入力し、commit・digestの転記は不要になった。
+exact owner approval、protected Environment、Sunday approval、operator Mac経由のVPS
+entrypointは維持され、candidate request自体を承認と誤認しない回帰検査も追加した。
