@@ -20,6 +20,9 @@ const authorizedDeploy = script("run-authorized-production-deploy.sh");
 const prepareRelease = script("prepare-production-release.sh");
 const deployRelease = script("deploy-production-release.sh");
 const waitForRequiredCi = script("wait-for-required-ci.sh");
+const waitForProductionAuthorization = script(
+  "wait-for-production-authorization.sh",
+);
 const healthScript = script("check-production-health.sh");
 const secretCheck = script("check-production-secrets.sh");
 const bibleImport = script("production-bible-import.sh");
@@ -42,6 +45,7 @@ const syntax = spawnSync(
     prepareRelease,
     deployRelease,
     waitForRequiredCi,
+    waitForProductionAuthorization,
     healthScript,
     secretCheck,
     bibleImport,
@@ -214,11 +218,73 @@ assert.doesNotMatch(prepareSource, /ssh /);
 const deployReleaseSource = readFileSync(deployRelease, "utf8");
 assert.match(deployReleaseSource, /release_candidate_run_id/);
 assert.match(deployReleaseSource, /run-authorized-production-deploy\.sh/);
+assert.match(deployReleaseSource, /wait-for-production-authorization\.sh/);
+assert.match(deployReleaseSource, /Production deployが正常に完了しました/);
+assert.match(deployReleaseSource, /Authorization: https:\/\/github\.com/);
 assert.match(deployReleaseSource, /\$\{1:-\}.*==.*--/);
 assert.doesNotMatch(
   deployReleaseSource,
   /gh issue|approval_comment|release_issue/,
 );
+
+const authorizationWaitFixture = mkdtempSync(
+  path.join(tmpdir(), "levi-authorization-wait."),
+);
+try {
+  const fakeGh = path.join(authorizationWaitFixture, "gh");
+  const marker = path.join(authorizationWaitFixture, "polled");
+  writeFileSync(
+    fakeGh,
+    `#!/usr/bin/env bash
+set -euo pipefail
+endpoint="$2"
+if [[ "$endpoint" == */pending_deployments ]]; then
+  printf '%s\n' '[{"environment":{"name":"production"}}]'
+elif [[ "\${FAKE_AUTHORIZATION_RESULT:-success}" == "failure" ]]; then
+  printf '%s\n' '{"status":"completed","conclusion":"failure"}'
+elif [[ -f "$POLL_MARKER" ]]; then
+  printf '%s\n' '{"status":"completed","conclusion":"success"}'
+else
+  : > "$POLL_MARKER"
+  printf '%s\n' '{"status":"waiting","conclusion":null}'
+fi
+`,
+  );
+  chmodSync(fakeGh, 0o755);
+  const waitEnvironment = {
+    ...process.env,
+    PATH: `${authorizationWaitFixture}:${process.env.PATH ?? ""}`,
+    POLL_MARKER: marker,
+    LEVI_AUTHORIZATION_WAIT_INTERVAL_SECONDS: "0",
+  };
+  const approved = spawnSync(
+    "bash",
+    [waitForProductionAuthorization, "123456"],
+    { cwd: root, encoding: "utf8", env: waitEnvironment },
+  );
+  assert.equal(approved.status, 0, approved.stderr);
+  assert.match(approved.stdout, /production Environment の承認を待っています/);
+  assert.match(
+    approved.stdout,
+    /承認URL: https:\/\/github\.com\/iwaseasahi\/levi\/actions\/runs\/123456/,
+  );
+  assert.match(approved.stdout, /production承認が完了しました/);
+
+  const rejected = spawnSync(
+    "bash",
+    [waitForProductionAuthorization, "123456"],
+    {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...waitEnvironment, FAKE_AUTHORIZATION_RESULT: "failure" },
+    },
+  );
+  assert.equal(rejected.status, 65);
+  assert.match(rejected.stderr, /completed with: failure/);
+  assert.match(rejected.stderr, /actions\/runs\/123456/);
+} finally {
+  rmSync(authorizationWaitFixture, { recursive: true, force: true });
+}
 
 const authorizedSource = readFileSync(authorizedDeploy, "utf8");
 assert.match(authorizedSource, /\.schema_version == 4/);

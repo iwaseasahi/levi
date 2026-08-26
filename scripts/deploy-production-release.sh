@@ -107,8 +107,12 @@ done
 }
 
 echo "Exact candidate verified: commit=${commit_sha} application=${application_image} migration=${migration_image}"
-echo "Approve the protected production Environment when prompted. Sunday additionally requires production-sunday approval:"
-echo "https://github.com/${repository}/actions/runs/${authorization_run_id}"
-gh run watch "$authorization_run_id" --repo "$repository" --exit-status
+bash "${script_directory}/wait-for-production-authorization.sh" "$authorization_run_id"
 
 bash "${script_directory}/run-authorized-production-deploy.sh" "$authorization_run_id"
+
+echo
+echo "Production deployが正常に完了しました。"
+echo "Commit: ${commit_sha}"
+echo "Application: ${application_image}"
+echo "Authorization: https://github.com/${repository}/actions/runs/${authorization_run_id}"
