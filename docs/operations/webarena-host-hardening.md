@@ -69,7 +69,8 @@ WebARENA側のfirewallでは、TCP 22をoperator回線の現在のglobal IPv4
 address 1件だけ（`/32`）に制限します。GitHub-hosted runner向けに
 `0.0.0.0/0`やGitHubの巨大な動的rangeを許可しません。デプロイはGitHubで
 exact artifactとEnvironment承認を記録した後、allowlist済みoperator Macから
-`pnpm production:deploy:authorized -- RUN_ID`を実行します。
+通常releaseでは`pnpm production:release:deploy -- PUBLISH_RUN_ID`を実行します。
+既存の`production:deploy:authorized`は内部適用と障害時の診断に残します。
 
 operator回線のIPが変わった場合は、Macで`curl -4 https://ifconfig.me`を実行し、
 WebARENA consoleからSSH ruleを新しい`/32`へ更新します。既存のSSH sessionを

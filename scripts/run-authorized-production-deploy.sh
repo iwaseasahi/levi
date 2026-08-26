@@ -66,7 +66,7 @@ jq -e \
   --arg repository "$repository" \
   --argjson run_id "$run_id" \
   --argjson run_attempt "$run_attempt" \
-  '.schema_version == 2 and
+  '.schema_version == 3 and
    .repository == $repository and
    .run_id == $run_id and
    .run_attempt == $run_attempt and
@@ -75,6 +75,7 @@ jq -e \
    (.migration_image | test("^ghcr\\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$")) and
    (.approval_comment | test("^https://github\\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$")) and
    ((.sunday_approval_comment == null) or (.sunday_approval_comment | test("^https://github\\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$"))) and
+   (.release_candidate_run_id | type == "number") and
    (.authorized_at | type == "string")' \
   "$authorization_file" >/dev/null || {
   echo "The production authorization record is invalid." >&2

@@ -1,4 +1,5 @@
 name: Authorize production deploy
+run-name: "Authorize production candidate #${{ inputs.release_candidate_run_id }}"
 
 on:
   workflow_dispatch:
@@ -24,6 +25,10 @@ on:
         required: false
         default: ""
         type: string
+      release_candidate_run_id:
+        description: Successful Publish production images run containing the pinned candidate
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -47,6 +52,8 @@ jobs:
           COMMIT_SHA: ${{ inputs.commit_sha }}
           GH_TOKEN: ${{ github.token }}
           MIGRATION_IMAGE: ${{ inputs.migration_image }}
+          PRODUCTION_APPROVAL_COMMENT: ${{ inputs.approval_comment }}
+          RELEASE_CANDIDATE_RUN_ID: ${{ inputs.release_candidate_run_id }}
           SUNDAY_APPROVAL_COMMENT: ${{ inputs.sunday_approval_comment }}
         run: |
           set -euo pipefail
@@ -54,6 +61,8 @@ jobs:
           [[ "$APPLICATION_IMAGE" =~ ^ghcr\.io/iwaseasahi/levi@sha256:[a-f0-9]{64}$ ]]
           [[ "$MIGRATION_IMAGE" =~ ^ghcr\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$ ]]
           [[ "$APPROVAL_COMMENT" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]
+          [[ "$RELEASE_CANDIDATE_RUN_ID" =~ ^[0-9]+$ ]]
+          bash scripts/check-production-deploy-approval.sh
           bash scripts/check-sunday-deploy-approval.sh
           git fetch --quiet origin main
           git merge-base --is-ancestor "$COMMIT_SHA" origin/main
@@ -82,6 +91,7 @@ jobs:
           COMMIT_SHA: ${{ inputs.commit_sha }}
           MIGRATION_IMAGE: ${{ inputs.migration_image }}
           SUNDAY_APPROVAL_COMMENT: ${{ inputs.sunday_approval_comment }}
+          RELEASE_CANDIDATE_RUN_ID: ${{ inputs.release_candidate_run_id }}
         run: |
           set -euo pipefail
           jq -n \
@@ -93,9 +103,10 @@ jobs:
             --arg migration_image "$MIGRATION_IMAGE" \
             --arg approval_comment "$APPROVAL_COMMENT" \
             --arg sunday_approval_comment "$SUNDAY_APPROVAL_COMMENT" \
+            --argjson release_candidate_run_id "$RELEASE_CANDIDATE_RUN_ID" \
             --arg authorized_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '{
-              schema_version: 2,
+              schema_version: 3,
               repository: $repository,
               run_id: $run_id,
               run_attempt: $run_attempt,
@@ -104,6 +115,7 @@ jobs:
               migration_image: $migration_image,
               approval_comment: $approval_comment,
               sunday_approval_comment: (if $sunday_approval_comment == "" then null else $sunday_approval_comment end),
+              release_candidate_run_id: $release_candidate_run_id,
               authorized_at: $authorized_at
             }' > production-deploy-authorization.json
       - name: Upload authorization record
@@ -121,7 +133,9 @@ jobs:
           GitHub validation and the protected \`production\` Environment approval completed.
           No network connection to the production host was attempted.
 
-          The operator can execute the exact authorization from an allowlisted workstation:
+          The waiting two-command release flow will verify this authorization and apply it
+          from the allowlisted operator workstation. For an interrupted operator command,
+          resume the already-authorized apply with:
 
           \`pnpm production:deploy:authorized -- $GITHUB_RUN_ID\`
           EOF
