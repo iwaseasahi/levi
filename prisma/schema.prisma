@@ -132,8 +132,6 @@ model AdminUser {
   id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name                 String          @db.VarChar(200)
   email                String          @unique(map: "admin_users_email_uk") @db.Citext
-  /// Deprecated rollback-compatibility column. Application code must not read or write it.
-  loginId              String?         @unique(map: "admin_users_login_id_uk") @map("login_id") @db.Citext
   emailVerified        Boolean         @default(false) @map("email_verified")
   image                String?         @db.Text
   status               AdminUserStatus @default(INVITED)

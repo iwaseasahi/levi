@@ -45,6 +45,7 @@
 - 2026-08-27 — unit/component/integration/E2Eをメールログイン仕様へ更新した。
 - 2026-08-27 — rollback観測期間後の物理列削除をfollow-up Issue #346へ分離した。
 - 2026-08-27 — commit `bc0259c`に対するCI run 32991218798でQuality、Database、E2E、Securityがすべて成功した。
+- 2026-08-27 — follow-up Issue #346でrollback互換期間を終了し、deprecatedな`admin_users.login_id`物理列を削除した。
 
 ## Decisions
 
@@ -54,6 +55,7 @@
   - ADR: `docs/architecture/0012-admin-better-auth-email.md`
 - 2026-08-27 — Decision: `login_id`物理列は今回nullableなdeprecated互換列としてschemaに残し、application codeからの読み書きを止めた上でrollback期間後に別migrationで削除する。
   - Reason: migration適用中に旧applicationが稼働するproduction deploy順序との互換性を保つため。
+  - Follow-up: rollback互換期間の終了後、Issue #346のforward migrationで物理削除した。
 
 ## Risks and mitigations
 
