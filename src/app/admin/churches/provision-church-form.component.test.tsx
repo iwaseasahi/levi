@@ -63,11 +63,10 @@ describe("ProvisionChurchForm", () => {
     completeAction?.({
       churchName: "テスト教会",
       email: "church@example.invalid",
-      message: "教会と初期アカウントを作成しました。",
+      message: "教会利用者へ招待メールを送信しました。",
       status: "success",
-      temporaryPassword: "t".repeat(24),
     });
-    await screen.findByText("教会と初期アカウントを作成しました。");
+    await screen.findByText("教会利用者へ招待メールを送信しました。");
   });
 
   it("focuses validation feedback and associates the field error", async () => {
@@ -100,14 +99,12 @@ describe("ProvisionChurchForm", () => {
     expect(screen.getByText("教会名を入力してください。")).toBeVisible();
   });
 
-  it("shows the temporary password once and lets the operator dismiss it", async () => {
-    const temporaryPassword = "t".repeat(24);
+  it("shows the invitation destination and 24-hour validity", async () => {
     const action = vi.fn().mockResolvedValue({
       churchName: "テスト教会",
       email: "church@example.invalid",
-      message: "教会と初期アカウントを作成しました。",
+      message: "教会利用者へ招待メールを送信しました。",
       status: "success",
-      temporaryPassword,
     });
     render(<ProvisionChurchForm action={action} />);
     const user = userEvent.setup();
@@ -119,17 +116,9 @@ describe("ProvisionChurchForm", () => {
       }),
     );
 
-    expect(screen.queryByText(temporaryPassword)).not.toBeInTheDocument();
-    await user.click(
-      screen.getByRole("button", { name: "一時パスワードを表示" }),
-    );
-    expect(await screen.findByText(temporaryPassword)).toBeVisible();
-    await user.click(screen.getByRole("button", { name: "表示を閉じる" }));
-    expect(screen.queryByText(temporaryPassword)).not.toBeInTheDocument();
+    expect(screen.getByText("メール招待")).toBeVisible();
     expect(
-      screen.getByText(
-        "一時パスワードの表示を終了しました。再表示はできません。",
-      ),
+      screen.getByText("メール内のパスワード設定リンクは24時間有効です。"),
     ).toBeVisible();
   });
 });

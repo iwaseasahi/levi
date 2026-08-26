@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { LogoutButton } from "./logout-button";
 
 export function ScriptureSettingsMenu() {
@@ -39,6 +40,13 @@ export function ScriptureSettingsMenu() {
           id="scripture-settings-menu"
           role="menu"
         >
+          <Link
+            className="scripture-settings-logout"
+            href="/account/change-password"
+            role="menuitem"
+          >
+            パスワードを変更
+          </Link>
           <LogoutButton className="scripture-settings-logout" role="menuitem" />
         </div>
       ) : null}

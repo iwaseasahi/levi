@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PasswordInput } from "@/app/password-input";
@@ -59,6 +60,7 @@ export function LoginForm() {
           {pending ? "ログイン中…" : "ログイン"}
         </button>
       </fieldset>
+      <Link href="/forgot-password">パスワードを忘れた場合</Link>
       {error ? (
         <div
           className="notice notice-error"

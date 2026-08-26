@@ -10,8 +10,7 @@ export default async function NewChurchPage() {
         <p className="eyebrow">教会管理</p>
         <h1>教会を作成</h1>
         <p>
-          教会と最初の利用者を同時に作成します。一時パスワードは作成直後に
-          一度だけ表示されます。
+          教会と最初の利用者を同時に作成し、本人へパスワード設定用の招待メールを送信します。
         </p>
       </header>
       <ProvisionChurchForm action={provisionChurchAction} />

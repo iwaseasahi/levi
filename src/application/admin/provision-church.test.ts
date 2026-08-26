@@ -18,7 +18,6 @@ const input = {
 
 function transaction(): ProvisionChurchTransaction {
   return {
-    activateUser: vi.fn(),
     createChurch: vi
       .fn()
       .mockResolvedValue({ id: "church-id", name: input.churchName }),
@@ -32,7 +31,9 @@ function transaction(): ProvisionChurchTransaction {
 function dependencies(tx = transaction()) {
   return {
     generatePassword: vi.fn(() => "t".repeat(24)),
+    removeUnsentProvision: vi.fn(),
     runTransaction: vi.fn(async (operation) => operation(tx)),
+    sendInvitation: vi.fn(),
     tx,
   };
 }
@@ -50,14 +51,13 @@ describe("createChurchProvisioner", () => {
     expect(deps.runTransaction).not.toHaveBeenCalled();
   });
 
-  it("creates one active church account through application ports", async () => {
+  it("creates one pending church account and sends its invitation", async () => {
     const deps = dependencies();
     const provision = createChurchProvisioner(deps);
     await expect(provision(operatorId, input)).resolves.toEqual({
       churchId: "church-id",
       churchName: input.churchName,
       email: input.email,
-      temporaryPassword: "t".repeat(24),
       userId,
     });
     expect(deps.tx.createCredential).toHaveBeenCalledWith({
@@ -69,7 +69,21 @@ describe("createChurchProvisioner", () => {
       "church-id",
       userId,
     );
-    expect(deps.tx.activateUser).toHaveBeenCalledWith(userId);
+    expect(deps.sendInvitation).toHaveBeenCalledWith(input.email);
+    expect(deps.removeUnsentProvision).not.toHaveBeenCalled();
+  });
+
+  it("removes the pending church and user when invitation delivery fails", async () => {
+    const deps = dependencies();
+    deps.sendInvitation.mockRejectedValue(new Error("smtp"));
+
+    await expect(
+      createChurchProvisioner(deps)(operatorId, input),
+    ).rejects.toBeInstanceOf(ProvisioningFailedError);
+    expect(deps.removeUnsentProvision).toHaveBeenCalledWith({
+      churchId: "church-id",
+      userId,
+    });
   });
 
   it("preserves authorization failures and masks adapter failures", async () => {

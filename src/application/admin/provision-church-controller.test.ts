@@ -62,7 +62,6 @@ describe("createProvisionChurchController", () => {
         churchId: "church-id",
         churchName: "テスト教会",
         email: "church@example.invalid",
-        temporaryPassword: "t".repeat(24),
         userId: "church-user-id",
       }),
       recordEvent,
@@ -73,9 +72,8 @@ describe("createProvisionChurchController", () => {
     ).resolves.toEqual({
       churchName: "テスト教会",
       email: "church@example.invalid",
-      message: "教会と初期アカウントを作成しました。",
+      message: "教会利用者へ招待メールを送信しました。",
       status: "success",
-      temporaryPassword: "t".repeat(24),
     });
     expect(recordEvent).toHaveBeenCalledWith({
       actorAdminUserId: "operator-id",

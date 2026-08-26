@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 
 import type { ProvisionChurchFormState } from "@/application/admin/provision-church-controller";
 
@@ -42,8 +42,6 @@ export function ProvisionChurchForm({
     action,
     initialProvisionChurchFormState,
   );
-  const [secretDismissed, setSecretDismissed] = useState(false);
-  const [secretRevealed, setSecretRevealed] = useState(false);
   const feedbackRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -60,20 +58,11 @@ export function ProvisionChurchForm({
 
   const validationErrors =
     state.status === "validation-error" ? state.fieldErrors : {};
-  const showSuccess =
-    state.status === "success" && !pending && !secretDismissed;
+  const showSuccess = state.status === "success" && !pending;
 
   return (
     <div className="provisioning-grid">
-      <form
-        action={formAction}
-        className="admin-form"
-        onSubmit={() => {
-          setSecretDismissed(false);
-          setSecretRevealed(false);
-        }}
-        ref={formRef}
-      >
+      <form action={formAction} className="admin-form" ref={formRef}>
         <fieldset disabled={pending}>
           <legend className="sr-only">教会と初期アカウントの情報</legend>
 
@@ -165,7 +154,7 @@ export function ProvisionChurchForm({
             role="status"
             tabIndex={-1}
           >
-            <p className="eyebrow">一度だけ表示されます</p>
+            <p className="eyebrow">メール招待</p>
             <h2>{state.message}</h2>
             <dl className="credential-summary">
               <div>
@@ -173,43 +162,11 @@ export function ProvisionChurchForm({
                 <dd>{state.churchName}</dd>
               </div>
               <div>
-                <dt>ログインID</dt>
+                <dt>ログイン用メールアドレス</dt>
                 <dd>{state.email}</dd>
               </div>
-              <div>
-                <dt>一時パスワード</dt>
-                <dd>
-                  {secretRevealed ? (
-                    <code>{state.temporaryPassword}</code>
-                  ) : (
-                    <button
-                      className="inline-button"
-                      onClick={() => setSecretRevealed(true)}
-                      type="button"
-                    >
-                      一時パスワードを表示
-                    </button>
-                  )}
-                </dd>
-              </div>
             </dl>
-            <p>
-              今この場で、本人確認済みの対面または通話により伝えてください。
-              メール、チャット、Issue、画面保存には残さないでください。
-            </p>
-            <button
-              className="secondary-button"
-              onClick={() => setSecretDismissed(true)}
-              type="button"
-            >
-              表示を閉じる
-            </button>
-          </div>
-        ) : null}
-
-        {state.status === "success" && !pending && secretDismissed ? (
-          <div className="notice" ref={feedbackRef} tabIndex={-1}>
-            一時パスワードの表示を終了しました。再表示はできません。
+            <p>メール内のパスワード設定リンクは24時間有効です。</p>
           </div>
         ) : null}
       </div>

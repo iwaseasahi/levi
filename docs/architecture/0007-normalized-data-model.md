@@ -60,7 +60,9 @@ of this decision.
   and its fields remain part of the pinned-version schema review contract.
 - `AdminUser` is an independent identity model and is never a Better Auth
   `User`. A deferred PostgreSQL constraint trigger requires every ACTIVE User
-  to have one `ChurchMembership` and every PENDING User to have none.
+  to have one `ChurchMembership`. A PENDING User may have no membership while
+  being assembled or one membership while waiting for the emailed password
+  invitation to be accepted, but never more than one.
 - A valid Better Auth session never implies platform or church authorization.
   Server use cases resolve exactly one actor subtype and, for church users, the
   membership's Church.
