@@ -20,8 +20,7 @@ The current Basic credential remains in environment configuration. A
 deterministic `BOOTSTRAP` admin user is the audit and authorization subject for
 that credential; it has no database password. Invited administrators have a
 case-insensitive login ID, a one-way password hash, invitation metadata, and a
-status. Invitation does not grant access until the individual administrator
-login described by #259 is implemented.
+status. ADR 0010 defines their individual login and session lifecycle.
 
 Administrative server actions authenticate again and pass an admin user ID to
 the use case. Church session creation only admits an ACTIVE `users` row with an
@@ -35,8 +34,8 @@ ACTIVE church membership.
   but are never persisted or logged.
 - `platform_operators` is removed and the User actor-assignment constraint now
   describes Church users only.
-- #259 must define activation, sessions, revocation, MFA, and Basic removal
-  before invited administrators can authenticate.
+- ADR 0010 adds activation, sessions, and revocation while retaining Basic as
+  the outer administration boundary. MFA remains a later decision.
 
-This ADR supersedes ADR 0008 only for the internal actor storage model. Its
-decision to retain Basic authentication remains active until #259.
+This ADR supersedes ADR 0008 only for the internal actor storage model. ADR
+0010 keeps Basic authentication active as the outer boundary.

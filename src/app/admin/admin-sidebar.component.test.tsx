@@ -6,6 +6,9 @@ import { AdminSidebar } from "./admin-sidebar";
 vi.mock("next/navigation", () => ({
   usePathname: () => "/admin",
 }));
+vi.mock("./auth-actions", () => ({
+  adminLogoutAction: vi.fn(),
+}));
 
 describe("AdminSidebar", () => {
   it("exposes each administration destination and the current page", () => {
@@ -26,5 +29,6 @@ describe("AdminSidebar", () => {
     expect(
       screen.getByRole("link", { name: "管理者一覧" }).getAttribute("href"),
     ).toBe("/admin/admin-users");
+    expect(screen.getByRole("button", { name: "ログアウト" })).toBeTruthy();
   });
 });

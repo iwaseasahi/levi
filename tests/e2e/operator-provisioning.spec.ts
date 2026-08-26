@@ -4,10 +4,13 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   E2E_CHURCH_USER_EMAIL,
+  E2E_ACTIVE_ADMIN_LOGIN_ID,
   E2E_ADMIN_BASIC_USERNAME,
   E2E_CREATED_CHURCH,
   E2E_CREATED_EMAIL,
   E2E_INVITED_ADMIN_LOGIN_ID,
+  E2E_INITIAL_ADMIN_LOGIN_ID,
+  E2E_INITIAL_ADMIN_PASSWORD,
   E2E_PASSWORD,
 } from "./operator-fixture";
 
@@ -22,6 +25,22 @@ async function signIn(page: Page, email: string) {
     headers: { origin: "http://127.0.0.1:3100" },
   });
   expect(response.ok()).toBe(true);
+}
+
+async function signInAdmin(
+  page: Page,
+  loginId = E2E_ACTIVE_ADMIN_LOGIN_ID,
+  password = E2E_PASSWORD,
+) {
+  await page.goto("/admin/login");
+  await page.getByLabel("ログインID").fill(loginId);
+  await page.getByLabel("パスワード", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "ログイン" }).click();
+  await expect(page).toHaveURL(
+    loginId === E2E_INITIAL_ADMIN_LOGIN_ID
+      ? /\/admin\/change-password$/
+      : /\/admin$/,
+  );
 }
 
 test.describe("operator administration access", () => {
@@ -48,6 +67,20 @@ test.describe("operator administration access", () => {
     expect(response.status()).toBe(401);
     expect(await response.text()).not.toContain("教会アカウントを作成");
   });
+
+  test("requires an individual administrator login after Basic authentication", async ({
+    page,
+  }) => {
+    const response = await page.request.get("/admin", {
+      headers: {
+        authorization: `Basic ${Buffer.from(`${E2E_ADMIN_BASIC_USERNAME}:${E2E_PASSWORD}`).toString("base64")}`,
+      },
+      maxRedirects: 0,
+    });
+
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toBe("/admin/login");
+  });
 });
 
 test.describe("administrator invitations", () => {
@@ -61,7 +94,8 @@ test.describe("administrator invitations", () => {
   test("uses the protected administration dashboard as the entry point", async ({
     page,
   }) => {
-    await page.goto("/admin");
+    await signInAdmin(page);
+    await expect(page).toHaveURL(/\/admin$/);
     await expect(
       page.getByRole("heading", { level: 1, name: "管理画面" }),
     ).toBeVisible();
@@ -88,6 +122,7 @@ test.describe("administrator invitations", () => {
   test("invites an administrator and lists the pending identity", async ({
     page,
   }) => {
+    await signInAdmin(page);
     await page.goto("/admin/admin-users/new");
     await expect(
       page.getByRole("heading", { level: 1, name: "管理者を招待" }),
@@ -110,7 +145,12 @@ test.describe("administrator invitations", () => {
     ).toBeVisible();
     await expect(page.getByText("basic-bootstrap")).toHaveCount(0);
     await expect(page.getByText(E2E_INVITED_ADMIN_LOGIN_ID)).toBeVisible();
-    await expect(page.getByText("招待済み（ログイン未対応）")).toBeVisible();
+    await expect(
+      page
+        .locator(".admin-user-list li")
+        .filter({ hasText: E2E_INVITED_ADMIN_LOGIN_ID })
+        .getByText("初回パスワード変更待ち"),
+    ).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 });
@@ -127,6 +167,7 @@ test.describe("operator church provisioning", () => {
   test("provisions an account through first login and password change", async ({
     page,
   }) => {
+    await signInAdmin(page);
     await page.goto("/admin/churches/new");
 
     await expect(
@@ -235,5 +276,54 @@ test.describe("operator church provisioning", () => {
     await expect(
       page.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();
+  });
+});
+
+test.describe("administrator first login", () => {
+  test.use({
+    httpCredentials: {
+      password: E2E_PASSWORD,
+      username: E2E_ADMIN_BASIC_USERNAME,
+    },
+  });
+
+  test("forces the invited administrator to choose a password before access", async ({
+    page,
+  }) => {
+    await signInAdmin(
+      page,
+      E2E_INITIAL_ADMIN_LOGIN_ID,
+      E2E_INITIAL_ADMIN_PASSWORD,
+    );
+    await expect(page).toHaveURL(/\/admin\/change-password$/);
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin\/change-password$/);
+
+    const selectedPassword = "activated-admin-password";
+    await page
+      .getByLabel("新しいパスワード", { exact: true })
+      .fill(selectedPassword);
+    await page
+      .getByLabel("新しいパスワード（確認）", { exact: true })
+      .fill(selectedPassword);
+    await page.getByRole("button", { name: "パスワードを変更" }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+    await page.getByRole("button", { name: "ログアウト" }).click();
+    await expect(page).toHaveURL(/\/admin\/login$/);
+
+    await page.getByLabel("ログインID").fill(E2E_INITIAL_ADMIN_LOGIN_ID);
+    await page
+      .getByLabel("パスワード", { exact: true })
+      .fill(E2E_INITIAL_ADMIN_PASSWORD);
+    await page.getByRole("button", { name: "ログイン" }).click();
+    await expect(
+      page.getByText("ログインIDまたはパスワードを確認してください。", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.getByLabel("ログインID").fill(E2E_INITIAL_ADMIN_LOGIN_ID);
+    await page.getByLabel("パスワード", { exact: true }).fill(selectedPassword);
+    await page.getByRole("button", { name: "ログイン" }).click();
+    await expect(page).toHaveURL(/\/admin$/);
   });
 });

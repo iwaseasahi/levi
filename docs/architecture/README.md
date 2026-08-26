@@ -25,6 +25,7 @@ them in implementation code.
 | [0007](0007-normalized-data-model.md)             | accepted   | Normalized ownership-specific relational models          |
 | [0008](0008-single-operator-basic-auth.md)        | accepted   | Basic authentication for the single platform operator    |
 | [0009](0009-separate-administrator-identities.md) | accepted   | Separate administrator identities from Church users      |
+| [0010](0010-admin-user-database-sessions.md)      | accepted   | Database sessions inside the Basic admin boundary        |
 
 Implementation-level data rules are documented in
 [`database-conventions.md`](database-conventions.md) and the accepted

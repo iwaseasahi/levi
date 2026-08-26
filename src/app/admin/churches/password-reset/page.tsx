@@ -1,8 +1,10 @@
 import { prisma } from "@/infrastructure/database/client";
 import { resetPasswordAction } from "../reset-actions";
 import { ResetPasswordForm } from "../reset-password-form";
+import { requireAdminPageAccess } from "@/infrastructure/auth/admin-page-access";
 
 export default async function ChurchPasswordResetPage() {
+  await requireAdminPageAccess();
   const churches = await prisma.church.findMany({
     where: { status: "ACTIVE", membership: { isNot: null } },
     orderBy: [{ name: "asc" }, { id: "asc" }],

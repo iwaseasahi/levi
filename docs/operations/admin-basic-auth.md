@@ -1,8 +1,10 @@
 # Administration Basic authentication runbook
 
-The administration UI currently uses HTTP Basic authentication. The credential
-maps to a deterministic `BOOTSTRAP` row in `admin_users`; Church users continue
-to use `/login` and cannot enter administration.
+The administration UI uses two boundaries: HTTPS Basic authentication first,
+then an individual `admin_users` login. The Basic credential maps to a
+deterministic `BOOTSTRAP` row and remains the outer break-glass boundary; it is
+not an individual administrator session. Church users continue to use `/login`
+and cannot enter administration.
 
 ## Configure credentials
 
@@ -29,13 +31,14 @@ Ordinary application releases use the standard production deployment flow.
   credentials are merely encoded on the wire and are unsafe over HTTP.
 - Five failed attempts within 60 seconds temporarily block all administration
   authentication. Wait at least 60 seconds before retrying.
-- There is no administration logout button. Chrome may cache Basic credentials
-  for the browser session; close all Chrome windows or use a separate profile
-  after administration work.
+- Use the administration sidebar's **ログアウト** button to revoke the current
+  database session. Chrome may still cache the outer Basic credential; close all
+  Chrome windows or use a separate profile when that outer credential must also
+  be forgotten.
 - Rotate the credential by generating a new verifier, updating the protected
   environment, and completing the approved deployment/restart workflow. Verify
   the old password is rejected and the new password reaches
-  `/admin/churches/new`.
+  `/admin/login`.
 - An unavailable configuration, database, or bootstrap administrator returns `503` and
   must be repaired rather than bypassed.
 
@@ -48,11 +51,20 @@ Ordinary application releases use the standard production deployment flow.
 4. Transfer the login ID and temporary password only through a verified
    face-to-face or voice channel, then close the one-time display. Levi stores
    only the password hash and cannot show the temporary password again.
+5. The administrator opens `/admin/login` after passing Basic authentication,
+   signs in, and replaces the temporary password before any management page is
+   available.
 
-The new row remains `INVITED` and cannot authenticate yet. Do not treat the
-invitation as access being granted until #259 implements individual
-administrator authentication and activation.
+The row remains `INVITED` until the password change completes, then becomes
+`ACTIVE`. The application session expires after 30 days. Logout revokes the
+current session; suspension, deletion, or expiry is rejected on the next
+request.
 
-Creating an invited administrator record does not grant access while Basic
-authentication remains active. Individual administrator sessions, activation,
-revocation, and Basic removal are tracked by #259 and ADR 0009.
+## Deployment prerequisite
+
+Before deploying the migration that requires individual login, create at least
+one invited administrator through the existing Basic-protected UI and retain
+the one-time credential safely. After deployment, verify `/admin/login`, forced
+password change, `/admin`, logout, rejection of the temporary password, and
+login with the selected password. Do not remove the Basic configuration; every
+administration request still requires it.

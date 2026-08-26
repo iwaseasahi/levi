@@ -2,12 +2,22 @@ import "@testing-library/jest-dom/vitest";
 
 import axe from "axe-core";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import AdministrationPage from "./page";
+
+vi.mock("@/infrastructure/auth/admin-page-access", () => ({
+  requireAdminPageAccess: vi.fn().mockResolvedValue({
+    adminUserId: "admin-1",
+    mustChangePassword: false,
+    name: "管理者",
+    sessionId: "session-1",
+    status: "authorized",
+  }),
+}));
 
 describe("AdministrationPage", () => {
   it("offers every primary administration workflow accessibly", async () => {
-    const { container } = render(<AdministrationPage />);
+    const { container } = render(await AdministrationPage());
 
     expect(
       screen.getByRole("heading", { level: 1, name: "管理画面" }),

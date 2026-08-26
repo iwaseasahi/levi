@@ -1,7 +1,9 @@
 import { provisionChurchAction } from "../actions";
 import { ProvisionChurchForm } from "../provision-church-form";
+import { requireAdminPageAccess } from "@/infrastructure/auth/admin-page-access";
 
-export default function NewChurchPage() {
+export default async function NewChurchPage() {
+  await requireAdminPageAccess();
   return (
     <main className="admin-shell">
       <header className="admin-header">
