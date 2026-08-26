@@ -9,7 +9,7 @@ const namespace = "test.database.";
 
 async function clearTestRecords() {
   await prisma.adminUser.deleteMany({
-    where: { loginId: { startsWith: namespace } },
+    where: { email: { startsWith: namespace } },
   });
   await prisma.user.deleteMany({
     where: { email: { startsWith: namespace } },
@@ -113,7 +113,6 @@ describe("auth and tenant constraints", () => {
       data: {
         id,
         email: "test.database.admin@example.com",
-        loginId: "test.database.admin",
         name: "Test Administrator",
         status: "ACTIVE",
       },
@@ -123,8 +122,7 @@ describe("auth and tenant constraints", () => {
     await expect(
       prisma.adminUser.create({
         data: {
-          email: "test.database.other-admin@example.com",
-          loginId: "TEST.DATABASE.ADMIN",
+          email: "TEST.DATABASE.ADMIN@example.com",
           name: "Duplicate Administrator",
           status: "INVITED",
           invitedAt: new Date(),

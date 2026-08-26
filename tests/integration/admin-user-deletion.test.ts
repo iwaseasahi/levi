@@ -9,10 +9,10 @@ const namespace = "test.delete-admin.";
 async function clear() {
   await prisma.adminUser.updateMany({
     data: { invitedByAdminUserId: null },
-    where: { loginId: { startsWith: namespace } },
+    where: { email: { startsWith: namespace } },
   });
   await prisma.adminUser.deleteMany({
-    where: { loginId: { startsWith: namespace } },
+    where: { email: { startsWith: namespace } },
   });
 }
 
@@ -20,7 +20,6 @@ async function createAdmin(status: "ACTIVE" | "INVITED" = "ACTIVE") {
   return prisma.adminUser.create({
     data: {
       email: `${namespace}${randomUUID()}@example.com`,
-      loginId: `${namespace}${randomUUID()}`,
       name: "Deletion test administrator",
       status,
     },
@@ -40,7 +39,6 @@ describe("admin user deletion", () => {
         email: `${namespace}${randomUUID()}@example.com`,
         invitedAt: new Date(),
         invitedByAdminUserId: target.id,
-        loginId: `${namespace}${randomUUID()}`,
         name: "Preserved invitee",
         status: "INVITED",
       },

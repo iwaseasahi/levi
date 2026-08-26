@@ -19,7 +19,6 @@ export type InviteAdminUserFormState =
     }
   | { message: string; status: "not-authorized" | "server-error" }
   | {
-      loginId: string;
       email: string;
       message: string;
       name: string;
@@ -30,7 +29,7 @@ export function createInviteAdminUserController(dependencies: {
   getOperatorAccess(headers: Headers): Promise<OperatorAccess>;
   inviteAdminUser(
     actorAdminUserId: string,
-    input: { email: unknown; loginId: unknown; name: unknown },
+    input: { email: unknown; name: unknown },
   ): Promise<InviteAdminUserResult>;
   recordEvent(event: {
     actorAdminUserId?: string;
@@ -41,7 +40,7 @@ export function createInviteAdminUserController(dependencies: {
 }) {
   return async function handle(
     headers: Headers,
-    rawInput: { email: unknown; loginId: unknown; name: unknown },
+    rawInput: { email: unknown; name: unknown },
     requestId?: string,
   ): Promise<InviteAdminUserFormState> {
     const access = await dependencies.getOperatorAccess(headers);
@@ -81,7 +80,6 @@ export function createInviteAdminUserController(dependencies: {
       });
       return {
         email: result.email,
-        loginId: result.loginId,
         message: "管理者へ招待メールを送信しました。",
         name: result.name,
         status: "success",
@@ -107,7 +105,7 @@ export function createInviteAdminUserController(dependencies: {
       return {
         message:
           error instanceof AdminUserInvitationDuplicateError
-            ? "このログインIDは既に使用されています。"
+            ? "このメールアドレスは既に使用されています。"
             : "招待できませんでした。もう一度お試しください。",
         status: "server-error",
       };

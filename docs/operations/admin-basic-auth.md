@@ -24,12 +24,12 @@ is required to forget it.
 ## Administrator invitation
 
 1. Open `/admin/admin-users` through the production HTTPS origin.
-2. Enter the administrator name, unique email address, and unique login ID.
+2. Enter the administrator name and unique email address.
 3. Select **管理者を招待**.
 4. Levi sends a one-hour password setup link to the email address. It never
    displays or transfers a temporary password.
 5. The invited administrator opens the link, chooses a password, and signs in
-   at `/admin/login` with the login ID and selected password.
+   at `/admin/login` with the email address and selected password.
 
 An invitation starts as `INVITED`. Successful password setup changes it to
 `ACTIVE` and revokes any prior session. An active administrator can be deleted

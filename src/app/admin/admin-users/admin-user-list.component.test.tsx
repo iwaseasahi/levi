@@ -19,7 +19,6 @@ describe("AdminUserList", () => {
             createdAt: new Date("2026-08-24T00:00:00Z"),
             email: "bootstrap@pending.invalid",
             id: "admin-1",
-            loginId: "basic-bootstrap",
             name: "Levi Administrator",
             status: "BOOTSTRAP",
           },
@@ -27,7 +26,6 @@ describe("AdminUserList", () => {
             createdAt: new Date("2026-08-24T01:00:00Z"),
             email: "invited@example.com",
             id: "admin-2",
-            loginId: "invited.admin",
             name: "招待済み管理者",
             status: "INVITED",
           },
@@ -39,7 +37,7 @@ describe("AdminUserList", () => {
 
     expect(screen.queryByText("basic-bootstrap")).not.toBeInTheDocument();
     expect(screen.queryByText("Basic認証")).not.toBeInTheDocument();
-    expect(screen.getByText("invited.admin")).toBeVisible();
+    expect(screen.getByText("invited@example.com")).toBeVisible();
     expect(screen.getByText("初回パスワード変更待ち")).toBeVisible();
     expect(screen.getByText("現在の管理者")).toBeVisible();
     expect(
@@ -62,7 +60,6 @@ describe("AdminUserList", () => {
             createdAt: new Date("2026-08-24T00:00:00Z"),
             email: "bootstrap@pending.invalid",
             id: "admin-1",
-            loginId: "basic-bootstrap",
             name: "Levi Administrator",
             status: "BOOTSTRAP",
           },
@@ -84,7 +81,6 @@ describe("AdminUserList", () => {
             createdAt: new Date("2026-08-24T01:00:00Z"),
             email: "other@example.com",
             id: "admin-2",
-            loginId: "other.admin",
             name: "別の管理者",
             status: "ACTIVE",
           },

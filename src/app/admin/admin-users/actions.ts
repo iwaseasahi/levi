@@ -70,7 +70,6 @@ export async function inviteAdminUserAction(
     requestHeaders,
     {
       email: formData.get("email"),
-      loginId: formData.get("loginId"),
       name: formData.get("name"),
     },
     requestHeaders.get(REQUEST_ID_HEADER) ?? undefined,

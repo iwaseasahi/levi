@@ -1,7 +1,6 @@
 import { hashPassword } from "better-auth/crypto";
 
 import {
-  BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
   BASIC_BOOTSTRAP_ADMIN_NAME,
   BASIC_BOOTSTRAP_ADMIN_USER_ID,
 } from "@/domain/admin/admin-user";
@@ -15,11 +14,8 @@ export const E2E_PASSWORD_USER_EMAIL =
 export const E2E_PASSWORD = "e".repeat(16);
 export const E2E_CREATED_EMAIL = "test.e2e.created@example.invalid";
 export const E2E_CREATED_CHURCH = "test.e2e created church";
-export const E2E_INVITED_ADMIN_LOGIN_ID = "test.e2e.invited.admin";
 export const E2E_INVITED_ADMIN_EMAIL = "test.e2e.invited.admin@example.invalid";
-export const E2E_ACTIVE_ADMIN_LOGIN_ID = "test.e2e.active.admin";
 export const E2E_ACTIVE_ADMIN_EMAIL = "test.e2e.active.admin@example.invalid";
-export const E2E_INITIAL_ADMIN_LOGIN_ID = "test.e2e.initial.admin";
 export const E2E_INITIAL_ADMIN_EMAIL = "test.e2e.initial.admin@example.invalid";
 export const E2E_INITIAL_ADMIN_PASSWORD = "temporary-admin-password";
 
@@ -175,7 +171,7 @@ export async function seedScriptureFixture() {
 export async function clearOperatorFixtures() {
   await prisma.rateLimit.deleteMany();
   await prisma.adminUser.deleteMany({
-    where: { loginId: { startsWith: "test.e2e." } },
+    where: { email: { startsWith: "test.e2e." } },
   });
   await prisma.adminUser.deleteMany({
     where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
@@ -200,7 +196,6 @@ export async function seedOperatorFixtures() {
       data: {
         id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
         email: "basic-bootstrap@pending.invalid",
-        loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
         status: "BOOTSTRAP",
       },
@@ -210,7 +205,6 @@ export async function seedOperatorFixtures() {
         activatedAt: new Date(),
         email: E2E_ACTIVE_ADMIN_EMAIL,
         id: E2E_ACTIVE_ADMIN_ID,
-        loginId: E2E_ACTIVE_ADMIN_LOGIN_ID,
         name: "Synthetic Active Administrator",
         status: "ACTIVE",
         accounts: {
@@ -229,7 +223,6 @@ export async function seedOperatorFixtures() {
         id: E2E_INITIAL_ADMIN_ID,
         invitedAt: new Date(),
         invitedByAdminUserId: E2E_ACTIVE_ADMIN_ID,
-        loginId: E2E_INITIAL_ADMIN_LOGIN_ID,
         name: "Synthetic Initial Administrator",
         status: "INVITED",
         accounts: {

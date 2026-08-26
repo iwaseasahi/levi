@@ -15,8 +15,8 @@ export function AdminLoginForm() {
   async function submit(formData: FormData) {
     setPending(true);
     setMessage(undefined);
-    const result = await adminAuthClient.signIn.username({
-      username: String(formData.get("loginId") ?? "")
+    const result = await adminAuthClient.signIn.email({
+      email: String(formData.get("email") ?? "")
         .trim()
         .toLowerCase(),
       password: String(formData.get("password") ?? ""),
@@ -24,7 +24,7 @@ export function AdminLoginForm() {
     });
     if (result.error) {
       setPending(false);
-      setMessage("ログインIDまたはパスワードを確認してください。");
+      setMessage("メールアドレスまたはパスワードを確認してください。");
       requestAnimationFrame(() => feedback.current?.focus());
       return;
     }
@@ -36,13 +36,14 @@ export function AdminLoginForm() {
     <form action={submit} className="auth-form">
       <fieldset disabled={pending}>
         <legend className="sr-only">管理者ログイン</legend>
-        <label htmlFor="admin-login-id">ログインID</label>
+        <label htmlFor="admin-login-email">メールアドレス</label>
         <input
-          autoComplete="username"
-          id="admin-login-id"
-          maxLength={100}
-          name="loginId"
+          autoCapitalize="none"
+          autoComplete="email"
+          id="admin-login-email"
+          name="email"
           required
+          type="email"
         />
         <PasswordInput
           autoComplete="current-password"

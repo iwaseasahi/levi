@@ -38,7 +38,7 @@ export default async function AdministrationPage() {
           </span>
           <span>
             <strong>管理者の一覧</strong>
-            <small>登録済みの管理者IDと状態を確認します</small>
+            <small>登録済みの管理者と状態を確認します</small>
           </span>
           <span aria-hidden="true">→</span>
         </Link>

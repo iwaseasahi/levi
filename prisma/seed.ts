@@ -1,7 +1,6 @@
 import "dotenv/config";
 
 import {
-  BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
   BASIC_BOOTSTRAP_ADMIN_NAME,
   BASIC_BOOTSTRAP_ADMIN_USER_ID,
 } from "../src/domain/admin/admin-user.js";
@@ -26,14 +25,12 @@ async function seed() {
       where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
       update: {
         email: "basic-bootstrap@pending.invalid",
-        loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
         status: "BOOTSTRAP",
       },
       create: {
         email: "basic-bootstrap@pending.invalid",
         id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
-        loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
         status: "BOOTSTRAP",
       },

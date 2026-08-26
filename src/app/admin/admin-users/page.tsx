@@ -12,7 +12,7 @@ export default async function AdminUsersPage() {
       <header className="admin-header">
         <p className="eyebrow">運営管理</p>
         <h1>管理者の一覧</h1>
-        <p>登録されている管理者IDと現在の状態を確認できます。</p>
+        <p>登録されている管理者と現在の状態を確認できます。</p>
         <Link
           className="primary-button admin-header-action"
           href="/admin/admin-users/new"

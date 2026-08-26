@@ -1,6 +1,6 @@
 # ADR 0009: Separate administrator identities from Church users
 
-- Status: accepted
+- Status: accepted (login identifier decision superseded by ADR 0012)
 - Date: 2026-08-24
 - Related: #255, #256, #258, #259
 
@@ -19,9 +19,9 @@ Levi stores administrative identities in `admin_users`, independently of
 The current Basic credential remains in environment configuration. A
 deterministic `BOOTSTRAP` admin user is the audit and authorization subject for
 that credential; it has no database password. Invited administrators have a
-case-insensitive login ID, unique email address, invitation metadata, and a
-status. ADR 0012 defines their Better Auth login, password, session, and email
-lifecycle.
+unique email address, invitation metadata, and a status. ADR 0012 supersedes
+this ADR's original separate-login-ID decision and defines their Better Auth
+login, password, session, and email lifecycle.
 
 Administrative server actions authenticate again and pass an admin user ID to
 the use case. Church session creation only admits an ACTIVE `users` row with an

@@ -73,27 +73,6 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
           />
           <Errors errors={errors.email} id="admin-email-errors" />
 
-          <label htmlFor="admin-login-id">ログインID</label>
-          <input
-            aria-describedby={
-              errors.loginId
-                ? "admin-login-id-errors admin-login-id-hint"
-                : "admin-login-id-hint"
-            }
-            aria-invalid={Boolean(errors.loginId)}
-            autoCapitalize="none"
-            autoComplete="username"
-            id="admin-login-id"
-            maxLength={100}
-            name="loginId"
-            required
-            spellCheck={false}
-          />
-          <p className="field-hint" id="admin-login-id-hint">
-            半角英数字と . _ @ - を使用できます。
-          </p>
-          <Errors errors={errors.loginId} id="admin-login-id-errors" />
-
           <button className="primary-button" type="submit">
             {pending ? "招待中…" : "管理者を招待"}
           </button>
@@ -103,7 +82,7 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
       <div className="provisioning-feedback" aria-live="polite">
         {pending ? (
           <div className="notice" role="status">
-            管理者IDを安全に作成しています。
+            管理者アカウントを安全に作成しています。
           </div>
         ) : null}
         {state.status === "validation-error" ||
@@ -135,10 +114,6 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
               <div>
                 <dt>メールアドレス</dt>
                 <dd>{state.email}</dd>
-              </div>
-              <div>
-                <dt>ログインID</dt>
-                <dd>{state.loginId}</dd>
               </div>
             </dl>
             <p>メール内のリンクは1時間有効です。</p>

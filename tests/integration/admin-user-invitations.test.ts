@@ -15,11 +15,11 @@ async function clear() {
   await prisma.adminUser.deleteMany({
     where: {
       invitedByAdminUserId: { not: null },
-      loginId: { startsWith: namespace },
+      email: { startsWith: namespace },
     },
   });
   await prisma.adminUser.deleteMany({
-    where: { loginId: { startsWith: namespace } },
+    where: { email: { startsWith: namespace } },
   });
 }
 
@@ -27,7 +27,6 @@ async function actor() {
   return prisma.adminUser.create({
     data: {
       email: `${namespace}${randomUUID()}@example.com`,
-      loginId: `${namespace}${randomUUID()}`,
       name: "Inviting administrator",
       status: "ACTIVE",
     },
@@ -50,7 +49,6 @@ describe("admin user invitations", () => {
     const inviter = await actor();
     const result = await inviteAdminUser(inviter.id, {
       email: `${namespace}new@example.com`,
-      loginId: `${namespace}NEW`,
       name: "New administrator",
     });
     const record = await prisma.adminUser.findUniqueOrThrow({
@@ -59,7 +57,6 @@ describe("admin user invitations", () => {
     expect(record).toMatchObject({
       invitedByAdminUserId: inviter.id,
       email: `${namespace}new@example.com`,
-      loginId: `${namespace}new`,
       name: "New administrator",
       status: "INVITED",
     });
@@ -81,31 +78,28 @@ describe("admin user invitations", () => {
     const failingService = createAdminUserInvitationService(async () => {
       throw new Error("SMTP unavailable");
     });
-    const loginId = `${namespace}mail-failure`;
-
     await expect(
       failingService(inviter.id, {
         email: `${namespace}mail-failure@example.com`,
-        loginId,
         name: "Mail failure",
       }),
     ).rejects.toBeInstanceOf(AdminUserInvitationFailedError);
-    await expect(prisma.adminUser.count({ where: { loginId } })).resolves.toBe(
-      0,
-    );
+    await expect(
+      prisma.adminUser.count({
+        where: { email: `${namespace}mail-failure@example.com` },
+      }),
+    ).resolves.toBe(0);
   });
 
   it("rejects case-insensitive duplicates", async () => {
     const inviter = await actor();
     await inviteAdminUser(inviter.id, {
       email: `${namespace}duplicate@example.com`,
-      loginId: `${namespace}duplicate`,
       name: "First",
     });
     await expect(
       inviteAdminUser(inviter.id, {
-        email: `${namespace}other@example.com`,
-        loginId: `${namespace}DUPLICATE`,
+        email: `${namespace}DUPLICATE@example.com`,
         name: "Second",
       }),
     ).rejects.toBeInstanceOf(AdminUserInvitationDuplicateError);
@@ -115,7 +109,6 @@ describe("admin user invitations", () => {
     const suspended = await prisma.adminUser.create({
       data: {
         email: `${namespace}suspended@example.com`,
-        loginId: `${namespace}suspended`,
         name: "Suspended",
         status: "SUSPENDED",
       },
@@ -123,7 +116,6 @@ describe("admin user invitations", () => {
     await expect(
       inviteAdminUser(suspended.id, {
         email: `${namespace}denied@example.com`,
-        loginId: `${namespace}denied`,
         name: "Denied",
       }),
     ).rejects.toBeInstanceOf(AdminUserInvitationAuthorizationError);

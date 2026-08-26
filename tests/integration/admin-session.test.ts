@@ -15,7 +15,7 @@ const origin = "http://localhost:3000";
 
 async function clear() {
   await prisma.adminUser.deleteMany({
-    where: { loginId: { startsWith: namespace } },
+    where: { email: { startsWith: namespace } },
   });
   await prisma.adminRateLimit.deleteMany();
 }
@@ -24,13 +24,12 @@ async function createAdmin(
   status: "ACTIVE" | "INVITED" | "SUSPENDED" = "ACTIVE",
 ) {
   const id = randomUUID();
-  const loginId = `${namespace}${id}`;
+  const email = `${namespace}${id}@example.com`;
   return prisma.adminUser.create({
     data: {
       activatedAt: status === "ACTIVE" ? new Date() : null,
-      email: `${loginId}@example.com`,
+      email,
       id,
-      loginId,
       name: "Session test administrator",
       status,
       accounts: {
@@ -45,10 +44,10 @@ async function createAdmin(
   });
 }
 
-async function signIn(loginId: string, selectedPassword = password) {
-  const response = await adminAuth.api.signInUsername({
+async function signIn(email: string, selectedPassword = password) {
+  const response = await adminAuth.api.signInEmail({
     asResponse: true,
-    body: { password: selectedPassword, username: loginId },
+    body: { email, password: selectedPassword },
     headers: new Headers({ origin }),
   });
   const cookie = response.headers
@@ -65,7 +64,7 @@ afterAll(() => prisma.$disconnect());
 describe("administrator Better Auth sessions", () => {
   it("authenticates an active administrator with an isolated 30-day session", async () => {
     const admin = await createAdmin();
-    const login = await signIn(admin.loginId.toUpperCase());
+    const login = await signIn(admin.email.toUpperCase());
 
     expect(login.response.status).toBe(200);
     expect(login.cookie).toContain("levi-admin-auth.session_token=");
@@ -85,17 +84,17 @@ describe("administrator Better Auth sessions", () => {
 
   it("rejects invalid credentials and suspended administrators", async () => {
     const active = await createAdmin();
-    const invalid = await signIn(active.loginId, "wrong-password");
+    const invalid = await signIn(active.email, "wrong-password");
     expect(invalid.response.status).toBe(401);
 
     const suspended = await createAdmin("SUSPENDED");
-    const denied = await signIn(suspended.loginId);
+    const denied = await signIn(suspended.email);
     expect(denied.response.status).toBeGreaterThanOrEqual(400);
   });
 
   it("invalidates an existing session as soon as the administrator is suspended", async () => {
     const admin = await createAdmin();
-    const login = await signIn(admin.loginId);
+    const login = await signIn(admin.email);
     expect(login.response.status).toBe(200);
 
     await prisma.adminUser.update({

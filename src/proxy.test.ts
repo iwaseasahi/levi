@@ -38,7 +38,7 @@ describe("proxy", () => {
       authenticateAdmin: async () => ({ status: "unauthenticated" }),
     });
     const response = await handle(
-      new NextRequest("https://levi.example/api/admin-auth/sign-in/username"),
+      new NextRequest("https://levi.example/api/admin-auth/sign-in/email"),
     );
 
     expect(response.status).toBe(401);
