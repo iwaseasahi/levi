@@ -19,6 +19,7 @@ const entrypointInstaller = script("install-production-deploy-entrypoint.sh");
 const authorizedDeploy = script("run-authorized-production-deploy.sh");
 const prepareRelease = script("prepare-production-release.sh");
 const deployRelease = script("deploy-production-release.sh");
+const waitForRequiredCi = script("wait-for-required-ci.sh");
 const healthScript = script("check-production-health.sh");
 const secretCheck = script("check-production-secrets.sh");
 const bibleImport = script("production-bible-import.sh");
@@ -40,6 +41,7 @@ const syntax = spawnSync(
     authorizedDeploy,
     prepareRelease,
     deployRelease,
+    waitForRequiredCi,
     healthScript,
     secretCheck,
     bibleImport,
@@ -47,6 +49,57 @@ const syntax = spawnSync(
   { encoding: "utf8" },
 );
 assert.equal(syntax.status, 0, syntax.stderr);
+
+const ciWaitFixture = mkdtempSync(path.join(tmpdir(), "levi-ci-wait."));
+try {
+  const fakeGh = path.join(ciWaitFixture, "gh");
+  writeFileSync(
+    fakeGh,
+    `#!/usr/bin/env bash
+set -euo pipefail
+case "\${FAKE_CI_MODE:-success}" in
+  success)
+    printf '%s\\n' '{"check_runs":[{"name":"Quality","status":"completed","conclusion":"success","started_at":"1"},{"name":"Database","status":"completed","conclusion":"success","started_at":"1"},{"name":"E2E","status":"completed","conclusion":"success","started_at":"1"},{"name":"Security","status":"completed","conclusion":"success","started_at":"1"}]}'
+    ;;
+  failure)
+    printf '%s\\n' '{"check_runs":[{"name":"Quality","status":"completed","conclusion":"failure","started_at":"1"},{"name":"Database","status":"completed","conclusion":"success","started_at":"1"},{"name":"E2E","status":"completed","conclusion":"success","started_at":"1"},{"name":"Security","status":"completed","conclusion":"success","started_at":"1"}]}'
+    ;;
+  pending)
+    printf '%s\\n' '{"check_runs":[{"name":"Quality","status":"in_progress","conclusion":null,"started_at":"1"}]}'
+    ;;
+esac
+`,
+  );
+  chmodSync(fakeGh, 0o755);
+  const ciWaitEnvironment = {
+    ...process.env,
+    PATH: `${ciWaitFixture}:${process.env.PATH ?? ""}`,
+    LEVI_ALLOW_TEST_OVERRIDES: "true",
+    LEVI_CI_WAIT_INTERVAL_SECONDS: "0",
+    LEVI_CI_WAIT_MAX_ATTEMPTS: "1",
+  };
+  const successfulCi = spawnSync("bash", [waitForRequiredCi, "a".repeat(40)], {
+    encoding: "utf8",
+    env: ciWaitEnvironment,
+  });
+  assert.equal(successfulCi.status, 0, successfulCi.stderr);
+
+  const failedCi = spawnSync("bash", [waitForRequiredCi, "a".repeat(40)], {
+    encoding: "utf8",
+    env: { ...ciWaitEnvironment, FAKE_CI_MODE: "failure" },
+  });
+  assert.equal(failedCi.status, 65);
+  assert.match(failedCi.stderr, /Quality check failed/);
+
+  const timedOutCi = spawnSync("bash", [waitForRequiredCi, "a".repeat(40)], {
+    encoding: "utf8",
+    env: { ...ciWaitEnvironment, FAKE_CI_MODE: "pending" },
+  });
+  assert.equal(timedOutCi.status, 75);
+  assert.match(timedOutCi.stderr, /Timed out waiting for required CI/);
+} finally {
+  rmSync(ciWaitFixture, { recursive: true, force: true });
+}
 
 const baseEnvironment = {
   ...process.env,
@@ -153,6 +206,7 @@ assert.doesNotMatch(publishWorkflow, /\bssh\b/);
 const prepareSource = readFileSync(prepareRelease, "utf8");
 assert.match(prepareSource, /\$# -ne 0/);
 assert.match(prepareSource, /git rev-parse origin\/main/);
+assert.match(prepareSource, /wait-for-required-ci\.sh/);
 assert.match(prepareSource, /production:release:deploy/);
 assert.doesNotMatch(prepareSource, /ISSUE_NUMBER|gh issue|release_issue/);
 assert.doesNotMatch(prepareSource, /ssh /);
