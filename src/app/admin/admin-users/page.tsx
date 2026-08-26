@@ -2,9 +2,10 @@ import Link from "next/link";
 import { listAdminUsers } from "@/infrastructure/auth/admin-user-invitations";
 import { AdminUserList } from "./admin-user-list";
 import { requireAdminPageAccess } from "@/infrastructure/auth/admin-page-access";
+import { deleteAdminUserAction } from "./actions";
 
 export default async function AdminUsersPage() {
-  await requireAdminPageAccess();
+  const access = await requireAdminPageAccess();
   const adminUsers = await listAdminUsers();
   return (
     <main className="admin-shell">
@@ -19,7 +20,11 @@ export default async function AdminUsersPage() {
           管理者を招待
         </Link>
       </header>
-      <AdminUserList adminUsers={adminUsers} />
+      <AdminUserList
+        adminUsers={adminUsers}
+        currentAdminUserId={access.adminUserId}
+        deleteAction={deleteAdminUserAction}
+      />
     </main>
   );
 }

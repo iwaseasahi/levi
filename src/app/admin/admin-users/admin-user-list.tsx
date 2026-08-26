@@ -1,4 +1,6 @@
 import type { AdminUserSummary } from "@/infrastructure/auth/admin-user-invitations";
+import type { DeleteAdminUserState } from "@/application/admin/delete-admin-user-controller";
+import { DeleteAdminUserButton } from "./delete-admin-user-button";
 
 const statusLabels = {
   ACTIVE: "有効",
@@ -9,8 +11,15 @@ const statusLabels = {
 
 export function AdminUserList({
   adminUsers,
+  currentAdminUserId,
+  deleteAction,
 }: {
   adminUsers: AdminUserSummary[];
+  currentAdminUserId: string;
+  deleteAction: (
+    state: DeleteAdminUserState,
+    formData: FormData,
+  ) => Promise<DeleteAdminUserState>;
 }) {
   const visibleAdminUsers = adminUsers.filter(
     (adminUser) => adminUser.status !== "BOOTSTRAP",
@@ -32,11 +41,22 @@ export function AdminUserList({
                 <strong>{adminUser.name}</strong>
                 <span>{adminUser.loginId}</span>
               </div>
-              <span
-                className={`status-badge status-${adminUser.status.toLowerCase()}`}
-              >
-                {statusLabels[adminUser.status]}
-              </span>
+              <div className="admin-user-actions">
+                <span
+                  className={`status-badge status-${adminUser.status.toLowerCase()}`}
+                >
+                  {statusLabels[adminUser.status]}
+                </span>
+                {adminUser.id === currentAdminUserId ? (
+                  <span className="current-admin-label">現在の管理者</span>
+                ) : (
+                  <DeleteAdminUserButton
+                    action={deleteAction}
+                    adminUserId={adminUser.id}
+                    adminUserName={adminUser.name}
+                  />
+                )}
+              </div>
             </li>
           ))}
         </ul>

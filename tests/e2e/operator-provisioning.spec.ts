@@ -151,6 +151,13 @@ test.describe("administrator invitations", () => {
         .filter({ hasText: E2E_INVITED_ADMIN_LOGIN_ID })
         .getByText("初回パスワード変更待ち"),
     ).toBeVisible();
+    page.once("dialog", (dialog) => dialog.accept());
+    await page
+      .locator(".admin-user-list li")
+      .filter({ hasText: E2E_INVITED_ADMIN_LOGIN_ID })
+      .getByRole("button", { name: "削除" })
+      .click();
+    await expect(page.getByText(E2E_INVITED_ADMIN_LOGIN_ID)).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 });
