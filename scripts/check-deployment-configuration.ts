@@ -28,6 +28,7 @@ const healthScript = script("check-production-health.sh");
 const secretCheck = script("check-production-secrets.sh");
 const bibleImport = script("production-bible-import.sh");
 const ghcrCleanup = script("cleanup-ghcr-packages.sh");
+const productionImageCleanup = script("cleanup-production-images.sh");
 const currentCommit = spawnSync("git", ["rev-parse", "HEAD"], {
   cwd: root,
   encoding: "utf8",
@@ -52,6 +53,7 @@ const syntax = spawnSync(
     secretCheck,
     bibleImport,
     ghcrCleanup,
+    productionImageCleanup,
   ],
   { encoding: "utf8" },
 );
@@ -387,6 +389,107 @@ assert.match(
   deploySource,
   /Approved application and migration images are available locally/,
 );
+assert.match(deploySource, /cleanup-production-images\.sh/);
+
+const productionImageCleanupSource = readFileSync(
+  productionImageCleanup,
+  "utf8",
+);
+assert.match(productionImageCleanupSource, /--dry-run/);
+assert.match(
+  productionImageCleanupSource,
+  /label=com\.docker\.compose\.project=levi-production/,
+);
+assert.match(productionImageCleanupSource, /references_current_digest/);
+assert.match(productionImageCleanupSource, /is_running_image/);
+assert.match(productionImageCleanupSource, /docker image prune --force/);
+assert.doesNotMatch(
+  productionImageCleanupSource,
+  /docker (?:system|volume) prune/,
+);
+
+const imageCleanupFixture = mkdtempSync(
+  path.join(tmpdir(), "levi-image-cleanup."),
+);
+try {
+  const fakeDocker = path.join(imageCleanupFixture, "docker");
+  const dockerLog = path.join(imageCleanupFixture, "docker.log");
+  const currentApplication = `ghcr.io/iwaseasahi/levi@sha256:${"a".repeat(64)}`;
+  const currentMigration = `ghcr.io/iwaseasahi/levi-migrate@sha256:${"b".repeat(64)}`;
+  writeFileSync(
+    fakeDocker,
+    `#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\\n' "$*" >>"\${FAKE_DOCKER_LOG}"
+case "$1 $2" in
+  "image inspect")
+    case "\${*: -1}" in
+      sha256:current-migration)
+        printf '%s\\n' '${currentMigration}'
+        ;;
+      *) ;;
+    esac
+    ;;
+  "system df")
+    printf '%s\\n' 'TYPE TOTAL ACTIVE SIZE RECLAIMABLE'
+    ;;
+  "ps --quiet")
+    printf '%s\\n' 'running-app'
+    ;;
+  "ps --all")
+    printf '%s\\n' 'stopped-app'
+    ;;
+  "inspect --format")
+    printf '%s\\n' 'sha256:current-application'
+    ;;
+  "image ls")
+    case "$3" in
+      ghcr.io/iwaseasahi/levi)
+        printf '%s\\n' 'sha256:current-application' 'sha256:old-application'
+        ;;
+      ghcr.io/iwaseasahi/levi-migrate)
+        printf '%s\\n' 'sha256:current-migration' 'sha256:old-migration'
+        ;;
+    esac
+    ;;
+  "container rm"|"image rm"|"image prune")
+    exit 99
+    ;;
+esac
+`,
+  );
+  chmodSync(fakeDocker, 0o755);
+  const dryRunCleanup = spawnSync(
+    "bash",
+    [productionImageCleanup, "--dry-run", currentApplication, currentMigration],
+    {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${imageCleanupFixture}:${process.env.PATH ?? ""}`,
+        FAKE_DOCKER_LOG: dockerLog,
+        LEVI_ALLOW_NON_ROOT_FOR_REHEARSAL: "true",
+      },
+    },
+  );
+  assert.equal(dryRunCleanup.status, 0, dryRunCleanup.stderr);
+  assert.match(
+    dryRunCleanup.stdout,
+    /Would remove stopped Levi production container/,
+  );
+  assert.match(dryRunCleanup.stdout, /sha256:old-application/);
+  assert.match(dryRunCleanup.stdout, /sha256:old-migration/);
+  assert.doesNotMatch(
+    dryRunCleanup.stdout,
+    /Would remove obsolete Levi image: sha256:current/,
+  );
+  assert.doesNotMatch(
+    readFileSync(dockerLog, "utf8"),
+    /^(?:container rm|image rm|image prune)/m,
+  );
+} finally {
+  rmSync(imageCleanupFixture, { recursive: true, force: true });
+}
 
 const prepareSource = readFileSync(prepareRelease, "utf8");
 assert.match(prepareSource, /\$# -ne 0/);
