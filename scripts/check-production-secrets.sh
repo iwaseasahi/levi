@@ -103,7 +103,7 @@ readonly mail_from="$(value_for "$production_environment" MAIL_FROM)"
 [[ "$smtp_host" == "smtp.gmail.com" ]] || fail
 [[ "$smtp_port" == "587" ]] || fail
 [[ "$smtp_secure" == "false" ]] || fail
-[[ "$smtp_user" == "levi-system@gmail.com" ]] || fail
+[[ "$smtp_user" == "levi.system.app@gmail.com" ]] || fail
 [[ "$mail_from" == "$smtp_user" ]] || fail
 [[ "$smtp_password" =~ ^[^[:space:]]{16,128}$ ]] || fail
 

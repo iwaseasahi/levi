@@ -57,15 +57,15 @@ the same local origin used to request it.
 
 ## Production Gmail
 
-Production sends through `levi-system@gmail.com` with a Google app password:
+Production sends through `levi.system.app@gmail.com` with a Google app password:
 
 ```dotenv
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
-SMTP_USER=levi-system@gmail.com
+SMTP_USER=levi.system.app@gmail.com
 SMTP_PASSWORD=<Google app password>
-MAIL_FROM=levi-system@gmail.com
+MAIL_FROM=levi.system.app@gmail.com
 ```
 
 The app password belongs only in `/etc/levi/production.env` with mode
