@@ -2,7 +2,7 @@ name: Production smoke
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -14,6 +14,8 @@ jobs:
     if: ${{ vars.PRODUCTION_BASE_URL != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 3
+    env:
+      SLACK_MONITORING_WEBHOOK_URL: ${{ secrets.SLACK_MONITORING_WEBHOOK_URL }}
     steps:
       - name: Check production readiness without credentials
         env:
@@ -23,3 +25,21 @@ jobs:
           [[ "$PRODUCTION_BASE_URL" == "https://levi-system.com" ]]
           response="$(curl --fail --silent --show-error --max-time 10 --retry 1 --retry-delay 5 "${PRODUCTION_BASE_URL}/api/ready")"
           [[ "$(jq -r '.status // empty' <<< "$response")" == "ready" ]]
+
+      - name: Notify Slack when external readiness fails
+        if: ${{ failure() }}
+        env:
+          ALERT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$SLACK_MONITORING_WEBHOOK_URL" ]]; then
+            echo "Slack monitoring webhook is not configured; notification was skipped."
+            exit 0
+          fi
+          [[ "$SLACK_MONITORING_WEBHOOK_URL" =~ ^https://hooks\.slack\.com/services/[A-Za-z0-9_/-]+$ ]]
+          payload="$(jq -cn --arg run_url "$ALERT_RUN_URL" \
+            '{text: (":red_circle: Levi productionの外形死活監視に失敗しました。確認: " + $run_url)}')"
+          curl --fail --silent --show-error --max-time 10 \
+            --header "Content-Type: application/json" \
+            --data "$payload" \
+            "$SLACK_MONITORING_WEBHOOK_URL" >/dev/null

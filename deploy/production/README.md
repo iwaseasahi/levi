@@ -12,7 +12,7 @@
 - `production.env.example`: シークレットを含まない設定例
 - `backup.env.example`: root 管理のバックアップ設定例
 - `systemd/`: 毎週月曜日・30日保持のweekly暗号化バックアップと監視timer（deploy/import前のoperational backupは48時間保持）
-- `monitoring.env.example`: readiness、DB、容量、5xx、backup age の監視設定例
+- `monitoring.env.example`: readiness、DB、容量、5xx、backup age、Slack通知の監視設定例
 - `journald-levi.conf`: 圧縮、200 MB、14日間の journal retention
 
 production deploy成功後は、現在稼働中のapplication imageとcurrent migration imageを
