@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
   chmodSync,
+  existsSync,
   mkdtempSync,
   readFileSync,
   rmSync,
@@ -26,6 +27,7 @@ const waitForProductionAuthorization = script(
 const healthScript = script("check-production-health.sh");
 const secretCheck = script("check-production-secrets.sh");
 const bibleImport = script("production-bible-import.sh");
+const ghcrCleanup = script("cleanup-ghcr-packages.sh");
 const currentCommit = spawnSync("git", ["rev-parse", "HEAD"], {
   cwd: root,
   encoding: "utf8",
@@ -49,6 +51,7 @@ const syntax = spawnSync(
     healthScript,
     secretCheck,
     bibleImport,
+    ghcrCleanup,
   ],
   { encoding: "utf8" },
 );
@@ -242,6 +245,109 @@ assert.doesNotMatch(publishWorkflow, /docker buildx build/);
 assert.doesNotMatch(publishWorkflow, /release_issue/);
 assert.doesNotMatch(publishWorkflow, /\bssh\b/);
 
+const cleanupWorkflow = readFileSync(
+  path.join(root, ".github/workflows/cleanup-ghcr.yml"),
+  "utf8",
+);
+assert.match(cleanupWorkflow, /cron: "0 5 \* \* 1"/);
+assert.match(cleanupWorkflow, /workflow_dispatch:/);
+assert.match(cleanupWorkflow, /packages: write/);
+assert.match(cleanupWorkflow, /LEVI_PRODUCTION_DEPLOYMENT_JSON/);
+assert.match(cleanupWorkflow, /vars\.LEVI_PRODUCTION_DEPLOYMENT/);
+assert.match(cleanupWorkflow, /LEVI_GHCR_RETENTION_DAYS: "7"/);
+assert.doesNotMatch(cleanupWorkflow, /pull_request:|\bssh\b/);
+
+const cleanupFixture = mkdtempSync(path.join(tmpdir(), "levi-ghcr-cleanup."));
+try {
+  const fakeGh = path.join(cleanupFixture, "gh");
+  const fakeDate = path.join(cleanupFixture, "date");
+  const deletedVersions = path.join(cleanupFixture, "deleted.txt");
+  writeFileSync(
+    fakeDate,
+    `#!/usr/bin/env bash
+printf '%s\\n' '2026-08-19T00:00:00Z'
+`,
+  );
+  writeFileSync(
+    fakeGh,
+    `#!/usr/bin/env bash
+set -euo pipefail
+if [[ "$*" == *"/levi-migrate/versions?"* ]]; then
+  printf '%s\\n' '[[{"id":11,"name":"sha256:${"b".repeat(64)}","created_at":"2026-07-01T00:00:00Z","metadata":{"container":{"tags":["current"]}}},{"id":12,"name":"sha256:${"d".repeat(64)}","created_at":"2026-07-01T00:00:00Z","metadata":{"container":{"tags":["old"]}}},{"id":13,"name":"sha256:${"e".repeat(64)}","created_at":"2026-07-01T00:00:00Z","metadata":{"container":{"tags":[]}}}]]'
+elif [[ "$*" == *"/levi/versions?"* ]]; then
+  printf '%s\\n' '[[{"id":1,"name":"sha256:${"a".repeat(64)}","created_at":"2026-07-01T00:00:00Z","metadata":{"container":{"tags":["current"]}}},{"id":2,"name":"sha256:${"c".repeat(64)}","created_at":"2026-07-01T00:00:00Z","metadata":{"container":{"tags":["old"]}}},{"id":3,"name":"sha256:${"e".repeat(64)}","created_at":"2026-08-20T00:00:00Z","metadata":{"container":{"tags":["recent"]}}},{"id":4,"name":"sha256:${"f".repeat(64)}","created_at":"2026-07-01T00:00:00Z","metadata":{"container":{"tags":[]}}}]]'
+elif [[ "$*" == *"--method DELETE"* ]]; then
+  printf '%s\\n' "$*" >> "$DELETED_VERSIONS"
+else
+  echo "unexpected gh: $*" >&2
+  exit 70
+fi
+`,
+  );
+  chmodSync(fakeGh, 0o755);
+  chmodSync(fakeDate, 0o755);
+  const deploymentState = JSON.stringify({
+    schema_version: 1,
+    status: "ready",
+    commit_sha: "f".repeat(40),
+    application_image: `ghcr.io/iwaseasahi/levi@sha256:${"a".repeat(64)}`,
+    migration_image: `ghcr.io/iwaseasahi/levi-migrate@sha256:${"b".repeat(64)}`,
+    authorization_run_url:
+      "https://github.com/iwaseasahi/levi/actions/runs/123456",
+    recorded_at: "2026-08-18T00:00:00Z",
+  });
+  const cleanupEnvironment = {
+    ...process.env,
+    PATH: `${cleanupFixture}:${process.env.PATH ?? ""}`,
+    DELETED_VERSIONS: deletedVersions,
+    LEVI_PRODUCTION_DEPLOYMENT_JSON: deploymentState,
+  };
+  const dryRun = spawnSync("bash", [ghcrCleanup], {
+    cwd: root,
+    encoding: "utf8",
+    env: cleanupEnvironment,
+  });
+  assert.equal(dryRun.status, 0, dryRun.stderr);
+  assert.match(dryRun.stdout, /would-delete package=levi .*version_id=2/);
+  assert.match(
+    dryRun.stdout,
+    /would-delete package=levi-migrate .*version_id=12/,
+  );
+  assert.match(dryRun.stdout, /reason=production/);
+  assert.match(dryRun.stdout, /reason=untagged-child-or-attestation/);
+  assert.equal(existsSync(deletedVersions), false);
+
+  const cleanup = spawnSync("bash", [ghcrCleanup], {
+    cwd: root,
+    encoding: "utf8",
+    env: {
+      ...cleanupEnvironment,
+      LEVI_GHCR_CLEANUP_DRY_RUN: "false",
+    },
+  });
+  assert.equal(cleanup.status, 0, cleanup.stderr);
+  const deletions = readFileSync(deletedVersions, "utf8");
+  assert.match(deletions, /\/levi\/versions\/2/);
+  assert.match(deletions, /\/levi-migrate\/versions\/12/);
+  assert.doesNotMatch(deletions, /versions\/(?:1|3|4|11|13)(?:\D|$)/);
+
+  const blocked = spawnSync("bash", [ghcrCleanup], {
+    cwd: root,
+    encoding: "utf8",
+    env: {
+      ...cleanupEnvironment,
+      LEVI_PRODUCTION_DEPLOYMENT_JSON: deploymentState.replace(
+        '"status":"ready"',
+        '"status":"deploying"',
+      ),
+    },
+  });
+  assert.equal(blocked.status, 65);
+  assert.match(blocked.stderr, /no package version was deleted/);
+} finally {
+  rmSync(cleanupFixture, { recursive: true, force: true });
+}
+
 const migrationDockerfile = readFileSync(
   path.join(root, "Dockerfile.migrate.production"),
   "utf8",
@@ -348,6 +454,9 @@ assert.match(authorizedSource, /\.schema_version == 4/);
 assert.match(authorizedSource, /authorization_run_url/);
 assert.match(authorizedSource, /ssh -o BatchMode=yes/);
 assert.match(authorizedSource, /\$\{1:-\}.*==.*--/);
+assert.match(authorizedSource, /record_deployment_state "deploying"/);
+assert.match(authorizedSource, /record_deployment_state "ready"/);
+assert.match(authorizedSource, /gh variable set LEVI_PRODUCTION_DEPLOYMENT/);
 assert.doesNotMatch(authorizedSource, /issuecomment/);
 
 const releaseArgumentFixture = mkdtempSync(
@@ -396,6 +505,10 @@ try {
   const fakeSsh = path.join(authorizationFixture, "ssh");
   const record = path.join(authorizationFixture, "authorization.json");
   const capture = path.join(authorizationFixture, "ssh-arguments.txt");
+  const variableCapture = path.join(
+    authorizationFixture,
+    "deployment-variable.txt",
+  );
   const runId = 123456;
   const runAttempt = 2;
   const validRecord = {
@@ -432,6 +545,9 @@ elif [[ "$1" == "run" ]]; then
     if [[ "$1" == "--dir" ]]; then cp "$AUTHORIZATION_FIXTURE" "$2/production-deploy-authorization.json"; exit 0; fi
     shift
   done
+elif [[ "$1" == "variable" && "$2" == "set" ]]; then
+  printf '%s\\n' "$*" >> "$VARIABLE_CAPTURE"
+  exit 0
 fi
 echo "unexpected gh: $*" >&2
 exit 70
@@ -451,6 +567,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
     PATH: `${authorizationFixture}:${process.env.PATH ?? ""}`,
     AUTHORIZATION_FIXTURE: record,
     SSH_CAPTURE: capture,
+    VARIABLE_CAPTURE: variableCapture,
   };
   const authorized = spawnSync("bash", [authorizedDeploy, `${runId}`], {
     cwd: root,
@@ -460,6 +577,9 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
   assert.equal(authorized.status, 0, authorized.stderr);
   assert.match(readFileSync(capture, "utf8"), /actions\/runs\/123456/);
   assert.match(readFileSync(capture, "utf8"), /'none'/);
+  const recordedStates = readFileSync(variableCapture, "utf8");
+  assert.match(recordedStates, /"status":"deploying"/);
+  assert.match(recordedStates, /"status":"ready"/);
 
   const authorizedWithSeparator = spawnSync(
     "bash",
