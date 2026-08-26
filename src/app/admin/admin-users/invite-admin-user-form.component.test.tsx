@@ -30,10 +30,12 @@ describe("InviteAdminUserForm", () => {
     ).toEqual([]);
     await user.click(screen.getByRole("button", { name: "管理者を招待" }));
     expect(await screen.findByText("next.admin@example.com")).toBeVisible();
-    expect(screen.getByText("メール内のリンクは1時間有効です。")).toBeVisible();
+    expect(
+      screen.getByText("メール内のリンクは24時間有効です。"),
+    ).toBeVisible();
     await user.click(screen.getByRole("button", { name: "表示を閉じる" }));
     expect(
-      screen.queryByText("メール内のリンクは1時間有効です。"),
+      screen.queryByText("メール内のリンクは24時間有効です。"),
     ).not.toBeInTheDocument();
   });
 
