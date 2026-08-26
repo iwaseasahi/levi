@@ -55,3 +55,49 @@ If the VPS cannot send any signal, external readiness fails and routes through G
 ## Incident minimum record
 
 Record detection time, reporter, affected churches, current commit/digests, readiness/DB/5xx/capacity/backup evidence, last known good time, data-integrity assessment, decision and approver, communication times, recovery action, verification, and follow-up Issues. Do not paste Restricted or Confidential data.
+
+## Production renewal register
+
+The operator owns this register. Review it quarterly and after changing a
+provider, certificate, key, or credential. Keep provider account identifiers,
+billing details, secret values, recovery codes, IP addresses, and private-key
+material outside the repository.
+
+| Item                                    | Current policy or expiry                                                                            | Review or action deadline                                                                                           | Evidence location                                                           |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `levi-system.com` registration          | XServer automatic renewal is enabled; current term ends 2028-08-25                                  | Confirm billing and registrant contact by 2028-05-27, then at least 90 days before every later expiry               | XServer Domain console                                                      |
+| WebARENA production VPS                 | Continuously billed service; no repository-managed expiry                                           | Confirm payment method, instance state, and console recovery access quarterly; next review 2026-11-26               | WebARENA console                                                            |
+| Public TLS certificates                 | Caddy automatic issuance and renewal with persistent certificate storage                            | External domain verification must always show at least 30 days remaining; investigate any renewal error immediately | Caddy data volume and `production:domain:verify`                            |
+| PostgreSQL backup recipient certificate | Public certificate expires 2036-08-22; encrypted private key remains offline                        | Replace and prove backup/isolated restore by 2036-05-24                                                             | Operator recovery storage and `/etc/levi/backup-recipient.crt`              |
+| Encrypted database backups              | Monday weekly schedule; each archive retained for 30 days; isolated restore proof valid for 90 days | Health timer checks continuously; perform and record a new isolated restore at least every 90 days                  | `/var/backups/levi` and restore proof                                       |
+| Runtime and database credentials        | Rotate immediately after suspected exposure or operator-access change                               | Annual review by 2027-08-26 if no earlier event requires rotation                                                   | Protected production environment; values are never copied to the repository |
+| Admin Basic authentication credential   | Rotate immediately after suspected exposure or administrator change                                 | Annual review by 2027-08-26 if no earlier event requires rotation                                                   | Protected production environment                                            |
+| Production SSH key                      | Levi-only operator key; revoke immediately after loss or access change                              | Annual review by 2027-08-26 if no earlier event requires rotation                                                   | Operator-controlled SSH storage and VPS `authorized_keys`                   |
+
+When a date or policy changes, update this table through a reviewed pull request
+and record the provider-side confirmation in the operations Issue without
+copying sensitive evidence.
+
+## Initial production baseline
+
+The first post-launch baseline was measured on 2026-08-26 JST and recorded in
+GitHub Issue #280:
+
+- public readiness returned HTTP 200 with PostgreSQL `ok`;
+- root disk use was 14% against the 80% threshold;
+- host memory use was 15% against the 90% threshold;
+- Caddy recorded zero 5xx responses in the final five-minute window;
+- the weekly backup and isolated restore proof passed health checks;
+- `levi-health.timer`, `levi-backup-health.timer`, and
+  `levi-backup-weekly.timer` were enabled and active;
+- a controlled VPS reboot restored SSH, Docker, HTTPS, application readiness,
+  PostgreSQL, and all three timers without manual service recovery;
+- the first health run during application startup failed closed, and a later
+  timer run recovered automatically with a successful result;
+- 93 sensitive Caddy header fields were present only with redacted values, and
+  no unredacted application credential, database URL, session token, password,
+  or private-key value was found.
+
+This is an operational baseline, not an SLA. Record the first real Sunday-use
+CPU, memory, disk, latency, and error measurements separately because synthetic
+or idle measurements do not represent projection traffic.
