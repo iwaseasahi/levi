@@ -41,35 +41,55 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
-      - name: Build and publish exact images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      - name: Build and publish application image
+        id: application
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: Dockerfile.production
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/iwaseasahi/levi:${{ inputs.commit_sha }}
+          build-args: VCS_REF=${{ inputs.commit_sha }}
+          cache-from: type=gha,scope=levi-production-application
+          cache-to: type=gha,mode=max,scope=levi-production-application
+      - name: Build and publish migration image
+        id: migration
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: Dockerfile.migrate.production
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/iwaseasahi/levi-migrate:${{ inputs.commit_sha }}
+          build-args: VCS_REF=${{ inputs.commit_sha }}
+          cache-from: type=gha,scope=levi-production-migration
+          cache-to: type=gha,mode=max,scope=levi-production-migration
+      - name: Create immutable release candidate
         env:
           COMMIT_SHA: ${{ inputs.commit_sha }}
+          APPLICATION_DIGEST: ${{ steps.application.outputs.digest }}
+          MIGRATION_DIGEST: ${{ steps.migration.outputs.digest }}
         run: |
           set -euo pipefail
-          docker buildx build --platform linux/amd64 --build-arg "VCS_REF=$COMMIT_SHA" \
-            --file Dockerfile.production --tag "ghcr.io/iwaseasahi/levi:$COMMIT_SHA" \
-            --metadata-file application-metadata.json --push .
-          docker buildx build --platform linux/amd64 --build-arg "VCS_REF=$COMMIT_SHA" \
-            --file Dockerfile.migrate.production --tag "ghcr.io/iwaseasahi/levi-migrate:$COMMIT_SHA" \
-            --metadata-file migration-metadata.json --push .
-          application_digest="$(jq -r '."containerimage.digest"' application-metadata.json)"
-          migration_digest="$(jq -r '."containerimage.digest"' migration-metadata.json)"
-          [[ "$application_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
-          [[ "$migration_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$APPLICATION_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$MIGRATION_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
           {
             echo '## Immutable production images'
             echo
             echo "- commit: \`$COMMIT_SHA\`"
-            echo "- application: \`ghcr.io/iwaseasahi/levi@$application_digest\`"
-            echo "- migration: \`ghcr.io/iwaseasahi/levi-migrate@$migration_digest\`"
+            echo "- application: \`ghcr.io/iwaseasahi/levi@$APPLICATION_DIGEST\`"
+            echo "- migration: \`ghcr.io/iwaseasahi/levi-migrate@$MIGRATION_DIGEST\`"
           } >> "$GITHUB_STEP_SUMMARY"
           jq -n \
             --arg repository "$GITHUB_REPOSITORY" \
             --argjson run_id "$GITHUB_RUN_ID" \
             --argjson run_attempt "$GITHUB_RUN_ATTEMPT" \
             --arg commit_sha "$COMMIT_SHA" \
-            --arg application_image "ghcr.io/iwaseasahi/levi@$application_digest" \
-            --arg migration_image "ghcr.io/iwaseasahi/levi-migrate@$migration_digest" \
+            --arg application_image "ghcr.io/iwaseasahi/levi@$APPLICATION_DIGEST" \
+            --arg migration_image "ghcr.io/iwaseasahi/levi-migrate@$MIGRATION_DIGEST" \
             --arg prepared_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '{
               schema_version: 1,

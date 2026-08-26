@@ -204,6 +204,41 @@ assert.match(
 );
 assert.match(publishWorkflow, /production-release-candidate\.json/);
 assert.match(publishWorkflow, /retention-days: 1/);
+assert.match(
+  publishWorkflow,
+  /docker\/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e/,
+);
+assert.equal(
+  publishWorkflow.match(
+    /docker\/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a/g,
+  )?.length,
+  2,
+);
+assert.match(
+  publishWorkflow,
+  /cache-from: type=gha,scope=levi-production-application/,
+);
+assert.match(
+  publishWorkflow,
+  /cache-to: type=gha,mode=max,scope=levi-production-application/,
+);
+assert.match(
+  publishWorkflow,
+  /cache-from: type=gha,scope=levi-production-migration/,
+);
+assert.match(
+  publishWorkflow,
+  /cache-to: type=gha,mode=max,scope=levi-production-migration/,
+);
+assert.match(
+  publishWorkflow,
+  /APPLICATION_DIGEST: \$\{\{ steps\.application\.outputs\.digest \}\}/,
+);
+assert.match(
+  publishWorkflow,
+  /MIGRATION_DIGEST: \$\{\{ steps\.migration\.outputs\.digest \}\}/,
+);
+assert.doesNotMatch(publishWorkflow, /docker buildx build/);
 assert.doesNotMatch(publishWorkflow, /release_issue/);
 assert.doesNotMatch(publishWorkflow, /\bssh\b/);
 
