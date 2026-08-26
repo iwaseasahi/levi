@@ -28,6 +28,18 @@ const authorizedDeployScript = path.join(
   repositoryRoot,
   "scripts/run-authorized-production-deploy.sh",
 );
+const prepareReleaseScript = path.join(
+  repositoryRoot,
+  "scripts/prepare-production-release.sh",
+);
+const deployReleaseScript = path.join(
+  repositoryRoot,
+  "scripts/deploy-production-release.sh",
+);
+const productionApprovalScript = path.join(
+  repositoryRoot,
+  "scripts/check-production-deploy-approval.sh",
+);
 const sundayApprovalScript = path.join(
   repositoryRoot,
   "scripts/check-sunday-deploy-approval.sh",
@@ -74,6 +86,9 @@ const syntax = spawnSync(
     deployEntrypoint,
     deployEntrypointInstaller,
     authorizedDeployScript,
+    prepareReleaseScript,
+    deployReleaseScript,
+    productionApprovalScript,
     sundayApprovalScript,
     healthScript,
     secretCheckScript,
@@ -138,7 +153,13 @@ for (const checkName of ["Quality", "Database", "E2E", "Security"]) {
   );
 }
 assert.match(deployWorkflow, /environment: production/);
+assert.match(
+  deployWorkflow,
+  /run-name: "Authorize production candidate #\$\{\{ inputs\.release_candidate_run_id \}\}"/,
+);
 assert.match(deployWorkflow, /sunday_approval_comment:/);
+assert.match(deployWorkflow, /release_candidate_run_id:/);
+assert.match(deployWorkflow, /check-production-deploy-approval\.sh/);
 assert.match(deployWorkflow, /check-sunday-deploy-approval\.sh/);
 assert.match(deployWorkflow, /issues: read/);
 assert.match(deployWorkflow, /workflow_dispatch:/);
@@ -153,6 +174,112 @@ assert.doesNotMatch(deployWorkflow, /\bssh\b/);
 assert.doesNotMatch(deployWorkflow, /PRODUCTION_SSH_/);
 assert.doesNotMatch(deployWorkflow, /sudo git/);
 assert.doesNotMatch(deployWorkflow, /sudo env/);
+
+const publishWorkflow = readFileSync(
+  path.join(repositoryRoot, ".github/workflows/publish-production-images.yml"),
+  "utf8",
+);
+assert.match(publishWorkflow, /release_issue:/);
+assert.match(
+  publishWorkflow,
+  /run-name: "Prepare production candidate #\$\{\{ inputs\.release_issue \}\} for \$\{\{ inputs\.commit_sha \}\}"/,
+);
+assert.match(publishWorkflow, /production-release-candidate\.json/);
+assert.match(
+  publishWorkflow,
+  /production-release-candidate-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/,
+);
+assert.match(publishWorkflow, /retention-days: 1/);
+assert.doesNotMatch(publishWorkflow, /\bssh\b/);
+
+const productionApprovalSource = readFileSync(productionApprovalScript, "utf8");
+assert.match(productionApprovalSource, /Production-Deploy: APPROVED/);
+assert.match(productionApprovalSource, /author_association/);
+assert.match(productionApprovalSource, /OWNER/);
+assert.match(productionApprovalSource, /Commit: \$commit_sha/);
+assert.match(
+  productionApprovalSource,
+  /Application-Image: \$application_image/,
+);
+assert.match(productionApprovalSource, /Migration-Image: \$migration_image/);
+
+const productionApprovalFixture = mkdtempSync(
+  path.join(tmpdir(), "levi-production-approval."),
+);
+try {
+  const fakeGh = path.join(productionApprovalFixture, "gh");
+  const approvalCommit = "a".repeat(40);
+  const approvalApplication = `ghcr.io/iwaseasahi/levi@sha256:${"b".repeat(64)}`;
+  const approvalMigration = `ghcr.io/iwaseasahi/levi-migrate@sha256:${"c".repeat(64)}`;
+  const approvedBody = [
+    "Production-Deploy: APPROVED",
+    `Commit: ${approvalCommit}`,
+    `Application-Image: ${approvalApplication}`,
+    `Migration-Image: ${approvalMigration}`,
+  ].join("\n");
+  writeFileSync(
+    fakeGh,
+    `#!/usr/bin/env bash
+set -euo pipefail
+jq -n --arg association "\${FAKE_ASSOCIATION:-OWNER}" --arg body "$FAKE_APPROVAL_BODY" \\
+  '{author_association: $association, body: $body}'
+`,
+  );
+  chmodSync(fakeGh, 0o755);
+  const approvalEnvironment = {
+    ...process.env,
+    PATH: `${productionApprovalFixture}:${process.env.PATH ?? ""}`,
+    COMMIT_SHA: approvalCommit,
+    APPLICATION_IMAGE: approvalApplication,
+    MIGRATION_IMAGE: approvalMigration,
+    PRODUCTION_APPROVAL_COMMENT:
+      "https://github.com/iwaseasahi/levi/issues/307#issuecomment-123",
+    FAKE_APPROVAL_BODY: approvedBody,
+  };
+
+  const approved = spawnSync("bash", [productionApprovalScript], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: approvalEnvironment,
+  });
+  assert.equal(approved.status, 0, approved.stderr);
+
+  const wrongOwner = spawnSync("bash", [productionApprovalScript], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: { ...approvalEnvironment, FAKE_ASSOCIATION: "MEMBER" },
+  });
+  assert.notEqual(wrongOwner.status, 0);
+  assert.match(wrongOwner.stderr, /repository owner/);
+
+  const requestCommentIsNotApproval = spawnSync(
+    "bash",
+    [productionApprovalScript],
+    {
+      cwd: repositoryRoot,
+      encoding: "utf8",
+      env: {
+        ...approvalEnvironment,
+        FAKE_APPROVAL_BODY: `Please approve:\n${approvedBody}`,
+      },
+    },
+  );
+  assert.notEqual(requestCommentIsNotApproval.status, 0);
+  assert.match(
+    requestCommentIsNotApproval.stderr,
+    /does not match the exact release/,
+  );
+
+  const mismatchedCommit = spawnSync("bash", [productionApprovalScript], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: { ...approvalEnvironment, COMMIT_SHA: "d".repeat(40) },
+  });
+  assert.notEqual(mismatchedCommit.status, 0);
+  assert.match(mismatchedCommit.stderr, /does not match the exact release/);
+} finally {
+  rmSync(productionApprovalFixture, { recursive: true, force: true });
+}
 
 const sundayApprovalSource = readFileSync(sundayApprovalScript, "utf8");
 assert.match(sundayApprovalSource, /Sunday-Deploy: APPROVED/);
@@ -253,6 +380,7 @@ jq -n --arg association "\${FAKE_ASSOCIATION:-OWNER}" --arg body "$FAKE_APPROVAL
 }
 
 const authorizedDeploySource = readFileSync(authorizedDeployScript, "utf8");
+assert.match(authorizedDeploySource, /\.schema_version == 3/);
 assert.match(authorizedDeploySource, /\.conclusion.*success/s);
 assert.match(authorizedDeploySource, /\.head_branch.*main/s);
 assert.match(authorizedDeploySource, /deploy-production\.yml/);
@@ -264,6 +392,20 @@ assert.match(
   /sudo -n \/usr\/local\/sbin\/levi-production-deploy/,
 );
 assert.doesNotMatch(authorizedDeploySource, /PRODUCTION_SSH_PRIVATE_KEY/);
+
+const prepareReleaseSource = readFileSync(prepareReleaseScript, "utf8");
+assert.match(prepareReleaseSource, /git fetch --quiet origin main/);
+assert.match(prepareReleaseSource, /git rev-parse origin\/main/);
+assert.match(prepareReleaseSource, /production-release-candidate/);
+assert.match(prepareReleaseSource, /production:release:deploy/);
+assert.doesNotMatch(prepareReleaseSource, /ssh /);
+
+const deployReleaseSource = readFileSync(deployReleaseScript, "utf8");
+assert.match(deployReleaseSource, /production-release-candidate/);
+assert.match(deployReleaseSource, /check-production-deploy-approval\.sh/);
+assert.match(deployReleaseSource, /check-sunday-deploy-approval\.sh/);
+assert.match(deployReleaseSource, /run-authorized-production-deploy\.sh/);
+assert.doesNotMatch(deployReleaseSource, /PRODUCTION_SSH_PRIVATE_KEY/);
 
 const authorizationFixture = mkdtempSync(
   path.join(tmpdir(), "levi-deploy-authorization."),
@@ -282,7 +424,7 @@ try {
   writeFileSync(
     authorizationRecord,
     JSON.stringify({
-      schema_version: 2,
+      schema_version: 3,
       repository: "iwaseasahi/levi",
       run_id: runId,
       run_attempt: runAttempt,
@@ -292,6 +434,7 @@ try {
       approval_comment:
         "https://github.com/iwaseasahi/levi/issues/292#issuecomment-123",
       sunday_approval_comment: null,
+      release_candidate_run_id: 987654,
       authorized_at: "2026-08-25T00:00:00Z",
     }),
   );
@@ -358,7 +501,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
   writeFileSync(
     authorizationRecord,
     JSON.stringify({
-      schema_version: 2,
+      schema_version: 3,
       repository: "iwaseasahi/levi",
       run_id: runId,
       run_attempt: runAttempt,
@@ -368,6 +511,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
       approval_comment:
         "https://github.com/iwaseasahi/levi/issues/292#issuecomment-123",
       sunday_approval_comment: "not-a-comment-url",
+      release_candidate_run_id: 987654,
       authorized_at: "2026-08-25T00:00:00Z",
     }),
   );
@@ -389,7 +533,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
   writeFileSync(
     authorizationRecord,
     JSON.stringify({
-      schema_version: 2,
+      schema_version: 3,
       repository: "iwaseasahi/levi",
       run_id: runId,
       run_attempt: runAttempt,
@@ -399,6 +543,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
       approval_comment:
         "https://github.com/iwaseasahi/levi/issues/292#issuecomment-123",
       sunday_approval_comment: null,
+      release_candidate_run_id: 987654,
       authorized_at: "2026-08-25T00:00:00Z",
     }),
   );

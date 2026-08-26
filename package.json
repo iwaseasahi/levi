@@ -40,6 +40,8 @@
     "backup:rehearse": "bash scripts/rehearse-backup.sh",
     "backup:config:check": "tsx scripts/check-backup-configuration.ts",
     "deployment:config:check": "tsx scripts/check-deployment-configuration.ts",
+    "production:release:prepare": "bash scripts/prepare-production-release.sh",
+    "production:release:deploy": "bash scripts/deploy-production-release.sh",
     "production:deploy:authorized": "bash scripts/run-authorized-production-deploy.sh",
     "production:domain:check": "tsx scripts/check-production-domain.ts",
     "production:domain:verify": "tsx scripts/check-production-domain.ts --live",

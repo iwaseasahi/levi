@@ -1,10 +1,15 @@
 name: Publish production images
+run-name: "Prepare production candidate #${{ inputs.release_issue }} for ${{ inputs.commit_sha }}"
 
 on:
   workflow_dispatch:
     inputs:
       commit_sha:
         description: Exact 40-character commit SHA already merged to main with successful CI
+        required: true
+        type: string
+      release_issue:
+        description: Levi Issue number used for the exact production approval
         required: true
         type: string
 
@@ -27,9 +32,11 @@ jobs:
         env:
           COMMIT_SHA: ${{ inputs.commit_sha }}
           GH_TOKEN: ${{ github.token }}
+          RELEASE_ISSUE: ${{ inputs.release_issue }}
         run: |
           set -euo pipefail
           [[ "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$RELEASE_ISSUE" =~ ^[0-9]+$ ]]
           git fetch --quiet origin main
           git merge-base --is-ancestor "$COMMIT_SHA" origin/main
           for required in Quality Database E2E Security; do
@@ -62,3 +69,30 @@ jobs:
             echo "- application: \`ghcr.io/iwaseasahi/levi@$application_digest\`"
             echo "- migration: \`ghcr.io/iwaseasahi/levi-migrate@$migration_digest\`"
           } >> "$GITHUB_STEP_SUMMARY"
+          jq -n \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --argjson run_id "$GITHUB_RUN_ID" \
+            --argjson run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --argjson release_issue "${{ inputs.release_issue }}" \
+            --arg commit_sha "$COMMIT_SHA" \
+            --arg application_image "ghcr.io/iwaseasahi/levi@$application_digest" \
+            --arg migration_image "ghcr.io/iwaseasahi/levi-migrate@$migration_digest" \
+            --arg prepared_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              schema_version: 1,
+              repository: $repository,
+              run_id: $run_id,
+              run_attempt: $run_attempt,
+              release_issue: $release_issue,
+              commit_sha: $commit_sha,
+              application_image: $application_image,
+              migration_image: $migration_image,
+              prepared_at: $prepared_at
+            }' > production-release-candidate.json
+      - name: Upload immutable release candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: production-release-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: production-release-candidate.json
+          if-no-files-found: error
+          retention-days: 1

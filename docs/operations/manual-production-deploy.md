@@ -3,8 +3,11 @@
 ## 目的と用語
 
 Leviのproduction deployは、`main`へmergeしただけでは始まりません。通常経路も
-人間が開始・承認・適用する手動フローです。GitHub Actionsはimmutable imageの
-作成とrelease authorizationの検証を行いますが、production VPSへSSH接続しません。
+人間が開始・承認・適用する手動フローです。operatorはcommit SHAやimage digestを
+入力せず、2つのcommandだけを実行します。準備commandがその時点の`origin/main`を
+exact SHAへ固定するため、準備後に`main`が更新されても承認対象は変わりません。
+GitHub Actionsはimmutable imageの作成とrelease authorizationの検証を行いますが、
+production VPSへSSH接続しません。
 
 このrunbookでは次の2つを区別します。
 
@@ -20,6 +23,10 @@ deploy前backup、forward-only migration、readiness確認を省略しません�
 ## 全体構成
 
 ```text
+operator Mac
+  production:release:prepare -- ISSUE_NUMBER
+                    │ origin/mainを一度だけexact SHAへ固定
+                    ▼
 main上のexact commit
   ├─ CI: Quality / Database / E2E / Security
   └─ Publish production images
@@ -27,7 +34,11 @@ main上のexact commit
        └─ migration image   @ sha256 digest
                     │
                     ▼
-release Issueのexact artifact承認
+release Issueのexact artifact承認（repository owner）
+                    │
+                    ▼
+operator Mac
+  production:release:deploy -- PUBLISH_RUN_ID
                     │
                     ▼
 Authorize production deploy
@@ -37,7 +48,7 @@ Authorize production deploy
                     │
                     ▼
 allowlist済みoperator Mac
-  pnpm production:deploy:authorized -- RUN_ID
+  authorization artifactを検証して自動適用
                     │ pinned SSH alias
                     ▼
 VPS /usr/local/sbin/levi-production-deploy
@@ -157,43 +168,47 @@ sudoersは`levi-system-operator`へ
 entrypointはcommit、application digest、migration digest、通常承認comment URL、
 Sunday承認comment URLまたは`none`のexact 5引数だけを受け取ります。
 
-## 通常deploy手順
+## 通常deploy手順（operatorが実行する2コマンド）
 
-### 1. releaseを固定する
+### 1. 現在のmainからrelease candidateを準備する
 
-release Issueを用意し、対象commitが`main`へmerge済みであることを確認します。
+open状態のrelease Issueを用意し、そのIssue番号だけを指定します。
 
 ```bash
-git fetch origin main
-COMMIT_SHA='<40-character commit on main>'
-git merge-base --is-ancestor "$COMMIT_SHA" origin/main
+mise exec -- pnpm production:release:prepare -- ISSUE_NUMBER
 ```
 
-GitHub上で、そのcommitの`Quality`、`Database`、`E2E`、`Security`がすべて成功
-していることを確認します。失敗、pending、別commitの成功結果は使用しません。
+commandは次を自動実行します。
 
-### 2. immutable imageを公開する
+1. remoteの`origin/main`を取得し、exact 40-character SHAを一度だけ解決する。
+2. そのSHAの`Quality`、`Database`、`E2E`、`Security`成功を確認する。
+3. `Publish production images`を開始して完了まで待つ。
+4. applicationとmigrationのimmutable digestを含む一日保持のcandidate artifactを
+   検証する。
+5. release Issueへexact値と承認用4行をコメントする。
 
-GitHub Actionsの`Publish production images`を手動実行し、`commit_sha`へ対象commit
-を指定します。workflowはCIとmain ancestryを再確認し、`linux/amd64`のapplication
-imageとmigration imageをGHCRへpushします。
+最後に表示される`PUBLISH_RUN_ID`を控えます。tag、`latest`、digestを省略したimage
+名は使用されません。準備中または準備後に`main`が進んでもcandidate artifact内の
+SHAとdigestは変更されません。
 
-workflow summaryに出た次の2つをrelease Issueへ記録します。
+### 2. exact releaseをIssue上で承認する
+
+repository ownerがcandidate commentに記録されたcommitと両digest、migration、
+backup、利用者影響、実施時刻、forward recoveryを確認します。承認する場合は、
+candidate commentが示す次の4行を**別コメント**へそのまま投稿します。
 
 ```text
-ghcr.io/iwaseasahi/levi@sha256:<64 hexadecimal characters>
-ghcr.io/iwaseasahi/levi-migrate@sha256:<64 hexadecimal characters>
+Production-Deploy: APPROVED
+Commit: <candidateの40-character SHA>
+Application-Image: ghcr.io/iwaseasahi/levi@sha256:<candidate digest>
+Migration-Image: ghcr.io/iwaseasahi/levi-migrate@sha256:<candidate digest>
 ```
 
-tag、`latest`、digestを省略したimage名は使用しません。source repositoryはpublicで
-imageにDB dump、Bible data、secretを含めないため、VPSはpublic GHCR packageを
-credentialなしでpullします。package visibilityや課金条件の変更は別のhuman action
-です。
+単なる「承認します」、repository owner以外のコメント、値が一文字でも異なる
+コメント、説明文やcode fenceを含むコメント、candidate準備前のコメントは使用
+できません。承認commentの本文は上の4行だけにします。
 
-### 3. exact releaseを承認する
-
-repository ownerがrelease Issueへ、少なくとも以下を含む即時承認コメントを投稿
-します。
+承認判断では少なくとも以下を確認します。
 
 - exact 40-character commit
 - application image digest
@@ -204,44 +219,25 @@ repository ownerがrelease Issueへ、少なくとも以下を含む即時承認
 - rollbackまたはforward-recovery方針
 - 実行責任者
 
-### 4. 日曜の場合だけ追加承認する
+### 3. 日曜の場合だけ追加承認する
 
 `Asia/Tokyo`の日曜に実施する場合、repository ownerが「このexact releaseを日曜に
-deployしてよいか」へ明示的に回答し、次の独立した行をcommentへ含めます。
+deployしてよいか」へ明示的に回答します。通常承認と同じcommentを使う場合は、
+4行の末尾へ次の1行を追加します。
 
 ```text
 Sunday-Deploy: APPROVED
-Commit: <40-character commit SHA>
-Application-Image: ghcr.io/iwaseasahi/levi@sha256:<64 hexadecimal characters>
-Migration-Image: ghcr.io/iwaseasahi/levi-migrate@sha256:<64 hexadecimal characters>
 ```
 
-通常の即時承認commentと同じcommentでも構いません。日曜以外は
-`sunday_approval_comment`を空にし、host entrypointへは`none`を渡します。
+Sunday approvalを別commentにする場合は、従来どおり上の1行とcommit・両digestの
+計4行を記載できます。日曜以外は`sunday_approval_comment`を空にし、host
+entrypointへは`none`を渡します。
 
 日曜は原則としてread-only health checkとincident communicationを優先します。
 待つ方が運用リスクを高める場合だけdeployし、利用中なら影響する教会へ事前連絡
 します。
 
-### 5. GitHub authorizationを作る
-
-GitHub Actionsの`Authorize production deploy`を手動実行し、以下を入力します。
-
-- `commit_sha`
-- `application_image`
-- `migration_image`
-- `approval_comment`
-- `sunday_approval_comment`（日曜だけ）
-
-workflowは入力形式、Issue commentのrepository-owner association、日曜承認のexact
-一致、main ancestry、4つのrequired CIを検証します。その後、`production`
-Environmentを人間が承認します。
-
-成功すると、現在のrun attemptに結び付いたauthorization artifactが一日だけ保持
-されます。workflow全体が成功した`RUN_ID`を控えます。失敗run、superseded attempt、
-期限切れartifactは使用しません。
-
-### 6. operator Macから適用する
+### 4. authorizationを作成して適用する
 
 operator Macのpublic IPv4とSSH接続を確認します。IPが変わった場合はWebARENA
 consoleからSSH ruleを新しい`/32`へ変更し、既存sessionを閉じる前に別terminalで
@@ -250,13 +246,17 @@ consoleからSSH ruleを新しい`/32`へ変更し、既存sessionを閉じる�
 ```bash
 curl -4 https://ifconfig.me
 ssh levi-system-production true
-mise exec -- pnpm production:deploy:authorized -- RUN_ID
+mise exec -- pnpm production:release:deploy -- PUBLISH_RUN_ID
 ```
 
-最後のコマンドはauthenticated GitHub CLIを使い、run、workflow、attempt、artifact
-の全fieldを再検証してから、pinned SSH alias経由でVPS entrypointを実行します。
+最後のcommandはcandidate artifactとIssue commentを照合し、exact値を入力せずに
+`Authorize production deploy`を開始します。表示されたURLでprotected `production`
+Environmentを人間が承認してください。commandはworkflow完了まで待ち、一日保持の
+authorization artifactを再検証してから、pinned SSH alias経由でVPS entrypointを
+実行します。Environmentが拒否された場合、承認が不足する場合、artifactが期限切れ
+の場合はVPSへ接続しません。
 
-### 7. VPS内で自動実行される処理
+### 5. VPS内で自動実行される処理
 
 operatorが個別に実行する必要はありません。entrypointと
 `scripts/production-deploy.sh`が次の順序で処理します。
@@ -274,7 +274,7 @@ operatorが個別に実行する必要はありません。entrypointと
 9. commit、digest、通常承認、Sunday承認、UTC時刻を
    `/var/lib/levi-deploy/history/`へ記録し、`current.env`を更新する。
 
-### 8. 完了を確認して記録する
+### 6. 完了を確認して記録する
 
 deployコマンドが成功した後、外部readinessとVPS内の総合healthを確認します。
 
