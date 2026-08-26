@@ -1,5 +1,9 @@
 # Issue #259: Basic 認証を維持した管理者個別ログイン
 
+> Historical plan. Issue #341 replaces the custom administrator credential and
+> session implementation with a separate Better Auth realm while retaining the
+> outer Basic authentication boundary.
+
 ## Goal
 
 `/admin` 全体の Basic 認証を維持し、その内側に `admin_users` の個別ログイン、30日セッション、初回パスワード変更、ログアウトを追加する。

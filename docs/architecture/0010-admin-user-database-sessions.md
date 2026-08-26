@@ -1,6 +1,6 @@
 # ADR 0010: Database sessions inside the Basic administration boundary
 
-- Status: accepted
+- Status: superseded by ADR 0012
 - Date: 2026-08-26
 - Related: #259
 
@@ -48,3 +48,6 @@ Integration tests cover login, expiry, suspension, logout, first password
 change, revocation, and rate limiting. E2E tests prove Basic-only access is
 redirected to individual login and an invited administrator cannot reach
 management pages before changing the temporary password.
+
+ADR 0012 replaces this custom session/token implementation with a dedicated
+Better Auth realm and replaces temporary-password activation with email setup.

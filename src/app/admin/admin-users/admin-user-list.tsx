@@ -40,6 +40,7 @@ export function AdminUserList({
               <div>
                 <strong>{adminUser.name}</strong>
                 <span>{adminUser.loginId}</span>
+                {adminUser.email ? <span>{adminUser.email}</span> : null}
               </div>
               <div className="admin-user-actions">
                 <span

@@ -10,7 +10,7 @@ export default async function InviteAdminUserPage() {
       <header className="admin-header">
         <p className="eyebrow">運営管理</p>
         <h1>管理者を招待</h1>
-        <p>新しい管理者IDと初回ログイン用の一時パスワードを発行します。</p>
+        <p>新しい管理者を登録し、パスワード設定用の招待メールを送信します。</p>
         <Link className="admin-back-link" href="/admin/admin-users">
           ← 管理者の一覧へ
         </Link>

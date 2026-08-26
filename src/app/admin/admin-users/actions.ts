@@ -68,7 +68,11 @@ export async function inviteAdminUserAction(
   const requestHeaders = await headers();
   const result = await handleInvite(
     requestHeaders,
-    { loginId: formData.get("loginId"), name: formData.get("name") },
+    {
+      email: formData.get("email"),
+      loginId: formData.get("loginId"),
+      name: formData.get("name"),
+    },
     requestHeaders.get(REQUEST_ID_HEADER) ?? undefined,
   );
   if (result.status === "success") revalidatePath("/admin/admin-users");

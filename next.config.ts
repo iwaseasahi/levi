@@ -5,6 +5,7 @@ import { SEARCH_ENGINE_ROBOTS_HEADER } from "./src/config/search-engine-indexing
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   devIndicators: false,
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   headers() {
     return [
       {

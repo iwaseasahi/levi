@@ -125,8 +125,15 @@ sudo /opt/levi/scripts/check-production-secrets.sh
 
 通常ユーザーからファイルが見えないのは意図した動作です。確認に`cat`、`env`、値を
 表示する`docker compose config`を使いません。deployはDB password、Better Auth
-secret、Basic認証情報を転送せず、承認済みの2つのimage digestだけを実行時に上書き
+secrets、Gmail app password、Basic認証情報を転送せず、承認済みの2つのimage digestだけを実行時に上書き
 します。
+
+管理者Better Authとメール送信を有効化するreleaseでは、事前にroot所有の環境へ
+`ADMIN_BETTER_AUTH_SECRET`（教会側secretとは異なる64–128文字の小文字hex）、
+`SMTP_HOST=smtp.gmail.com`、`SMTP_PORT=587`、`SMTP_SECURE=false`、
+`SMTP_USER`、`SMTP_PASSWORD`、`MAIL_FROM`を設定します。Gmail app passwordや
+secret値をIssue、Actions、deploy引数へ渡しません。`check-production-secrets.sh`が値を
+表示せず境界を検証できるまではdeployしません。
 
 ## GHCR image lifecycle
 

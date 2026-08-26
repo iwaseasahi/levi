@@ -175,32 +175,47 @@ No unique church-name rule is imposed; distinct churches may share a name.
 | `id`                          | `uuid`         | no   | PK                                               |
 | `login_id`                    | `citext`       | no   | case-insensitive unique administration login ID  |
 | `name`                        | `varchar(200)` | no   | administrator display name                       |
-| `password_hash`               | `text`         | yes  | null only for the Basic bootstrap identity       |
+| `email`                       | `citext`       | no   | case-insensitive unique recovery address         |
+| `email_verified`              | `boolean`      | no   | Better Auth email state                          |
+| `image`                       | `text`         | yes  | optional Better Auth profile image               |
 | `status`                      | enum           | no   | `BOOTSTRAP`, `INVITED`, `ACTIVE`, or `SUSPENDED` |
-| `must_change_password`        | `boolean`      | no   | initial credential change gate                   |
 | `invited_by_admin_user_id`    | `uuid`         | yes  | self FK to the inviter                           |
 | `invited_at` / `activated_at` | `timestamptz`  | yes  | lifecycle timestamps                             |
 | timestamps                    | `timestamptz`  | no   | creation/update                                  |
 
 The deterministic `BOOTSTRAP` row maps the environment-held Basic credential to
-an auditable identity and has no database password. `INVITED` rows require a
-hash and invitation timestamp. Admin users never have Better Auth accounts or
-Church memberships; their sessions use the separate `admin_sessions` table.
+an auditable identity and has no individual Better Auth account. `INVITED` rows
+have invitation metadata and a credential in `admin_accounts`. Admin users never
+have Church memberships and cannot authenticate through the Church auth realm.
+
+### `admin_accounts`
+
+Better Auth credential records for administrator identities. The table mirrors
+the Church `accounts` contract but has an FK only to `admin_users`. Provider and
+account identity are unique, and password hashes are never stored in
+`admin_users`.
 
 ### `admin_sessions`
 
-| Column          | Type          | Null | Contract                                 |
-| --------------- | ------------- | ---- | ---------------------------------------- |
-| `id`            | `uuid`        | no   | PK                                       |
-| `admin_user_id` | `uuid`        | no   | FK to `admin_users.id ON DELETE CASCADE` |
-| `token_hash`    | `char(64)`    | no   | unique lowercase SHA-256 token digest    |
-| `expires_at`    | `timestamptz` | no   | fixed 30-day application session expiry  |
-| timestamps      | `timestamptz` | no   | creation/update                          |
+| Column       | Type           | Null | Contract                                  |
+| ------------ | -------------- | ---- | ----------------------------------------- |
+| `id`         | `uuid`         | no   | PK                                        |
+| `user_id`    | `uuid`         | no   | FK to `admin_users.id ON DELETE CASCADE`  |
+| `token`      | `varchar(255)` | no   | Better Auth unique session token          |
+| `expires_at` | `timestamptz`  | no   | rolling 30-day application session expiry |
+| `ip_address` | `varchar(64)`  | yes  | retained client address                   |
+| `user_agent` | `text`         | yes  | retained client agent                     |
+| timestamps   | `timestamptz`  | no   | creation/update                           |
 
-The browser receives the opaque raw token; PostgreSQL stores only its digest.
-Session validity also requires an `ACTIVE` or `INVITED` administrator on every
-request. `INVITED` sessions are restricted to initial password change and
-logout.
+Session validity also requires an `ACTIVE` administrator on every request.
+`INVITED` identities cannot create a session until the emailed setup flow
+activates them.
+
+### `admin_verifications` and `admin_rate_limits`
+
+Dedicated Better Auth verification/reset tokens and database rate-limit state.
+They are not shared with Church identities. Verification values are Restricted
+and expire after the configured one-hour administrator reset window.
 
 ### `church_memberships`
 

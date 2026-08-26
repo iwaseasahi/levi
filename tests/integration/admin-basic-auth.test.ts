@@ -33,8 +33,8 @@ beforeEach(async () => {
     await transaction.adminUser.create({
       data: {
         id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
+        email: "basic-bootstrap@pending.invalid",
         loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
-        mustChangePassword: false,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
         status: "BOOTSTRAP",
       },
@@ -55,7 +55,7 @@ describe("administration Basic authentication database boundary", () => {
     });
     await expect(
       prisma.adminUser.count({
-        where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID, passwordHash: null },
+        where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID, accounts: { none: {} } },
       }),
     ).resolves.toBe(1);
   });

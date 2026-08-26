@@ -97,6 +97,7 @@ for (const variable of [
   "ACME_EMAIL",
   "ADMIN_BASIC_AUTH_PASSWORD_HASH",
   "ADMIN_BASIC_AUTH_USERNAME",
+  "ADMIN_BETTER_AUTH_SECRET",
   "BETTER_AUTH_BASE_URL",
   "BETTER_AUTH_SECRET",
   "BETTER_AUTH_TRUSTED_ORIGINS",
@@ -110,6 +111,12 @@ for (const variable of [
   "POSTGRES_DB",
   "POSTGRES_PASSWORD",
   "POSTGRES_USER",
+  "MAIL_FROM",
+  "SMTP_HOST",
+  "SMTP_PASSWORD",
+  "SMTP_PORT",
+  "SMTP_SECURE",
+  "SMTP_USER",
 ]) {
   delete composeEnvironment[variable];
 }
@@ -164,11 +171,20 @@ assert(app.healthcheck, "app must define a readiness healthcheck");
 assert.match(app.environment?.DATABASE_URL ?? "", /^postgresql:\/\/levi_app:/);
 assert.equal(app.environment?.ADMIN_BASIC_AUTH_USERNAME, "levi-admin");
 assert.equal(
+  app.environment?.ADMIN_BETTER_AUTH_SECRET,
+  "replace-with-a-distinct-32-character-random-secret",
+);
+assert.equal(
   app.environment?.ADMIN_BASIC_AUTH_PASSWORD_HASH,
   "replace-with-output-from-pnpm-admin-hash-password",
 );
 assert.equal(app.environment?.POSTGRES_PASSWORD, undefined);
 assert.equal(app.environment?.MIGRATION_DATABASE_URL, undefined);
+assert.equal(app.environment?.SMTP_HOST, "smtp.gmail.com");
+assert.equal(app.environment?.SMTP_PORT, "587");
+assert.equal(app.environment?.SMTP_SECURE, "false");
+assert.equal(app.environment?.SMTP_USER, "levi-system@gmail.com");
+assert.equal(app.environment?.MAIL_FROM, "levi-system@gmail.com");
 
 const postgres = config.services.postgres!;
 assert.equal(postgres.read_only, true);

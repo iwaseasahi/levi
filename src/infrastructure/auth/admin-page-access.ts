@@ -12,6 +12,5 @@ export async function requireAdminPageAccess() {
   if (basic.status !== "authorized") redirect("/admin/login");
   const session = await getAdminSessionAccess(requestHeaders);
   if (session.status !== "authorized") redirect("/admin/login");
-  if (session.mustChangePassword) redirect("/admin/change-password");
   return session;
 }

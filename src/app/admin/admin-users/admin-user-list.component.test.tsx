@@ -17,6 +17,7 @@ describe("AdminUserList", () => {
         adminUsers={[
           {
             createdAt: new Date("2026-08-24T00:00:00Z"),
+            email: "bootstrap@pending.invalid",
             id: "admin-1",
             loginId: "basic-bootstrap",
             name: "Levi Administrator",
@@ -24,6 +25,7 @@ describe("AdminUserList", () => {
           },
           {
             createdAt: new Date("2026-08-24T01:00:00Z"),
+            email: "invited@example.com",
             id: "admin-2",
             loginId: "invited.admin",
             name: "招待済み管理者",
@@ -58,6 +60,7 @@ describe("AdminUserList", () => {
         adminUsers={[
           {
             createdAt: new Date("2026-08-24T00:00:00Z"),
+            email: "bootstrap@pending.invalid",
             id: "admin-1",
             loginId: "basic-bootstrap",
             name: "Levi Administrator",
@@ -79,6 +82,7 @@ describe("AdminUserList", () => {
         adminUsers={[
           {
             createdAt: new Date("2026-08-24T01:00:00Z"),
+            email: "other@example.com",
             id: "admin-2",
             loginId: "other.admin",
             name: "別の管理者",

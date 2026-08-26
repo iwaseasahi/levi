@@ -15,7 +15,12 @@ interface ProxyDependencies {
 }
 
 function protectedAdminPath(pathname: string) {
-  return pathname === "/admin" || pathname.startsWith("/admin/");
+  return (
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/api/admin-auth" ||
+    pathname.startsWith("/api/admin-auth/")
+  );
 }
 
 function deniedAdminResponse(

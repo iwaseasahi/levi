@@ -16,6 +16,7 @@ COPY . .
 ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build
 ENV SHADOW_DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build_shadow
 ENV BETTER_AUTH_SECRET=build-only-secret-at-least-thirty-two-characters
+ENV ADMIN_BETTER_AUTH_SECRET=build-only-admin-secret-at-least-thirty-two-characters
 ENV BETTER_AUTH_BASE_URL=https://levi.invalid
 ENV BETTER_AUTH_TRUSTED_ORIGINS=https://levi.invalid
 ENV NEXT_TELEMETRY_DISABLED=1

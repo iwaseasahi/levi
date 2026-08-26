@@ -25,16 +25,15 @@ async function seed() {
     prisma.adminUser.upsert({
       where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
       update: {
+        email: "basic-bootstrap@pending.invalid",
         loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
-        mustChangePassword: false,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
-        passwordHash: null,
         status: "BOOTSTRAP",
       },
       create: {
+        email: "basic-bootstrap@pending.invalid",
         id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
         loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
-        mustChangePassword: false,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
         status: "BOOTSTRAP",
       },

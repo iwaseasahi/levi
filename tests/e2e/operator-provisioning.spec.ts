@@ -8,9 +8,10 @@ import {
   E2E_ADMIN_BASIC_USERNAME,
   E2E_CREATED_CHURCH,
   E2E_CREATED_EMAIL,
+  E2E_INVITED_ADMIN_EMAIL,
   E2E_INVITED_ADMIN_LOGIN_ID,
+  E2E_INITIAL_ADMIN_EMAIL,
   E2E_INITIAL_ADMIN_LOGIN_ID,
-  E2E_INITIAL_ADMIN_PASSWORD,
   E2E_PASSWORD,
 } from "./operator-fixture";
 
@@ -36,11 +37,51 @@ async function signInAdmin(
   await page.getByLabel("ログインID").fill(loginId);
   await page.getByLabel("パスワード", { exact: true }).fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();
-  await expect(page).toHaveURL(
-    loginId === E2E_INITIAL_ADMIN_LOGIN_ID
-      ? /\/admin\/change-password$/
-      : /\/admin$/,
+  await expect(page).toHaveURL(/\/admin$/);
+}
+
+async function findPasswordResetUrl(page: Page, recipient: string) {
+  await expect
+    .poll(
+      async () => {
+        const response = await page.request.get(
+          "http://127.0.0.1:8026/api/v1/messages",
+        );
+        if (!response.ok()) return undefined;
+        const payload = (await response.json()) as {
+          messages: Array<{
+            ID: string;
+            To: Array<{ Address: string }>;
+          }>;
+        };
+        return payload.messages.find((message) =>
+          message.To.some(({ Address }) => Address === recipient),
+        )?.ID;
+      },
+      { timeout: 20_000 },
+    )
+    .not.toBeUndefined();
+
+  const messagesResponse = await page.request.get(
+    "http://127.0.0.1:8026/api/v1/messages",
   );
+  const messages = (await messagesResponse.json()) as {
+    messages: Array<{ ID: string; To: Array<{ Address: string }> }>;
+  };
+  const messageId = messages.messages.find((message) =>
+    message.To.some(({ Address }) => Address === recipient),
+  )?.ID;
+  expect(messageId).toBeDefined();
+  const messageResponse = await page.request.get(
+    `http://127.0.0.1:8026/api/v1/message/${messageId}`,
+  );
+  expect(messageResponse.ok()).toBe(true);
+  const message = (await messageResponse.json()) as { Text: string };
+  const resetUrl = message.Text.match(
+    /https?:\/\/\S+\/api\/admin-auth\/reset-password\/[^\s]+/,
+  )?.[0];
+  expect(resetUrl).toBeDefined();
+  return resetUrl as string;
 }
 
 test.describe("operator administration access", () => {
@@ -131,12 +172,15 @@ test.describe("administrator invitations", () => {
     await page
       .getByLabel("ログインID")
       .fill(E2E_INVITED_ADMIN_LOGIN_ID.toUpperCase());
+    await page.getByLabel("メールアドレス").fill(E2E_INVITED_ADMIN_EMAIL);
     await page.getByRole("button", { name: "管理者を招待" }).click();
     await expect(
-      page.getByRole("status").filter({ hasText: "管理者を招待しました。" }),
+      page
+        .getByRole("status")
+        .filter({ hasText: "管理者へ招待メールを送信しました。" }),
     ).toBeVisible();
-    await page.getByRole("button", { name: "一時パスワードを表示" }).click();
-    await expect(page.locator(".credential-summary code")).toHaveText(/.{24}/);
+    await expect(page.getByText(E2E_INVITED_ADMIN_EMAIL)).toBeVisible();
+    await findPasswordResetUrl(page, E2E_INVITED_ADMIN_EMAIL);
     await page.getByRole("button", { name: "表示を閉じる" }).click();
     await page.getByRole("link", { name: "管理者の一覧へ" }).click();
     await expect(page).toHaveURL(/\/admin\/admin-users$/);
@@ -144,7 +188,9 @@ test.describe("administrator invitations", () => {
       page.getByRole("heading", { level: 1, name: "管理者の一覧" }),
     ).toBeVisible();
     await expect(page.getByText("basic-bootstrap")).toHaveCount(0);
-    await expect(page.getByText(E2E_INVITED_ADMIN_LOGIN_ID)).toBeVisible();
+    await expect(
+      page.getByText(E2E_INVITED_ADMIN_LOGIN_ID, { exact: true }),
+    ).toBeVisible();
     await expect(
       page
         .locator(".admin-user-list li")
@@ -286,7 +332,7 @@ test.describe("operator church provisioning", () => {
   });
 });
 
-test.describe("administrator first login", () => {
+test.describe("administrator password setup", () => {
   test.use({
     httpCredentials: {
       password: E2E_PASSWORD,
@@ -294,17 +340,21 @@ test.describe("administrator first login", () => {
     },
   });
 
-  test("forces the invited administrator to choose a password before access", async ({
+  test("activates an invited administrator through the emailed reset link", async ({
     page,
   }) => {
-    await signInAdmin(
-      page,
-      E2E_INITIAL_ADMIN_LOGIN_ID,
-      E2E_INITIAL_ADMIN_PASSWORD,
+    await page.goto("/admin/forgot-password");
+    await page.getByLabel("メールアドレス").fill(E2E_INITIAL_ADMIN_EMAIL);
+    await page.getByRole("button", { name: "再設定メールを送信" }).click();
+    await expect(page.getByRole("status")).toContainText(
+      "再設定メールを送信しました",
     );
-    await expect(page).toHaveURL(/\/admin\/change-password$/);
-    await page.goto("/admin");
-    await expect(page).toHaveURL(/\/admin\/change-password$/);
+
+    const resetUrl = await findPasswordResetUrl(page, E2E_INITIAL_ADMIN_EMAIL);
+    await page.goto(resetUrl);
+    await expect(
+      page.getByRole("heading", { name: "新しいパスワードを設定" }),
+    ).toBeVisible();
 
     const selectedPassword = "activated-admin-password";
     await page
@@ -314,20 +364,8 @@ test.describe("administrator first login", () => {
       .getByLabel("新しいパスワード（確認）", { exact: true })
       .fill(selectedPassword);
     await page.getByRole("button", { name: "パスワードを変更" }).click();
-    await expect(page).toHaveURL(/\/admin$/);
-    await page.getByRole("button", { name: "ログアウト" }).click();
-    await expect(page).toHaveURL(/\/admin\/login$/);
+    await expect(page).toHaveURL(/\/admin\/login\?passwordReset=completed$/);
 
-    await page.getByLabel("ログインID").fill(E2E_INITIAL_ADMIN_LOGIN_ID);
-    await page
-      .getByLabel("パスワード", { exact: true })
-      .fill(E2E_INITIAL_ADMIN_PASSWORD);
-    await page.getByRole("button", { name: "ログイン" }).click();
-    await expect(
-      page.getByText("ログインIDまたはパスワードを確認してください。", {
-        exact: true,
-      }),
-    ).toBeVisible();
     await page.getByLabel("ログインID").fill(E2E_INITIAL_ADMIN_LOGIN_ID);
     await page.getByLabel("パスワード", { exact: true }).fill(selectedPassword);
     await page.getByRole("button", { name: "ログイン" }).click();

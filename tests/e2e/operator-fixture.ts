@@ -16,8 +16,11 @@ export const E2E_PASSWORD = "e".repeat(16);
 export const E2E_CREATED_EMAIL = "test.e2e.created@example.invalid";
 export const E2E_CREATED_CHURCH = "test.e2e created church";
 export const E2E_INVITED_ADMIN_LOGIN_ID = "test.e2e.invited.admin";
+export const E2E_INVITED_ADMIN_EMAIL = "test.e2e.invited.admin@example.invalid";
 export const E2E_ACTIVE_ADMIN_LOGIN_ID = "test.e2e.active.admin";
+export const E2E_ACTIVE_ADMIN_EMAIL = "test.e2e.active.admin@example.invalid";
 export const E2E_INITIAL_ADMIN_LOGIN_ID = "test.e2e.initial.admin";
+export const E2E_INITIAL_ADMIN_EMAIL = "test.e2e.initial.admin@example.invalid";
 export const E2E_INITIAL_ADMIN_PASSWORD = "temporary-admin-password";
 
 const E2E_CHURCH_USER_ID = "00000000-0000-4000-8000-000000004302";
@@ -196,8 +199,8 @@ export async function seedOperatorFixtures() {
     await transaction.adminUser.create({
       data: {
         id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
+        email: "basic-bootstrap@pending.invalid",
         loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
-        mustChangePassword: false,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
         status: "BOOTSTRAP",
       },
@@ -205,24 +208,38 @@ export async function seedOperatorFixtures() {
     await transaction.adminUser.create({
       data: {
         activatedAt: new Date(),
+        email: E2E_ACTIVE_ADMIN_EMAIL,
         id: E2E_ACTIVE_ADMIN_ID,
         loginId: E2E_ACTIVE_ADMIN_LOGIN_ID,
-        mustChangePassword: false,
         name: "Synthetic Active Administrator",
-        passwordHash,
         status: "ACTIVE",
+        accounts: {
+          create: {
+            accountId: E2E_ACTIVE_ADMIN_ID,
+            issuer: "local:credential",
+            password: passwordHash,
+            providerId: "credential",
+          },
+        },
       },
     });
     await transaction.adminUser.create({
       data: {
+        email: E2E_INITIAL_ADMIN_EMAIL,
         id: E2E_INITIAL_ADMIN_ID,
         invitedAt: new Date(),
         invitedByAdminUserId: E2E_ACTIVE_ADMIN_ID,
         loginId: E2E_INITIAL_ADMIN_LOGIN_ID,
-        mustChangePassword: true,
         name: "Synthetic Initial Administrator",
-        passwordHash: initialAdminPasswordHash,
         status: "INVITED",
+        accounts: {
+          create: {
+            accountId: E2E_INITIAL_ADMIN_ID,
+            issuer: "local:credential",
+            password: initialAdminPasswordHash,
+            providerId: "credential",
+          },
+        },
       },
     });
 

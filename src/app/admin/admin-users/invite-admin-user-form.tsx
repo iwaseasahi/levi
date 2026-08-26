@@ -24,7 +24,6 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
     status: "idle",
   });
   const [dismissed, setDismissed] = useState(false);
-  const [revealed, setRevealed] = useState(false);
   const feedbackRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -44,7 +43,6 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
         className="admin-form"
         onSubmit={() => {
           setDismissed(false);
-          setRevealed(false);
         }}
         ref={formRef}
       >
@@ -61,6 +59,19 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
             required
           />
           <Errors errors={errors.name} id="admin-name-errors" />
+
+          <label htmlFor="admin-email">メールアドレス</label>
+          <input
+            aria-describedby={errors.email ? "admin-email-errors" : undefined}
+            aria-invalid={Boolean(errors.email)}
+            autoCapitalize="none"
+            autoComplete="email"
+            id="admin-email"
+            name="email"
+            required
+            type="email"
+          />
+          <Errors errors={errors.email} id="admin-email-errors" />
 
           <label htmlFor="admin-login-id">ログインID</label>
           <input
@@ -115,7 +126,6 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
             role="status"
             tabIndex={-1}
           >
-            <p className="eyebrow">一度だけ表示されます</p>
             <h2>{state.message}</h2>
             <dl className="credential-summary">
               <div>
@@ -123,29 +133,15 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
                 <dd>{state.name}</dd>
               </div>
               <div>
+                <dt>メールアドレス</dt>
+                <dd>{state.email}</dd>
+              </div>
+              <div>
                 <dt>ログインID</dt>
                 <dd>{state.loginId}</dd>
               </div>
-              <div>
-                <dt>一時パスワード</dt>
-                <dd>
-                  {revealed ? (
-                    <code>{state.temporaryPassword}</code>
-                  ) : (
-                    <button
-                      className="inline-button"
-                      onClick={() => setRevealed(true)}
-                      type="button"
-                    >
-                      一時パスワードを表示
-                    </button>
-                  )}
-                </dd>
-              </div>
             </dl>
-            <p>
-              本人確認済みの対面または通話で伝えてください。メール、チャット、Issue、画面保存には残さないでください。
-            </p>
+            <p>メール内のリンクは1時間有効です。</p>
             <button
               className="secondary-button"
               onClick={() => setDismissed(true)}
@@ -157,7 +153,7 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
         ) : null}
         {state.status === "success" && !pending && dismissed ? (
           <div className="notice" ref={feedbackRef} tabIndex={-1}>
-            一時パスワードの表示を終了しました。再表示はできません。
+            招待メールを送信しました。
           </div>
         ) : null}
       </div>

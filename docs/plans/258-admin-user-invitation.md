@@ -1,5 +1,9 @@
 # Issue #258: 管理者を招待できるようにする
 
+> Historical plan. Issue #341 supersedes the temporary-password and no-email
+> decisions below. Current invitations use Better Auth password setup links sent
+> through Gmail in production and captured by Mailpit locally.
+
 ## Issue
 
 - Issue: #258

@@ -1,6 +1,13 @@
 name: levi
 
 services:
+  mailpit:
+    image: axllent/mailpit:v1.29.4
+    ports:
+      - "127.0.0.1:1125:1025"
+      - "127.0.0.1:8026:8025"
+    restart: unless-stopped
+
   postgres:
     image: postgres:18-alpine
     environment:

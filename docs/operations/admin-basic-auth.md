@@ -1,70 +1,95 @@
-# Administration Basic authentication runbook
+# Administration authentication and email runbook
 
-The administration UI uses two boundaries: HTTPS Basic authentication first,
-then an individual `admin_users` login. The Basic credential maps to a
-deterministic `BOOTSTRAP` row and remains the outer break-glass boundary; it is
-not an individual administrator session. Church users continue to use `/login`
-and cannot enter administration.
+The administration UI has two independent authentication boundaries. HTTPS
+Basic authentication remains the outer break-glass boundary. Behind it, each
+administrator signs in through a dedicated Better Auth realm backed by
+`admin_users`, `admin_accounts`, `admin_sessions`, `admin_verifications`, and
+`admin_rate_limits`. Church users use a different Better Auth realm and cannot
+enter administration.
 
-## Configure credentials
+## Basic authentication
 
-Run this from an interactive terminal:
+Generate the Basic verifier from an interactive terminal:
 
 ```sh
 pnpm admin:hash-password
 ```
 
-Enter the password twice. The command hides input and prints only an encoded
-`ADMIN_BASIC_AUTH_PASSWORD_HASH` assignment. Configure that value together with
-a non-secret `ADMIN_BASIC_AUTH_USERNAME`. Treat the generated verifier as
-Restricted: do not place it in source control, Issues, pull requests, logs, chat,
-or agent prompts. Do not set an `ADMIN_BASIC_AUTH_PASSWORD` variable.
+Store the resulting `ADMIN_BASIC_AUTH_PASSWORD_HASH` and the non-secret
+`ADMIN_BASIC_AUTH_USERNAME` in the untracked local `.env` or the root-owned
+production environment. Never store the plaintext password. Chrome may cache
+this outer credential; closing every Chrome window or using a separate profile
+is required to forget it.
 
-Local development may place both values in the untracked `.env` file. Production
-values belong in the host's protected `production.env`; changing that file
-remains a separate secret/access operation requiring explicit authorization.
-Ordinary application releases use the standard production deployment flow.
-
-## Operate safely
-
-- Open administration only through the production HTTPS origin. Basic
-  credentials are merely encoded on the wire and are unsafe over HTTP.
-- Five failed attempts within 60 seconds temporarily block all administration
-  authentication. Wait at least 60 seconds before retrying.
-- Use the administration sidebar's **ログアウト** button to revoke the current
-  database session. Chrome may still cache the outer Basic credential; close all
-  Chrome windows or use a separate profile when that outer credential must also
-  be forgotten.
-- Rotate the credential by generating a new verifier, updating the protected
-  environment, and completing the approved deployment/restart workflow. Verify
-  the old password is rejected and the new password reaches
-  `/admin/login`.
-- An unavailable configuration, database, or bootstrap administrator returns `503` and
-  must be repaired rather than bypassed.
-
-## Invite another administrator
+## Administrator invitation
 
 1. Open `/admin/admin-users` through the production HTTPS origin.
-2. Enter the administrator name and a unique login ID. Login IDs are normalized
-   to lowercase and may contain ASCII letters, numbers, `.`, `_`, `@`, and `-`.
-3. Select **管理者を招待** and reveal the generated temporary password.
-4. Transfer the login ID and temporary password only through a verified
-   face-to-face or voice channel, then close the one-time display. Levi stores
-   only the password hash and cannot show the temporary password again.
-5. The administrator opens `/admin/login` after passing Basic authentication,
-   signs in, and replaces the temporary password before any management page is
-   available.
+2. Enter the administrator name, unique email address, and unique login ID.
+3. Select **管理者を招待**.
+4. Levi sends a one-hour password setup link to the email address. It never
+   displays or transfers a temporary password.
+5. The invited administrator opens the link, chooses a password, and signs in
+   at `/admin/login` with the login ID and selected password.
 
-The row remains `INVITED` until the password change completes, then becomes
-`ACTIVE`. The application session expires after 30 days. Logout revokes the
-current session; suspension, deletion, or expiry is rejected on the next
-request.
+An invitation starts as `INVITED`. Successful password setup changes it to
+`ACTIVE` and revokes any prior session. An active administrator can be deleted
+by another active administrator. The current administrator cannot delete their
+own account.
 
-## Deployment prerequisite
+## Password reset
 
-Before deploying the migration that requires individual login, create at least
-one invited administrator through the existing Basic-protected UI and retain
-the one-time credential safely. After deployment, verify `/admin/login`, forced
-password change, `/admin`, logout, rejection of the temporary password, and
-login with the selected password. Do not remove the Basic configuration; every
-administration request still requires it.
+An administrator selects **パスワードを忘れた場合** on `/admin/login`, enters
+their email address, and receives a one-hour reset link. The response is the same
+whether or not the address exists. Successful reset revokes all administrator
+sessions. The outer Basic authentication is still required for the reset pages.
+
+## Local mail
+
+Development uses Mailpit from `compose.development.yaml`:
+
+- SMTP: `127.0.0.1:1125`, without authentication
+- Inbox: <http://localhost:8026>
+- Sender: `levi-system@localhost.test`
+
+Run `mise run setup` or `pnpm db:up:dev` to start it. No local message leaves the
+machine. Copy a password setup/reset URL from the Mailpit inbox and open it in
+the same local origin used to request it.
+
+## Production Gmail
+
+Production sends through `levi-system@gmail.com` with a Google app password:
+
+```dotenv
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=levi-system@gmail.com
+SMTP_PASSWORD=<Google app password>
+MAIL_FROM=levi-system@gmail.com
+```
+
+The app password belongs only in `/etc/levi/production.env` with mode
+`600 root:root`. Runtime validation rejects production SMTP hosts other than
+Gmail and rejects unauthenticated submission. Gmail outage failover, queues,
+and retries are intentionally out of scope.
+
+Before the first production deploy, also create a distinct 64–128 character
+lowercase-hex `ADMIN_BETTER_AUTH_SECRET`. It must not equal
+`BETTER_AUTH_SECRET`. Do not display either secret.
+
+Existing administrator rows receive a non-deliverable `@pending.invalid`
+address during migration. After deployment, keep the existing login working,
+use it to invite a replacement administrator with the real email address,
+complete that invitation, sign in as the replacement, and delete the old
+placeholder administrator. This uses the normal audited UI and avoids direct
+production database edits. Do not send a reset request to a placeholder.
+
+## Verification
+
+- Basic authentication still protects every `/admin` and `/api/admin-auth`
+  request.
+- Administrator login creates a separate 30-day database session.
+- Invitation and reset links expire after one hour and cannot be reused.
+- Password reset revokes existing administrator sessions.
+- Local mail appears only in Mailpit.
+- Production secret validation succeeds without printing values.

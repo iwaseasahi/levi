@@ -7,18 +7,21 @@ import { describe, expect, it, vi } from "vitest";
 import { InviteAdminUserForm } from "./invite-admin-user-form";
 
 describe("InviteAdminUserForm", () => {
-  it("is accessible and only reveals the password on request", async () => {
-    const password = "t".repeat(24);
+  it("is accessible and confirms email delivery without exposing a credential", async () => {
     const action = vi.fn().mockResolvedValue({
+      email: "next.admin@example.com",
       loginId: "next.admin",
-      message: "管理者を招待しました。",
+      message: "管理者へ招待メールを送信しました。",
       name: "次の管理者",
       status: "success",
-      temporaryPassword: password,
     });
     const { container } = render(<InviteAdminUserForm action={action} />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("管理者名"), "次の管理者");
+    await user.type(
+      screen.getByLabelText("メールアドレス"),
+      "next.admin@example.com",
+    );
     await user.type(screen.getByLabelText("ログインID"), "next.admin");
     expect(
       (
@@ -28,13 +31,12 @@ describe("InviteAdminUserForm", () => {
       ).violations,
     ).toEqual([]);
     await user.click(screen.getByRole("button", { name: "管理者を招待" }));
-    expect(screen.queryByText(password)).not.toBeInTheDocument();
-    await user.click(
-      screen.getByRole("button", { name: "一時パスワードを表示" }),
-    );
-    expect(await screen.findByText(password)).toBeVisible();
+    expect(await screen.findByText("next.admin@example.com")).toBeVisible();
+    expect(screen.getByText("メール内のリンクは1時間有効です。")).toBeVisible();
     await user.click(screen.getByRole("button", { name: "表示を閉じる" }));
-    expect(screen.queryByText(password)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("メール内のリンクは1時間有効です。"),
+    ).not.toBeInTheDocument();
   });
 
   it("focuses and associates validation feedback", async () => {
@@ -46,6 +48,10 @@ describe("InviteAdminUserForm", () => {
     render(<InviteAdminUserForm action={action} />);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("管理者名"), "次の管理者");
+    await user.type(
+      screen.getByLabelText("メールアドレス"),
+      "next.admin@example.com",
+    );
     await user.type(screen.getByLabelText("ログインID"), "next.admin");
     await user.click(screen.getByRole("button", { name: "管理者を招待" }));
     expect(await screen.findByRole("alert")).toHaveFocus();

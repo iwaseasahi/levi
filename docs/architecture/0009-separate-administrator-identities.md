@@ -19,8 +19,9 @@ Levi stores administrative identities in `admin_users`, independently of
 The current Basic credential remains in environment configuration. A
 deterministic `BOOTSTRAP` admin user is the audit and authorization subject for
 that credential; it has no database password. Invited administrators have a
-case-insensitive login ID, a one-way password hash, invitation metadata, and a
-status. ADR 0010 defines their individual login and session lifecycle.
+case-insensitive login ID, unique email address, invitation metadata, and a
+status. ADR 0012 defines their Better Auth login, password, session, and email
+lifecycle.
 
 Administrative server actions authenticate again and pass an admin user ID to
 the use case. Church session creation only admits an ACTIVE `users` row with an
@@ -30,12 +31,12 @@ ACTIVE church membership.
 
 - Administrator records cannot sign in through Better Auth as church users.
 - The shared Basic credential remains a transitional operational dependency.
-- Plaintext temporary passwords may be returned once to the inviting operator,
-  but are never persisted or logged.
+- Invitations send a one-hour Better Auth password setup link; plaintext
+  temporary passwords are not returned to the inviting operator.
 - `platform_operators` is removed and the User actor-assignment constraint now
   describes Church users only.
-- ADR 0010 adds activation, sessions, and revocation while retaining Basic as
+- ADR 0012 adds Better Auth activation, sessions, and recovery while retaining Basic as
   the outer administration boundary. MFA remains a later decision.
 
 This ADR supersedes ADR 0008 only for the internal actor storage model. ADR
-0010 keeps Basic authentication active as the outer boundary.
+0012 keeps Basic authentication active as the outer boundary.

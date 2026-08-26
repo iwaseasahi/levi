@@ -14,9 +14,9 @@ try {
 
   const administrator = await prisma.adminUser.findUnique({
     where: { id: BASIC_BOOTSTRAP_ADMIN_USER_ID },
-    select: { passwordHash: true, status: true },
+    select: { accounts: { select: { id: true } }, status: true },
   });
-  if (administrator?.status !== "BOOTSTRAP" || administrator.passwordHash) {
+  if (administrator?.status !== "BOOTSTRAP" || administrator.accounts.length) {
     throw new Error("Credential-free bootstrap administrator seed is missing");
   }
 

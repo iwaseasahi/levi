@@ -9,7 +9,5 @@ export async function getOperatorAccess(
   if (access.status !== "authorized") return { status: "unauthenticated" };
   const session = await getAdminSessionAccess(headers);
   if (session.status !== "authorized") return { status: "unauthenticated" };
-  return session.mustChangePassword
-    ? { status: "forbidden", adminUserId: session.adminUserId }
-    : { status: "authorized", adminUserId: session.adminUserId };
+  return { status: "authorized", adminUserId: session.adminUserId };
 }

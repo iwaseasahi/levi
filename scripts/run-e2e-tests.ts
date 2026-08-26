@@ -15,11 +15,19 @@ const e2eEnvironment: NodeJS.ProcessEnv = {
   BETTER_AUTH_SECRET:
     process.env.BETTER_AUTH_SECRET ??
     "synthetic-e2e-secret-not-for-production-000000000000",
+  ADMIN_BETTER_AUTH_SECRET:
+    process.env.ADMIN_BETTER_AUTH_SECRET ??
+    "synthetic-e2e-admin-secret-not-for-production-00000000",
   ADMIN_BASIC_AUTH_USERNAME:
     process.env.ADMIN_BASIC_AUTH_USERNAME ?? "test-e2e-admin",
   ADMIN_BASIC_AUTH_PASSWORD_HASH:
     process.env.ADMIN_BASIC_AUTH_PASSWORD_HASH ??
     (await hashPassword(e2eAdminPassword)),
+  MAIL_FROM: process.env.MAIL_FROM ?? "levi-local@example.test",
+  SMTP_HOST: process.env.SMTP_HOST ?? "127.0.0.1",
+  SMTP_PORT: process.env.SMTP_PORT ?? "1125",
+  SMTP_SECURE: process.env.SMTP_SECURE ?? "false",
+  NEXT_DIST_DIR: process.env.NEXT_DIST_DIR ?? ".next-e2e",
 };
 
 prepareTestDatabase(e2eEnvironment);
