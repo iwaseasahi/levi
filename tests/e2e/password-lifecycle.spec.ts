@@ -2,6 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 
 import { expect, test } from "./fixtures";
 import {
+  E2E_ACTIVE_ADMIN_LOGIN_ID,
   E2E_ADMIN_BASIC_USERNAME,
   E2E_PASSWORD,
   E2E_PASSWORD_USER_EMAIL,
@@ -19,6 +20,12 @@ test("operator reset revokes the old session and forces a new password", async (
   browser,
   page,
 }) => {
+  await page.goto("/admin/login");
+  await page.getByLabel("ログインID").fill(E2E_ACTIVE_ADMIN_LOGIN_ID);
+  await page.getByLabel("パスワード", { exact: true }).fill(E2E_PASSWORD);
+  await page.getByRole("button", { name: "ログイン" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+
   const signIn = async (email: string, password: string) => {
     await page.goto("/login");
     await page.getByLabel("メールアドレス").fill(email);

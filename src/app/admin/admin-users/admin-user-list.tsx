@@ -3,7 +3,7 @@ import type { AdminUserSummary } from "@/infrastructure/auth/admin-user-invitati
 const statusLabels = {
   ACTIVE: "有効",
   BOOTSTRAP: "Basic認証",
-  INVITED: "招待済み（ログイン未対応）",
+  INVITED: "初回パスワード変更待ち",
   SUSPENDED: "停止中",
 } as const;
 

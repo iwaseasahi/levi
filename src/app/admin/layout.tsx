@@ -1,14 +1,14 @@
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { getAdminSessionAccess } from "@/infrastructure/auth/admin-session";
 
-import { getOperatorAccess } from "@/infrastructure/auth/operator-session";
 import { AdminSidebar } from "./admin-sidebar";
 
 export default async function AdministrationLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const access = await getOperatorAccess(await headers());
-  if (access.status !== "authorized") notFound();
+  const access = await getAdminSessionAccess(await headers());
+  if (access.status !== "authorized" || access.mustChangePassword)
+    return children;
 
   return (
     <div className="admin-workspace">

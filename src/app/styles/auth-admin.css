@@ -39,6 +39,32 @@
   gap: 0.35rem;
 }
 
+.admin-sidebar-logout-form {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.admin-sidebar-logout {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.65rem;
+  background: var(--surface-control);
+  color: var(--text-primary);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.admin-sidebar-logout:hover {
+  border-color: #6f512c;
+  color: var(--accent-hover);
+}
+
+.admin-auth-logout {
+  margin-top: 1rem;
+}
+
 .admin-nav-link {
   display: flex;
   gap: 0.7rem;

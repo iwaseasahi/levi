@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { requireAdminPageAccess } from "@/infrastructure/auth/admin-page-access";
 
-export default function ChurchAdministrationPage() {
+export default async function ChurchAdministrationPage() {
+  await requireAdminPageAccess();
   redirect("/admin/churches/new");
 }

@@ -65,5 +65,6 @@ provisioning and reset still work.
 ## Later evolution
 
 ADR 0009 supersedes this ADR's internal `users` / `platform_operators` actor
-mapping with an independent `admin_users` model. Basic authentication itself
-remains the current administration entry point until #259 is implemented.
+mapping with an independent `admin_users` model. Basic authentication remains
+the outer administration entry point. ADR 0010 adds individually attributable
+database sessions inside that boundary.

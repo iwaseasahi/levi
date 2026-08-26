@@ -184,8 +184,23 @@ No unique church-name rule is imposed; distinct churches may share a name.
 
 The deterministic `BOOTSTRAP` row maps the environment-held Basic credential to
 an auditable identity and has no database password. `INVITED` rows require a
-hash and invitation timestamp. Admin users never have Better Auth accounts,
-sessions, or Church memberships.
+hash and invitation timestamp. Admin users never have Better Auth accounts or
+Church memberships; their sessions use the separate `admin_sessions` table.
+
+### `admin_sessions`
+
+| Column          | Type          | Null | Contract                                 |
+| --------------- | ------------- | ---- | ---------------------------------------- |
+| `id`            | `uuid`        | no   | PK                                       |
+| `admin_user_id` | `uuid`        | no   | FK to `admin_users.id ON DELETE CASCADE` |
+| `token_hash`    | `char(64)`    | no   | unique lowercase SHA-256 token digest    |
+| `expires_at`    | `timestamptz` | no   | fixed 30-day application session expiry  |
+| timestamps      | `timestamptz` | no   | creation/update                          |
+
+The browser receives the opaque raw token; PostgreSQL stores only its digest.
+Session validity also requires an `ACTIVE` or `INVITED` administrator on every
+request. `INVITED` sessions are restricted to initial password change and
+logout.
 
 ### `church_memberships`
 

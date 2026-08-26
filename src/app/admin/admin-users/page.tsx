@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { listAdminUsers } from "@/infrastructure/auth/admin-user-invitations";
 import { AdminUserList } from "./admin-user-list";
+import { requireAdminPageAccess } from "@/infrastructure/auth/admin-page-access";
 
 export default async function AdminUsersPage() {
+  await requireAdminPageAccess();
   const adminUsers = await listAdminUsers();
   return (
     <main className="admin-shell">

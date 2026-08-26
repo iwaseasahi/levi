@@ -6,7 +6,8 @@ must not treat “signed in” as permission to perform every action.
 
 ADR 0006 selects Better Auth with revocable PostgreSQL sessions for church
 users. ADR 0008 protects the administration entry with HTTPS Basic
-authentication, while ADR 0009 stores its identity in `admin_users`. Levi
+authentication, ADR 0009 stores its identities in `admin_users`, and ADR 0010
+adds revocable database sessions inside the Basic boundary. Levi
 remains responsible for every authorization decision.
 
 The implemented boundary follows these rules:
@@ -32,14 +33,18 @@ The implemented boundary follows these rules:
 - record security-relevant actions without recording credentials, tokens, or
   temporary passwords.
 
-The `/admin` route is challenged by Proxy, and every administration Server
-Action independently repeats Basic authentication before authorization. A valid
-credential maps only to the deterministic bootstrap admin user, which has no
-Better Auth account or session. The configured password is a
+The `/admin` route is challenged by Proxy. The login page then requires an
+individual `admin_users` credential, and every protected page and administration
+Server Action independently repeats Basic and individual-session verification.
+A valid Basic credential maps only to the deterministic bootstrap admin user,
+which has no Better Auth account or individual session. The configured password is a
 Better Auth `scrypt` verifier, never plaintext. Five failures per 60 seconds are
 limited globally in PostgreSQL, and missing configuration or storage fails
-closed. Basic authentication is permitted only behind the production HTTPS
-edge. See [`../operations/admin-basic-auth.md`](../operations/admin-basic-auth.md).
+closed. Individual login has a separate five-per-minute limit keyed by a digest
+of the normalized login ID. Its host-only, HttpOnly, SameSite=Lax cookie contains
+the raw opaque token; `admin_sessions` stores only the SHA-256 digest and fixed
+30-day expiry. Basic authentication is permitted only behind the production
+HTTPS edge. See [`../operations/admin-basic-auth.md`](../operations/admin-basic-auth.md).
 
 Every protected capability needs separate automated cases for unauthenticated,
 authenticated-but-denied, allowed, expired/revoked, and cross-resource access.

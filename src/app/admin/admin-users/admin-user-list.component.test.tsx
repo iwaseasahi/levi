@@ -31,7 +31,7 @@ describe("AdminUserList", () => {
     expect(screen.queryByText("basic-bootstrap")).not.toBeInTheDocument();
     expect(screen.queryByText("Basic認証")).not.toBeInTheDocument();
     expect(screen.getByText("invited.admin")).toBeVisible();
-    expect(screen.getByText("招待済み（ログイン未対応）")).toBeVisible();
+    expect(screen.getByText("初回パスワード変更待ち")).toBeVisible();
     expect(
       (
         await axe.run(container, {

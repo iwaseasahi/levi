@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { adminLogoutAction } from "./auth-actions";
 
 const items = [
   { href: "/admin", label: "トップ" },
@@ -39,6 +40,11 @@ export function AdminSidebar() {
           );
         })}
       </nav>
+      <form action={adminLogoutAction} className="admin-sidebar-logout-form">
+        <button className="admin-sidebar-logout" type="submit">
+          ログアウト
+        </button>
+      </form>
     </aside>
   );
 }

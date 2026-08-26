@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { requireAdminPageAccess } from "@/infrastructure/auth/admin-page-access";
 
-export default function AdministrationPage() {
+export default async function AdministrationPage() {
+  await requireAdminPageAccess();
   return (
     <main className="admin-shell">
       <header className="admin-header">

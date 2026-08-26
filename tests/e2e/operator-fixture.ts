@@ -16,6 +16,9 @@ export const E2E_PASSWORD = "e".repeat(16);
 export const E2E_CREATED_EMAIL = "test.e2e.created@example.invalid";
 export const E2E_CREATED_CHURCH = "test.e2e created church";
 export const E2E_INVITED_ADMIN_LOGIN_ID = "test.e2e.invited.admin";
+export const E2E_ACTIVE_ADMIN_LOGIN_ID = "test.e2e.active.admin";
+export const E2E_INITIAL_ADMIN_LOGIN_ID = "test.e2e.initial.admin";
+export const E2E_INITIAL_ADMIN_PASSWORD = "temporary-admin-password";
 
 const E2E_CHURCH_USER_ID = "00000000-0000-4000-8000-000000004302";
 const E2E_CHURCH_ID = "00000000-0000-4000-8000-000000004303";
@@ -26,6 +29,8 @@ const E2E_PASSWORD_USER_ID = "00000000-0000-4000-8000-000000004306";
 const E2E_PASSWORD_CHURCH_ID = "00000000-0000-4000-8000-000000004307";
 const E2E_SCRIPTURE_BOOK_ID = "00000000-0000-4000-8000-000000004350";
 const E2E_NEXT_SCRIPTURE_BOOK_ID = "00000000-0000-4000-8000-000000004351";
+const E2E_ACTIVE_ADMIN_ID = "00000000-0000-4000-8000-000000004360";
+const E2E_INITIAL_ADMIN_ID = "00000000-0000-4000-8000-000000004361";
 
 export async function clearScriptureFixture() {
   await prisma.bibleVerse.deleteMany({
@@ -183,6 +188,9 @@ export async function clearOperatorFixtures() {
 export async function seedOperatorFixtures() {
   await clearOperatorFixtures();
   const passwordHash = await hashPassword(E2E_PASSWORD);
+  const initialAdminPasswordHash = await hashPassword(
+    E2E_INITIAL_ADMIN_PASSWORD,
+  );
 
   await prisma.$transaction(async (transaction) => {
     await transaction.adminUser.create({
@@ -192,6 +200,29 @@ export async function seedOperatorFixtures() {
         mustChangePassword: false,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
         status: "BOOTSTRAP",
+      },
+    });
+    await transaction.adminUser.create({
+      data: {
+        activatedAt: new Date(),
+        id: E2E_ACTIVE_ADMIN_ID,
+        loginId: E2E_ACTIVE_ADMIN_LOGIN_ID,
+        mustChangePassword: false,
+        name: "Synthetic Active Administrator",
+        passwordHash,
+        status: "ACTIVE",
+      },
+    });
+    await transaction.adminUser.create({
+      data: {
+        id: E2E_INITIAL_ADMIN_ID,
+        invitedAt: new Date(),
+        invitedByAdminUserId: E2E_ACTIVE_ADMIN_ID,
+        loginId: E2E_INITIAL_ADMIN_LOGIN_ID,
+        mustChangePassword: true,
+        name: "Synthetic Initial Administrator",
+        passwordHash: initialAdminPasswordHash,
+        status: "INVITED",
       },
     });
 
