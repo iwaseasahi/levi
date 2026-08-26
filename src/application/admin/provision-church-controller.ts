@@ -23,7 +23,6 @@ export type ProvisionChurchFormState =
       email: string;
       message: string;
       status: "success";
-      temporaryPassword: string;
     };
 
 export const initialProvisionChurchFormState: ProvisionChurchFormState = {
@@ -103,9 +102,8 @@ export function createProvisionChurchController(
       return {
         churchName: result.churchName,
         email: result.email,
-        message: "教会と初期アカウントを作成しました。",
+        message: "教会利用者へ招待メールを送信しました。",
         status: "success",
-        temporaryPassword: result.temporaryPassword,
       };
     } catch (error) {
       if (error instanceof ProvisioningInputError) {

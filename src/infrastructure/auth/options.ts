@@ -4,8 +4,19 @@ import type { AuthRuntimeConfig } from "@/config/env";
 
 export const SESSION_EXPIRES_IN_SECONDS = 30 * 24 * 60 * 60;
 export const SESSION_UPDATE_AGE_SECONDS = 24 * 60 * 60;
+export const CHURCH_PASSWORD_RESET_EXPIRES_IN_SECONDS = 24 * 60 * 60;
 
-export function buildAuthOptions(config: AuthRuntimeConfig) {
+export function buildAuthOptions(
+  config: AuthRuntimeConfig,
+  callbacks?: {
+    onPasswordReset?(userId: string): Promise<void>;
+    sendResetPassword?(input: {
+      name: string;
+      resetUrl: string;
+      to: string;
+    }): Promise<void>;
+  },
+) {
   return {
     appName: "Levi",
     secret: config.secret,
@@ -17,7 +28,16 @@ export function buildAuthOptions(config: AuthRuntimeConfig) {
       autoSignIn: false,
       minPasswordLength: 12,
       maxPasswordLength: 128,
+      resetPasswordTokenExpiresIn: CHURCH_PASSWORD_RESET_EXPIRES_IN_SECONDS,
       revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) =>
+        callbacks?.sendResetPassword?.({
+          name: user.name,
+          resetUrl: url,
+          to: user.email,
+        }),
+      onPasswordReset: async ({ user }) =>
+        callbacks?.onPasswordReset?.(user.id),
     },
     user: {
       additionalFields: {
@@ -49,6 +69,7 @@ export function buildAuthOptions(config: AuthRuntimeConfig) {
       modelName: "rateLimit",
       customRules: {
         "/sign-in/email": { window: 60, max: 10 },
+        "/request-password-reset": { window: 60, max: 5 },
       },
     },
     advanced: {

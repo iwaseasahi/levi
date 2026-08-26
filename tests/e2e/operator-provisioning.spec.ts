@@ -13,9 +13,8 @@ import {
   E2E_PASSWORD,
 } from "./operator-fixture";
 
-// A successful Server Action response contains a live one-time credential.
-// Keep this file out of screenshots, traces, and videos so it cannot enter CI
-// artifacts, even when a later assertion fails.
+// Administration scenarios change live credentials. Keep this file out of
+// screenshots, traces, and videos so credentials cannot enter CI artifacts.
 test.use({ screenshot: "off", trace: "off", video: "off" });
 
 async function signIn(page: Page, email: string) {
@@ -38,7 +37,11 @@ async function signInAdmin(
   await expect(page).toHaveURL(/\/admin$/);
 }
 
-async function findPasswordResetUrl(page: Page, recipient: string) {
+async function findPasswordResetUrl(
+  page: Page,
+  recipient: string,
+  audience: "admin" | "church" = "admin",
+) {
   await expect
     .poll(
       async () => {
@@ -75,8 +78,11 @@ async function findPasswordResetUrl(page: Page, recipient: string) {
   );
   expect(messageResponse.ok()).toBe(true);
   const message = (await messageResponse.json()) as { Text: string };
+  const resetPath = audience === "admin" ? "admin-auth" : "auth";
   const resetUrl = message.Text.match(
-    /https?:\/\/\S+\/api\/admin-auth\/reset-password\/[^\s]+/,
+    new RegExp(
+      `https?:\\/\\/\\S+\\/api\\/${resetPath}\\/reset-password\\/[^\\s]+`,
+    ),
   )?.[0];
   expect(resetUrl).toBeDefined();
   return resetUrl as string;
@@ -212,7 +218,7 @@ test.describe("operator church provisioning", () => {
     },
   });
 
-  test("provisions an account through first login and password change", async ({
+  test("invites an account and lets the user set and change a password", async ({
     page,
   }) => {
     await signInAdmin(page);
@@ -253,22 +259,17 @@ test.describe("operator church provisioning", () => {
       .click();
 
     const success = page.getByRole("status").filter({
-      hasText: "教会と初期アカウントを作成しました。",
+      hasText: "教会利用者へ招待メールを送信しました。",
     });
     await expect(success).toBeVisible();
     await expect(success).toBeFocused();
-    await page.getByRole("button", { name: "一時パスワードを表示" }).click();
-    const temporaryPassword = await page
-      .locator(".credential-summary code")
-      .textContent();
-    expect(temporaryPassword).toHaveLength(24);
-    await page.getByRole("button", { name: "表示を閉じる" }).click();
-    await expect(page.locator(".credential-summary")).toHaveCount(0);
-    await expect(
-      page.getByText(
-        "一時パスワードの表示を終了しました。再表示はできません。",
-      ),
-    ).toBeVisible();
+    await expect(success).toContainText(E2E_CREATED_EMAIL);
+    await expect(success).toContainText("24時間");
+    const resetUrl = await findPasswordResetUrl(
+      page,
+      E2E_CREATED_EMAIL,
+      "church",
+    );
 
     await page.getByLabel("教会名").fill(E2E_CREATED_CHURCH);
     await page.getByLabel("利用者名").fill("Synthetic Created User");
@@ -281,32 +282,41 @@ test.describe("operator church provisioning", () => {
       "作成できませんでした。入力内容を確認して、もう一度お試しください。",
     );
 
-    await page.evaluate(() =>
-      fetch("/api/auth/sign-out", {
-        body: "{}",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        method: "POST",
-      }),
-    );
+    await page.goto(resetUrl);
+    await expect(
+      page.getByRole("heading", { name: "新しいパスワードを設定" }),
+    ).toBeVisible();
+    const initialPassword = "n".repeat(16);
+    await page
+      .getByLabel("新しいパスワード", { exact: true })
+      .fill(initialPassword);
+    await page
+      .getByLabel("新しいパスワード（確認）", { exact: true })
+      .fill(initialPassword);
+    await page.getByRole("button", { name: "パスワードを変更" }).click();
+    await expect(page).toHaveURL(/\/login\?passwordReset=completed$/);
+
     await page.goto("/login");
     await page.getByLabel("メールアドレス").fill(E2E_CREATED_EMAIL);
     const loginPassword = page.getByLabel("パスワード", { exact: true });
-    await loginPassword.fill(temporaryPassword ?? "");
+    await loginPassword.fill(initialPassword);
     await expect(loginPassword).toHaveAttribute("type", "password");
     await page.getByRole("button", { name: "パスワードを表示" }).click();
     await expect(loginPassword).toHaveAttribute("type", "text");
-    await expect(loginPassword).toHaveValue(temporaryPassword ?? "");
+    await expect(loginPassword).toHaveValue(initialPassword);
     await page.getByRole("button", { name: "パスワードを隠す" }).click();
     await expect(loginPassword).toHaveAttribute("type", "password");
     await page.getByRole("button", { name: "ログイン" }).click();
-    await expect(page).toHaveURL(/\/change-password$/, { timeout: 20_000 });
-    await expect(page.locator(".auth-card")).toHaveCSS(
-      "background-color",
-      "rgba(17, 17, 17, 0.94)",
-    );
+    await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
 
-    const selectedPassword = "n".repeat(16);
+    await page.goto("/account/change-password");
+    await expect(
+      page.getByRole("heading", { name: "パスワードを変更" }),
+    ).toBeVisible();
+    await page
+      .getByLabel("現在のパスワード", { exact: true })
+      .fill(initialPassword);
+    const selectedPassword = "m".repeat(16);
     const newPassword = page.getByLabel("新しいパスワード", { exact: true });
     const confirmation = page.getByLabel("新しいパスワード（確認）", {
       exact: true,
@@ -319,8 +329,11 @@ test.describe("operator church provisioning", () => {
     await expect(confirmation).toHaveAttribute("type", "password");
     await page.getByRole("button", { name: "新しいパスワードを隠す" }).click();
     await page.getByRole("button", { name: "パスワードを変更" }).click();
-    await page.getByRole("button", { name: "教会用画面へ" }).click();
-    await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
+    await expect(page.getByRole("status")).toContainText(
+      "パスワードを変更しました。",
+    );
+    await page.getByRole("link", { name: "聖書検索へ戻る" }).click();
+    await expect(page).toHaveURL(/\/scripture$/);
     await expect(
       page.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();

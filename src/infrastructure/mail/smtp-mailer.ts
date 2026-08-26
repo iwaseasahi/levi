@@ -9,6 +9,23 @@ export interface PasswordResetMail {
 }
 
 export async function sendAdminPasswordResetMail(input: PasswordResetMail) {
+  return sendPasswordResetMail(input, {
+    audience: "Levi管理画面",
+    subject: "Levi 管理者パスワードの設定・再設定",
+  });
+}
+
+export async function sendChurchPasswordResetMail(input: PasswordResetMail) {
+  return sendPasswordResetMail(input, {
+    audience: "Levi教会用画面",
+    subject: "Levi 教会利用者パスワードの設定・再設定",
+  });
+}
+
+async function sendPasswordResetMail(
+  input: PasswordResetMail,
+  copy: { audience: string; subject: string },
+) {
   const config = getMailRuntimeConfig();
   const transport = nodemailer.createTransport({
     host: config.host,
@@ -21,11 +38,11 @@ export async function sendAdminPasswordResetMail(input: PasswordResetMail) {
   await transport.sendMail({
     from: config.from,
     to: input.to,
-    subject: "Levi 管理者パスワードの設定・再設定",
+    subject: copy.subject,
     text: [
       `${input.name} 様`,
       "",
-      "Levi管理画面のパスワードを設定または再設定するには、次のURLを開いてください。",
+      `${copy.audience}のパスワードを設定または再設定するには、次のURLを開いてください。`,
       input.resetUrl,
       "",
       "このURLの有効期限は24時間です。心当たりがない場合は、このメールを破棄してください。",

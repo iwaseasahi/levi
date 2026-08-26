@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { AuthRuntimeConfig } from "@/config/env";
 import {
   buildAuthOptions,
+  CHURCH_PASSWORD_RESET_EXPIRES_IN_SECONDS,
   SESSION_EXPIRES_IN_SECONDS,
   SESSION_UPDATE_AGE_SECONDS,
 } from "./options";
@@ -44,14 +45,31 @@ describe("Better Auth options", () => {
     expect(options.logger).toEqual({ disabled: true });
   });
 
-  it("does not configure public or outbound-email password recovery", () => {
-    const options = buildAuthOptions(config("production"));
+  it("configures 24-hour password recovery callbacks", async () => {
+    const sendResetPassword = vi.fn();
+    const onPasswordReset = vi.fn();
+    const options = buildAuthOptions(config("production"), {
+      onPasswordReset,
+      sendResetPassword,
+    });
 
-    expect(options.emailAndPassword).not.toHaveProperty("sendResetPassword");
-    expect(options.emailAndPassword).not.toHaveProperty("onPasswordReset");
-    expect(options).not.toHaveProperty(
-      "emailVerification.sendVerificationEmail",
+    expect(options.emailAndPassword.resetPasswordTokenExpiresIn).toBe(
+      CHURCH_PASSWORD_RESET_EXPIRES_IN_SECONDS,
     );
+    await options.emailAndPassword.sendResetPassword?.({
+      user: { id: "user-id", name: "利用者", email: "user@example.com" },
+      url: "https://levi.example/reset",
+      token: "token",
+    } as never);
+    await options.emailAndPassword.onPasswordReset?.({
+      user: { id: "user-id" },
+    } as never);
+    expect(sendResetPassword).toHaveBeenCalledWith({
+      name: "利用者",
+      resetUrl: "https://levi.example/reset",
+      to: "user@example.com",
+    });
+    expect(onPasswordReset).toHaveBeenCalledWith("user-id");
   });
 
   it("uses database rate limits and server-owned actor fields", () => {
@@ -64,6 +82,7 @@ describe("Better Auth options", () => {
     });
     expect(options.rateLimit.customRules).toEqual({
       "/sign-in/email": { max: 10, window: 60 },
+      "/request-password-reset": { max: 5, window: 60 },
     });
     expect(options.user.additionalFields).toMatchObject({
       actorState: { input: false, returned: false, defaultValue: "PENDING" },

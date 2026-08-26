@@ -9,17 +9,13 @@ import { Prisma } from "@/generated/prisma/client";
 import { canAdminUserManagePlatform } from "@/domain/admin/admin-user";
 import { prisma } from "@/infrastructure/database/client";
 import { runWithSerializableRetry } from "@/infrastructure/database/serializable-retry";
+import { getAuthRuntimeConfig } from "@/config/env";
+import { auth } from "./server";
 
 function transactionAdapter(
   transaction: Prisma.TransactionClient,
 ): ProvisionChurchTransaction {
   return {
-    async activateUser(userId) {
-      await transaction.user.update({
-        data: { actorState: "ACTIVE", mustChangePassword: true },
-        where: { id: userId },
-      });
-    },
     createChurch(name) {
       return transaction.church.create({
         data: { name },
@@ -69,6 +65,14 @@ function transactionAdapter(
 
 export const provisionChurch = createChurchProvisioner({
   generatePassword: generateTemporaryPassword,
+  async removeUnsentProvision({ churchId, userId }) {
+    await prisma.$transaction(async (transaction) => {
+      await transaction.church.deleteMany({ where: { id: churchId } });
+      await transaction.user.deleteMany({
+        where: { actorState: "PENDING", id: userId },
+      });
+    });
+  },
   runTransaction(operation) {
     return runWithSerializableRetry(() =>
       prisma.$transaction(
@@ -76,5 +80,13 @@ export const provisionChurch = createChurchProvisioner({
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       ),
     );
+  },
+  async sendInvitation(email) {
+    await auth.api.requestPasswordReset({
+      body: {
+        email,
+        redirectTo: `${getAuthRuntimeConfig().baseURL}/reset-password`,
+      },
+    });
   },
 });

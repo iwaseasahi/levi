@@ -45,7 +45,8 @@ Constraints:
   `email::text = lower(btrim(email::text)) AND length(email::text) <= 320`.
 - `users_name_nonblank_ck`: `length(btrim(name)) > 0`.
 - Deferred actor constraint: `ACTIVE` requires exactly one
-  `church_memberships` row; `PENDING` requires none.
+  `church_memberships` row; `PENDING` permits zero or one. The one-membership
+  PENDING state represents an invited church user who has not set a password.
 
 Better Auth configuration maps logical `user` fields to this table and declares
 `actorState` and `mustChangePassword` as additional fields with `input: false`.

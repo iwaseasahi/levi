@@ -96,11 +96,12 @@ have completed.
 
 This table fixes the observable behavior that must survive structural refactors.
 
-| Flow                             | UI / route boundary                                       | Application and domain responsibility                       | Characterization gate             |
-| -------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------- |
-| Login and persistent session     | `/login`, `/api/auth/[...all]`, request proxy             | auth options, church access, session eligibility            | unit, integration, E2E            |
-| Scripture search                 | `/scripture`, scripture catalog/search API controllers    | catalog lookup, range validation, bilingual search          | unit, component, integration, E2E |
-| Audience projection and controls | `/scripture/audience`, direct audience component          | audience message validation and scripture navigation        | unit, component, E2E              |
-| Folders and bookmarks            | saved-content panel, `/folders`, saved-content controller | tenant-scoped folder/bookmark commands and ordering         | unit, component, integration, E2E |
-| Temporary-password change/reset  | `/change-password`, operator administration               | password lifecycle, forced-change state, session revocation | unit, component, integration, E2E |
-| Tenant isolation                 | request proxy and church-scoped APIs                      | membership eligibility and church-scoped repositories       | unit, integration, E2E            |
+| Flow                             | UI / route boundary                                            | Application and domain responsibility                          | Characterization gate             |
+| -------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------- |
+| Login and persistent session     | `/login`, `/api/auth/[...all]`, request proxy                  | auth options, church access, session eligibility               | unit, integration, E2E            |
+| Scripture search                 | `/scripture`, scripture catalog/search API controllers         | catalog lookup, range validation, bilingual search             | unit, component, integration, E2E |
+| Audience projection and controls | `/scripture/audience`, direct audience component               | audience message validation and scripture navigation           | unit, component, E2E              |
+| Folders and bookmarks            | saved-content panel, `/folders`, saved-content controller      | tenant-scoped folder/bookmark commands and ordering            | unit, component, integration, E2E |
+| Password invitation/recovery     | `/forgot-password`, `/reset-password`, operator administration | email invitation, token expiry, activation, session revocation | unit, component, integration, E2E |
+| Signed-in password change        | `/account/change-password`                                     | current-password verification and other-session revocation     | component, integration, E2E       |
+| Tenant isolation                 | request proxy and church-scoped APIs                           | membership eligibility and church-scoped repositories          | unit, integration, E2E            |

@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth";
 import { getAuthRuntimeConfig, type AuthRuntimeConfig } from "@/config/env";
 import { canActorStartSession } from "@/application/auth/session-eligibility";
 import { prisma } from "@/infrastructure/database/client";
+import { sendChurchPasswordResetMail } from "@/infrastructure/mail/smtp-mailer";
 import { buildAuthOptions } from "./options";
 
 interface AuthDependencies {
@@ -30,7 +31,10 @@ export function createAuth(
   dependencies: AuthDependencies = authDependencies,
 ) {
   return betterAuth({
-    ...buildAuthOptions(config),
+    ...buildAuthOptions(config, {
+      onPasswordReset: activateInvitedChurchUserAfterPasswordReset,
+      sendResetPassword: sendChurchPasswordResetMail,
+    }),
     database: prismaAdapter(prisma, { provider: "postgresql" }),
     databaseHooks: {
       session: {
@@ -40,6 +44,15 @@ export function createAuth(
         },
       },
     },
+  });
+}
+
+export async function activateInvitedChurchUserAfterPasswordReset(
+  userId: string,
+): Promise<void> {
+  await prisma.user.updateMany({
+    data: { actorState: "ACTIVE", mustChangePassword: false },
+    where: { actorState: "PENDING", id: userId },
   });
 }
 

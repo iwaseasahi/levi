@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { verifyPassword } from "better-auth/crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
@@ -67,7 +66,7 @@ afterAll(async () => {
 });
 
 describe("administrator church provisioning", () => {
-  it("atomically creates an active forced-change credential account", async () => {
+  it("atomically creates a pending invited credential account", async () => {
     const operatorUserId = await createOperator();
     const result = await provisionChurch(operatorUserId, {
       accountName: "Test Church User",
@@ -82,9 +81,9 @@ describe("administrator church provisioning", () => {
     const credential = user.accounts[0];
 
     expect(user).toMatchObject({
-      actorState: "ACTIVE",
+      actorState: "PENDING",
       email: `${namespace}.new@example.invalid`,
-      mustChangePassword: true,
+      mustChangePassword: false,
     });
     expect(user.churchMembership?.churchId).toBe(result.churchId);
     expect(user.sessions).toEqual([]);
@@ -93,13 +92,15 @@ describe("administrator church provisioning", () => {
       issuer: "local:credential",
       providerId: "credential",
     });
-    expect(credential?.password).not.toBe(result.temporaryPassword);
+    expect(credential?.password).toEqual(expect.any(String));
     await expect(
-      verifyPassword({
-        hash: credential?.password ?? "",
-        password: result.temporaryPassword,
+      prisma.verification.count({
+        where: {
+          identifier: { startsWith: "reset-password:" },
+          value: user.id,
+        },
       }),
-    ).resolves.toBe(true);
+    ).resolves.toBe(1);
   });
 
   it("completes concurrent provisioning for distinct churches", async () => {
