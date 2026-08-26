@@ -1,5 +1,5 @@
-name: Authorize production deploy
-run-name: "Authorize production candidate #${{ inputs.release_candidate_run_id }}"
+name: Validate production deploy
+run-name: "Validate production candidate #${{ inputs.release_candidate_run_id }}"
 
 on:
   workflow_dispatch:
@@ -86,18 +86,9 @@ jobs:
             echo "- Sunday in Asia/Tokyo: \`$(if [[ "$(TZ=Asia/Tokyo date +%u)" == "7" ]]; then echo true; else echo false; fi)\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  authorize:
-    name: Approve production release
-    needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment: production
-    steps:
-      - run: echo "Protected production Environment approved the exact candidate."
-
   authorize_sunday:
     name: Approve Sunday production release
-    needs: [verify, authorize]
+    needs: verify
     if: needs.verify.outputs.is_sunday == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -107,11 +98,10 @@ jobs:
 
   record:
     name: Record immutable authorization
-    needs: [verify, authorize, authorize_sunday]
+    needs: [verify, authorize_sunday]
     if: >-
       always() &&
       needs.verify.result == 'success' &&
-      needs.authorize.result == 'success' &&
       (needs.authorize_sunday.result == 'success' || needs.authorize_sunday.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -162,7 +152,8 @@ jobs:
           cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## Production deploy authorized
 
-          The exact release candidate passed CI validation and protected Environment review.
+          The exact release candidate passed automated validation.
+          Sunday releases additionally passed protected production-sunday Environment review.
           No network connection to the production host was attempted.
 
           Resume an interrupted operator command with:

@@ -184,7 +184,7 @@ const deployWorkflow = readFileSync(
 for (const check of ["Quality", "Database", "E2E", "Security"]) {
   assert.match(deployWorkflow, new RegExp(`for required in.*${check}`, "s"));
 }
-assert.match(deployWorkflow, /environment: production\n/);
+assert.doesNotMatch(deployWorkflow, /environment: production\n/);
 assert.match(deployWorkflow, /environment: production-sunday/);
 assert.match(deployWorkflow, /needs\.verify\.outputs\.is_sunday == 'true'/);
 assert.match(deployWorkflow, /actions: read/);
@@ -420,7 +420,7 @@ try {
 set -euo pipefail
 endpoint="$2"
 if [[ "$endpoint" == */pending_deployments ]]; then
-  printf '%s\n' '[{"environment":{"name":"production"}}]'
+  printf '%s\n' '[{"environment":{"name":"production-sunday"}}]'
 elif [[ "\${FAKE_AUTHORIZATION_RESULT:-success}" == "failure" ]]; then
   printf '%s\n' '{"status":"completed","conclusion":"failure"}'
 elif [[ -f "$POLL_MARKER" ]]; then
@@ -444,12 +444,15 @@ fi
     { cwd: root, encoding: "utf8", env: waitEnvironment },
   );
   assert.equal(approved.status, 0, approved.stderr);
-  assert.match(approved.stdout, /production Environment の承認を待っています/);
+  assert.match(
+    approved.stdout,
+    /production-sunday Environment の日曜deploy承認を待っています/,
+  );
   assert.match(
     approved.stdout,
     /承認URL: https:\/\/github\.com\/iwaseasahi\/levi\/actions\/runs\/123456/,
   );
-  assert.match(approved.stdout, /production承認が完了しました/);
+  assert.match(approved.stdout, /production検証が完了しました/);
 
   const rejected = spawnSync(
     "bash",

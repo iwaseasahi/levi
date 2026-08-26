@@ -35,7 +35,7 @@ while true; do
       echo "GitHub Actions: ${authorization_url}" >&2
       exit 65
     }
-    echo "GitHub Actionsのproduction承認が完了しました。deployを続行します。"
+    echo "GitHub Actionsのproduction検証が完了しました。deployを続行します。"
     echo "GitHub Actions: ${authorization_url}"
     break
   fi
@@ -45,14 +45,14 @@ while true; do
   if [[ -n "$pending_environments" ]]; then
     waiting_state="approval:${pending_environments}"
     if [[ "$waiting_state" != "$last_waiting_state" ]]; then
-      echo "GitHub Actionsで ${pending_environments} Environment の承認を待っています。"
+      echo "GitHub Actionsで ${pending_environments} Environment の日曜deploy承認を待っています。"
       echo "承認URL: ${authorization_url}"
       last_waiting_state="$waiting_state"
     fi
   else
     waiting_state="workflow:${status}"
     if [[ "$waiting_state" != "$last_waiting_state" ]]; then
-      echo "GitHub Actionsのproduction承認処理を待っています（状態: ${status}）。"
+      echo "GitHub Actionsのproduction検証処理を待っています（状態: ${status}）。"
       echo "確認URL: ${authorization_url}"
       last_waiting_state="$waiting_state"
     fi
