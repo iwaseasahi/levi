@@ -44,12 +44,12 @@ describe("parseMailRuntimeConfig", () => {
     expect(
       parseMailRuntimeConfig(
         {
-          from: "levi-system@gmail.com",
+          from: "levi.system.app@gmail.com",
           host: "smtp.gmail.com",
           password: "gmail-app-password",
           port: "587",
           secure: "false",
-          user: "levi-system@gmail.com",
+          user: "levi.system.app@gmail.com",
         },
         "production",
       ),
@@ -65,12 +65,12 @@ describe("parseMailRuntimeConfig", () => {
     expect(() =>
       parseMailRuntimeConfig(
         {
-          from: "levi-system@gmail.com",
+          from: "levi.system.app@gmail.com",
           host: "smtp.gmail.com",
           password: "gmail-app-password",
           port: "587",
           secure: "false",
-          user: "levi-system@gmail.com",
+          user: "levi.system.app@gmail.com",
           ...overrides,
         },
         "production",

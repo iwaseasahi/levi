@@ -183,8 +183,8 @@ assert.equal(app.environment?.MIGRATION_DATABASE_URL, undefined);
 assert.equal(app.environment?.SMTP_HOST, "smtp.gmail.com");
 assert.equal(app.environment?.SMTP_PORT, "587");
 assert.equal(app.environment?.SMTP_SECURE, "false");
-assert.equal(app.environment?.SMTP_USER, "levi-system@gmail.com");
-assert.equal(app.environment?.MAIL_FROM, "levi-system@gmail.com");
+assert.equal(app.environment?.SMTP_USER, "levi.system.app@gmail.com");
+assert.equal(app.environment?.MAIL_FROM, "levi.system.app@gmail.com");
 
 const postgres = config.services.postgres!;
 assert.equal(postgres.read_only, true);
