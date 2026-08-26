@@ -15,6 +15,10 @@
 - `monitoring.env.example`: readiness、DB、容量、5xx、backup age の監視設定例
 - `journald-levi.conf`: 圧縮、200 MB、14日間の journal retention
 
+production deploy成功後は、現在稼働中のapplication imageとcurrent migration imageを
+保護したうえで、過去のLevi imageと停止済みLevi containerを自動整理します。永続volumeや
+第三者imageへ広げる`docker system prune` / `docker volume prune`は使用しません。
+
 ## 設定検証
 
 Docker が動作する開発環境で次を実行します。この操作はコンテナを起動しません。

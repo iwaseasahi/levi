@@ -127,4 +127,9 @@ chmod 600 "$deployment_record"
 cp "$deployment_record" "${deployment_root}/current.env"
 chmod 600 "${deployment_root}/current.env"
 
+if ! "${repository}/scripts/cleanup-production-images.sh" \
+  "$application_image" "$migration_image"; then
+  echo "WARNING: Production is ready, but obsolete Docker image cleanup failed." >&2
+fi
+
 echo "Production deployment is ready: commit=${deploy_commit} application_image=${application_image}"

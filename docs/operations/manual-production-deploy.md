@@ -54,6 +54,7 @@ allowlist済みoperator Mac → pinned SSH alias → VPS entrypoint
         ├─ 暗号化backup
         ├─ forward-only migration
         ├─ app・database・proxy readiness
+        ├─ current/running imageを保護して過去のLevi imageを整理
         ├─ Actions run URLをdeploy historyへ記録
         └─ 稼働中digestをrepository variableへ記録
 ```
@@ -75,6 +76,21 @@ releaseには次がすべて必要です。
 candidateとauthorization artifactは1日で失効します。mutable tag、別runの値、失効済み
 artifact、未検証runを流用しません。日曜追加承認はapplication deployと宣言済みmigration
 だけを許可し、Bible import、restore、secret変更、OS操作、再起動には適用しません。
+
+deploy成功後は、VPS内に残った過去のLevi application/migration image、停止済みの
+`levi-production` container、dangling imageを自動整理します。稼働中imageと当該deployの
+migration image、PostgreSQL volume、Caddy/PostgreSQL image、backup、deploy履歴は削除
+しません。cleanupが失敗してもreadyになったapplicationは停止せず、deploy出力へ警告を
+残します。
+
+削除候補と容量だけを確認する場合は、current deployment recordに記録された2つのdigestを
+指定してdry-runします。環境変数ファイルやsecret値は読みません。
+
+```bash
+sudo /opt/levi/scripts/cleanup-production-images.sh --dry-run \
+  'ghcr.io/iwaseasahi/levi@sha256:<current-application-digest>' \
+  'ghcr.io/iwaseasahi/levi-migrate@sha256:<current-migration-digest>'
+```
 
 ## 一度だけ行うGitHub設定
 
