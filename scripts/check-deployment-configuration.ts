@@ -242,6 +242,28 @@ assert.doesNotMatch(publishWorkflow, /docker buildx build/);
 assert.doesNotMatch(publishWorkflow, /release_issue/);
 assert.doesNotMatch(publishWorkflow, /\bssh\b/);
 
+const migrationDockerfile = readFileSync(
+  path.join(root, "Dockerfile.migrate.production"),
+  "utf8",
+);
+assert.match(migrationDockerfile, /@levi\/production-migration/);
+assert.match(migrationDockerfile, /deploy --prod \/migrator/);
+assert.doesNotMatch(migrationDockerfile, /import-ginmaku-bible/);
+assert.doesNotMatch(migrationDockerfile, /run-production-bible-import/);
+assert.doesNotMatch(migrationDockerfile, /src\/migration/);
+
+const deploySource = readFileSync(deployScript, "utf8");
+assert.match(
+  deploySource,
+  /docker pull "\$application_image" &.*docker pull "\$migration_image" &/s,
+);
+assert.match(deploySource, /wait "\$application_pull_pid"/);
+assert.match(deploySource, /wait "\$migration_pull_pid"/);
+assert.match(
+  deploySource,
+  /Approved application and migration images are available locally/,
+);
+
 const prepareSource = readFileSync(prepareRelease, "utf8");
 assert.match(prepareSource, /\$# -ne 0/);
 assert.match(prepareSource, /git rev-parse origin\/main/);

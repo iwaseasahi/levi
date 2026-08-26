@@ -4,26 +4,22 @@ FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@11.19.0 --activate
-WORKDIR /app
+WORKDIR /workspace
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+COPY deploy/migration/package.json ./deploy/migration/package.json
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --filter @levi/production-migration... && \
+    pnpm --filter @levi/production-migration deploy --prod /migrator
 
-FROM dependencies AS migrator
+FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491f4857e25e35a36ba7995 AS migrator
 ARG VCS_REF=unknown
 ENV NODE_ENV=production
 LABEL org.opencontainers.image.revision=$VCS_REF
-COPY --chown=node:node prisma ./prisma
-COPY --chown=node:node prisma.config.ts ./prisma.config.ts
-COPY --chown=node:node tsconfig.json ./tsconfig.json
-COPY --chown=node:node src/config ./src/config
-COPY --chown=node:node src/domain/admin ./src/domain/admin
-COPY --chown=node:node src/infrastructure/database ./src/infrastructure/database
-COPY --chown=node:node src/migration ./src/migration
-COPY --chown=node:node scripts/import-ginmaku-bible.ts ./scripts/import-ginmaku-bible.ts
-COPY --chown=node:node --chmod=0555 scripts/run-production-database-bootstrap.sh ./scripts/run-production-database-bootstrap.sh
-COPY --chown=node:node --chmod=0555 scripts/run-production-bible-import.sh ./scripts/run-production-bible-import.sh
-RUN DATABASE_URL=postgresql://levi:levi@localhost:5432/levi \
-    SHADOW_DATABASE_URL=postgresql://levi:levi@localhost:5432/levi_shadow \
-    pnpm db:generate
+WORKDIR /app
+COPY --from=dependencies --chown=node:node /migrator/package.json ./package.json
+COPY --from=dependencies --chown=node:node /migrator/node_modules ./node_modules
+COPY --chown=node:node prisma/schema.prisma ./prisma/schema.prisma
+COPY --chown=node:node prisma/migrations ./prisma/migrations
+COPY --chown=node:node deploy/migration/prisma.config.ts ./prisma.config.ts
 USER node
 ENTRYPOINT ["node", "node_modules/prisma/build/index.js", "migrate", "deploy"]
