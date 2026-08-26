@@ -4,96 +4,128 @@ run-name: "Authorize production candidate #${{ inputs.release_candidate_run_id }
 on:
   workflow_dispatch:
     inputs:
-      commit_sha:
-        description: Exact 40-character commit SHA already merged to main
-        required: true
-        type: string
-      application_image:
-        description: Immutable ghcr.io/iwaseasahi/levi@sha256 digest
-        required: true
-        type: string
-      migration_image:
-        description: Immutable ghcr.io/iwaseasahi/levi-migrate@sha256 digest
-        required: true
-        type: string
-      approval_comment:
-        description: Immediate approval comment URL on a Levi Issue
-        required: true
-        type: string
-      sunday_approval_comment:
-        description: Sunday-only approval comment URL; leave empty outside Sunday (Asia/Tokyo)
-        required: false
-        default: ""
-        type: string
       release_candidate_run_id:
         description: Successful Publish production images run containing the pinned candidate
         required: true
         type: string
 
 permissions:
-  contents: read
+  actions: read
   checks: read
-  issues: read
+  contents: read
 
 jobs:
   verify:
     name: Verify immutable release
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      application_image: ${{ steps.candidate.outputs.application_image }}
+      commit_sha: ${{ steps.candidate.outputs.commit_sha }}
+      is_sunday: ${{ steps.candidate.outputs.is_sunday }}
+      migration_image: ${{ steps.candidate.outputs.migration_image }}
+      release_candidate_run_id: ${{ steps.candidate.outputs.release_candidate_run_id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ref: ${{ inputs.commit_sha }}
-      - name: Validate release inputs and Sunday approval
+      - name: Download and verify immutable candidate
+        id: candidate
         env:
-          APPROVAL_COMMENT: ${{ inputs.approval_comment }}
-          APPLICATION_IMAGE: ${{ inputs.application_image }}
-          COMMIT_SHA: ${{ inputs.commit_sha }}
           GH_TOKEN: ${{ github.token }}
-          MIGRATION_IMAGE: ${{ inputs.migration_image }}
-          PRODUCTION_APPROVAL_COMMENT: ${{ inputs.approval_comment }}
           RELEASE_CANDIDATE_RUN_ID: ${{ inputs.release_candidate_run_id }}
-          SUNDAY_APPROVAL_COMMENT: ${{ inputs.sunday_approval_comment }}
         run: |
           set -euo pipefail
-          [[ "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
-          [[ "$APPLICATION_IMAGE" =~ ^ghcr\.io/iwaseasahi/levi@sha256:[a-f0-9]{64}$ ]]
-          [[ "$MIGRATION_IMAGE" =~ ^ghcr\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$ ]]
-          [[ "$APPROVAL_COMMENT" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]
           [[ "$RELEASE_CANDIDATE_RUN_ID" =~ ^[0-9]+$ ]]
-          bash scripts/check-production-deploy-approval.sh
-          bash scripts/check-sunday-deploy-approval.sh
+          run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RELEASE_CANDIDATE_RUN_ID}")"
+          [[ "$(jq -r '.event' <<< "$run_json")" == "workflow_dispatch" ]]
+          [[ "$(jq -r '.status' <<< "$run_json")" == "completed" ]]
+          [[ "$(jq -r '.conclusion' <<< "$run_json")" == "success" ]]
+          [[ "$(jq -r '.head_branch' <<< "$run_json")" == "main" ]]
+          workflow_id="$(jq -r '.workflow_id' <<< "$run_json")"
+          workflow_path="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}" --jq '.path')"
+          [[ "$workflow_path" == ".github/workflows/publish-production-images.yml" ]]
+          run_attempt="$(jq -r '.run_attempt' <<< "$run_json")"
+          gh run download "$RELEASE_CANDIDATE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name "production-release-candidate-${RELEASE_CANDIDATE_RUN_ID}-${run_attempt}"
+          candidate=production-release-candidate.json
+          jq -e \
+            --arg repository "$GITHUB_REPOSITORY" \
+            --argjson run_id "$RELEASE_CANDIDATE_RUN_ID" \
+            --argjson run_attempt "$run_attempt" \
+            '.schema_version == 1 and
+             .repository == $repository and
+             .run_id == $run_id and
+             .run_attempt == $run_attempt and
+             (.commit_sha | test("^[a-f0-9]{40}$")) and
+             (.application_image | test("^ghcr\\.io/iwaseasahi/levi@sha256:[a-f0-9]{64}$")) and
+             (.migration_image | test("^ghcr\\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$")) and
+             (.prepared_at | type == "string")' "$candidate" >/dev/null
+          commit_sha="$(jq -r '.commit_sha' "$candidate")"
           git fetch --quiet origin main
-          git merge-base --is-ancestor "$COMMIT_SHA" origin/main
-      - name: Require successful CI for the exact commit
-        env:
-          COMMIT_SHA: ${{ inputs.commit_sha }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
+          git merge-base --is-ancestor "$commit_sha" origin/main
           for required in Quality Database E2E Security; do
-            result="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT_SHA}/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$required\")] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv")"
-            [[ "$result" == $'completed\tsuccess' ]] || { echo "Latest ${required} check is not successful for ${COMMIT_SHA}" >&2; exit 1; }
+            result="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${commit_sha}/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$required\")] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv")"
+            [[ "$result" == $'completed\tsuccess' ]] || { echo "Latest ${required} check is not successful for ${commit_sha}" >&2; exit 1; }
           done
+          {
+            echo "application_image=$(jq -r '.application_image' "$candidate")"
+            echo "commit_sha=$commit_sha"
+            if [[ "$(TZ=Asia/Tokyo date +%u)" == "7" ]]; then echo "is_sunday=true"; else echo "is_sunday=false"; fi
+            echo "migration_image=$(jq -r '.migration_image' "$candidate")"
+            echo "release_candidate_run_id=$RELEASE_CANDIDATE_RUN_ID"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "## Exact production candidate"
+            echo
+            echo "- candidate: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${RELEASE_CANDIDATE_RUN_ID}"
+            echo "- commit: \`${commit_sha}\`"
+            echo "- application: \`$(jq -r '.application_image' "$candidate")\`"
+            echo "- migration: \`$(jq -r '.migration_image' "$candidate")\`"
+            echo "- Sunday in Asia/Tokyo: \`$(if [[ "$(TZ=Asia/Tokyo date +%u)" == "7" ]]; then echo true; else echo false; fi)\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   authorize:
-    name: Authorize approved digest
+    name: Approve production release
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment: production
     steps:
+      - run: echo "Protected production Environment approved the exact candidate."
+
+  authorize_sunday:
+    name: Approve Sunday production release
+    needs: [verify, authorize]
+    if: needs.verify.outputs.is_sunday == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production-sunday
+    steps:
+      - run: echo "Protected production-sunday Environment approved the exact candidate."
+
+  record:
+    name: Record immutable authorization
+    needs: [verify, authorize, authorize_sunday]
+    if: >-
+      always() &&
+      needs.verify.result == 'success' &&
+      needs.authorize.result == 'success' &&
+      (needs.authorize_sunday.result == 'success' || needs.authorize_sunday.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
       - name: Create immutable authorization record
         env:
-          APPROVAL_COMMENT: ${{ inputs.approval_comment }}
-          APPLICATION_IMAGE: ${{ inputs.application_image }}
-          COMMIT_SHA: ${{ inputs.commit_sha }}
-          MIGRATION_IMAGE: ${{ inputs.migration_image }}
-          SUNDAY_APPROVAL_COMMENT: ${{ inputs.sunday_approval_comment }}
-          RELEASE_CANDIDATE_RUN_ID: ${{ inputs.release_candidate_run_id }}
+          APPLICATION_IMAGE: ${{ needs.verify.outputs.application_image }}
+          COMMIT_SHA: ${{ needs.verify.outputs.commit_sha }}
+          IS_SUNDAY: ${{ needs.verify.outputs.is_sunday }}
+          MIGRATION_IMAGE: ${{ needs.verify.outputs.migration_image }}
+          RELEASE_CANDIDATE_RUN_ID: ${{ needs.verify.outputs.release_candidate_run_id }}
         run: |
           set -euo pipefail
+          authorization_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           jq -n \
             --arg repository "$GITHUB_REPOSITORY" \
             --argjson run_id "$GITHUB_RUN_ID" \
@@ -101,20 +133,20 @@ jobs:
             --arg commit_sha "$COMMIT_SHA" \
             --arg application_image "$APPLICATION_IMAGE" \
             --arg migration_image "$MIGRATION_IMAGE" \
-            --arg approval_comment "$APPROVAL_COMMENT" \
-            --arg sunday_approval_comment "$SUNDAY_APPROVAL_COMMENT" \
+            --arg authorization_run_url "$authorization_url" \
+            --argjson is_sunday "$IS_SUNDAY" \
             --argjson release_candidate_run_id "$RELEASE_CANDIDATE_RUN_ID" \
             --arg authorized_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '{
-              schema_version: 3,
+              schema_version: 4,
               repository: $repository,
               run_id: $run_id,
               run_attempt: $run_attempt,
               commit_sha: $commit_sha,
               application_image: $application_image,
               migration_image: $migration_image,
-              approval_comment: $approval_comment,
-              sunday_approval_comment: (if $sunday_approval_comment == "" then null else $sunday_approval_comment end),
+              authorization_run_url: $authorization_run_url,
+              sunday_authorization_run_url: (if $is_sunday then $authorization_run_url else null end),
               release_candidate_run_id: $release_candidate_run_id,
               authorized_at: $authorized_at
             }' > production-deploy-authorization.json
@@ -130,12 +162,10 @@ jobs:
           cat >> "$GITHUB_STEP_SUMMARY" <<EOF
           ## Production deploy authorized
 
-          GitHub validation and the protected \`production\` Environment approval completed.
+          The exact release candidate passed CI validation and protected Environment review.
           No network connection to the production host was attempted.
 
-          The waiting two-command release flow will verify this authorization and apply it
-          from the allowlisted operator workstation. For an interrupted operator command,
-          resume the already-authorized apply with:
+          Resume an interrupted operator command with:
 
-          \`pnpm production:deploy:authorized -- $GITHUB_RUN_ID\`
+          \`mise exec -- pnpm production:deploy:authorized -- $GITHUB_RUN_ID\`
           EOF

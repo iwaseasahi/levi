@@ -61,7 +61,6 @@ jq -e \
    .repository == $repository and
    .run_id == $run_id and
    .run_attempt == $run_attempt and
-   (.release_issue | type == "number") and
    (.commit_sha | test("^[a-f0-9]{40}$")) and
    (.application_image | test("^ghcr\\.io/iwaseasahi/levi@sha256:[a-f0-9]{64}$")) and
    (.migration_image | test("^ghcr\\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$")) and
@@ -71,67 +70,15 @@ jq -e \
   exit 65
 }
 
-readonly release_issue="$(jq -r '.release_issue' "$candidate_file")"
 readonly commit_sha="$(jq -r '.commit_sha' "$candidate_file")"
 readonly application_image="$(jq -r '.application_image' "$candidate_file")"
 readonly migration_image="$(jq -r '.migration_image' "$candidate_file")"
-readonly prepared_at="$(jq -r '.prepared_at' "$candidate_file")"
-
-comments="$(gh api --paginate --slurp "repos/${repository}/issues/${release_issue}/comments?per_page=100")"
-approval_comment=""
-while IFS=$'\t' read -r comment_url _; do
-  [[ -n "$comment_url" ]] || continue
-  if COMMIT_SHA="$commit_sha" \
-    APPLICATION_IMAGE="$application_image" \
-    MIGRATION_IMAGE="$migration_image" \
-    PRODUCTION_APPROVAL_COMMENT="$comment_url" \
-    GITHUB_REPOSITORY="$repository" \
-    bash "${script_directory}/check-production-deploy-approval.sh" >/dev/null 2>&1; then
-    approval_comment="$comment_url"
-    break
-  fi
-done < <(jq -r \
-  --arg prepared_at "$prepared_at" \
-  'add | map(select(.author_association == "OWNER" and .created_at >= $prepared_at)) | sort_by(.created_at) | reverse | .[] | [.html_url, .created_at] | @tsv' \
-  <<< "$comments")
-[[ -n "$approval_comment" ]] || {
-  echo "No exact repository-owner approval was found on Issue #${release_issue}." >&2
-  exit 67
-}
-
-sunday_approval_comment=""
-if [[ "$(TZ=Asia/Tokyo date +%u)" == "7" ]]; then
-  while IFS=$'\t' read -r comment_url _; do
-    [[ -n "$comment_url" ]] || continue
-    if COMMIT_SHA="$commit_sha" \
-      APPLICATION_IMAGE="$application_image" \
-      MIGRATION_IMAGE="$migration_image" \
-      SUNDAY_APPROVAL_COMMENT="$comment_url" \
-      GITHUB_REPOSITORY="$repository" \
-      bash "${script_directory}/check-sunday-deploy-approval.sh" >/dev/null 2>&1; then
-      sunday_approval_comment="$comment_url"
-      break
-    fi
-  done < <(jq -r \
-    --arg prepared_at "$prepared_at" \
-    'add | map(select(.author_association == "OWNER" and .created_at >= $prepared_at)) | sort_by(.created_at) | reverse | .[] | [.html_url, .created_at] | @tsv' \
-    <<< "$comments")
-  [[ -n "$sunday_approval_comment" ]] || {
-    echo "No exact Sunday approval was found on Issue #${release_issue}." >&2
-    exit 67
-  }
-fi
 
 readonly dispatched_after="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 readonly expected_title="Authorize production candidate #${publish_run_id}"
 gh workflow run "$authorize_workflow_path" \
   --repo "$repository" \
   --ref main \
-  --field "commit_sha=${commit_sha}" \
-  --field "application_image=${application_image}" \
-  --field "migration_image=${migration_image}" \
-  --field "approval_comment=${approval_comment}" \
-  --field "sunday_approval_comment=${sunday_approval_comment}" \
   --field "release_candidate_run_id=${publish_run_id}"
 
 authorization_run_id=""
@@ -156,8 +103,8 @@ done
   exit 66
 }
 
-echo "Pinned release approval passed: ${approval_comment}"
-echo "Approve the protected production Environment when prompted:"
+echo "Exact candidate verified: commit=${commit_sha} application=${application_image} migration=${migration_image}"
+echo "Approve the protected production Environment when prompted. Sunday additionally requires production-sunday approval:"
 echo "https://github.com/${repository}/actions/runs/${authorization_run_id}"
 gh run watch "$authorization_run_id" --repo "$repository" --exit-status
 

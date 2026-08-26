@@ -16,7 +16,7 @@ if [[ "${SUDO_USER:-}" != "$expected_operator" ]]; then
   exit 2
 fi
 if [[ "$#" -ne 5 ]]; then
-  echo "Usage: levi-production-deploy COMMIT_SHA APPLICATION_IMAGE MIGRATION_IMAGE APPROVAL_COMMENT_URL SUNDAY_APPROVAL_COMMENT_URL_OR_NONE" >&2
+  echo "Usage: levi-production-deploy COMMIT_SHA APPLICATION_IMAGE MIGRATION_IMAGE AUTHORIZATION_RUN_URL SUNDAY_AUTHORIZATION_RUN_URL_OR_NONE" >&2
   exit 2
 fi
 
@@ -38,12 +38,12 @@ if [[ ! "$migration_image" =~ ^ghcr\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{
   echo "MIGRATION_IMAGE must be an immutable ghcr.io/iwaseasahi/levi-migrate digest." >&2
   exit 2
 fi
-if [[ ! "$approval_reference" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]; then
-  echo "APPROVAL_COMMENT_URL must be an exact Levi Issue comment URL." >&2
+if [[ ! "$approval_reference" =~ ^https://github\.com/iwaseasahi/levi/actions/runs/[0-9]+$ ]]; then
+  echo "AUTHORIZATION_RUN_URL must be an exact Levi Actions run URL." >&2
   exit 2
 fi
-if [[ "$sunday_approval_argument" != "none" && ! "$sunday_approval_argument" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]; then
-  echo "SUNDAY_APPROVAL_COMMENT_URL_OR_NONE must be none or an exact Levi Issue comment URL." >&2
+if [[ "$sunday_approval_argument" != "none" && ! "$sunday_approval_argument" =~ ^https://github\.com/iwaseasahi/levi/actions/runs/[0-9]+$ ]]; then
+  echo "SUNDAY_AUTHORIZATION_RUN_URL_OR_NONE must be none or an exact Levi Actions run URL." >&2
   exit 2
 fi
 if [[ "$sunday_approval_argument" == "none" ]]; then
