@@ -12,7 +12,46 @@
 - host memory use reaches 90%;
 - Caddy records at least five 5xx responses in five minutes.
 
-GitHub's `Production smoke` workflow checks public readiness every 15 minutes when `PRODUCTION_BASE_URL` is configured. This is a low-cost supplementary external check; scheduled Actions may be delayed and are not an SLA. A failed workflow uses GitHub's normal Actions notification route. The VPS-side timer remains the source for DB, capacity, backup, and 5xx signals.
+GitHub's `Production smoke` workflow checks public readiness at minute zero of
+every hour when `PRODUCTION_BASE_URL` is configured. This is a low-cost
+supplementary external check; scheduled Actions may be delayed and are not an
+SLA. A failed workflow posts a fixed, non-sensitive message and the Actions run
+URL to Slack when `SLACK_MONITORING_WEBHOOK_URL` is configured. The VPS-side
+timer remains the source for DB, capacity, backup, and 5xx signals.
+
+The VPS-side check remains every minute. `run-production-health-monitor.sh`
+records only whether an incident is active in `/var/lib/levi-monitoring`. It
+posts one Slack message on the first failed check, suppresses repeated alerts
+while the failure continues, and posts one recovery message after the first
+successful check. The message never contains check output, request data, or a
+secret. When no webhook is configured, health checks and their systemd result
+continue to work without Slack.
+
+## Slack alert setup
+
+Use a dedicated private Slack channel for Levi production operations. Create a
+Slack app, enable Incoming Webhooks, and add a webhook to that channel following
+[Slack's Incoming Webhooks documentation](https://api.slack.com/messaging/webhooks).
+The generated URL is a secret tied to that channel. Do not paste it into an
+Issue, PR, chat, terminal output, or repository file.
+
+Store the same URL in these two protected locations:
+
+1. GitHub repository Actions secret `SLACK_MONITORING_WEBHOOK_URL`, used only by
+   the hourly external readiness workflow.
+2. Root-owned `/etc/levi/monitoring.env` as `LEVI_SLACK_WEBHOOK_URL`, used only by
+   the VPS-side transition notifier.
+
+For GitHub, enter the value in **Settings > Secrets and variables > Actions >
+New repository secret**. For the VPS, edit the protected file without printing
+its contents and retain mode `600 root:root`. Creating either secret and changing
+the running production service require the operator's explicit approval.
+
+After both values are installed in an approved maintenance window, install the
+updated script and unit, reload systemd, then run one controlled notification
+test. Do not simulate a real outage by stopping production. Instead, use a
+separately reviewed test entrypoint that sends a fixed test message and confirm
+the expected channel receives exactly one event.
 
 Install `/etc/levi/monitoring.env` from the example, install and enable the service/timer, and check the first result before release:
 
@@ -26,6 +65,19 @@ sudo systemctl enable --now levi-health.timer
 sudo systemctl start levi-health.service
 sudo systemctl status levi-health.service
 ```
+
+Useful non-secret diagnostics are:
+
+```bash
+sudo systemctl list-timers levi-health.timer
+sudo systemctl show --property=Result --value levi-health.service
+sudo test -f /var/lib/levi-monitoring/health-failed \
+  && echo incident-active \
+  || echo healthy
+```
+
+Do not print `/etc/levi/monitoring.env` or include its contents in diagnostic
+output.
 
 Install the bounded journal retention configuration during the same approved provisioning window:
 
@@ -50,7 +102,13 @@ Application logs remain structured and must not contain passwords, session token
 - Sunday target: acknowledge within 15 minutes when GitHub/VPS alerts are visible, notify affected church contacts within 30 minutes, and update at least every 30 minutes until stable.
 - Weekday target: acknowledge within four hours. Low-traffic non-impacting warnings may be handled in the next maintenance window.
 
-If the VPS cannot send any signal, external readiness fails and routes through GitHub Actions. If GitHub monitoring is also unavailable, church contacts report projection failure to the Levi operator using the separately maintained contact channel. Personal contact details do not belong in the repository.
+If the VPS cannot send any signal, the next hourly external readiness run fails
+and Slack receives the external alert. A fully stopped VPS cannot send an
+internal recovery message; the hourly workflow will become successful again but
+does not currently send an external recovery notification. If GitHub monitoring
+or Slack is also unavailable, church contacts report projection failure to the
+Levi operator using the separately maintained contact channel. Personal contact
+details do not belong in the repository.
 
 ## Incident minimum record
 

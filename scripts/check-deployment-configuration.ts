@@ -25,6 +25,7 @@ const waitForProductionAuthorization = script(
   "wait-for-production-authorization.sh",
 );
 const healthScript = script("check-production-health.sh");
+const healthMonitor = script("run-production-health-monitor.sh");
 const secretCheck = script("check-production-secrets.sh");
 const bibleImport = script("production-bible-import.sh");
 const ghcrCleanup = script("cleanup-ghcr-packages.sh");
@@ -50,6 +51,7 @@ const syntax = spawnSync(
     waitForRequiredCi,
     waitForProductionAuthorization,
     healthScript,
+    healthMonitor,
     secretCheck,
     bibleImport,
     ghcrCleanup,

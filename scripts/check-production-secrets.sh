@@ -95,6 +95,12 @@ readonly migration_image="$(value_for "$production_environment" LEVI_MIGRATION_I
 [[ "$(value_for "$backup_environment" LEVI_ENV_FILE)" == "$production_environment" ]] || fail
 [[ "$(value_for "$backup_environment" LEVI_BACKUP_CERTIFICATE)" == "$backup_certificate" ]] || fail
 [[ "$(value_for "$monitoring_environment" LEVI_ENV_FILE)" == "$production_environment" ]] || fail
+readonly slack_webhook_count="$(awk -F= '$1 == "LEVI_SLACK_WEBHOOK_URL" { count += 1 } END { print count + 0 }' "$monitoring_environment")"
+[[ "$slack_webhook_count" == "0" || "$slack_webhook_count" == "1" ]] || fail
+if [[ "$slack_webhook_count" == "1" ]]; then
+  readonly slack_webhook="$(value_for "$monitoring_environment" LEVI_SLACK_WEBHOOK_URL)"
+  [[ -z "$slack_webhook" || "$slack_webhook" =~ ^https://hooks\.slack\.com/services/[A-Za-z0-9_/-]+$ ]] || fail
+fi
 
 docker compose --env-file "$production_environment" --file "$compose_file" config --quiet >/dev/null || fail
 
