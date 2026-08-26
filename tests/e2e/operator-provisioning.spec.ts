@@ -4,14 +4,12 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   E2E_CHURCH_USER_EMAIL,
-  E2E_ACTIVE_ADMIN_LOGIN_ID,
+  E2E_ACTIVE_ADMIN_EMAIL,
   E2E_ADMIN_BASIC_USERNAME,
   E2E_CREATED_CHURCH,
   E2E_CREATED_EMAIL,
   E2E_INVITED_ADMIN_EMAIL,
-  E2E_INVITED_ADMIN_LOGIN_ID,
   E2E_INITIAL_ADMIN_EMAIL,
-  E2E_INITIAL_ADMIN_LOGIN_ID,
   E2E_PASSWORD,
 } from "./operator-fixture";
 
@@ -30,11 +28,11 @@ async function signIn(page: Page, email: string) {
 
 async function signInAdmin(
   page: Page,
-  loginId = E2E_ACTIVE_ADMIN_LOGIN_ID,
+  email = E2E_ACTIVE_ADMIN_EMAIL,
   password = E2E_PASSWORD,
 ) {
   await page.goto("/admin/login");
-  await page.getByLabel("ログインID").fill(loginId);
+  await page.getByLabel("メールアドレス").fill(email);
   await page.getByLabel("パスワード", { exact: true }).fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();
   await expect(page).toHaveURL(/\/admin$/);
@@ -169,9 +167,6 @@ test.describe("administrator invitations", () => {
       page.getByRole("heading", { level: 1, name: "管理者を招待" }),
     ).toBeVisible();
     await page.getByLabel("管理者名").fill("Synthetic Invited Administrator");
-    await page
-      .getByLabel("ログインID")
-      .fill(E2E_INVITED_ADMIN_LOGIN_ID.toUpperCase());
     await page.getByLabel("メールアドレス").fill(E2E_INVITED_ADMIN_EMAIL);
     await page.getByRole("button", { name: "管理者を招待" }).click();
     await expect(
@@ -189,21 +184,21 @@ test.describe("administrator invitations", () => {
     ).toBeVisible();
     await expect(page.getByText("basic-bootstrap")).toHaveCount(0);
     await expect(
-      page.getByText(E2E_INVITED_ADMIN_LOGIN_ID, { exact: true }),
+      page.getByText(E2E_INVITED_ADMIN_EMAIL, { exact: true }),
     ).toBeVisible();
     await expect(
       page
         .locator(".admin-user-list li")
-        .filter({ hasText: E2E_INVITED_ADMIN_LOGIN_ID })
+        .filter({ hasText: E2E_INVITED_ADMIN_EMAIL })
         .getByText("初回パスワード変更待ち"),
     ).toBeVisible();
     page.once("dialog", (dialog) => dialog.accept());
     await page
       .locator(".admin-user-list li")
-      .filter({ hasText: E2E_INVITED_ADMIN_LOGIN_ID })
+      .filter({ hasText: E2E_INVITED_ADMIN_EMAIL })
       .getByRole("button", { name: "削除" })
       .click();
-    await expect(page.getByText(E2E_INVITED_ADMIN_LOGIN_ID)).toHaveCount(0);
+    await expect(page.getByText(E2E_INVITED_ADMIN_EMAIL)).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 });
@@ -366,7 +361,7 @@ test.describe("administrator password setup", () => {
     await page.getByRole("button", { name: "パスワードを変更" }).click();
     await expect(page).toHaveURL(/\/admin\/login\?passwordReset=completed$/);
 
-    await page.getByLabel("ログインID").fill(E2E_INITIAL_ADMIN_LOGIN_ID);
+    await page.getByLabel("メールアドレス").fill(E2E_INITIAL_ADMIN_EMAIL);
     await page.getByLabel("パスワード", { exact: true }).fill(selectedPassword);
     await page.getByRole("button", { name: "ログイン" }).click();
     await expect(page).toHaveURL(/\/admin$/);

@@ -12,7 +12,6 @@ function createStore(): InviteAdminUserStore {
     create: vi.fn().mockResolvedValue({
       email: "next.admin@example.com",
       id: "admin-2",
-      loginId: "next.admin",
       name: "次の管理者",
     }),
   };
@@ -33,12 +32,10 @@ describe("createAdminUserInviter", () => {
     await expect(
       invite("actor", {
         email: "next.admin@example.com",
-        loginId: "Next.Admin",
         name: "次の管理者",
       }),
     ).resolves.toMatchObject({
       email: "next.admin@example.com",
-      loginId: "next.admin",
     });
     expect(hashPassword).toHaveBeenCalledWith("t".repeat(24));
     expect(store.create).toHaveBeenCalledWith(
@@ -63,7 +60,6 @@ describe("createAdminUserInviter", () => {
     await expect(
       invite("actor", {
         email: "next.admin@example.com",
-        loginId: "next.admin",
         name: "次の管理者",
       }),
     ).rejects.toBeInstanceOf(AdminUserInvitationAuthorizationError);
@@ -84,7 +80,6 @@ describe("createAdminUserInviter", () => {
     await expect(
       invite("actor", {
         email: "next.admin@example.com",
-        loginId: "next.admin",
         name: "次の管理者",
       }),
     ).rejects.toBeInstanceOf(AdminUserInvitationFailedError);

@@ -16,7 +16,7 @@ const selectedPassword = "n".repeat(16);
 
 async function clear() {
   await prisma.adminUser.deleteMany({
-    where: { loginId: { startsWith: prefix } },
+    where: { email: { startsWith: prefix } },
   });
   await prisma.user.deleteMany({ where: { email: { startsWith: prefix } } });
   await prisma.church.deleteMany({ where: { name: { startsWith: prefix } } });
@@ -33,7 +33,6 @@ async function fixture() {
       data: {
         id: operatorId,
         email: `${prefix}.operator.${operatorId}@example.com`,
-        loginId: `${prefix}.operator.${randomUUID()}`,
         name: "Administrator",
         status: "ACTIVE",
       },

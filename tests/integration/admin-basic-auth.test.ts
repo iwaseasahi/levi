@@ -2,7 +2,6 @@ import { hashPassword } from "better-auth/crypto";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
-  BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
   BASIC_BOOTSTRAP_ADMIN_NAME,
   BASIC_BOOTSTRAP_ADMIN_USER_ID,
 } from "@/domain/admin/admin-user";
@@ -34,7 +33,6 @@ beforeEach(async () => {
       data: {
         id: BASIC_BOOTSTRAP_ADMIN_USER_ID,
         email: "basic-bootstrap@pending.invalid",
-        loginId: BASIC_BOOTSTRAP_ADMIN_LOGIN_ID,
         name: BASIC_BOOTSTRAP_ADMIN_NAME,
         status: "BOOTSTRAP",
       },

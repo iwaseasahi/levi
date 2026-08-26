@@ -1,5 +1,4 @@
 import type { BetterAuthOptions } from "better-auth";
-import { username } from "better-auth/plugins";
 
 import type { AdminAuthRuntimeConfig } from "@/config/env";
 import {
@@ -69,20 +68,10 @@ export function buildAdminAuthOptions(
       storage: "database",
       modelName: "adminRateLimit",
       customRules: {
-        "/sign-in/username": { window: 60, max: 10 },
+        "/sign-in/email": { window: 60, max: 10 },
         "/request-password-reset": { window: 60, max: 5 },
       },
     },
-    plugins: [
-      username({
-        schema: { user: { fields: { username: "loginId" } } },
-        displayUsername: false,
-        immutableUsername: true,
-        minUsernameLength: 3,
-        maxUsernameLength: 100,
-        usernameValidator: (value) => /^[a-zA-Z0-9._@-]+$/.test(value),
-      }),
-    ],
     advanced: {
       cookiePrefix: "levi-admin-auth",
       database: { generateId: "uuid" },

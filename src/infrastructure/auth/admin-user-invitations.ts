@@ -17,7 +17,6 @@ export interface AdminUserSummary {
   createdAt: Date;
   email: string;
   id: string;
-  loginId: string;
   name: string;
   status: "ACTIVE" | "BOOTSTRAP" | "INVITED" | "SUSPENDED";
 }
@@ -38,11 +37,10 @@ function store(transaction: Prisma.TransactionClient): InviteAdminUserStore {
             email: input.email,
             invitedAt: new Date(),
             invitedByAdminUserId: input.invitedByAdminUserId,
-            loginId: input.loginId,
             name: input.name,
             status: "INVITED",
           },
-          select: { email: true, id: true, loginId: true, name: true },
+          select: { email: true, id: true, name: true },
         });
         await transaction.adminAccount.create({
           data: {
@@ -105,7 +103,6 @@ export function listAdminUsers(): Promise<AdminUserSummary[]> {
     select: {
       createdAt: true,
       id: true,
-      loginId: true,
       email: true,
       name: true,
       status: true,

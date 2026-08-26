@@ -15,7 +15,7 @@ const namespace = "test.provision";
 
 async function clearProvisioningRecords() {
   await prisma.adminUser.deleteMany({
-    where: { loginId: { startsWith: namespace } },
+    where: { email: { startsWith: namespace } },
   });
   await prisma.user.deleteMany({
     where: { email: { startsWith: namespace } },
@@ -31,7 +31,6 @@ async function createOperator() {
     data: {
       id: userId,
       email: `${namespace}.${userId}@example.com`,
-      loginId: `${namespace}.${userId}`,
       name: "Test Administrator",
       status: "ACTIVE",
     },

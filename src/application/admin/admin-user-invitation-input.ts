@@ -6,16 +6,6 @@ const schema = z.object({
     .trim()
     .pipe(z.email("有効なメールアドレスを入力してください。"))
     .transform((value) => value.toLowerCase()),
-  loginId: z
-    .string()
-    .trim()
-    .min(3, "ログインIDは3文字以上で入力してください。")
-    .max(100, "ログインIDは100文字以内で入力してください。")
-    .regex(
-      /^[a-zA-Z0-9._@-]+$/,
-      "ログインIDは半角英数字と . _ @ - で入力してください。",
-    )
-    .transform((value) => value.toLowerCase()),
   name: z
     .string()
     .trim()
@@ -30,7 +20,6 @@ export type AdminUserInvitationFieldErrors = Partial<
 
 export function parseAdminUserInvitationInput(input: {
   email: unknown;
-  loginId: unknown;
   name: unknown;
 }) {
   const result = schema.safeParse(input);

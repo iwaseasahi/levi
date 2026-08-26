@@ -30,7 +30,7 @@ export function AdminUserList({
       className="admin-form admin-user-list"
       aria-labelledby="admin-users-heading"
     >
-      <h2 id="admin-users-heading">管理者ID</h2>
+      <h2 id="admin-users-heading">管理者</h2>
       {visibleAdminUsers.length === 0 ? (
         <p className="admin-empty-state">管理者はまだ登録されていません。</p>
       ) : (
@@ -39,8 +39,7 @@ export function AdminUserList({
             <li key={adminUser.id}>
               <div>
                 <strong>{adminUser.name}</strong>
-                <span>{adminUser.loginId}</span>
-                {adminUser.email ? <span>{adminUser.email}</span> : null}
+                <span>{adminUser.email}</span>
               </div>
               <div className="admin-user-actions">
                 <span

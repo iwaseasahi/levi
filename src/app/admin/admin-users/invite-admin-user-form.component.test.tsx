@@ -10,7 +10,6 @@ describe("InviteAdminUserForm", () => {
   it("is accessible and confirms email delivery without exposing a credential", async () => {
     const action = vi.fn().mockResolvedValue({
       email: "next.admin@example.com",
-      loginId: "next.admin",
       message: "管理者へ招待メールを送信しました。",
       name: "次の管理者",
       status: "success",
@@ -22,7 +21,6 @@ describe("InviteAdminUserForm", () => {
       screen.getByLabelText("メールアドレス"),
       "next.admin@example.com",
     );
-    await user.type(screen.getByLabelText("ログインID"), "next.admin");
     expect(
       (
         await axe.run(container, {
@@ -41,7 +39,7 @@ describe("InviteAdminUserForm", () => {
 
   it("focuses and associates validation feedback", async () => {
     const action = vi.fn().mockResolvedValue({
-      fieldErrors: { loginId: ["ログインIDを確認してください。"] },
+      fieldErrors: { email: ["メールアドレスを確認してください。"] },
       message: "入力内容を確認してください。",
       status: "validation-error",
     });
@@ -52,12 +50,11 @@ describe("InviteAdminUserForm", () => {
       screen.getByLabelText("メールアドレス"),
       "next.admin@example.com",
     );
-    await user.type(screen.getByLabelText("ログインID"), "next.admin");
     await user.click(screen.getByRole("button", { name: "管理者を招待" }));
     expect(await screen.findByRole("alert")).toHaveFocus();
-    expect(screen.getByLabelText("ログインID")).toHaveAttribute(
+    expect(screen.getByLabelText("メールアドレス")).toHaveAttribute(
       "aria-describedby",
-      "admin-login-id-errors admin-login-id-hint",
+      "admin-email-errors",
     );
   });
 });

@@ -4,7 +4,6 @@ import { createInviteAdminUserController } from "./invite-admin-user-controller"
 
 const input = {
   email: "next.admin@example.com",
-  loginId: "next.admin",
   name: "次の管理者",
 };
 
@@ -53,7 +52,7 @@ describe("createInviteAdminUserController", () => {
       recordEvent: vi.fn(),
     });
     await expect(controller(new Headers(), input)).resolves.toEqual({
-      message: "このログインIDは既に使用されています。",
+      message: "このメールアドレスは既に使用されています。",
       status: "server-error",
     });
   });

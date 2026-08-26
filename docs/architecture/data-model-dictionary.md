@@ -170,23 +170,27 @@ No unique church-name rule is imposed; distinct churches may share a name.
 
 ### `admin_users`
 
-| Column                        | Type           | Null | Contract                                         |
-| ----------------------------- | -------------- | ---- | ------------------------------------------------ |
-| `id`                          | `uuid`         | no   | PK                                               |
-| `login_id`                    | `citext`       | no   | case-insensitive unique administration login ID  |
-| `name`                        | `varchar(200)` | no   | administrator display name                       |
-| `email`                       | `citext`       | no   | case-insensitive unique recovery address         |
-| `email_verified`              | `boolean`      | no   | Better Auth email state                          |
-| `image`                       | `text`         | yes  | optional Better Auth profile image               |
-| `status`                      | enum           | no   | `BOOTSTRAP`, `INVITED`, `ACTIVE`, or `SUSPENDED` |
-| `invited_by_admin_user_id`    | `uuid`         | yes  | self FK to the inviter                           |
-| `invited_at` / `activated_at` | `timestamptz`  | yes  | lifecycle timestamps                             |
-| timestamps                    | `timestamptz`  | no   | creation/update                                  |
+| Column                        | Type           | Null | Contract                                           |
+| ----------------------------- | -------------- | ---- | -------------------------------------------------- |
+| `id`                          | `uuid`         | no   | PK                                                 |
+| `name`                        | `varchar(200)` | no   | administrator display name                         |
+| `email`                       | `citext`       | no   | case-insensitive unique login and recovery address |
+| `email_verified`              | `boolean`      | no   | Better Auth email state                            |
+| `image`                       | `text`         | yes  | optional Better Auth profile image                 |
+| `status`                      | enum           | no   | `BOOTSTRAP`, `INVITED`, `ACTIVE`, or `SUSPENDED`   |
+| `invited_by_admin_user_id`    | `uuid`         | yes  | self FK to the inviter                             |
+| `invited_at` / `activated_at` | `timestamptz`  | yes  | lifecycle timestamps                               |
+| timestamps                    | `timestamptz`  | no   | creation/update                                    |
 
 The deterministic `BOOTSTRAP` row maps the environment-held Basic credential to
 an auditable identity and has no individual Better Auth account. `INVITED` rows
 have invitation metadata and a credential in `admin_accounts`. Admin users never
 have Church memberships and cannot authenticate through the Church auth realm.
+
+The physical `login_id` column is temporarily retained as nullable rollback
+compatibility after the email-login migration. Application code neither reads
+nor writes it; a later forward migration removes the column and its legacy
+index after the rollback window.
 
 ### `admin_accounts`
 

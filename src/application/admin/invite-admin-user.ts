@@ -15,7 +15,6 @@ export class AdminUserInvitationInputError extends Error {
 export interface InviteAdminUserResult {
   adminUserId: string;
   email: string;
-  loginId: string;
   name: string;
 }
 
@@ -23,10 +22,9 @@ export interface InviteAdminUserStore {
   create(input: {
     email: string;
     invitedByAdminUserId: string;
-    loginId: string;
     name: string;
     passwordHash: string;
-  }): Promise<{ email: string; id: string; loginId: string; name: string }>;
+  }): Promise<{ email: string; id: string; name: string }>;
   canInvite(adminUserId: string): Promise<boolean>;
 }
 
@@ -41,7 +39,7 @@ export function createAdminUserInviter(dependencies: {
 }) {
   return async function inviteAdminUser(
     actorAdminUserId: string,
-    rawInput: { email: unknown; loginId: unknown; name: unknown },
+    rawInput: { email: unknown; name: unknown },
   ): Promise<InviteAdminUserResult> {
     const parsed = parseAdminUserInvitationInput(rawInput);
     if (!parsed.success) throw new AdminUserInvitationInputError(parsed.errors);
@@ -52,7 +50,6 @@ export function createAdminUserInviter(dependencies: {
     let adminUser: {
       email: string;
       id: string;
-      loginId: string;
       name: string;
     };
     try {
@@ -62,7 +59,6 @@ export function createAdminUserInviter(dependencies: {
         return store.create({
           invitedByAdminUserId: actorAdminUserId,
           email: parsed.data.email,
-          loginId: parsed.data.loginId,
           name: parsed.data.name,
           passwordHash,
         });

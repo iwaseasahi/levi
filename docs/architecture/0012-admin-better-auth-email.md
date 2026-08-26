@@ -19,6 +19,9 @@ administrator user, account, session, verification, and rate-limit tables. Give
 it a distinct secret and cookie prefix. Retain Basic authentication as the outer
 boundary for all administrator pages and API routes.
 
+Use the administrator's case-insensitively unique email address as the sole
+login identifier. Do not maintain a separate username or login ID.
+
 Use Better Auth password-reset tokens for both invitation password setup and
 active administrator recovery. Deliver them through Gmail in production and
 Mailpit in development. Tokens expire after one hour and successful reset
@@ -27,6 +30,7 @@ revokes existing sessions.
 ## Consequences
 
 - Better Auth owns administrator password hashes and session lifecycle.
+- Administrator login, invitation, and recovery use one email identity.
 - Church and administrator credentials cannot collide or cross-authenticate.
 - Local testing exercises real SMTP/message parsing without sending mail.
 - Production requires a Gmail app password and distinct administrator auth
