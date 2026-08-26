@@ -7,6 +7,23 @@ operatorが2つのcommandを実行し、GitHub protected Environmentで人間が
 初めてVPSへ適用されます。deploy承認のためのIssueは作りません。承認対象と記録は
 GitHub Actions run、exact commit、immutable image digestへ結び付けます。
 
+## 標準手動deployのクイック手順
+
+通常の手動deployでoperatorが実行するのは、次の2コマンドだけです。
+
+```bash
+mise exec -- pnpm production:release:prepare
+mise exec -- pnpm production:release:deploy -- PUBLISH_RUN_ID
+```
+
+1つ目の出力に表示された`PUBLISH_RUN_ID`を2つ目へ指定します。2つ目の実行中に
+GitHub ActionsのURLが表示されたら、`production` Environmentを承認します。
+Asia/Tokyoの日曜だけは、続いて`production-sunday` Environmentも承認します。
+
+operatorがVPSへ入ってbackup、migration、Compose起動、readiness確認を個別に実行
+する必要はありません。これらは2つ目のコマンドから安全な順序で自動実行されます。
+Issue作成、commit SHAやimage digestの手入力、VPS上でのdeployコマンド実行も不要です。
+
 ```text
 operator Mac
   production:release:prepare
@@ -105,7 +122,7 @@ commit、2つのdigest、authorization Actions run URL、Sunday authorization ru
 または`none`のexact 5引数だけを受け取ります。`git`、`docker`、shellへの包括的な
 passwordless sudoを許可しません。
 
-## 通常deploy（2コマンド）
+## 標準手動deploy（実行するのは2コマンドだけ）
 
 ### 1. 現在のmainからcandidateを準備する
 
@@ -121,13 +138,15 @@ migration、candidate Actions URLを確認し、`PUBLISH_RUN_ID`を控えます�
 ### 2. authorizationを承認して適用する
 
 実施前にmigration、backup状態、利用者影響、時刻、forward recoveryを確認します。
-operator Macのpublic IPv4とSSH接続も確認します。
+通常のdeploy操作として実行するコマンドは、次の1つだけです。
 
 ```bash
-curl -4 https://ifconfig.me
-ssh levi-system-production true
 mise exec -- pnpm production:release:deploy -- PUBLISH_RUN_ID
 ```
+
+回線変更後やSSH接続エラーの調査時だけ、`curl -4 https://ifconfig.me`と
+`ssh levi-system-production true`を診断として使用します。毎回の標準deploy手順には
+含めません。
 
 commandはcandidateを再検証して`Authorize production deploy`を起動します。表示された
 Actions URLを開き、exact commitと両digestを確認して`production` Environmentを承認
@@ -137,7 +156,7 @@ Actions URLを開き、exact commitと両digestを確認して`production` Envir
 authorization成功後、commandは1日保持artifactを検証し、allowlist済みoperator Mac
 からpinned SSH alias経由で制限付きentrypointを実行します。
 
-### 中断後の再開
+### 中断後の再開（例外時のみ）
 
 Environment承認後にoperator commandだけが中断した場合は、authorization run IDで
 同じartifactを再検証して適用できます。
@@ -146,6 +165,7 @@ Environment承認後にoperator commandだけが中断した場合は、authoriz
 mise exec -- pnpm production:deploy:authorized -- AUTHORIZATION_RUN_ID
 ```
 
+この再開コマンドは標準の2コマンドへ追加して毎回実行するものではありません。
 artifactが失効した場合は`production:release:deploy -- PUBLISH_RUN_ID`をやり直して
 新しいEnvironment reviewを受けます。
 
