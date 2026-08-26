@@ -100,6 +100,13 @@ Approval must identify the exact action, target environment, relevant data, and
 expected impact. A broad instruction to "finish everything" is not approval for
 an unknown future production or destructive action.
 
+A production deploy performed on Sunday in `Asia/Tokyo` requires an additional
+explicit Sunday authorization bound to the exact commit and immutable
+application and migration image digests. The repository workflow and production
+host must both fail closed when that Sunday authorization is missing or belongs
+to another release. Sunday authorization for a deploy does not expand to data
+imports, restores, secret or access changes, OS maintenance, or reboots.
+
 ## Human decisions
 
 Humans retain final authority for:

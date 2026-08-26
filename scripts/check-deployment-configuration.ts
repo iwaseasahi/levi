@@ -28,6 +28,10 @@ const authorizedDeployScript = path.join(
   repositoryRoot,
   "scripts/run-authorized-production-deploy.sh",
 );
+const sundayApprovalScript = path.join(
+  repositoryRoot,
+  "scripts/check-sunday-deploy-approval.sh",
+);
 const healthScript = path.join(
   repositoryRoot,
   "scripts/check-production-health.sh",
@@ -70,6 +74,7 @@ const syntax = spawnSync(
     deployEntrypoint,
     deployEntrypointInstaller,
     authorizedDeployScript,
+    sundayApprovalScript,
     healthScript,
     secretCheckScript,
     bibleImportScript,
@@ -92,7 +97,35 @@ const sunday = spawnSync("bash", [deployScript], {
   env: { ...baseEnvironment, LEVI_DEPLOY_WEEKDAY_OVERRIDE: "7" },
 });
 assert.notEqual(sunday.status, 0);
-assert.match(sunday.stderr, /frozen on Sunday/);
+assert.match(sunday.stderr, /requires an exact Sunday approval/);
+
+const approvedSunday = spawnSync("bash", [deployScript], {
+  cwd: repositoryRoot,
+  encoding: "utf8",
+  env: {
+    ...baseEnvironment,
+    LEVI_DEPLOY_WEEKDAY_OVERRIDE: "7",
+    LEVI_SUNDAY_DEPLOY_APPROVAL_REFERENCE:
+      "https://github.com/iwaseasahi/levi/issues/303#issuecomment-456",
+  },
+});
+assert.equal(approvedSunday.status, 0, approvedSunday.stderr);
+
+const weekdayWithSundayApproval = spawnSync("bash", [deployScript], {
+  cwd: repositoryRoot,
+  encoding: "utf8",
+  env: {
+    ...baseEnvironment,
+    LEVI_DEPLOY_WEEKDAY_OVERRIDE: "5",
+    LEVI_SUNDAY_DEPLOY_APPROVAL_REFERENCE:
+      "https://github.com/iwaseasahi/levi/issues/303#issuecomment-456",
+  },
+});
+assert.notEqual(weekdayWithSundayApproval.status, 0);
+assert.match(
+  weekdayWithSundayApproval.stderr,
+  /must not be supplied outside Sunday/,
+);
 
 const deployWorkflow = readFileSync(
   path.join(repositoryRoot, ".github/workflows/deploy-production.yml"),
@@ -105,6 +138,9 @@ for (const checkName of ["Quality", "Database", "E2E", "Security"]) {
   );
 }
 assert.match(deployWorkflow, /environment: production/);
+assert.match(deployWorkflow, /sunday_approval_comment:/);
+assert.match(deployWorkflow, /check-sunday-deploy-approval\.sh/);
+assert.match(deployWorkflow, /issues: read/);
 assert.match(deployWorkflow, /workflow_dispatch:/);
 assert.doesNotMatch(deployWorkflow, /^\s+push:/m);
 assert.match(
@@ -117,6 +153,104 @@ assert.doesNotMatch(deployWorkflow, /\bssh\b/);
 assert.doesNotMatch(deployWorkflow, /PRODUCTION_SSH_/);
 assert.doesNotMatch(deployWorkflow, /sudo git/);
 assert.doesNotMatch(deployWorkflow, /sudo env/);
+
+const sundayApprovalSource = readFileSync(sundayApprovalScript, "utf8");
+assert.match(sundayApprovalSource, /Sunday-Deploy: APPROVED/);
+assert.match(sundayApprovalSource, /author_association/);
+assert.match(sundayApprovalSource, /OWNER/);
+assert.match(sundayApprovalSource, /Commit: \$commit_sha/);
+assert.match(sundayApprovalSource, /Application-Image: \$application_image/);
+assert.match(sundayApprovalSource, /Migration-Image: \$migration_image/);
+
+const sundayApprovalFixture = mkdtempSync(
+  path.join(tmpdir(), "levi-sunday-approval."),
+);
+try {
+  const fakeGh = path.join(sundayApprovalFixture, "gh");
+  const sundayCommit = "a".repeat(40);
+  const sundayApplication = `ghcr.io/iwaseasahi/levi@sha256:${"b".repeat(64)}`;
+  const sundayMigration = `ghcr.io/iwaseasahi/levi-migrate@sha256:${"c".repeat(64)}`;
+  const approvedBody = [
+    "Sunday-Deploy: APPROVED",
+    `Commit: ${sundayCommit}`,
+    `Application-Image: ${sundayApplication}`,
+    `Migration-Image: ${sundayMigration}`,
+  ].join("\n");
+  writeFileSync(
+    fakeGh,
+    `#!/usr/bin/env bash
+set -euo pipefail
+jq -n --arg association "\${FAKE_ASSOCIATION:-OWNER}" --arg body "$FAKE_APPROVAL_BODY" \\
+  '{author_association: $association, body: $body}'
+`,
+  );
+  chmodSync(fakeGh, 0o755);
+  const sundayEnvironment = {
+    ...process.env,
+    PATH: `${sundayApprovalFixture}:${process.env.PATH ?? ""}`,
+    LEVI_ALLOW_TEST_OVERRIDES: "true",
+    LEVI_SUNDAY_CHECK_WEEKDAY_OVERRIDE: "7",
+    COMMIT_SHA: sundayCommit,
+    APPLICATION_IMAGE: sundayApplication,
+    MIGRATION_IMAGE: sundayMigration,
+    SUNDAY_APPROVAL_COMMENT:
+      "https://github.com/iwaseasahi/levi/issues/303#issuecomment-456",
+    FAKE_APPROVAL_BODY: approvedBody,
+  };
+
+  const approved = spawnSync("bash", [sundayApprovalScript], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: sundayEnvironment,
+  });
+  assert.equal(approved.status, 0, approved.stderr);
+
+  const missing = spawnSync("bash", [sundayApprovalScript], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: {
+      ...sundayEnvironment,
+      SUNDAY_APPROVAL_COMMENT: "",
+    },
+  });
+  assert.notEqual(missing.status, 0);
+  assert.match(missing.stderr, /requires an exact Sunday approval/);
+
+  const wrongOwner = spawnSync("bash", [sundayApprovalScript], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: {
+      ...sundayEnvironment,
+      FAKE_ASSOCIATION: "NONE",
+    },
+  });
+  assert.notEqual(wrongOwner.status, 0);
+  assert.match(wrongOwner.stderr, /repository owner/);
+
+  const mismatchedArtifact = spawnSync("bash", [sundayApprovalScript], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: {
+      ...sundayEnvironment,
+      MIGRATION_IMAGE: `ghcr.io/iwaseasahi/levi-migrate@sha256:${"d".repeat(64)}`,
+    },
+  });
+  assert.notEqual(mismatchedArtifact.status, 0);
+  assert.match(mismatchedArtifact.stderr, /does not match the exact release/);
+
+  const weekdayMisuse = spawnSync("bash", [sundayApprovalScript], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+    env: {
+      ...sundayEnvironment,
+      LEVI_SUNDAY_CHECK_WEEKDAY_OVERRIDE: "5",
+    },
+  });
+  assert.notEqual(weekdayMisuse.status, 0);
+  assert.match(weekdayMisuse.stderr, /must not be supplied outside Sunday/);
+} finally {
+  rmSync(sundayApprovalFixture, { recursive: true, force: true });
+}
 
 const authorizedDeploySource = readFileSync(authorizedDeployScript, "utf8");
 assert.match(authorizedDeploySource, /\.conclusion.*success/s);
@@ -148,7 +282,7 @@ try {
   writeFileSync(
     authorizationRecord,
     JSON.stringify({
-      schema_version: 1,
+      schema_version: 2,
       repository: "iwaseasahi/levi",
       run_id: runId,
       run_attempt: runAttempt,
@@ -157,6 +291,7 @@ try {
       migration_image: `ghcr.io/iwaseasahi/levi-migrate@sha256:${"c".repeat(64)}`,
       approval_comment:
         "https://github.com/iwaseasahi/levi/issues/292#issuecomment-123",
+      sunday_approval_comment: null,
       authorized_at: "2026-08-25T00:00:00Z",
     }),
   );
@@ -207,6 +342,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
     readFileSync(sshCapture, "utf8"),
     /sudo -n \/usr\/local\/sbin\/levi-production-deploy/,
   );
+  assert.match(readFileSync(sshCapture, "utf8"), /'none'/);
 
   const rejected = spawnSync("bash", [authorizedDeployScript, `${runId}`], {
     cwd: repositoryRoot,
@@ -222,7 +358,38 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
   writeFileSync(
     authorizationRecord,
     JSON.stringify({
-      schema_version: 1,
+      schema_version: 2,
+      repository: "iwaseasahi/levi",
+      run_id: runId,
+      run_attempt: runAttempt,
+      commit_sha: "a".repeat(40),
+      application_image: `ghcr.io/iwaseasahi/levi@sha256:${"b".repeat(64)}`,
+      migration_image: `ghcr.io/iwaseasahi/levi-migrate@sha256:${"c".repeat(64)}`,
+      approval_comment:
+        "https://github.com/iwaseasahi/levi/issues/292#issuecomment-123",
+      sunday_approval_comment: "not-a-comment-url",
+      authorized_at: "2026-08-25T00:00:00Z",
+    }),
+  );
+  const malformedSundayApproval = spawnSync(
+    "bash",
+    [authorizedDeployScript, `${runId}`],
+    {
+      cwd: repositoryRoot,
+      encoding: "utf8",
+      env: authorizationEnvironment,
+    },
+  );
+  assert.notEqual(malformedSundayApproval.status, 0);
+  assert.match(
+    malformedSundayApproval.stderr,
+    /authorization record is invalid/,
+  );
+
+  writeFileSync(
+    authorizationRecord,
+    JSON.stringify({
+      schema_version: 2,
       repository: "iwaseasahi/levi",
       run_id: runId,
       run_attempt: runAttempt,
@@ -231,6 +398,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
       migration_image: `ghcr.io/iwaseasahi/levi-migrate@sha256:${"c".repeat(64)}`,
       approval_comment:
         "https://github.com/iwaseasahi/levi/issues/292#issuecomment-123",
+      sunday_approval_comment: null,
       authorized_at: "2026-08-25T00:00:00Z",
     }),
   );
@@ -251,7 +419,8 @@ assert.match(
   /expected_operator="levi-system-operator"/,
 );
 assert.match(deployEntrypointSource, /repository="\/opt\/levi"/);
-assert.match(deployEntrypointSource, /\$#" -ne 4/);
+assert.match(deployEntrypointSource, /\$#" -ne 5/);
+assert.match(deployEntrypointSource, /SUNDAY_APPROVAL_COMMENT_URL_OR_NONE/);
 assert.match(deployEntrypointSource, /merge-base --is-ancestor/);
 assert.match(deployEntrypointSource, /exec \/usr\/bin\/env -i/);
 assert.match(deployEntrypointSource, /production-deploy\.sh/);
