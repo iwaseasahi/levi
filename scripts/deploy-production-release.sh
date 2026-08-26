@@ -7,6 +7,9 @@ readonly publish_workflow_path=".github/workflows/publish-production-images.yml"
 readonly authorize_workflow_path=".github/workflows/deploy-production.yml"
 readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
 if [[ $# -ne 1 || ! "$1" =~ ^[0-9]+$ ]]; then
   echo "Usage: pnpm production:release:deploy -- PUBLISH_RUN_ID" >&2
   exit 64
