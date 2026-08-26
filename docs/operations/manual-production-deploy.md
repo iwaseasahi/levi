@@ -130,10 +130,12 @@ passwordless sudoを許可しません。
 mise exec -- pnpm production:release:prepare
 ```
 
-このcommandは`origin/main`を一度だけexact SHAへ固定し、4つのCIを確認し、immutable
-imageを公開してcandidate artifactを検証します。出力されたcommit、application、
-migration、candidate Actions URLを確認し、`PUBLISH_RUN_ID`を控えます。準備後にmainが
-進んでもcandidateは変化しません。
+このcommandは`origin/main`を一度だけexact SHAへ固定し、4つのCIが実行中なら成功まで
+待機してから、immutable imageを公開してcandidate artifactを検証します。operatorが
+CI完了を見計らって実行し直す必要はありません。CIが失敗または待機上限を超えた場合は
+imageを公開せず停止します。出力されたcommit、application、migration、candidate
+Actions URLを確認し、`PUBLISH_RUN_ID`を控えます。準備後にmainが進んでもcandidateは
+変化しません。
 
 ### 2. authorizationを承認して適用する
 

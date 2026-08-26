@@ -4,6 +4,7 @@ set -euo pipefail
 
 readonly repository="iwaseasahi/levi"
 readonly workflow_path=".github/workflows/publish-production-images.yml"
+readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [[ $# -ne 0 ]]; then
   echo "Usage: pnpm production:release:prepare" >&2
@@ -27,14 +28,7 @@ readonly commit_sha="$(git rev-parse origin/main)"
   exit 65
 }
 
-for required in Quality Database E2E Security; do
-  result="$(gh api "repos/${repository}/commits/${commit_sha}/check-runs?per_page=100" \
-    --jq "[.check_runs[] | select(.name == \"$required\")] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv")"
-  [[ "$result" == $'completed\tsuccess' ]] || {
-    echo "Latest ${required} check is not successful for pinned main commit ${commit_sha}." >&2
-    exit 65
-  }
-done
+GITHUB_REPOSITORY="$repository" bash "${script_directory}/wait-for-required-ci.sh" "$commit_sha"
 
 readonly dispatched_after="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 readonly expected_title="Prepare production candidate for ${commit_sha}"
