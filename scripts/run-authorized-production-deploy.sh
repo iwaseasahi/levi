@@ -66,7 +66,7 @@ jq -e \
   --arg repository "$repository" \
   --argjson run_id "$run_id" \
   --argjson run_attempt "$run_attempt" \
-  '.schema_version == 1 and
+  '.schema_version == 2 and
    .repository == $repository and
    .run_id == $run_id and
    .run_attempt == $run_attempt and
@@ -74,6 +74,7 @@ jq -e \
    (.application_image | test("^ghcr\\.io/iwaseasahi/levi@sha256:[a-f0-9]{64}$")) and
    (.migration_image | test("^ghcr\\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$")) and
    (.approval_comment | test("^https://github\\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$")) and
+   ((.sunday_approval_comment == null) or (.sunday_approval_comment | test("^https://github\\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$"))) and
    (.authorized_at | type == "string")' \
   "$authorization_file" >/dev/null || {
   echo "The production authorization record is invalid." >&2
@@ -84,8 +85,9 @@ readonly commit_sha="$(jq -r '.commit_sha' "$authorization_file")"
 readonly application_image="$(jq -r '.application_image' "$authorization_file")"
 readonly migration_image="$(jq -r '.migration_image' "$authorization_file")"
 readonly approval_comment="$(jq -r '.approval_comment' "$authorization_file")"
+readonly sunday_approval_comment="$(jq -r '.sunday_approval_comment // "none"' "$authorization_file")"
 
 echo "Authorization verified: ${repository} Actions run ${run_id}, attempt ${run_attempt}."
 echo "Connecting through the operator's allowlisted SSH path."
 ssh -o BatchMode=yes "$ssh_host_alias" \
-  "sudo -n /usr/local/sbin/levi-production-deploy '$commit_sha' '$application_image' '$migration_image' '$approval_comment'"
+  "sudo -n /usr/local/sbin/levi-production-deploy '$commit_sha' '$application_image' '$migration_image' '$approval_comment' '$sunday_approval_comment'"

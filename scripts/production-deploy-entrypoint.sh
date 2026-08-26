@@ -15,8 +15,8 @@ if [[ "${SUDO_USER:-}" != "$expected_operator" ]]; then
   echo "Production deployment entrypoint is restricted to the approved operator." >&2
   exit 2
 fi
-if [[ "$#" -ne 4 ]]; then
-  echo "Usage: levi-production-deploy COMMIT_SHA APPLICATION_IMAGE MIGRATION_IMAGE APPROVAL_COMMENT_URL" >&2
+if [[ "$#" -ne 5 ]]; then
+  echo "Usage: levi-production-deploy COMMIT_SHA APPLICATION_IMAGE MIGRATION_IMAGE APPROVAL_COMMENT_URL SUNDAY_APPROVAL_COMMENT_URL_OR_NONE" >&2
   exit 2
 fi
 
@@ -24,6 +24,7 @@ readonly deploy_commit="$1"
 readonly application_image="$2"
 readonly migration_image="$3"
 readonly approval_reference="$4"
+readonly sunday_approval_argument="$5"
 
 if [[ ! "$deploy_commit" =~ ^[a-f0-9]{40}$ ]]; then
   echo "COMMIT_SHA must be an exact 40-character commit SHA." >&2
@@ -40,6 +41,15 @@ fi
 if [[ ! "$approval_reference" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]; then
   echo "APPROVAL_COMMENT_URL must be an exact Levi Issue comment URL." >&2
   exit 2
+fi
+if [[ "$sunday_approval_argument" != "none" && ! "$sunday_approval_argument" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]; then
+  echo "SUNDAY_APPROVAL_COMMENT_URL_OR_NONE must be none or an exact Levi Issue comment URL." >&2
+  exit 2
+fi
+if [[ "$sunday_approval_argument" == "none" ]]; then
+  readonly sunday_approval_reference=""
+else
+  readonly sunday_approval_reference="$sunday_approval_argument"
 fi
 if [[ ! -x "$deploy_script" ]]; then
   echo "The root-owned production deployment script is unavailable." >&2
@@ -65,4 +75,5 @@ exec /usr/bin/env -i \
   LEVI_DEPLOY_REPOSITORY="$repository" \
   LEVI_IMAGE="$application_image" \
   LEVI_MIGRATION_IMAGE="$migration_image" \
+  LEVI_SUNDAY_DEPLOY_APPROVAL_REFERENCE="$sunday_approval_reference" \
   "$deploy_script"

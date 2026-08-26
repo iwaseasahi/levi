@@ -9,9 +9,15 @@ Production publication and deployment are manual workflows. Nothing in this repo
 3. immutable application and migration image digests carrying the same commit revision label;
 4. an Issue comment approving that exact commit, both digests, migration impact, rollback/forward-recovery choice, and timing;
 5. approval on the GitHub `production` Environment;
-6. a day other than Sunday in `Asia/Tokyo`.
+6. outside Sunday in `Asia/Tokyo`, or an additional Sunday-specific approval
+   for the same exact commit and digests.
 
-The GitHub workflow and host script independently reject Sunday. There is no emergency bypass. An incident on Sunday uses restore/rollback procedures only after the separate immediate high-impact approval; it is not treated as a normal deploy.
+The GitHub workflow and host script independently reject an unapproved Sunday
+deploy. Sunday is not a blanket maintenance window: deploy only when waiting
+would create more operational risk, and obtain the Sunday-specific approval
+described below. That approval permits only the exact application deploy and
+its declared forward migration. It does not authorize a Bible import, data
+repair, restore, secret change, OS/package operation, or VPS reboot.
 
 ## One-time GitHub configuration
 
@@ -62,12 +68,12 @@ sudo -l
 
 The resulting sudoers policy grants `levi-system-operator` passwordless access
 only to `/usr/local/sbin/levi-production-deploy`. The wrapper accepts exactly a
-commit, two immutable image digests, and an approval comment URL. It validates
-all four values, requires the commit to be on `origin/main`, checks out that
-commit in the fixed root-owned `/opt/levi` repository, clears the caller's
-environment, and then invokes the fixed production deployment script. It does
-not grant passwordless access to `git`, `env`, `docker`, a shell, or arbitrary
-scripts.
+commit, two immutable image digests, the normal approval comment URL, and either
+the Sunday approval comment URL or `none`. It validates all five values,
+requires the commit to be on `origin/main`, checks out that commit in the fixed
+root-owned `/opt/levi` repository, clears the caller's environment, and then
+invokes the fixed production deployment script. It does not grant passwordless
+access to `git`, `env`, `docker`, a shell, or arbitrary scripts.
 
 To revoke use of the command-scoped deployment entrypoint, use an interactive
 sudo session and remove only these exact installed files:
@@ -95,6 +101,24 @@ migration digest, backup status, expected user impact, forward-recovery plan,
 and responsible operator. Then manually run `Authorize production deploy` with
 those exact values and the comment URL.
 
+On Sunday in `Asia/Tokyo`, obtain an explicit answer to the question “May this
+exact release be deployed on Sunday?” and record it in an Issue comment by the
+repository owner. The comment may also be the normal immediate approval comment,
+but it must contain these exact standalone lines with the real immutable values:
+
+```text
+Sunday-Deploy: APPROVED
+Commit: <40-character commit SHA>
+Application-Image: ghcr.io/iwaseasahi/levi@sha256:<64 hexadecimal characters>
+Migration-Image: ghcr.io/iwaseasahi/levi-migrate@sha256:<64 hexadecimal characters>
+```
+
+Pass that comment URL as `sunday_approval_comment`. Leave the input empty on
+every other day. The workflow reads the comment through the GitHub API, requires
+repository-owner association, and compares all three artifacts exactly. A
+general instruction, an approval for a different release, a Saturday artifact,
+or a Sunday input supplied on a weekday fails closed.
+
 The workflow checks CI and main ancestry before it reaches the protected
 `production` Environment. After the Environment reviewer approves, it uploads
 an immutable authorization record retained for one day. It does not connect to
@@ -118,12 +142,16 @@ The command-scoped host entrypoint independently validates the inputs and main
 ancestry, checks out the exact commit, clears the SSH caller's environment, and
 invokes `production-deploy.sh`. The host script:
 
-- validates the commit, digests, approval URL, and Sunday freeze again;
+- validates the commit, digests, approval URL, and conditional Sunday approval
+  again;
 - verifies each OCI revision label equals the commit;
 - validates Compose and takes a fresh encrypted operational backup;
 - runs forward-only Prisma migrations through the isolated admin migration image;
 - starts Caddy, application, and PostgreSQL and waits for readiness;
-- records commit, digests, approval, and UTC time in immutable-by-convention history under `/var/lib/levi-deploy/history/` and updates `/var/lib/levi-deploy/current.env`.
+- records commit, digests, normal approval, Sunday approval (or `none`), and UTC
+  time in immutable-by-convention history under
+  `/var/lib/levi-deploy/history/` and updates
+  `/var/lib/levi-deploy/current.env`.
 
 Record both the successful GitHub authorization run URL and the host deployment
 result in the release Issue. An authorization artifact that expires, belongs to
@@ -136,6 +164,17 @@ Do not reverse an applied migration. If the new application fails and the migrat
 
 Never delete the previous image, `levi_rollback_*` database, or recovery evidence during incident response. Record observed readiness, 5xx window, commit/digests, migration result, data-loss estimate, decision owner, church notification time, and final outcome in the incident Issue.
 
-## Sunday change freeze
+## Sunday change control
 
-No application deploy, Compose change, package update, OS reboot, schema migration, seed, or data import is scheduled on Sunday Japan time. Complete routine changes by Saturday, and prefer Monday through Thursday. On Sunday, the operator performs read-only health checks and communicates incidents; any destructive recovery remains governed by its own immediate approval.
+Complete routine changes by Saturday and prefer Monday through Thursday. On
+Sunday Japan time, default to read-only health checks and incident
+communication. An application deploy is allowed only through the exact
+Sunday-approval flow above; assess active projection impact and notify the
+affected church contact before execution when users are present.
+
+The Sunday deploy approval covers the declared release and its forward-only
+migration only. Compose architecture changes, package or OS maintenance, VPS
+reboot, seed, Bible import, manual data mutation, restore, rollback, and secret
+changes keep their separate approval boundaries. Record the reason Sunday could
+not wait, expected interruption, backup state, forward recovery, operator, and
+post-deploy readiness in the release Issue.

@@ -19,10 +19,16 @@ on:
         description: Immediate approval comment URL on a Levi Issue
         required: true
         type: string
+      sunday_approval_comment:
+        description: Sunday-only approval comment URL; leave empty outside Sunday (Asia/Tokyo)
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
   checks: read
+  issues: read
 
 jobs:
   verify:
@@ -34,19 +40,21 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ inputs.commit_sha }}
-      - name: Fail closed on Sunday and validate release inputs
+      - name: Validate release inputs and Sunday approval
         env:
           APPROVAL_COMMENT: ${{ inputs.approval_comment }}
           APPLICATION_IMAGE: ${{ inputs.application_image }}
           COMMIT_SHA: ${{ inputs.commit_sha }}
+          GH_TOKEN: ${{ github.token }}
           MIGRATION_IMAGE: ${{ inputs.migration_image }}
+          SUNDAY_APPROVAL_COMMENT: ${{ inputs.sunday_approval_comment }}
         run: |
           set -euo pipefail
           [[ "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
           [[ "$APPLICATION_IMAGE" =~ ^ghcr\.io/iwaseasahi/levi@sha256:[a-f0-9]{64}$ ]]
           [[ "$MIGRATION_IMAGE" =~ ^ghcr\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$ ]]
           [[ "$APPROVAL_COMMENT" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]
-          [[ "$(TZ=Asia/Tokyo date +%u)" != "7" ]]
+          bash scripts/check-sunday-deploy-approval.sh
           git fetch --quiet origin main
           git merge-base --is-ancestor "$COMMIT_SHA" origin/main
       - name: Require successful CI for the exact commit
@@ -73,6 +81,7 @@ jobs:
           APPLICATION_IMAGE: ${{ inputs.application_image }}
           COMMIT_SHA: ${{ inputs.commit_sha }}
           MIGRATION_IMAGE: ${{ inputs.migration_image }}
+          SUNDAY_APPROVAL_COMMENT: ${{ inputs.sunday_approval_comment }}
         run: |
           set -euo pipefail
           jq -n \
@@ -83,9 +92,10 @@ jobs:
             --arg application_image "$APPLICATION_IMAGE" \
             --arg migration_image "$MIGRATION_IMAGE" \
             --arg approval_comment "$APPROVAL_COMMENT" \
+            --arg sunday_approval_comment "$SUNDAY_APPROVAL_COMMENT" \
             --arg authorized_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '{
-              schema_version: 1,
+              schema_version: 2,
               repository: $repository,
               run_id: $run_id,
               run_attempt: $run_attempt,
@@ -93,6 +103,7 @@ jobs:
               application_image: $application_image,
               migration_image: $migration_image,
               approval_comment: $approval_comment,
+              sunday_approval_comment: (if $sunday_approval_comment == "" then null else $sunday_approval_comment end),
               authorized_at: $authorized_at
             }' > production-deploy-authorization.json
       - name: Upload authorization record

@@ -6,6 +6,7 @@ readonly deploy_commit="${LEVI_DEPLOY_COMMIT:-}"
 readonly application_image="${LEVI_IMAGE:-}"
 readonly migration_image="${LEVI_MIGRATION_IMAGE:-}"
 readonly approval_reference="${LEVI_DEPLOY_APPROVAL_REFERENCE:-}"
+readonly sunday_approval_reference="${LEVI_SUNDAY_DEPLOY_APPROVAL_REFERENCE:-}"
 readonly repository="${LEVI_DEPLOY_REPOSITORY:-/opt/levi}"
 readonly compose_file="${LEVI_COMPOSE_FILE:-/opt/levi/deploy/production/compose.yaml}"
 readonly environment_file="${LEVI_ENV_FILE:-/etc/levi/production.env}"
@@ -37,7 +38,12 @@ if [[ "${LEVI_ALLOW_TEST_OVERRIDES:-false}" == "true" ]]; then
   weekday="${LEVI_DEPLOY_WEEKDAY_OVERRIDE:-$weekday}"
 fi
 if [[ "$weekday" == "7" ]]; then
-  echo "Production deployment and migration are frozen on Sunday in Asia/Tokyo." >&2
+  if [[ ! "$sunday_approval_reference" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]; then
+    echo "Production deployment on Sunday requires an exact Sunday approval comment URL." >&2
+    exit 1
+  fi
+elif [[ -n "$sunday_approval_reference" ]]; then
+  echo "Sunday approval must not be supplied outside Sunday in Asia/Tokyo." >&2
   exit 1
 fi
 if [[ ! "$weekday" =~ ^[1-7]$ ]]; then
@@ -99,6 +105,7 @@ readonly deployment_record="${deployment_root}/history/${deployment_id}-${deploy
   printf 'application_image=%s\n' "$application_image"
   printf 'migration_image=%s\n' "$migration_image"
   printf 'approval=%s\n' "$approval_reference"
+  printf 'sunday_approval=%s\n' "${sunday_approval_reference:-none}"
 } >"$deployment_record"
 chmod 600 "$deployment_record"
 cp "$deployment_record" "${deployment_root}/current.env"
