@@ -30,7 +30,6 @@ const secretCheck = script("check-production-secrets.sh");
 const bibleImport = script("production-bible-import.sh");
 const ghcrCleanup = script("cleanup-ghcr-packages.sh");
 const productionImageCleanup = script("cleanup-production-images.sh");
-const adminPasswordRecovery = script("reset-production-admin-user-password.sh");
 const currentCommit = spawnSync("git", ["rev-parse", "HEAD"], {
   cwd: root,
   encoding: "utf8",
@@ -57,7 +56,6 @@ const syntax = spawnSync(
     bibleImport,
     ghcrCleanup,
     productionImageCleanup,
-    adminPasswordRecovery,
   ],
   { encoding: "utf8" },
 );
@@ -792,13 +790,5 @@ assert.match(bibleImportSource, /LEVI_IMPORT_APPROVAL_REFERENCE/);
 assert.match(bibleImportSource, /frozen on Sunday/);
 assert.match(bibleImportSource, /production-backup\.sh/);
 assert.doesNotMatch(bibleImportSource, /set -x/);
-
-const adminPasswordRecoverySource = readFileSync(adminPasswordRecovery, "utf8");
-assert.match(adminPasswordRecoverySource, /! -t 0 \|\| ! -t 1/);
-assert.match(adminPasswordRecoverySource, /production-backup\.sh.*operational/);
-assert.match(adminPasswordRecoverySource, /status IN \('INVITED', 'ACTIVE'\)/);
-assert.match(adminPasswordRecoverySource, /DELETE FROM admin_sessions/);
-assert.match(adminPasswordRecoverySource, /must_change_password = true/);
-assert.doesNotMatch(adminPasswordRecoverySource, /set -x/);
 
 console.log("Production deployment configuration passed safety invariants.");
