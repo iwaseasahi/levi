@@ -66,15 +66,15 @@ jq -e \
   --arg repository "$repository" \
   --argjson run_id "$run_id" \
   --argjson run_attempt "$run_attempt" \
-  '.schema_version == 3 and
+  '.schema_version == 4 and
    .repository == $repository and
    .run_id == $run_id and
    .run_attempt == $run_attempt and
    (.commit_sha | test("^[a-f0-9]{40}$")) and
    (.application_image | test("^ghcr\\.io/iwaseasahi/levi@sha256:[a-f0-9]{64}$")) and
    (.migration_image | test("^ghcr\\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{64}$")) and
-   (.approval_comment | test("^https://github\\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$")) and
-   ((.sunday_approval_comment == null) or (.sunday_approval_comment | test("^https://github\\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$"))) and
+   (.authorization_run_url == ("https://github.com/" + $repository + "/actions/runs/" + ($run_id | tostring))) and
+   ((.sunday_authorization_run_url == null) or (.sunday_authorization_run_url == .authorization_run_url)) and
    (.release_candidate_run_id | type == "number") and
    (.authorized_at | type == "string")' \
   "$authorization_file" >/dev/null || {
@@ -85,10 +85,10 @@ jq -e \
 readonly commit_sha="$(jq -r '.commit_sha' "$authorization_file")"
 readonly application_image="$(jq -r '.application_image' "$authorization_file")"
 readonly migration_image="$(jq -r '.migration_image' "$authorization_file")"
-readonly approval_comment="$(jq -r '.approval_comment' "$authorization_file")"
-readonly sunday_approval_comment="$(jq -r '.sunday_approval_comment // "none"' "$authorization_file")"
+readonly authorization_run_url="$(jq -r '.authorization_run_url' "$authorization_file")"
+readonly sunday_authorization_run_url="$(jq -r '.sunday_authorization_run_url // "none"' "$authorization_file")"
 
 echo "Authorization verified: ${repository} Actions run ${run_id}, attempt ${run_attempt}."
 echo "Connecting through the operator's allowlisted SSH path."
 ssh -o BatchMode=yes "$ssh_host_alias" \
-  "sudo -n /usr/local/sbin/levi-production-deploy '$commit_sha' '$application_image' '$migration_image' '$approval_comment' '$sunday_approval_comment'"
+  "sudo -n /usr/local/sbin/levi-production-deploy '$commit_sha' '$application_image' '$migration_image' '$authorization_run_url' '$sunday_authorization_run_url'"

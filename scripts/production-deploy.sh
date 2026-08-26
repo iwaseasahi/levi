@@ -28,8 +28,8 @@ if [[ ! "$migration_image" =~ ^ghcr\.io/iwaseasahi/levi-migrate@sha256:[a-f0-9]{
   echo "LEVI_MIGRATION_IMAGE must be an immutable ghcr.io/iwaseasahi/levi-migrate digest." >&2
   exit 2
 fi
-if [[ ! "$approval_reference" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]; then
-  echo "LEVI_DEPLOY_APPROVAL_REFERENCE must be the exact immediate-approval GitHub comment URL." >&2
+if [[ ! "$approval_reference" =~ ^https://github\.com/iwaseasahi/levi/actions/runs/[0-9]+$ ]]; then
+  echo "LEVI_DEPLOY_APPROVAL_REFERENCE must be the exact authorized GitHub Actions run URL." >&2
   exit 2
 fi
 
@@ -38,8 +38,8 @@ if [[ "${LEVI_ALLOW_TEST_OVERRIDES:-false}" == "true" ]]; then
   weekday="${LEVI_DEPLOY_WEEKDAY_OVERRIDE:-$weekday}"
 fi
 if [[ "$weekday" == "7" ]]; then
-  if [[ ! "$sunday_approval_reference" =~ ^https://github\.com/iwaseasahi/levi/issues/[0-9]+#issuecomment-[0-9]+$ ]]; then
-    echo "Production deployment on Sunday requires an exact Sunday approval comment URL." >&2
+  if [[ ! "$sunday_approval_reference" =~ ^https://github\.com/iwaseasahi/levi/actions/runs/[0-9]+$ ]]; then
+    echo "Production deployment on Sunday requires an exact Sunday-authorized Actions run URL." >&2
     exit 1
   fi
 elif [[ -n "$sunday_approval_reference" ]]; then
