@@ -44,6 +44,7 @@
 - 2026-08-27 — Better Auth標準email sign-inへ切り替え、招待・一覧・schemaからloginId依存を撤去した。
 - 2026-08-27 — unit/component/integration/E2Eをメールログイン仕様へ更新した。
 - 2026-08-27 — rollback観測期間後の物理列削除をfollow-up Issue #346へ分離した。
+- 2026-08-27 — commit `bc0259c`に対するCI run 32991218798でQuality、Database、E2E、Securityがすべて成功した。
 
 ## Decisions
 
