@@ -65,6 +65,33 @@ sudo ufw enable
 sudo ufw status verbose
 ```
 
+Levi のproduction Composeは、PostgreSQLを外部通信できない`private`
+networkに隔離し、application containerだけを固定の`egress` network
+（bridge `br-levi-egress`、subnet `172.29.0.0/24`）にも接続する。
+UFWのrouted trafficをdenyしているため、Gmail SMTPとapplicationが必要とする
+外向き通信だけを明示的に許可する。
+
+```bash
+sudo ufw route allow in on br-levi-egress out on ens10 \
+  from 172.29.0.0/24 to any port 53 proto udp \
+  comment 'Levi containers DNS UDP'
+sudo ufw route allow in on br-levi-egress out on ens10 \
+  from 172.29.0.0/24 to any port 53 proto tcp \
+  comment 'Levi containers DNS TCP'
+sudo ufw route allow in on br-levi-egress out on ens10 \
+  from 172.29.0.0/24 to any port 587 proto tcp \
+  comment 'Levi Gmail SMTP'
+sudo ufw route allow in on br-levi-egress out on ens10 \
+  from 172.29.0.0/24 to any port 80 proto tcp \
+  comment 'Levi containers HTTP outbound'
+sudo ufw route allow in on br-levi-egress out on ens10 \
+  from 172.29.0.0/24 to any port 443 proto tcp \
+  comment 'Levi containers HTTPS outbound'
+```
+
+`postgres`と`migrate`を`egress` networkへ接続してはならない。適用後は
+application container内から外部DNSと`smtp.gmail.com:587`への接続を確認する。
+
 WebARENA側のfirewallでは、TCP 22をoperator回線の現在のglobal IPv4
 address 1件だけ（`/32`）に制限します。GitHub-hosted runner向けに
 `0.0.0.0/0`やGitHubの巨大な動的rangeを許可しません。デプロイはGitHubで

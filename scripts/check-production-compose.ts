@@ -18,7 +18,15 @@ interface ComposeService {
 }
 
 interface ComposeConfig {
-  networks: Record<string, { internal?: boolean }>;
+  networks: Record<
+    string,
+    {
+      driver_opts?: Record<string, string>;
+      internal?: boolean;
+      ipam?: { config?: Array<{ subnet?: string }> };
+      name?: string;
+    }
+  >;
   services: Record<string, ComposeService>;
 }
 
@@ -166,7 +174,7 @@ const app = config.services.app!;
 assert.equal(app.user, "1000:1000");
 assert.equal(app.read_only, true);
 assert(app.cap_drop?.includes("ALL"));
-assert.deepEqual(Object.keys(app.networks ?? {}), ["private"]);
+assert.deepEqual(Object.keys(app.networks ?? {}), ["egress", "private"]);
 assert(app.healthcheck, "app must define a readiness healthcheck");
 assert.match(app.environment?.DATABASE_URL ?? "", /^postgresql:\/\/levi_app:/);
 assert.equal(app.environment?.ADMIN_BASIC_AUTH_USERNAME, "levi-admin");
@@ -193,6 +201,15 @@ assert(postgres.healthcheck, "PostgreSQL must define a healthcheck");
 assert.equal(postgres.ports, undefined, "PostgreSQL must not publish a port");
 assert.deepEqual(Object.keys(postgres.networks ?? {}), ["private"]);
 assert.equal(config.networks.private?.internal, true);
+assert.equal(config.networks.egress?.internal, undefined);
+assert.equal(config.networks.egress?.name, "levi-production-egress");
+assert.equal(
+  config.networks.egress?.driver_opts?.["com.docker.network.bridge.name"],
+  "br-levi-egress",
+);
+assert.deepEqual(config.networks.egress?.ipam?.config, [
+  { subnet: "172.29.0.0/24" },
+]);
 assert.equal(postgres.environment?.POSTGRES_USER, "levi_admin");
 assert(postgres.environment?.LEVI_APP_DATABASE_PASSWORD);
 
