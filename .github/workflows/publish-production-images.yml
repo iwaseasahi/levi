@@ -15,10 +15,10 @@ permissions:
   packages: write
 
 jobs:
-  publish:
-    name: Publish immutable images
+  verify:
+    name: Verify exact release
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -37,6 +37,18 @@ jobs:
             result="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT_SHA}/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$required\")] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv")"
             [[ "$result" == $'completed\tsuccess' ]] || { echo "Latest ${required} check is not successful for ${COMMIT_SHA}" >&2; exit 1; }
           done
+
+  application:
+    name: Build application image
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
       - name: Login to GHCR
         env:
           GH_TOKEN: ${{ github.token }}
@@ -44,7 +56,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
       - name: Build and publish application image
-        id: application
+        id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
@@ -55,8 +67,26 @@ jobs:
           build-args: VCS_REF=${{ inputs.commit_sha }}
           cache-from: type=gha,scope=levi-production-application
           cache-to: type=gha,mode=max,scope=levi-production-application
+
+  migration:
+    name: Build migration image
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Login to GHCR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
       - name: Build and publish migration image
-        id: migration
+        id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
@@ -67,11 +97,20 @@ jobs:
           build-args: VCS_REF=${{ inputs.commit_sha }}
           cache-from: type=gha,scope=levi-production-migration
           cache-to: type=gha,mode=max,scope=levi-production-migration
+
+  candidate:
+    name: Create immutable release candidate
+    needs:
+      - application
+      - migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
       - name: Create immutable release candidate
         env:
           COMMIT_SHA: ${{ inputs.commit_sha }}
-          APPLICATION_DIGEST: ${{ steps.application.outputs.digest }}
-          MIGRATION_DIGEST: ${{ steps.migration.outputs.digest }}
+          APPLICATION_DIGEST: ${{ needs.application.outputs.digest }}
+          MIGRATION_DIGEST: ${{ needs.migration.outputs.digest }}
         run: |
           set -euo pipefail
           [[ "$APPLICATION_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
