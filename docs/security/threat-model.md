@@ -28,7 +28,7 @@ Next.js process ── validated DB protocol ── PostgreSQL
         └── approved file/error-monitoring services (not connected yet)
 
 GitHub contributor/agent ── protected PR + pinned CI ── main
-production credentials ── protected environment + human approval ── deploy job
+exact candidate ── automated validation (+ Sunday human approval) ── operator deploy
 ```
 
 The browser, imported files/content, legacy exports, dependency packages, pull

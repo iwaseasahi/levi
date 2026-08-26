@@ -68,9 +68,9 @@ sudo ufw status verbose
 WebARENA側のfirewallでは、TCP 22をoperator回線の現在のglobal IPv4
 address 1件だけ（`/32`）に制限します。GitHub-hosted runner向けに
 `0.0.0.0/0`やGitHubの巨大な動的rangeを許可しません。デプロイはGitHubで
-exact artifactとEnvironment承認を記録した後、allowlist済みoperator Macから
+exact artifactの自動検証を記録した後、allowlist済みoperator Macから
 通常releaseでは`pnpm production:release:deploy -- PUBLISH_RUN_ID`を実行します。
-deploy承認用Issueは作成せず、通常日は`production`、日曜は追加で
+deploy承認用Issueは作成せず、通常日はEnvironment reviewなし、日曜だけ
 `production-sunday` Environment reviewを使用します。
 既存の`production:deploy:authorized`は内部適用と障害時の診断に残します。
 

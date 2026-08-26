@@ -3,9 +3,10 @@
 ## 方針
 
 Leviのproduction deployは、`main`へのmergeやIssue作成だけでは開始されません。
-operatorが2つのcommandを実行し、GitHub protected Environmentで人間が承認して
-初めてVPSへ適用されます。deploy承認のためのIssueは作りません。承認対象と記録は
-GitHub Actions run、exact commit、immutable image digestへ結び付けます。
+operatorが2つのcommandを明示的に実行した場合だけVPSへ適用されます。通常日は
+GitHub Environment reviewを行わず、exact candidateの自動検証後に適用します。
+Asia/Tokyoの日曜だけは`production-sunday` Environmentの人間による承認を必要とします。
+記録はGitHub Actions run、exact commit、immutable image digestへ結び付けます。
 
 ## 標準手動deployのクイック手順
 
@@ -16,9 +17,9 @@ mise exec -- pnpm production:release:prepare
 mise exec -- pnpm production:release:deploy -- PUBLISH_RUN_ID
 ```
 
-1つ目の出力に表示された`PUBLISH_RUN_ID`を2つ目へ指定します。2つ目の実行中に
-GitHub ActionsのURLが表示されたら、`production` Environmentを承認します。
-Asia/Tokyoの日曜だけは、続いて`production-sunday` Environmentも承認します。
+1つ目の出力に表示された`PUBLISH_RUN_ID`を2つ目へ指定します。通常日は2つ目のcommandが
+自動検証からdeploy完了まで進みます。Asia/Tokyoの日曜だけ、表示されたGitHub Actionsの
+URLで`production-sunday` Environmentを承認します。
 
 operatorがVPSへ入ってbackup、migration、Compose起動、readiness確認を個別に実行
 する必要はありません。これらは2つ目のコマンドから安全な順序で自動実行されます。
@@ -38,9 +39,8 @@ Publish production images
 operator Mac
   production:release:deploy -- PUBLISH_RUN_ID
         ▼
-Authorize production deploy
+Validate production deploy
   ├─ candidate・main ancestry・4つのCIを再検証
-  ├─ production Environment承認
   ├─ 日曜だけproduction-sunday Environment追加承認
   └─ 1日保持のauthorization artifact
         ▼
@@ -63,21 +63,18 @@ releaseには次がすべて必要です。
 1. `main`へmerge済みのexact 40-character commit
 2. 同じcommitの`Quality`、`Database`、`E2E`、`Security`成功
 3. commitのOCI revision labelを持つapplication・migrationのimmutable digest
-4. protected `production` Environmentの人間による承認
+4. operatorによるdeploy commandの明示実行
 5. Asia/Tokyoの日曜はprotected `production-sunday` Environmentの追加承認
 6. deploy直前の暗号化backupとforward-only migration
 
 candidateとauthorization artifactは1日で失効します。mutable tag、別runの値、失効済み
-artifact、未承認runを流用しません。日曜追加承認はapplication deployと宣言済みmigration
+artifact、未検証runを流用しません。日曜追加承認はapplication deployと宣言済みmigration
 だけを許可し、Bible import、restore、secret変更、OS操作、再起動には適用しません。
 
 ## 一度だけ行うGitHub設定
 
 repository ownerが次を設定します。
 
-- `production` Environment
-  - required reviewerにLevi operatorを指定
-  - deployment branchを`main`に制限
 - `production-sunday` Environment
   - required reviewerにLevi operatorを指定
   - deployment branchを`main`に制限
@@ -87,9 +84,9 @@ repository ownerが次を設定します。
   - operator scriptがdeploy開始時に`deploying`、成功時に`ready`を自動記録する
   - 手入力で更新しない
 
-利用プランで可能ならself-reviewを禁止します。GitHubへproduction SSH private keyは
-保存しません。Environment作成・reviewer変更はrepositoryの権限変更なので、実施前に
-人間の明示承認を得ます。
+利用プランで可能なら`production-sunday`のself-reviewを禁止します。GitHubへproduction
+SSH private keyは保存しません。Environment作成・reviewer変更はrepositoryの権限変更
+なので、実施前に人間の明示承認を得ます。
 
 ## production環境変数
 
@@ -154,7 +151,7 @@ imageを公開せず停止します。出力されたcommit、application、migr
 Actions URLを確認し、`PUBLISH_RUN_ID`を控えます。準備後にmainが進んでもcandidateは
 変化しません。
 
-### 2. authorizationを承認して適用する
+### 2. candidateを検証して適用する
 
 実施前にmigration、backup状態、利用者影響、時刻、forward recoveryを確認します。
 通常のdeploy操作として実行するコマンドは、次の1つだけです。
@@ -167,17 +164,17 @@ mise exec -- pnpm production:release:deploy -- PUBLISH_RUN_ID
 `ssh levi-system-production true`を診断として使用します。毎回の標準deploy手順には
 含めません。
 
-commandはcandidateを再検証して`Authorize production deploy`を起動します。表示された
-Actions URLを開き、exact commitと両digestを確認して`production` Environmentを承認
-します。Asia/Tokyoの日曜は、通常承認後に`production-sunday` Environmentの追加承認
-が必要です。どちらかを拒否または放置した場合、VPSへ接続しません。
+commandはcandidateを再検証して`Validate production deploy`を起動します。通常日は
+Environment reviewなしでauthorization artifactを生成し、そのままVPSへ適用します。
+Asia/Tokyoの日曜だけは、表示されたActions URLを開き、exact commitと両digestを確認して
+`production-sunday` Environmentを承認します。拒否または放置した場合、VPSへ接続しません。
 
 authorization成功後、commandは1日保持artifactを検証し、allowlist済みoperator Mac
 からpinned SSH alias経由で制限付きentrypointを実行します。
 
 ### 中断後の再開（例外時のみ）
 
-Environment承認後にoperator commandだけが中断した場合は、authorization run IDで
+GitHub Actions検証後にoperator commandだけが中断した場合は、authorization run IDで
 同じartifactを再検証して適用できます。
 
 ```bash
@@ -185,8 +182,8 @@ mise exec -- pnpm production:deploy:authorized -- AUTHORIZATION_RUN_ID
 ```
 
 この再開コマンドは標準の2コマンドへ追加して毎回実行するものではありません。
-artifactが失効した場合は`production:release:deploy -- PUBLISH_RUN_ID`をやり直して
-新しいEnvironment reviewを受けます。
+artifactが失効した場合は`production:release:deploy -- PUBLISH_RUN_ID`をやり直します。
+日曜の場合は新しいEnvironment reviewも必要です。
 
 ## VPS内で自動実行される処理
 
@@ -209,14 +206,14 @@ ssh -t levi-system-production \
    sudo systemctl show --property=Result --value levi-health.service'
 ```
 
-readinessの`status=ready`、health serviceの`success`を確認します。deploy承認の監査証跡
+readinessの`status=ready`、health serviceの`success`を確認します。deployの監査証跡
 はauthorization workflowのrun URLとartifactです。障害や利用者影響があった場合だけ
 incident Issueを作成し、secret、cookie、authorization header、Bible本文は記録しません。
 
 ## 手動deployと障害時の扱い
 
 通常経路自体が手動開始です。Issueを使う別のbreak-glass deployは設けません。
-GitHub Environment review、CI確認、candidate/authorization artifactのいずれかを利用
+CI確認、candidate/authorization artifactのいずれかを利用
 できない場合はfail closedとし、既知の良好なreleaseを維持します。障害復旧を待てない
 場合でも、承認なしの`docker compose up`やmigration直接実行へ切り替えません。
 

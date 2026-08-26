@@ -32,9 +32,10 @@ Confirm the exact check names from a successful workflow run before changing the
 rule. If a job name changes, update the rule in the same administrative change
 so the repository is never left with a silently missing gate.
 
-Production deployment is intentionally absent from `ci.yml`. A future deployment
-workflow must use a protected GitHub Environment, minimal deployment-specific
-permissions, and the explicit production approval defined by governance.
+Production deployment is intentionally absent from `ci.yml`. The dedicated
+deployment workflow uses minimal deployment-specific permissions, automated
+exact-candidate validation, and the Sunday production approval defined by
+governance.
 
 ## CI cost boundary
 

@@ -5,6 +5,7 @@
 - Decision owners: product owner and operations owner
 - Decision record: Issue #81
 - Recovery-policy amendment: Issue #297 (2026-08-26)
+- Deployment-policy amendment: Issue #327 (2026-08-26)
 - Supersedes: none
 - Superseded by: none
 
@@ -35,13 +36,15 @@ target:
 - SSH uses public-key authentication and host/network firewall rules expose
   only the approved administration and web paths.
 
-GitHub Actions validates the exact commit and image digests and records approval
-through the protected `production` Environment, but does not hold a production
-SSH key or connect to the VPS. It emits a one-day immutable authorization
-artifact. The operator retrieves and verifies that artifact from the
-allowlisted workstation, then invokes the fixed command-scoped host entrypoint.
-This keeps TCP 22 restricted to the operator's current `/32` while preserving
-CI, Issue approval, Environment approval, and host deployment history.
+GitHub Actions validates the exact commit and image digests, but does not hold a
+production SSH key or connect to the VPS. It emits a one-day immutable
+authorization artifact. The operator's explicit deploy command is the normal-day
+human action. Sunday deploys additionally require the protected
+`production-sunday` Environment review. The operator retrieves and verifies the
+artifact from the allowlisted workstation, then invokes the fixed command-scoped
+host entrypoint. This keeps TCP 22 restricted to the operator's current `/32`
+while preserving CI, immutable validation, Sunday approval, and host deployment
+history.
 
 Issue #81 records the product owner's acceptance of no SLA, one application and
 database failure domain, and no cross-region recovery. This ADR approves the
@@ -84,8 +87,8 @@ DNS owner, and final Better Auth origin. Domain cost is separate from the JPY
 ## Availability and operating policy
 
 - There is no contractual SLA for the selected plan and no automatic failover.
-- Application and database maintenance, deploys, and migrations are prohibited
-  during the Sunday freeze window defined by Issue #87.
+- Sunday deploys require the additional exact-release authorization introduced
+  by Issue #304; they are not categorically prohibited.
 - Health, readiness, resource saturation, disk, database, and backup age require
   monitoring, but monitoring must not receive credentials or Restricted data.
 - Capacity is accepted only after Issue #89 measures the two-Church workflow on

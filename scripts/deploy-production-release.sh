@@ -78,7 +78,7 @@ readonly application_image="$(jq -r '.application_image' "$candidate_file")"
 readonly migration_image="$(jq -r '.migration_image' "$candidate_file")"
 
 readonly dispatched_after="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-readonly expected_title="Authorize production candidate #${publish_run_id}"
+readonly expected_title="Validate production candidate #${publish_run_id}"
 gh workflow run "$authorize_workflow_path" \
   --repo "$repository" \
   --ref main \
