@@ -213,6 +213,12 @@ assert.match(
 );
 assert.equal(
   publishWorkflow.match(
+    /docker\/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e/g,
+  )?.length,
+  2,
+);
+assert.equal(
+  publishWorkflow.match(
     /docker\/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a/g,
   )?.length,
   2,
@@ -235,11 +241,23 @@ assert.match(
 );
 assert.match(
   publishWorkflow,
-  /APPLICATION_DIGEST: \$\{\{ steps\.application\.outputs\.digest \}\}/,
+  /application:\n\s+name: Build application image[\s\S]*?needs: verify[\s\S]*?digest: \$\{\{ steps\.build\.outputs\.digest \}\}/,
 );
 assert.match(
   publishWorkflow,
-  /MIGRATION_DIGEST: \$\{\{ steps\.migration\.outputs\.digest \}\}/,
+  /migration:\n\s+name: Build migration image[\s\S]*?needs: verify[\s\S]*?digest: \$\{\{ steps\.build\.outputs\.digest \}\}/,
+);
+assert.match(
+  publishWorkflow,
+  /candidate:\n\s+name: Create immutable release candidate[\s\S]*?needs:\n\s+- application\n\s+- migration/,
+);
+assert.match(
+  publishWorkflow,
+  /APPLICATION_DIGEST: \$\{\{ needs\.application\.outputs\.digest \}\}/,
+);
+assert.match(
+  publishWorkflow,
+  /MIGRATION_DIGEST: \$\{\{ needs\.migration\.outputs\.digest \}\}/,
 );
 assert.doesNotMatch(publishWorkflow, /docker buildx build/);
 assert.doesNotMatch(publishWorkflow, /release_issue/);
