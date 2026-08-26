@@ -41,7 +41,7 @@ and once when it recovers.
 2. [x] Add stateful VPS-side Slack notifications for incident and recovery transitions.
 3. [x] Add configuration checks and behavioral regression coverage.
 4. [x] Update the monitoring runbook with setup, security, behavior, and limitations.
-5. [ ] Run local checks, open a PR, pass required CI, merge, and close the Issue.
+5. [ ] Merge PR #334 after required CI and close the Issue.
 
 ## Progress
 
@@ -50,6 +50,8 @@ and once when it recovers.
 - 2026-08-26 16:41 JST — Implemented hourly external checks, failure alerts,
   VPS incident/recovery deduplication, configuration validation, tests, and the
   Slack operations runbook.
+- 2026-08-26 16:48 JST — PR #334 passed Quality, Database, E2E, and Security on
+  implementation commit `c6d9e13`.
 
 ## Decisions
 
@@ -86,8 +88,9 @@ and once when it recovers.
       auth origin, so the build was rerun with the same synthetic HTTPS auth values
       used by CI and passed.
 - [x] `git diff --check` — passed
-- [ ] Required GitHub checks: Quality, Database, E2E, Security
-- [ ] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
+- [x] Required GitHub checks: Quality, Database, E2E, Security — passed on
+      `c6d9e13`
+- [x] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
 
 ## Handoff or blockers
 
@@ -100,4 +103,6 @@ and once when it recovers.
 
 ## Result
 
-Pending.
+Repository implementation and verification are complete in PR #334. Production
+activation remains intentionally separate because creating the GitHub/VPS
+secrets and changing the running service require explicit operator approval.
