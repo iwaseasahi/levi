@@ -19,8 +19,9 @@ Restricted: do not place it in source control, Issues, pull requests, logs, chat
 or agent prompts. Do not set an `ADMIN_BASIC_AUTH_PASSWORD` variable.
 
 Local development may place both values in the untracked `.env` file. Production
-values belong in the host's protected `production.env`; changing that file or
-deploying it requires the normal separate production approval.
+values belong in the host's protected `production.env`; changing that file
+remains a separate secret/access operation requiring explicit authorization.
+Ordinary application releases use the standard production deployment flow.
 
 ## Operate safely
 

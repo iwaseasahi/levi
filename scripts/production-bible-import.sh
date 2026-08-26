@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Retained as a dormant, auditable starting point for a separately approved
+# future Bible re-import. The ordinary production migration image intentionally
+# excludes the importer runtime and this script is not part of application deploy.
 set -euo pipefail
 umask 077
 

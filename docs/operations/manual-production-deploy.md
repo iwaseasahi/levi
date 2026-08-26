@@ -1,5 +1,10 @@
 # Production deploy runbook
 
+The production Bible dump import is not part of this deployment flow. Its
+initial execution is complete; the retained import wrappers are dormant source
+for a separately reviewed future migration and do not work with the current
+minimal migration image.
+
 ## 方針
 
 Leviのproduction deployは、`main`へのmergeやIssue作成だけでは開始されません。
