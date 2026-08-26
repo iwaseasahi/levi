@@ -7,6 +7,11 @@ import {
   createInviteAdminUserController,
   type InviteAdminUserFormState,
 } from "@/application/admin/invite-admin-user-controller";
+import {
+  createDeleteAdminUserController,
+  type DeleteAdminUserState,
+} from "@/application/admin/delete-admin-user-controller";
+import { deleteAdminUser } from "@/infrastructure/auth/admin-user-deletion";
 import { inviteAdminUser } from "@/infrastructure/auth/admin-user-invitations";
 import { getOperatorAccess } from "@/infrastructure/auth/operator-session";
 import { writeLog } from "@/infrastructure/observability/logger";
@@ -34,6 +39,28 @@ const handleInvite = createInviteAdminUserController({
   },
 });
 
+const handleDelete = createDeleteAdminUserController({
+  deleteAdminUser,
+  getOperatorAccess,
+  recordEvent(event) {
+    writeLog({
+      attributes: {
+        capability: "admin.delete",
+        outcome: event.outcome,
+        ...(event.actorAdminUserId && {
+          actorAdminUserId: event.actorAdminUserId,
+        }),
+        ...(event.targetAdminUserId && {
+          targetAdminUserId: event.targetAdminUserId,
+        }),
+      },
+      event: "admin.user_deletion",
+      level: event.outcome === "failed" ? "error" : "info",
+      ...(event.requestId && { requestId: event.requestId }),
+    });
+  },
+});
+
 export async function inviteAdminUserAction(
   _previousState: InviteAdminUserFormState,
   formData: FormData,
@@ -42,6 +69,20 @@ export async function inviteAdminUserAction(
   const result = await handleInvite(
     requestHeaders,
     { loginId: formData.get("loginId"), name: formData.get("name") },
+    requestHeaders.get(REQUEST_ID_HEADER) ?? undefined,
+  );
+  if (result.status === "success") revalidatePath("/admin/admin-users");
+  return result;
+}
+
+export async function deleteAdminUserAction(
+  _previousState: DeleteAdminUserState,
+  formData: FormData,
+): Promise<DeleteAdminUserState> {
+  const requestHeaders = await headers();
+  const result = await handleDelete(
+    requestHeaders,
+    formData.get("adminUserId"),
     requestHeaders.get(REQUEST_ID_HEADER) ?? undefined,
   );
   if (result.status === "success") revalidatePath("/admin/admin-users");
