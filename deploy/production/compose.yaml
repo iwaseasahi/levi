@@ -74,6 +74,7 @@ services:
       - ALL
     networks:
       - private
+      - egress
     depends_on:
       postgres:
         condition: service_healthy
@@ -162,6 +163,14 @@ networks:
   edge: {}
   private:
     internal: true
+  egress:
+    name: levi-production-egress
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-levi-egress
+    ipam:
+      config:
+        - subnet: 172.29.0.0/24
 
 volumes:
   caddy_config: {}
