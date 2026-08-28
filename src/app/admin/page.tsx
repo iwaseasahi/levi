@@ -12,6 +12,16 @@ export default async function AdministrationPage() {
       </header>
 
       <nav className="admin-dashboard" aria-label="管理機能">
+        <Link href="/admin/churches">
+          <span className="admin-dashboard-icon" aria-hidden="true">
+            ≡
+          </span>
+          <span>
+            <strong>教会の一覧</strong>
+            <small>登録済みの教会と利用者の状態を確認します</small>
+          </span>
+          <span aria-hidden="true">→</span>
+        </Link>
         <Link href="/admin/churches/new">
           <span className="admin-dashboard-icon" aria-hidden="true">
             ＋

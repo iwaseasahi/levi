@@ -6,6 +6,7 @@ import { adminLogoutAction } from "./auth-actions";
 
 const items = [
   { href: "/admin", label: "トップ" },
+  { href: "/admin/churches", label: "教会一覧" },
   { href: "/admin/churches/new", label: "教会を作成" },
   {
     href: "/admin/churches/password-reset",
@@ -16,6 +17,12 @@ const items = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const currentHref = items.reduce<string | undefined>((match, item) => {
+    const matches =
+      pathname === item.href || pathname.startsWith(`${item.href}/`);
+    if (!matches || (match && match.length >= item.href.length)) return match;
+    return item.href;
+  }, undefined);
 
   return (
     <aside className="admin-sidebar" aria-label="管理メニュー">
@@ -25,8 +32,7 @@ export function AdminSidebar() {
       </div>
       <nav>
         {items.map((item) => {
-          const current =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+          const current = currentHref === item.href;
           return (
             <Link
               aria-current={current ? "page" : undefined}

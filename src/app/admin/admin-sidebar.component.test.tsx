@@ -3,8 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 
 import { AdminSidebar } from "./admin-sidebar";
 
+const { mockUsePathname } = vi.hoisted(() => ({
+  mockUsePathname: vi.fn(() => "/admin"),
+}));
+
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/admin",
+  usePathname: mockUsePathname,
 }));
 vi.mock("./auth-actions", () => ({
   adminLogoutAction: vi.fn(),
@@ -19,6 +23,9 @@ describe("AdminSidebar", () => {
     ).toBe("page");
 
     expect(
+      screen.getByRole("link", { name: "教会一覧" }).getAttribute("href"),
+    ).toBe("/admin/churches");
+    expect(
       screen.getByRole("link", { name: "教会を作成" }).getAttribute("href"),
     ).toBe("/admin/churches/new");
     expect(
@@ -30,5 +37,21 @@ describe("AdminSidebar", () => {
       screen.getByRole("link", { name: "管理者一覧" }).getAttribute("href"),
     ).toBe("/admin/admin-users");
     expect(screen.getByRole("button", { name: "ログアウト" })).toBeTruthy();
+  });
+
+  it("marks only the most specific administration destination as current", () => {
+    mockUsePathname.mockReturnValue("/admin/churches/new");
+    render(<AdminSidebar />);
+
+    expect(
+      screen
+        .getByRole("link", { name: "教会を作成" })
+        .getAttribute("aria-current"),
+    ).toBe("page");
+    expect(
+      screen
+        .getByRole("link", { name: "教会一覧" })
+        .getAttribute("aria-current"),
+    ).toBeNull();
   });
 });
