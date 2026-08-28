@@ -49,28 +49,26 @@ function transactionAdapter(
       const account = user?.accounts[0];
       return account?.password ? { accountId: account.id } : null;
     },
-    async findResetTarget(churchId) {
-      const church = await transaction.church.findFirst({
+    async findResetTarget(userId) {
+      const membership = await transaction.churchMembership.findFirst({
         select: {
-          id: true,
-          membership: {
-            select: {
-              user: {
-                select: { actorState: true, email: true, id: true },
-              },
-            },
+          church: {
+            select: { id: true, name: true, status: true },
           },
-          name: true,
+          user: { select: { actorState: true, email: true, id: true } },
         },
-        where: { id: churchId, status: "ACTIVE" },
+        where: {
+          church: { status: "ACTIVE" },
+          user: { actorState: "ACTIVE" },
+          userId,
+        },
       });
-      const user = church?.membership?.user;
-      if (!church || !user || user.actorState !== "ACTIVE") return null;
+      if (!membership) return null;
       return {
-        churchId: church.id,
-        churchName: church.name,
-        email: user.email,
-        userId: user.id,
+        churchId: membership.church.id,
+        churchName: membership.church.name,
+        email: membership.user.email,
+        userId: membership.user.id,
       };
     },
     async markForcedPasswordChange(userId) {

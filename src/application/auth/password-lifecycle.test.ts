@@ -54,7 +54,7 @@ describe("resetChurchPassword", () => {
       lifecycle.resetChurchPassword(operatorId, "invalid"),
     ).rejects.toBeInstanceOf(PasswordLifecycleInputError);
     await expect(
-      lifecycle.resetChurchPassword("invalid", churchId),
+      lifecycle.resetChurchPassword("invalid", userId),
     ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
     expect(deps.runTransaction).not.toHaveBeenCalled();
   });
@@ -63,7 +63,7 @@ describe("resetChurchPassword", () => {
     const deps = dependencies();
     const lifecycle = createPasswordLifecycle(deps);
     await expect(
-      lifecycle.resetChurchPassword(operatorId, churchId),
+      lifecycle.resetChurchPassword(operatorId, userId),
     ).resolves.toEqual({
       churchId,
       churchName: "テスト教会",
@@ -85,14 +85,14 @@ describe("resetChurchPassword", () => {
     await expect(
       createPasswordLifecycle(lookupFailed).resetChurchPassword(
         operatorId,
-        churchId,
+        userId,
       ),
     ).rejects.toBeInstanceOf(PasswordLifecycleFailedError);
 
     const denied = dependencies();
     denied.findActiveOperator.mockResolvedValue(false);
     await expect(
-      createPasswordLifecycle(denied).resetChurchPassword(operatorId, churchId),
+      createPasswordLifecycle(denied).resetChurchPassword(operatorId, userId),
     ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
 
     const recheckDenied = dependencies();
@@ -100,17 +100,14 @@ describe("resetChurchPassword", () => {
     await expect(
       createPasswordLifecycle(recheckDenied).resetChurchPassword(
         operatorId,
-        churchId,
+        userId,
       ),
     ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
 
     const missing = dependencies();
     vi.mocked(missing.tx.findResetTarget).mockResolvedValue(null);
     await expect(
-      createPasswordLifecycle(missing).resetChurchPassword(
-        operatorId,
-        churchId,
-      ),
+      createPasswordLifecycle(missing).resetChurchPassword(operatorId, userId),
     ).rejects.toBeInstanceOf(PasswordLifecycleFailedError);
   });
 });

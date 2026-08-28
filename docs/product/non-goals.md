@@ -14,7 +14,7 @@ Levi is not currently attempting to:
 - Add praise songs or song PDFs. Praise songs may be reconsidered later.
 - Add message slides to the initial release. Slides are mandatory follow-up work,
   use physical deletion, and do not retain edit history.
-- Support multiple accounts or roles inside one church initially.
+- Add roles or different permissions among users inside one church.
 - Migrate legacy data other than the Bible corpus.
 - Guarantee browsers other than the latest stable Chrome.
 - Guarantee full offline operation.

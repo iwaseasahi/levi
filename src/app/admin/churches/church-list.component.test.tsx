@@ -15,18 +15,27 @@ describe("ChurchList", () => {
             id: "church-active",
             name: "第一教会",
             status: "ACTIVE",
-            user: {
-              email: "member@example.com",
-              name: "教会利用者",
-              status: "PENDING",
-            },
+            users: [
+              {
+                email: "member@example.com",
+                id: "member-1",
+                name: "教会利用者",
+                status: "PENDING",
+              },
+              {
+                email: "active@example.com",
+                id: "member-2",
+                name: "第二利用者",
+                status: "ACTIVE",
+              },
+            ],
           },
           {
             createdAt: new Date("2026-08-28T00:00:00Z"),
             id: "church-suspended",
             name: "第二教会",
             status: "SUSPENDED",
-            user: null,
+            users: [],
           },
         ]}
       />,
@@ -34,10 +43,17 @@ describe("ChurchList", () => {
 
     expect(screen.getByText("第一教会")).toBeVisible();
     expect(screen.getByText("教会利用者")).toBeVisible();
+    expect(screen.getByText("第二利用者")).toBeVisible();
     expect(screen.getByText("member@example.com")).toBeVisible();
     expect(screen.getByText("招待中")).toBeVisible();
     expect(screen.getByText("停止中")).toBeVisible();
     expect(screen.getByText("利用者は未登録です。")).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "第一教会に利用者を招待" }),
+    ).toHaveAttribute("href", "/admin/churches/church-active/users/invite");
+    expect(
+      screen.queryByRole("link", { name: "第二教会に利用者を招待" }),
+    ).not.toBeInTheDocument();
     expect(container.textContent).not.toContain("password");
     expect(
       (

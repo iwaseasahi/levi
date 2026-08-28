@@ -14,6 +14,8 @@ export const E2E_PASSWORD_USER_EMAIL =
 export const E2E_PASSWORD = "e".repeat(16);
 export const E2E_CREATED_EMAIL = "test.e2e.created@example.invalid";
 export const E2E_CREATED_CHURCH = "test.e2e created church";
+export const E2E_ADDITIONAL_CHURCH_USER_EMAIL =
+  "test.e2e.additional.member@example.invalid";
 export const E2E_INVITED_ADMIN_EMAIL = "test.e2e.invited.admin@example.invalid";
 export const E2E_ACTIVE_ADMIN_EMAIL = "test.e2e.active.admin@example.invalid";
 export const E2E_INITIAL_ADMIN_EMAIL = "test.e2e.initial.admin@example.invalid";

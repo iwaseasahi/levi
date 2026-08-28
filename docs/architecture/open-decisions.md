@@ -18,9 +18,9 @@ WebARENA Indigo Linux 4 GB in Tokyo with an accepted single-VPS/no-DR tradeoff.
 
 Resolved product decisions are recorded in
 [`../product/initial-release-spec.md`](../product/initial-release-spec.md): the
-initial scope and first slice, one church user per church, email/password and
-platform-operator-managed reset, latest Chrome, separate search/audience tabs,
-and Bible-only migration.
+initial scope and first slice, multiple independently authenticated users per
+church, email/password and email-based setup/reset, latest Chrome, separate
+search/audience tabs, and Bible-only migration.
 
 Identity, tenancy, authentication, database sessions, and administrator-managed
 reset behavior are resolved by

@@ -60,15 +60,17 @@ fixtures.
 
 ## Initial lifecycle
 
-- The platform operator provisions and resets a church user; there is no public
-  sign-up or email-based password recovery.
-- A church user belongs to exactly one church and an initial church has exactly
-  one church user.
+- The platform operator provisions a church's initial user and may invite
+  additional users to an existing active church; there is no public sign-up.
+- A church user belongs to exactly one church. A church may have multiple users,
+  each with an independent credential and session but the same derived
+  `ChurchScope`.
 - A database session expires 30 days after its last eligible refresh and may roll
   at most once per day.
 - Logout revokes the current session. Administrator reset, suspension, and
   explicit revoke-all revoke every applicable session.
-- Administrator invitation and self-service reset use one-hour email links.
+- Administrator and church-user invitation and self-service reset use 24-hour
+  email links.
   Successful setup/reset activates an invited identity and revokes existing
   administrator sessions.
 - Expired session rows are removed on a bounded schedule; they are not retained

@@ -13,7 +13,7 @@
 ## Context
 
 - `/admin/churches` は現在、教会作成画面へリダイレクトするだけで一覧を持たない。
-- 初回リリースでは1教会につき1利用者であり、`ChurchMembership` が教会と利用者を一意に結ぶ。
+- この計画の実施時点では1教会につき1利用者だった。Issue #357 で1教会に複数利用者を許可し、`ChurchMembership.userId` の一意性だけを維持する設計へ更新された。
 - 管理画面はBasic認証と管理者専用Better Authセッションの二重境界を維持している。
 
 ## Constraints

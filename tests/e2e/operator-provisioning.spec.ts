@@ -4,6 +4,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "./fixtures";
 import {
   E2E_CHURCH_USER_EMAIL,
+  E2E_ADDITIONAL_CHURCH_USER_EMAIL,
   E2E_ACTIVE_ADMIN_EMAIL,
   E2E_ADMIN_BASIC_USERNAME,
   E2E_CREATED_CHURCH,
@@ -357,6 +358,53 @@ test.describe("operator church provisioning", () => {
     );
     await page.getByRole("link", { name: "聖書検索へ戻る" }).click();
     await expect(page).toHaveURL(/\/scripture$/);
+    await expect(
+      page.getByRole("radio", { name: "創世記/Genesis" }),
+    ).toBeVisible();
+  });
+
+  test("invites a second user to an existing church", async ({ page }) => {
+    await signInAdmin(page);
+    await page.goto("/admin/churches");
+    await page
+      .getByRole("link", {
+        name: "test.e2e member churchに利用者を招待",
+      })
+      .click();
+    await expect(
+      page.getByRole("heading", { level: 1, name: "利用者を招待" }),
+    ).toBeVisible();
+
+    await page.getByLabel("利用者名").fill("Synthetic Additional User");
+    await page
+      .getByLabel("ログイン用メールアドレス")
+      .fill(E2E_ADDITIONAL_CHURCH_USER_EMAIL);
+    await page.getByRole("button", { name: "利用者を招待" }).click();
+    const success = page.getByRole("status").filter({
+      hasText: "教会利用者へ招待メールを送信しました。",
+    });
+    await expect(success).toContainText(E2E_ADDITIONAL_CHURCH_USER_EMAIL);
+
+    const resetUrl = await findPasswordResetUrl(
+      page,
+      E2E_ADDITIONAL_CHURCH_USER_EMAIL,
+      "church",
+    );
+    await page.goto(resetUrl);
+    const password = "additional-user-password";
+    await page.getByLabel("新しいパスワード", { exact: true }).fill(password);
+    await page
+      .getByLabel("新しいパスワード（確認）", { exact: true })
+      .fill(password);
+    await page.getByRole("button", { name: "パスワードを変更" }).click();
+    await expect(page).toHaveURL(/\/login\?passwordReset=completed$/);
+
+    await page
+      .getByLabel("メールアドレス")
+      .fill(E2E_ADDITIONAL_CHURCH_USER_EMAIL);
+    await page.getByLabel("パスワード", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "ログイン" }).click();
+    await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
     await expect(
       page.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();

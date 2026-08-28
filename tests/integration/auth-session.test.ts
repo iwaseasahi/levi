@@ -117,7 +117,7 @@ describe("Church authentication session lifecycle", () => {
     const member = await createMember();
     const { cookie } = await signIn(member.email);
     await prisma.church.updateMany({
-      where: { membership: { userId: member.userId } },
+      where: { memberships: { some: { userId: member.userId } } },
       data: { status: "SUSPENDED", suspendedAt: new Date() },
     });
     await expect(getChurchAccess(new Headers({ cookie }))).resolves.toEqual({

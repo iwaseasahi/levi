@@ -14,7 +14,14 @@ describe("password lifecycle forms", () => {
     const user = userEvent.setup();
     render(
       <ResetPasswordForm
-        churches={[{ id: "church-id", name: "対象教会" }]}
+        users={[
+          {
+            churchName: "対象教会",
+            email: "member@example.invalid",
+            id: "user-id",
+            name: "対象利用者",
+          },
+        ]}
         action={vi.fn().mockResolvedValue({
           status: "success",
           churchName: "対象教会",
@@ -24,7 +31,7 @@ describe("password lifecycle forms", () => {
         })}
       />,
     );
-    await user.selectOptions(screen.getByLabelText("対象教会"), "church-id");
+    await user.selectOptions(screen.getByLabelText("対象利用者"), "user-id");
     await user.click(screen.getByRole("checkbox"));
     await user.click(
       screen.getByRole("button", { name: "パスワードを再設定" }),

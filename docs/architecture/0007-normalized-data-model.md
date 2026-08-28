@@ -21,9 +21,10 @@ contracts; Levi owns actor classification, church membership, tenant
 authorization, forced-password-change state, shared scripture masters, and
 prepared church content.
 
-The initial product permits one church user per church, but later multiple users
-must not require replacing identities or re-owning church content. Slides are
-mandatory later work but are not part of the initial schema.
+The product permits multiple church users per church while each user belongs to
+exactly one church. Adding users must not require replacing identities or
+re-owning church content. Slides are mandatory later work but are not part of
+the initial schema.
 
 ## Decision
 

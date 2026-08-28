@@ -226,9 +226,10 @@ and expire after the configured one-hour administrator reset window.
 | `user_id`    | `uuid`        | no   | FK to `users.id ON DELETE CASCADE`    |
 | `created_at` | `timestamptz` | no   | assignment time                       |
 
-`church_memberships_church_uk` and `church_memberships_user_uk` enforce the
-initial one-to-one relationship. The first constraint is the only cardinality
-constraint removed when multiple users per church is approved.
+`church_memberships_user_uk` enforces that one user belongs to at most one
+church. `church_memberships_church_created_idx` supports stable per-church user
+listing. Multiple membership rows may reference one church so independently
+authenticated users can share the same church scope and church-owned content.
 
 `actor_assignment_ck` is implemented as deferred constraint triggers on User
 and ChurchMembership changes. The trigger locks the User row before counting

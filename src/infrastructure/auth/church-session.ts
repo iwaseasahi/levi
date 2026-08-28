@@ -21,7 +21,7 @@ export function getChurchAccess(headers: Headers) {
         },
       });
 
-      return membership
+      return membership?.user
         ? {
             churchId: membership.churchId,
             mustChangePassword: membership.user.mustChangePassword,
