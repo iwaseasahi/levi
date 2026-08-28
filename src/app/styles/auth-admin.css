@@ -430,7 +430,8 @@
   height: 2.25rem;
 }
 
-.admin-church-actions .secondary-button {
+.admin-form .admin-church-actions .secondary-button {
+  margin-top: 0;
   min-height: auto;
   padding: 0.45rem 0.7rem;
   font-size: 0.82rem;
