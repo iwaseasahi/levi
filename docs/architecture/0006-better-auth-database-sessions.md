@@ -8,9 +8,9 @@
 
 ## Context
 
-The approved initial release requires email/password login, one church user per
-church, a separate Levi platform operator, operator-provisioned accounts, and
-platform-operator-managed password reset without outbound email. Levi uses
+The approved release requires email/password login, multiple independently
+authenticated users per church, a separate Levi platform operator,
+operator-invited accounts, and email-based password setup and reset. Levi uses
 Next.js 16, Prisma 7, and PostgreSQL. The solution must avoid identity-provider
 usage pricing, keep tenant authorization in Levi, and be maintainable by coding
 agents without implementing security-critical password and session primitives
@@ -44,15 +44,14 @@ data authorization.
 - A platform operator and a church user are distinct application actor types.
   Platform-operator access is denied by default and cannot be inferred merely
   from a valid session.
-- A church membership links a user to a church. The initial schema enforces one
-  membership per user and one user per church. A later approved migration may
-  relax the latter constraint without replacing identities.
+- A church membership links a user to a church. The schema enforces one
+  membership per user and permits multiple users to reference the same church.
 - Church-owned data is always selected through a server-derived tenant context.
   A client-supplied church identifier is never authorization evidence.
 - Public sign-up is unavailable. Only the protected platform-operator
-  provisioning use case may create a church user. Issue #43 must prove that the
-  chosen Better Auth provisioning API and the church/membership transaction
-  cannot leave an active orphan identity or tenant.
+  provisioning and existing-church invitation use cases may create a church
+  user. Their Better Auth provisioning API and church/membership transaction
+  must not leave an active orphan identity or tenant.
 
 ### Password and recovery
 

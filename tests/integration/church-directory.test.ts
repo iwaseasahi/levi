@@ -24,7 +24,8 @@ afterAll(async () => {
 
 describe("administrator church directory", () => {
   it("returns churches in stable order with only the display identity", async () => {
-    const userId = randomUUID();
+    const firstUserId = randomUUID();
+    const secondUserId = randomUUID();
     const olderChurch = await prisma.church.create({
       data: {
         createdAt: new Date("2026-08-27T00:00:00Z"),
@@ -38,12 +39,23 @@ describe("administrator church directory", () => {
         data: {
           actorState: "PENDING",
           email: `${namespace}.member@example.invalid`,
-          id: userId,
+          id: firstUserId,
           name: "Directory Member",
         },
       }),
       prisma.churchMembership.create({
-        data: { churchId: olderChurch.id, userId },
+        data: { churchId: olderChurch.id, userId: firstUserId },
+      }),
+      prisma.user.create({
+        data: {
+          actorState: "ACTIVE",
+          email: `${namespace}.second@example.invalid`,
+          id: secondUserId,
+          name: "Second Directory Member",
+        },
+      }),
+      prisma.churchMembership.create({
+        data: { churchId: olderChurch.id, userId: secondUserId },
       }),
       prisma.church.create({
         data: {
@@ -66,15 +78,25 @@ describe("administrator church directory", () => {
       id: olderChurch.id,
       name: `${namespace} older`,
       status: "SUSPENDED",
-      user: {
-        email: `${namespace}.member@example.invalid`,
-        name: "Directory Member",
-        status: "PENDING",
-      },
+      users: [
+        {
+          email: `${namespace}.member@example.invalid`,
+          id: firstUserId,
+          name: "Directory Member",
+          status: "PENDING",
+        },
+        {
+          email: `${namespace}.second@example.invalid`,
+          id: secondUserId,
+          name: "Second Directory Member",
+          status: "ACTIVE",
+        },
+      ],
     });
-    expect(entries[1]?.user).toBeNull();
-    expect(Object.keys(entries[0]?.user ?? {}).sort()).toEqual([
+    expect(entries[1]?.users).toEqual([]);
+    expect(Object.keys(entries[0]?.users[0] ?? {}).sort()).toEqual([
       "email",
+      "id",
       "name",
       "status",
     ]);

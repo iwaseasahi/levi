@@ -25,7 +25,7 @@ describe("reset password controller", () => {
     await expect(
       controller(
         new Headers(),
-        { churchId: "invalid", confirmed: "yes" },
+        { userId: "invalid", confirmed: "yes" },
         "req-1",
       ),
     ).resolves.toMatchObject({ status: "error" });
@@ -50,7 +50,7 @@ describe("reset password controller", () => {
       resetChurchPassword,
     });
     await expect(
-      controller(new Headers(), { churchId: "church-id", confirmed: null }),
+      controller(new Headers(), { userId: "user-id", confirmed: null }),
     ).resolves.toEqual({
       status: "error",
       message: "確認欄を選択してください。",
@@ -80,7 +80,7 @@ describe("reset password controller", () => {
     await expect(
       controller(
         new Headers(),
-        { churchId: "church-id", confirmed: "yes" },
+        { userId: "user-id", confirmed: "yes" },
         "req-2",
       ),
     ).resolves.toMatchObject({
@@ -111,7 +111,7 @@ describe("reset password controller", () => {
         .mockRejectedValue(new PasswordLifecycleFailedError()),
     });
     await expect(
-      controller(new Headers(), { churchId: "church-id", confirmed: "yes" }),
+      controller(new Headers(), { userId: "user-id", confirmed: "yes" }),
     ).resolves.toMatchObject({ status: "error" });
     expect(recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "failed" }),

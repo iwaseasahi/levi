@@ -46,9 +46,10 @@ test("operator reset revokes the old session and forces a new password", async (
   ).toBeVisible();
 
   await page.goto("/admin/churches/password-reset");
-  await page
-    .getByLabel("対象教会")
-    .selectOption({ label: "test.e2e password church" });
+  await page.getByLabel("対象利用者").selectOption({
+    label:
+      "test.e2e password church / Synthetic E2E Password User / test.e2e.password-member@example.invalid",
+  });
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "パスワードを再設定" }).click();
   await page.getByRole("button", { name: "一時パスワードを表示" }).click();

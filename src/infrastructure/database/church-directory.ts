@@ -5,11 +5,12 @@ export interface ChurchDirectoryEntry {
   id: string;
   name: string;
   status: "ACTIVE" | "SUSPENDED";
-  user: {
+  users: Array<{
+    id: string;
     email: string;
     name: string;
     status: "ACTIVE" | "PENDING";
-  } | null;
+  }>;
 }
 
 export async function listChurches(): Promise<ChurchDirectoryEntry[]> {
@@ -18,12 +19,14 @@ export async function listChurches(): Promise<ChurchDirectoryEntry[]> {
     select: {
       createdAt: true,
       id: true,
-      membership: {
+      memberships: {
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {
           user: {
             select: {
               actorState: true,
               email: true,
+              id: true,
               name: true,
             },
           },
@@ -34,14 +37,20 @@ export async function listChurches(): Promise<ChurchDirectoryEntry[]> {
     },
   });
 
-  return churches.map(({ membership, ...church }) => ({
+  return churches.map(({ memberships, ...church }) => ({
     ...church,
-    user: membership
-      ? {
-          email: membership.user.email,
-          name: membership.user.name,
-          status: membership.user.actorState,
-        }
-      : null,
+    users: memberships.map(({ user }) => ({
+      email: user.email,
+      id: user.id,
+      name: user.name,
+      status: user.actorState,
+    })),
   }));
+}
+
+export async function findChurchInvitationTarget(churchId: string) {
+  return prisma.church.findFirst({
+    select: { id: true, name: true },
+    where: { id: churchId, status: "ACTIVE" },
+  });
 }

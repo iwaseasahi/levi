@@ -20,7 +20,7 @@ export interface PasswordLifecycleTransaction {
     sessionId: string;
     userId: string;
   }): Promise<{ accountId: string } | null>;
-  findResetTarget(churchId: string): Promise<{
+  findResetTarget(userId: string): Promise<{
     churchId: string;
     churchName: string;
     email: string;
@@ -53,9 +53,9 @@ export function createPasswordLifecycle(
 ) {
   async function resetChurchPassword(
     operatorUserId: string,
-    churchId: string,
+    userId: string,
   ): Promise<ResetChurchPasswordResult> {
-    if (!UUID_PATTERN.test(churchId)) throw new PasswordLifecycleInputError();
+    if (!UUID_PATTERN.test(userId)) throw new PasswordLifecycleInputError();
     if (!UUID_PATTERN.test(operatorUserId))
       throw new PasswordLifecycleAuthorizationError();
 
@@ -73,7 +73,7 @@ export function createPasswordLifecycle(
       return await dependencies.runTransaction(async (transaction) => {
         if (!(await transaction.findActiveOperator(operatorUserId)))
           throw new PasswordLifecycleAuthorizationError();
-        const target = await transaction.findResetTarget(churchId);
+        const target = await transaction.findResetTarget(userId);
         if (!target) throw new PasswordLifecycleFailedError();
         if (
           !(await transaction.replaceCredentialPassword(

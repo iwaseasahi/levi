@@ -24,16 +24,17 @@ The initial release has two identity types:
 - a **church user**, who signs in with an email address and password and can use
   only that church's data.
 
-Initially, exactly one church user belongs to exactly one church. There are no
-roles or permissions inside a church. The data model must keep identity,
-membership, and church-owned data separate so a later multiple-user change does
-not require replacing identities or re-owning every record.
+Each church may have multiple church users, while each church user belongs to
+exactly one church. There are no roles or permissions inside a church. Every
+user authenticates independently and receives the same church scope so shared
+folders and bookmarks remain church-owned rather than user-owned.
 
 ## Initial release scope
 
 The first complete operator flow is:
 
-1. A platform operator creates a church and its initial account.
+1. A platform operator creates a church and its initial account, and may later
+   invite additional users to that church.
 2. The church user signs in with an email address and password.
 3. The user selects a Bible book, chapter, verse range, and display language.
 4. Levi shows the selected verses and opens or reuses a separate audience

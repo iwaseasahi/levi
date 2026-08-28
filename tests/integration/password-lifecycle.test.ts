@@ -75,10 +75,7 @@ describe("operator reset and forced password change", () => {
   it("replaces the hash, marks forced change, and revokes every session", async () => {
     const target = await fixture();
     await signIn(target.email, originalPassword);
-    const result = await resetChurchPassword(
-      target.operatorId,
-      target.churchId,
-    );
+    const result = await resetChurchPassword(target.operatorId, target.userId);
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: target.userId },
       include: { accounts: true, sessions: true },
@@ -102,17 +99,14 @@ describe("operator reset and forced password change", () => {
   it("denies a Church user at the reset use-case boundary", async () => {
     const target = await fixture();
     await expect(
-      resetChurchPassword(target.userId, target.churchId),
+      resetChurchPassword(target.userId, target.userId),
     ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
   });
 
   it("safely reissues reset and invalidates the earlier temporary password", async () => {
     const target = await fixture();
-    const first = await resetChurchPassword(target.operatorId, target.churchId);
-    const second = await resetChurchPassword(
-      target.operatorId,
-      target.churchId,
-    );
+    const first = await resetChurchPassword(target.operatorId, target.userId);
+    const second = await resetChurchPassword(target.operatorId, target.userId);
     const account = await prisma.account.findFirstOrThrow({
       where: { userId: target.userId, providerId: "credential" },
     });
@@ -133,7 +127,7 @@ describe("operator reset and forced password change", () => {
 
   it("uses the authenticated session, clears the gate, and keeps only the current session", async () => {
     const target = await fixture();
-    const reset = await resetChurchPassword(target.operatorId, target.churchId);
+    const reset = await resetChurchPassword(target.operatorId, target.userId);
     await signIn(target.email, reset.temporaryPassword);
     await signIn(target.email, reset.temporaryPassword);
     const sessions = await prisma.session.findMany({
@@ -168,7 +162,7 @@ describe("operator reset and forced password change", () => {
 
     const resets = await Promise.all(
       targets.map((target) =>
-        resetChurchPassword(target.operatorId, target.churchId),
+        resetChurchPassword(target.operatorId, target.userId),
       ),
     );
     for (const [index, target] of targets.entries()) {
@@ -230,7 +224,7 @@ describe("operator reset and forced password change", () => {
 
   it("rejects a stale session", async () => {
     const target = await fixture();
-    await resetChurchPassword(target.operatorId, target.churchId);
+    await resetChurchPassword(target.operatorId, target.userId);
     await expect(
       completeForcedPasswordChange({
         newPassword: selectedPassword,
@@ -243,7 +237,7 @@ describe("operator reset and forced password change", () => {
 
   it("rejects a completed password-change replay", async () => {
     const target = await fixture();
-    const reset = await resetChurchPassword(target.operatorId, target.churchId);
+    const reset = await resetChurchPassword(target.operatorId, target.userId);
     await signIn(target.email, reset.temporaryPassword);
     const session = await prisma.session.findFirstOrThrow({
       where: { userId: target.userId },

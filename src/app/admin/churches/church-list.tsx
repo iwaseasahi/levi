@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { ChurchDirectoryEntry } from "@/infrastructure/database/church-directory";
 
 const churchStatusLabels = {
@@ -25,34 +27,51 @@ export function ChurchList({ churches }: { churches: ChurchDirectoryEntry[] }) {
             <li key={church.id}>
               <div className="admin-church-heading">
                 <strong>{church.name}</strong>
-                <span
-                  className={`status-badge status-${church.status.toLowerCase()}`}
-                >
-                  <span className="visually-hidden">教会の状態: </span>
-                  {churchStatusLabels[church.status]}
-                </span>
+                <div className="admin-church-actions">
+                  <span
+                    className={`status-badge status-${church.status.toLowerCase()}`}
+                  >
+                    <span className="visually-hidden">教会の状態: </span>
+                    {churchStatusLabels[church.status]}
+                  </span>
+                  {church.status === "ACTIVE" ? (
+                    <Link
+                      aria-label={`${church.name}に利用者を招待`}
+                      className="secondary-button"
+                      href={`/admin/churches/${church.id}/users/invite`}
+                    >
+                      利用者を招待
+                    </Link>
+                  ) : null}
+                </div>
               </div>
-              {church.user ? (
-                <dl>
-                  <div>
-                    <dt>利用者</dt>
-                    <dd>{church.user.name}</dd>
-                  </div>
-                  <div>
-                    <dt>メールアドレス</dt>
-                    <dd>{church.user.email}</dd>
-                  </div>
-                  <div>
-                    <dt>利用者の状態</dt>
-                    <dd>
-                      <span
-                        className={`status-badge status-${church.user.status.toLowerCase()}`}
-                      >
-                        {userStatusLabels[church.user.status]}
-                      </span>
-                    </dd>
-                  </div>
-                </dl>
+              {church.users.length > 0 ? (
+                <ul className="admin-church-users">
+                  {church.users.map((user) => (
+                    <li key={user.id}>
+                      <dl>
+                        <div>
+                          <dt>利用者</dt>
+                          <dd>{user.name}</dd>
+                        </div>
+                        <div>
+                          <dt>メールアドレス</dt>
+                          <dd>{user.email}</dd>
+                        </div>
+                        <div>
+                          <dt>利用者の状態</dt>
+                          <dd>
+                            <span
+                              className={`status-badge status-${user.status.toLowerCase()}`}
+                            >
+                              {userStatusLabels[user.status]}
+                            </span>
+                          </dd>
+                        </div>
+                      </dl>
+                    </li>
+                  ))}
+                </ul>
               ) : (
                 <p className="admin-church-no-user">利用者は未登録です。</p>
               )}

@@ -40,12 +40,12 @@ export function createResetPasswordController(dependencies: {
   recordEvent(event: PasswordLifecycleAuditEvent): void;
   resetChurchPassword(
     operatorUserId: string,
-    churchId: string,
+    userId: string,
   ): Promise<ResetChurchPasswordResult>;
 }) {
   return async function resetPassword(
     headers: Headers,
-    input: { churchId: unknown; confirmed: unknown },
+    input: { userId: unknown; confirmed: unknown },
     requestId?: string,
   ): Promise<ResetPasswordState> {
     const access = await dependencies.getOperatorAccess(headers);
@@ -60,7 +60,7 @@ export function createResetPasswordController(dependencies: {
       });
       return { status: "error", message: "この操作を実行できません。" };
     }
-    const churchId = String(input.churchId ?? "");
+    const userId = String(input.userId ?? "");
     if (input.confirmed !== "yes") {
       dependencies.recordEvent({
         actorAdminUserId: access.adminUserId,
@@ -73,7 +73,7 @@ export function createResetPasswordController(dependencies: {
     try {
       const result = await dependencies.resetChurchPassword(
         access.adminUserId,
-        churchId,
+        userId,
       );
       dependencies.recordEvent({
         actorAdminUserId: access.adminUserId,

@@ -131,7 +131,7 @@ describe("auth and tenant constraints", () => {
     ).rejects.toThrow();
   });
 
-  it("enforces the initial one-user-per-church membership cardinality", async () => {
+  it("allows multiple users in one church while keeping one church per user", async () => {
     const first = pendingUser("test.database.first@example.invalid");
     await prisma.$transaction(async (transaction) => {
       const church = await transaction.church.create({
@@ -149,14 +149,24 @@ describe("auth and tenant constraints", () => {
       where: { name: "test.database.cardinality church" },
     });
     const second = pendingUser("test.database.second@example.invalid");
+    await prisma.$transaction(async (transaction) => {
+      await transaction.user.create({
+        data: { ...second, actorState: "ACTIVE" },
+      });
+      await transaction.churchMembership.create({
+        data: { churchId: church.id, userId: second.id },
+      });
+    });
     await expect(
-      prisma.$transaction(async (transaction) => {
-        await transaction.user.create({
-          data: { ...second, actorState: "ACTIVE" },
-        });
-        await transaction.churchMembership.create({
-          data: { churchId: church.id, userId: second.id },
-        });
+      prisma.churchMembership.count({ where: { churchId: church.id } }),
+    ).resolves.toBe(2);
+
+    const otherChurch = await prisma.church.create({
+      data: { name: "test.database.other cardinality church" },
+    });
+    await expect(
+      prisma.churchMembership.create({
+        data: { churchId: otherChurch.id, userId: second.id },
       }),
     ).rejects.toThrow();
   });

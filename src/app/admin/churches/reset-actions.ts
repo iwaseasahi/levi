@@ -46,7 +46,7 @@ export async function resetPasswordAction(
   return resetPassword(
     requestHeaders,
     {
-      churchId: formData.get("churchId"),
+      userId: formData.get("userId"),
       confirmed: formData.get("confirmed"),
     },
     requestHeaders.get(REQUEST_ID_HEADER) ?? undefined,

@@ -4,13 +4,18 @@ import type { ResetPasswordState } from "./reset-actions";
 
 export function ResetPasswordForm({
   action,
-  churches,
+  users,
 }: {
   action: (
     state: ResetPasswordState,
     formData: FormData,
   ) => Promise<ResetPasswordState>;
-  churches: Array<{ id: string; name: string }>;
+  users: Array<{
+    churchName: string;
+    email: string;
+    id: string;
+    name: string;
+  }>;
 }) {
   const [state, formAction, pending] = useActionState(action, {
     status: "idle",
@@ -33,14 +38,14 @@ export function ResetPasswordForm({
         }}
       >
         <fieldset disabled={pending}>
-          <label htmlFor="reset-church">対象教会</label>
-          <select id="reset-church" name="churchId" required defaultValue="">
+          <label htmlFor="reset-user">対象利用者</label>
+          <select id="reset-user" name="userId" required defaultValue="">
             <option value="" disabled>
               選択してください
             </option>
-            {churches.map((church) => (
-              <option key={church.id} value={church.id}>
-                {church.name}
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.churchName} / {user.name} / {user.email}
               </option>
             ))}
           </select>

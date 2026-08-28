@@ -6,9 +6,21 @@ import { requireAdminPageAccess } from "@/infrastructure/auth/admin-page-access"
 export default async function ChurchPasswordResetPage() {
   await requireAdminPageAccess();
   const churches = await prisma.church.findMany({
-    where: { status: "ACTIVE", membership: { isNot: null } },
+    where: { status: "ACTIVE", memberships: { some: {} } },
     orderBy: [{ name: "asc" }, { id: "asc" }],
-    select: { id: true, name: true },
+    select: {
+      id: true,
+      memberships: {
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: {
+          user: {
+            select: { actorState: true, email: true, id: true, name: true },
+          },
+        },
+        where: { user: { actorState: "ACTIVE" } },
+      },
+      name: true,
+    },
   });
 
   return (
@@ -20,7 +32,17 @@ export default async function ChurchPasswordResetPage() {
           教会利用者の既存セッションを失効し、新しい一時パスワードを発行します。
         </p>
       </header>
-      <ResetPasswordForm action={resetPasswordAction} churches={churches} />
+      <ResetPasswordForm
+        action={resetPasswordAction}
+        users={churches.flatMap((church) =>
+          church.memberships.map(({ user }) => ({
+            churchName: church.name,
+            email: user.email,
+            id: user.id,
+            name: user.name,
+          })),
+        )}
+      />
     </main>
   );
 }
