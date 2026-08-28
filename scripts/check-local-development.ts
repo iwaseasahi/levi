@@ -20,6 +20,7 @@ const packageJson = JSON.parse(read("package.json")) as {
 const mise = read("mise.toml");
 const setup = read("scripts/setup-local.sh");
 const e2eRunner = read("scripts/run-e2e-tests.ts");
+const e2eOperatorTests = read("tests/e2e/operator-provisioning.spec.ts");
 const compose = read("compose.development.yaml");
 const ci = read(".github/workflows/ci.yml");
 
@@ -69,8 +70,25 @@ assert(
   "local stop must preserve data and target Mailpit plus development PostgreSQL",
 );
 assert(
+  packageJson.scripts?.["db:up:test"] ===
+    "docker compose --file compose.development.yaml up -d --wait postgres-test" &&
+    packageJson.scripts?.["db:up:e2e"] ===
+      "docker compose --file compose.development.yaml up -d --wait mailpit-e2e postgres-test" &&
+    packageJson.scripts?.["db:clean:e2e"] ===
+      "docker compose --file compose.development.yaml rm --stop --force mailpit-e2e",
+  "test setup must isolate and remove the disposable E2E Mailpit",
+);
+assert(
   compose.startsWith("name: levi\n"),
   "Compose project name must remain stable across repository worktrees",
+);
+assert(
+  compose.includes('"127.0.0.1:1125:1025"') &&
+    compose.includes('"127.0.0.1:8026:8025"') &&
+    compose.includes("mailpit-e2e:") &&
+    compose.includes('"127.0.0.1:1126:1025"') &&
+    compose.includes('"127.0.0.1:8027:8025"'),
+  "development and E2E Mailpit must use separate loopback ports",
 );
 assert(
   packageJson.scripts?.["db:up"] ===
@@ -85,8 +103,25 @@ assert(
   ) &&
     e2eRunner.includes(
       'process.env.E2E_BETTER_AUTH_TRUSTED_ORIGINS ?? "http://127.0.0.1:3100"',
-    ),
-  "Local E2E must use its own explicit auth origin",
+    ) &&
+    e2eRunner.includes('MAIL_FROM: "levi-e2e@example.invalid"') &&
+    e2eRunner.includes('SMTP_HOST: "127.0.0.1"') &&
+    e2eRunner.includes('SMTP_PORT: "1126"') &&
+    e2eRunner.includes("SMTP_USER: undefined") &&
+    e2eRunner.includes("SMTP_PASSWORD: undefined") &&
+    e2eRunner.includes('E2E_MAILPIT_API_URL: "http://127.0.0.1:8027"') &&
+    e2eRunner.includes('localSetupScript: "db:up:e2e"') &&
+    e2eRunner.includes('runPnpm(["db:clean:e2e"]'),
+  "Local E2E must use its own explicit auth origin and unauthenticated Mailpit",
+);
+assert(
+  e2eOperatorTests.includes("process.env.E2E_MAILPIT_API_URL") &&
+    !e2eOperatorTests.includes("http://127.0.0.1:8026/api/v1"),
+  "E2E mail assertions must not access the developer Mailpit inbox",
+);
+assert(
+  ci.includes("- 1126:1025") && ci.includes("- 8027:8025"),
+  "CI E2E must use the same dedicated Mailpit ports as local E2E",
 );
 
 for (const signal of [

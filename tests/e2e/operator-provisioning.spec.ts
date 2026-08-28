@@ -18,6 +18,9 @@ import {
 // screenshots, traces, and videos so credentials cannot enter CI artifacts.
 test.use({ screenshot: "off", trace: "off", video: "off" });
 
+const mailpitApiUrl =
+  process.env.E2E_MAILPIT_API_URL ?? "http://127.0.0.1:8027";
+
 async function signIn(page: Page, email: string) {
   const response = await page.request.post("/api/auth/sign-in/email", {
     data: { email, password: E2E_PASSWORD },
@@ -47,7 +50,7 @@ async function findPasswordResetUrl(
     .poll(
       async () => {
         const response = await page.request.get(
-          "http://127.0.0.1:8026/api/v1/messages",
+          `${mailpitApiUrl}/api/v1/messages`,
         );
         if (!response.ok()) return undefined;
         const payload = (await response.json()) as {
@@ -65,7 +68,7 @@ async function findPasswordResetUrl(
     .not.toBeUndefined();
 
   const messagesResponse = await page.request.get(
-    "http://127.0.0.1:8026/api/v1/messages",
+    `${mailpitApiUrl}/api/v1/messages`,
   );
   const messages = (await messagesResponse.json()) as {
     messages: Array<{ ID: string; To: Array<{ Address: string }> }>;
@@ -75,7 +78,7 @@ async function findPasswordResetUrl(
   )?.ID;
   expect(messageId).toBeDefined();
   const messageResponse = await page.request.get(
-    `http://127.0.0.1:8026/api/v1/message/${messageId}`,
+    `${mailpitApiUrl}/api/v1/message/${messageId}`,
   );
   expect(messageResponse.ok()).toBe(true);
   const message = (await messageResponse.json()) as { Text: string };

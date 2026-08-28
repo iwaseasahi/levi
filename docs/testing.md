@@ -21,12 +21,14 @@ fixed local `levi_test` default is used. Every destructive setup boundary also
 rejects non-loopback hosts and any database name other than `levi_test` before
 migrations or fixture cleanup begin.
 
-Local mail tests use Mailpit. SMTP is available only on `127.0.0.1:1125`, and
-the inbox UI is <http://localhost:8026>. E2E tests clear the Mailpit inbox,
-submit an administrator invitation or reset request, obtain the generated URL
-from the Mailpit API, and complete the browser flow. They do not stub mail and
-cannot deliver to Gmail. Production is separately constrained to authenticated
-`smtp.gmail.com:587` submission.
+Local development mail uses Mailpit. SMTP is available only on
+`127.0.0.1:1125`, and the developer inbox UI is <http://localhost:8026>.
+E2E uses a separate disposable Mailpit on SMTP port `1126` and API port `8027`.
+The runner starts that service only for the test, obtains invitation and reset
+URLs from its API, and removes the container and inbox on success or failure.
+E2E never reads, clears, or writes the developer inbox. It does not stub mail
+and cannot deliver to Gmail. Production is separately constrained to
+authenticated `smtp.gmail.com:587` submission.
 
 Playwright treats `console.error`, uncaught page errors, unhandled browser
 rejections, and hydration errors as failures. Failed E2E tests retain a trace,
