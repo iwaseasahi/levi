@@ -25,9 +25,7 @@ describe("AdminSidebar", () => {
     expect(
       screen.getByRole("link", { name: "教会一覧" }).getAttribute("href"),
     ).toBe("/admin/churches");
-    expect(
-      screen.getByRole("link", { name: "教会を作成" }).getAttribute("href"),
-    ).toBe("/admin/churches/new");
+    expect(screen.queryByRole("link", { name: "教会を作成" })).toBeNull();
     expect(
       screen
         .getByRole("link", { name: "パスワードを再設定" })
@@ -39,19 +37,15 @@ describe("AdminSidebar", () => {
     expect(screen.getByRole("button", { name: "ログアウト" })).toBeTruthy();
   });
 
-  it("marks only the most specific administration destination as current", () => {
+  it("keeps the church directory current for nested church routes", () => {
     mockUsePathname.mockReturnValue("/admin/churches/new");
     render(<AdminSidebar />);
 
     expect(
       screen
-        .getByRole("link", { name: "教会を作成" })
-        .getAttribute("aria-current"),
-    ).toBe("page");
-    expect(
-      screen
         .getByRole("link", { name: "教会一覧" })
         .getAttribute("aria-current"),
-    ).toBeNull();
+    ).toBe("page");
+    expect(screen.queryByRole("link", { name: "教会を作成" })).toBeNull();
   });
 });
