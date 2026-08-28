@@ -110,8 +110,8 @@ jobs:
       mailpit:
         image: axllent/mailpit:v1.29.4
         ports:
-          - 1125:1025
-          - 8026:8025
+          - 1126:1025
+          - 8027:8025
       postgres:
         image: postgres:18-alpine
         env:
