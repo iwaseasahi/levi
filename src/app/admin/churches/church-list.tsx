@@ -29,7 +29,7 @@ export function ChurchList({ churches }: { churches: ChurchDirectoryEntry[] }) {
                 <strong>{church.name}</strong>
                 <div className="admin-church-actions">
                   <span
-                    className={`status-badge status-${church.status.toLowerCase()}`}
+                    className={`admin-church-action-control status-badge status-${church.status.toLowerCase()}`}
                   >
                     <span className="visually-hidden">教会の状態: </span>
                     {churchStatusLabels[church.status]}
@@ -37,7 +37,7 @@ export function ChurchList({ churches }: { churches: ChurchDirectoryEntry[] }) {
                   {church.status === "ACTIVE" ? (
                     <Link
                       aria-label={`${church.name}に利用者を招待`}
-                      className="secondary-button"
+                      className="admin-church-action-control secondary-button"
                       href={`/admin/churches/${church.id}/users/invite`}
                     >
                       利用者を招待

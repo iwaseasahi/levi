@@ -48,9 +48,17 @@ describe("ChurchList", () => {
     expect(screen.getByText("招待中")).toBeVisible();
     expect(screen.getByText("停止中")).toBeVisible();
     expect(screen.getByText("利用者は未登録です。")).toBeVisible();
+    const inviteLink = screen.getByRole("link", {
+      name: "第一教会に利用者を招待",
+    });
+    expect(inviteLink).toHaveAttribute(
+      "href",
+      "/admin/churches/church-active/users/invite",
+    );
+    expect(inviteLink).toHaveClass("admin-church-action-control");
     expect(
-      screen.getByRole("link", { name: "第一教会に利用者を招待" }),
-    ).toHaveAttribute("href", "/admin/churches/church-active/users/invite");
+      inviteLink.parentElement?.querySelector(".status-badge"),
+    ).toHaveClass("admin-church-action-control");
     expect(
       screen.queryByRole("link", { name: "第二教会に利用者を招待" }),
     ).not.toBeInTheDocument();

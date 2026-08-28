@@ -422,6 +422,14 @@
   align-items: center;
 }
 
+.admin-church-action-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 2.25rem;
+}
+
 .admin-church-actions .secondary-button {
   min-height: auto;
   padding: 0.45rem 0.7rem;
