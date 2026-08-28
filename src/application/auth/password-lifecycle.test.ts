@@ -8,27 +8,15 @@ import {
   type PasswordLifecycleTransaction,
 } from "./password-lifecycle";
 
-const operatorId = "00000000-0000-4000-8000-000000000001";
-const churchId = "00000000-0000-4000-8000-000000000002";
 const userId = "00000000-0000-4000-8000-000000000003";
 const sessionId = "00000000-0000-4000-8000-000000000004";
 
 function transaction(): PasswordLifecycleTransaction {
   return {
     clearForcedPasswordChange: vi.fn(),
-    findActiveOperator: vi.fn().mockResolvedValue(true),
     findForcedChangeAccount: vi
       .fn()
       .mockResolvedValue({ accountId: "account-id" }),
-    findResetTarget: vi.fn().mockResolvedValue({
-      churchId,
-      churchName: "テスト教会",
-      email: "church@example.invalid",
-      userId,
-    }),
-    markForcedPasswordChange: vi.fn(),
-    replaceCredentialPassword: vi.fn().mockResolvedValue(true),
-    revokeAllSessions: vi.fn(),
     revokeOtherSessions: vi.fn(),
     updateCredentialPassword: vi.fn(),
   };
@@ -36,8 +24,6 @@ function transaction(): PasswordLifecycleTransaction {
 
 function dependencies(tx = transaction()) {
   return {
-    findActiveOperator: vi.fn().mockResolvedValue(true),
-    generateTemporaryPassword: vi.fn(() => "t".repeat(24)),
     hashPassword: vi.fn(async (password: string) => `hashed:${password}`),
     runTransaction: vi.fn(async (operation) => operation(tx)),
     tx,
@@ -45,72 +31,6 @@ function dependencies(tx = transaction()) {
 }
 
 beforeEach(() => vi.clearAllMocks());
-
-describe("resetChurchPassword", () => {
-  it("rejects invalid identifiers before opening a transaction", async () => {
-    const deps = dependencies();
-    const lifecycle = createPasswordLifecycle(deps);
-    await expect(
-      lifecycle.resetChurchPassword(operatorId, "invalid"),
-    ).rejects.toBeInstanceOf(PasswordLifecycleInputError);
-    await expect(
-      lifecycle.resetChurchPassword("invalid", userId),
-    ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
-    expect(deps.runTransaction).not.toHaveBeenCalled();
-  });
-
-  it("replaces the credential and revokes all sessions", async () => {
-    const deps = dependencies();
-    const lifecycle = createPasswordLifecycle(deps);
-    await expect(
-      lifecycle.resetChurchPassword(operatorId, userId),
-    ).resolves.toEqual({
-      churchId,
-      churchName: "テスト教会",
-      email: "church@example.invalid",
-      temporaryPassword: "t".repeat(24),
-      userId,
-    });
-    expect(deps.tx.replaceCredentialPassword).toHaveBeenCalledWith(
-      userId,
-      `hashed:${"t".repeat(24)}`,
-    );
-    expect(deps.tx.markForcedPasswordChange).toHaveBeenCalledWith(userId);
-    expect(deps.tx.revokeAllSessions).toHaveBeenCalledWith(userId);
-  });
-
-  it("fails closed before and during the transaction", async () => {
-    const lookupFailed = dependencies();
-    lookupFailed.findActiveOperator.mockRejectedValue(new Error("db"));
-    await expect(
-      createPasswordLifecycle(lookupFailed).resetChurchPassword(
-        operatorId,
-        userId,
-      ),
-    ).rejects.toBeInstanceOf(PasswordLifecycleFailedError);
-
-    const denied = dependencies();
-    denied.findActiveOperator.mockResolvedValue(false);
-    await expect(
-      createPasswordLifecycle(denied).resetChurchPassword(operatorId, userId),
-    ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
-
-    const recheckDenied = dependencies();
-    vi.mocked(recheckDenied.tx.findActiveOperator).mockResolvedValue(false);
-    await expect(
-      createPasswordLifecycle(recheckDenied).resetChurchPassword(
-        operatorId,
-        userId,
-      ),
-    ).rejects.toBeInstanceOf(PasswordLifecycleAuthorizationError);
-
-    const missing = dependencies();
-    vi.mocked(missing.tx.findResetTarget).mockResolvedValue(null);
-    await expect(
-      createPasswordLifecycle(missing).resetChurchPassword(operatorId, userId),
-    ).rejects.toBeInstanceOf(PasswordLifecycleFailedError);
-  });
-});
 
 describe("completeForcedPasswordChange", () => {
   it("validates password length and confirmation before persistence", async () => {

@@ -154,7 +154,7 @@ test.describe("administrator invitations", () => {
     ).toBeVisible();
     await expect(
       dashboard.getByRole("link", { name: /パスワードを再設定/ }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(
       dashboard.getByRole("link", { name: /管理者の一覧/ }),
     ).toBeVisible();

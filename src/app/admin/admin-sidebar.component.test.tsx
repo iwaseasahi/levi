@@ -27,10 +27,8 @@ describe("AdminSidebar", () => {
     ).toBe("/admin/churches");
     expect(screen.queryByRole("link", { name: "教会を作成" })).toBeNull();
     expect(
-      screen
-        .getByRole("link", { name: "パスワードを再設定" })
-        .getAttribute("href"),
-    ).toBe("/admin/churches/password-reset");
+      screen.queryByRole("link", { name: "パスワードを再設定" }),
+    ).toBeNull();
     expect(
       screen.getByRole("link", { name: "管理者一覧" }).getAttribute("href"),
     ).toBe("/admin/admin-users");

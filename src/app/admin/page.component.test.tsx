@@ -31,8 +31,8 @@ describe("AdministrationPage", () => {
       "/admin/churches/new",
     );
     expect(
-      screen.getByRole("link", { name: /パスワードを再設定/ }),
-    ).toHaveAttribute("href", "/admin/churches/password-reset");
+      screen.queryByRole("link", { name: /パスワードを再設定/ }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /管理者の一覧/ })).toHaveAttribute(
       "href",
       "/admin/admin-users",

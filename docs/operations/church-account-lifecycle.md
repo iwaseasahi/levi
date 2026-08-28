@@ -1,6 +1,6 @@
 # Church account lifecycle runbook
 
-This runbook covers the initial operator-managed Church account lifecycle. It
+This runbook covers the email-based Church account lifecycle. It
 does not authorize production access, secret changes, deployment, or direct
 production database mutation. Those actions retain the human approval gates in
 `docs/governance/autonomy.md`.
@@ -8,45 +8,38 @@ production database mutation. Those actions retain the human approval gates in
 ## Before provisioning
 
 1. Verify the Church contact and requested login email using the approved
-   operator records. Levi does not verify mailbox ownership in the initial
-   release.
-2. Confirm that the recipient is available for immediate credential handoff.
+   operator records.
+2. Confirm that the recipient can receive email at that address.
 3. Open the protected Levi operator page directly. Do not share the operator
    session or use a screen-sharing recording.
 4. Enter the canonical Church name, recipient display name, and normalized login
    email. A repeated submission returns a generic failure and must not be treated
    as evidence that an account exists.
 
-## One-time temporary-password handoff
+## Invitation and password setup
 
-After a successful commit, Levi returns the temporary password once and keeps it
-hidden until the operator deliberately reveals it.
+After a successful commit, Levi sends a single-use password-setup link to the
+recipient. The link remains valid for 24 hours.
 
-1. Use either an in-person handoff or a live voice call to a contact whose
-   identity the operator has already verified. Do not record the call.
-2. Reveal the temporary password only when the recipient is ready to receive it.
-3. Read or show the login email and temporary password. Ask the recipient to
-   confirm receipt without repeating the password into a recording or message.
-4. Close the credential display immediately. It cannot be reopened.
-5. Do not place the value in email, SMS, chat, an Issue, pull request, support
-   ticket, agent prompt, screenshot, screen recording, ordinary notes, or logs.
+1. Confirm the administration screen reports that the invitation was accepted
+   for delivery; do not treat this as proof that Gmail delivered it.
+2. Ask the recipient to check the addressed mailbox and its spam folder.
+3. The recipient opens the link and chooses a password known only to them.
+4. Do not copy invitation links into Issues, pull requests, agent prompts,
+   screenshots, recordings, ordinary notes, or logs.
 
-The recipient must change the temporary password at the next login. Until the
-change succeeds, Levi permits only the password-change screen and logout. A
-successful change verifies the current temporary password, replaces its hash,
-clears the forced-change state, and revokes every other session.
+## Lost, expired, or possibly exposed link
 
-## Lost or possibly exposed credential
-
-- Do not create a second Church or a second account to work around a lost
-  temporary password.
+- Do not create a second Church or duplicate identity to work around an expired
+  invitation.
 - Treat a screenshot, message, recording, unintended observer, or uncertain
-  handoff as exposure.
-- Suspend use of the account and invoke the protected operator reset/reissue
-  workflow. That workflow replaces the scrypt hash, revokes all
-  sessions, and returns a new temporary password once.
-- If the protected reset/reissue workflow is unavailable, keep the account
-  unused and escalate; never edit credential rows directly.
+  sharing of a setup/reset link as exposure.
+- The user requests a new link through `/forgot-password`; Levi returns the same
+  generic response whether the identity exists or not.
+- A valid replacement link remains usable for 24 hours. Successful reset revokes
+  existing sessions.
+- The platform operator does not issue or view a password. Never edit credential
+  or verification rows directly.
 
 ## Suspension and resumption
 

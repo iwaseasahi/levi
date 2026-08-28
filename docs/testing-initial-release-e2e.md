@@ -6,28 +6,28 @@ release. CI installs that browser afresh and runs with retries disabled.
 
 ## Acceptance matrix
 
-| Release behavior                           | Playwright evidence                                                                                                                                                                         |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Operator creates a Church account          | `operator-provisioning.spec.ts` submits the protected form, verifies one-time output, and rejects duplicate provisioning.                                                                   |
-| New Church account can start               | The same scenario uses the emitted one-time password, reaches forced change, selects a password, and enters the Ginmaku-compatible Church screen.                                           |
-| Church login, persistence, and logout      | `church-authentication.spec.ts` verifies refresh, a second same-origin window, logout, expiry, and explicit revocation.                                                                     |
-| Operator reset and stale-session rejection | `password-lifecycle.spec.ts` establishes an old Church session, resets through the operator UI, proves the old page is denied, then completes one-time login and forced change.             |
-| Japanese, NKJV, and bilingual search       | `scripture-search-validation.spec.ts` checks the Ginmaku table's 4-column/22-row order, all three language selections, validation focus, and direct audience-tab opening without a preview. |
-| Separate direct audience tab               | `scripture-projection-navigation.spec.ts` keeps the search tab open, opens an ordinary tab, and checks audience-only content and its `chapter:verse` heading.                               |
-| Direct Ginmaku controls                    | The projection/navigation scenario checks the audience handshake; text larger/smaller changes its font and the search controls change previous/next scripture.                              |
-| Ginmaku keyboard navigation                | The projection/navigation scenario verifies Up/Down navigation beyond the selected end and across chapter and book boundaries without scrolling.                                            |
-| End, chapter, and book boundaries          | The projection/navigation scenario crosses the selected end verse, both directions across chapters, and both directions across Genesis/Exodus.                                              |
-| Audience recovery                          | `scripture-window-recovery.spec.ts` verifies reload, close detection, disabled controls, and reopening the direct audience tab.                                                             |
-| Folder and bookmark lifecycle              | `scripture-saved-content.spec.ts` creates, pins, marks recent, renames, reorders, reopens, deletes a bookmark, and physically deletes its folder.                                           |
-| Tenant denial                              | `scripture-tenant-isolation.spec.ts` proves foreign and guessed folder IDs return indistinguishable 404 responses.                                                                          |
-| Runtime and accessibility                  | Shared fixtures fail on unexpected browser errors from the search tab and popup tabs; Axe checks search, audience, saved content, forced-change, and operator surfaces.                     |
+| Release behavior                                  | Playwright evidence                                                                                                                                                                         |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Operator creates a Church account                 | `operator-provisioning.spec.ts` submits the protected invitation form and rejects duplicate provisioning.                                                                                   |
+| New Church account can start                      | The invitation scenario consumes a synthetic 24-hour email setup link, selects a password, and enters the Ginmaku-compatible Church screen.                                                 |
+| Church login, persistence, and logout             | `church-authentication.spec.ts` verifies refresh, a second same-origin window, logout, expiry, and explicit revocation.                                                                     |
+| Self-service recovery and stale-session rejection | Password-recovery E2E requests and consumes a synthetic email link, changes the password, and proves the previous session is denied.                                                        |
+| Japanese, NKJV, and bilingual search              | `scripture-search-validation.spec.ts` checks the Ginmaku table's 4-column/22-row order, all three language selections, validation focus, and direct audience-tab opening without a preview. |
+| Separate direct audience tab                      | `scripture-projection-navigation.spec.ts` keeps the search tab open, opens an ordinary tab, and checks audience-only content and its `chapter:verse` heading.                               |
+| Direct Ginmaku controls                           | The projection/navigation scenario checks the audience handshake; text larger/smaller changes its font and the search controls change previous/next scripture.                              |
+| Ginmaku keyboard navigation                       | The projection/navigation scenario verifies Up/Down navigation beyond the selected end and across chapter and book boundaries without scrolling.                                            |
+| End, chapter, and book boundaries                 | The projection/navigation scenario crosses the selected end verse, both directions across chapters, and both directions across Genesis/Exodus.                                              |
+| Audience recovery                                 | `scripture-window-recovery.spec.ts` verifies reload, close detection, disabled controls, and reopening the direct audience tab.                                                             |
+| Folder and bookmark lifecycle                     | `scripture-saved-content.spec.ts` creates, pins, marks recent, renames, reorders, reopens, deletes a bookmark, and physically deletes its folder.                                           |
+| Tenant denial                                     | `scripture-tenant-isolation.spec.ts` proves foreign and guessed folder IDs return indistinguishable 404 responses.                                                                          |
+| Runtime and accessibility                         | Shared fixtures fail on unexpected browser errors from the search tab and popup tabs; Axe checks search, audience, saved content, forced-change, and operator surfaces.                     |
 
 ## Secret and artifact boundary
 
-The provisioning and password-reset specs necessarily handle live synthetic
-one-time passwords. Both files set screenshot, trace, and video to `off`, so the
-credential cannot enter the E2E artifacts uploaded by CI. They assert only
-length and behavior and never print the value. All other retained artifacts use
+The invitation and password-reset specs necessarily handle live synthetic
+single-use tokens. Those files set screenshot, trace, and video to `off`, so the
+token cannot enter the E2E artifacts uploaded by CI. They assert only behavior
+and never print the value. All other retained artifacts use
 synthetic `.invalid` identities and synthetic scripture; no production data is
 used.
 

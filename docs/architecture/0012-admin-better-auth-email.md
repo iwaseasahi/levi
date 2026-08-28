@@ -24,7 +24,7 @@ login identifier. Do not maintain a separate username or login ID.
 
 Use Better Auth password-reset tokens for both invitation password setup and
 active administrator recovery. Deliver them through Gmail in production and
-Mailpit in development. Tokens expire after one hour and successful reset
+Mailpit in development. Tokens expire after 24 hours and successful reset
 revokes existing sessions.
 
 ## Consequences

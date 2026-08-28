@@ -32,16 +32,6 @@ export default async function AdministrationPage() {
           </span>
           <span aria-hidden="true">→</span>
         </Link>
-        <Link href="/admin/churches/password-reset">
-          <span className="admin-dashboard-icon" aria-hidden="true">
-            ↻
-          </span>
-          <span>
-            <strong>パスワードを再設定</strong>
-            <small>教会利用者へ新しい一時パスワードを発行します</small>
-          </span>
-          <span aria-hidden="true">→</span>
-        </Link>
         <Link href="/admin/admin-users">
           <span className="admin-dashboard-icon" aria-hidden="true">
             ◎
