@@ -22,6 +22,10 @@ describe("AdministrationPage", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "管理画面" }),
     ).toBeVisible();
+    expect(screen.getByRole("link", { name: /教会の一覧/ })).toHaveAttribute(
+      "href",
+      "/admin/churches",
+    );
     expect(screen.getByRole("link", { name: /教会を作成/ })).toHaveAttribute(
       "href",
       "/admin/churches/new",

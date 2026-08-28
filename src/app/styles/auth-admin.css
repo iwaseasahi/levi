@@ -135,7 +135,7 @@
   }
 
   .admin-sidebar nav {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .admin-nav-link {
@@ -392,6 +392,59 @@
   list-style: none;
 }
 
+.admin-church-list ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-church-list li {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.65rem;
+  background: var(--surface-control);
+}
+
+.admin-church-heading {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-church-list dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.admin-church-list dl div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.admin-church-list dt {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.admin-church-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-church-no-user {
+  margin: 0;
+  color: var(--text-muted);
+}
+
 .admin-empty-state {
   margin: 0;
   color: var(--muted-text);
@@ -488,7 +541,25 @@
   color: var(--accent-hover) !important;
 }
 
+.status-pending {
+  border-color: #6f512c;
+  color: var(--accent-hover) !important;
+}
+
+.status-suspended {
+  border-color: var(--error-border);
+  color: var(--error-text) !important;
+}
+
 @media (max-width: 32rem) {
+  .admin-church-heading {
+    align-items: flex-start;
+  }
+
+  .admin-church-list dl {
+    grid-template-columns: 1fr;
+  }
+
   .admin-user-list li {
     align-items: flex-start;
     flex-direction: column;

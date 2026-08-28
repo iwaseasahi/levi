@@ -107,10 +107,10 @@ test.describe("operator administration access", () => {
   }) => {
     await signIn(page, E2E_CHURCH_USER_EMAIL);
 
-    const response = await page.request.get("/admin/churches/new");
+    const response = await page.request.get("/admin/churches");
 
     expect(response.status()).toBe(401);
-    expect(await response.text()).not.toContain("教会アカウントを作成");
+    expect(await response.text()).not.toContain("教会一覧");
   });
 
   test("requires an individual administrator login after Basic authentication", async ({
@@ -146,6 +146,9 @@ test.describe("administrator invitations", () => {
     ).toBeVisible();
     const dashboard = page.getByRole("navigation", { name: "管理機能" });
     await expect(
+      dashboard.getByRole("link", { name: /教会の一覧/ }),
+    ).toBeVisible();
+    await expect(
       dashboard.getByRole("link", { name: /教会を作成/ }),
     ).toBeVisible();
     await expect(
@@ -154,6 +157,26 @@ test.describe("administrator invitations", () => {
     await expect(
       dashboard.getByRole("link", { name: /管理者の一覧/ }),
     ).toBeVisible();
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  });
+
+  test("lists registered churches and their users", async ({ page }) => {
+    await signInAdmin(page);
+    await page.goto("/admin/churches");
+
+    await expect(
+      page.getByRole("heading", { level: 1, name: "教会一覧" }),
+    ).toBeVisible();
+    await expect(page.getByText("test.e2e member church")).toBeVisible();
+    await expect(page.getByText(E2E_CHURCH_USER_EMAIL)).toBeVisible();
+    await expect(page.getByText("有効").first()).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
     expect(

@@ -1,0 +1,65 @@
+import type { ChurchDirectoryEntry } from "@/infrastructure/database/church-directory";
+
+const churchStatusLabels = {
+  ACTIVE: "利用中",
+  SUSPENDED: "停止中",
+} as const;
+
+const userStatusLabels = {
+  ACTIVE: "有効",
+  PENDING: "招待中",
+} as const;
+
+export function ChurchList({ churches }: { churches: ChurchDirectoryEntry[] }) {
+  return (
+    <section
+      aria-labelledby="churches-heading"
+      className="admin-form admin-church-list"
+    >
+      <h2 id="churches-heading">教会</h2>
+      {churches.length === 0 ? (
+        <p className="admin-empty-state">教会はまだ登録されていません。</p>
+      ) : (
+        <ul>
+          {churches.map((church) => (
+            <li key={church.id}>
+              <div className="admin-church-heading">
+                <strong>{church.name}</strong>
+                <span
+                  className={`status-badge status-${church.status.toLowerCase()}`}
+                >
+                  <span className="visually-hidden">教会の状態: </span>
+                  {churchStatusLabels[church.status]}
+                </span>
+              </div>
+              {church.user ? (
+                <dl>
+                  <div>
+                    <dt>利用者</dt>
+                    <dd>{church.user.name}</dd>
+                  </div>
+                  <div>
+                    <dt>メールアドレス</dt>
+                    <dd>{church.user.email}</dd>
+                  </div>
+                  <div>
+                    <dt>利用者の状態</dt>
+                    <dd>
+                      <span
+                        className={`status-badge status-${church.user.status.toLowerCase()}`}
+                      >
+                        {userStatusLabels[church.user.status]}
+                      </span>
+                    </dd>
+                  </div>
+                </dl>
+              ) : (
+                <p className="admin-church-no-user">利用者は未登録です。</p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
