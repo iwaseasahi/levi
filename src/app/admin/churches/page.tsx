@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdminPageAccess } from "@/infrastructure/auth/admin-page-access";
 import { listChurches } from "@/infrastructure/database/church-directory";
 import { ChurchList } from "./church-list";
+import { deleteChurchAction } from "./actions";
 
 export default async function ChurchAdministrationPage() {
   await requireAdminPageAccess();
@@ -20,7 +21,7 @@ export default async function ChurchAdministrationPage() {
           教会を作成
         </Link>
       </header>
-      <ChurchList churches={churches} />
+      <ChurchList churches={churches} deleteAction={deleteChurchAction} />
     </main>
   );
 }

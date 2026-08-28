@@ -386,24 +386,25 @@ Search/import reconciliation must reject gaps in the inclusive range.
 
 ## Ownership and deletion matrix
 
-| Parent or action            | Relation/target                 | DB action | Required behavior                                                |
-| --------------------------- | ------------------------------- | --------- | ---------------------------------------------------------------- |
-| Delete User                 | Account, Session                | CASCADE   | remove credential/session rows                                   |
-| Delete User                 | actor subtype                   | CASCADE   | remove membership or operator assignment                         |
-| Delete Church               | ChurchMembership                | CASCADE   | remove tenant assignment                                         |
-| Delete Church               | Folder                          | CASCADE   | start church-content physical deletion                           |
-| Delete Folder               | Bookmark                        | CASCADE   | remove only bookmarks in that folder                             |
-| Delete Bookmark             | ScriptureBookmark               | CASCADE   | remove typed payload                                             |
-| Delete Church               | associated User                 | no FK     | service transaction explicitly deletes initial User after Church |
-| Delete Translation or Book  | names, verses, saved references | RESTRICT  | master removal requires explicit migration/reconciliation        |
-| Delete BibleVerse           | ScriptureBookmark endpoint      | RESTRICT  | saved ranges prevent endpoint deletion                           |
-| Delete Verification/Session | expired row                     | direct    | bounded cleanup; no retained auth history                        |
+| Parent or action            | Relation/target                 | DB action | Required behavior                                                     |
+| --------------------------- | ------------------------------- | --------- | --------------------------------------------------------------------- |
+| Delete User                 | Account, Session                | CASCADE   | remove credential/session rows                                        |
+| Delete User                 | actor subtype                   | CASCADE   | remove membership or operator assignment                              |
+| Delete Church               | ChurchMembership                | CASCADE   | remove tenant assignment                                              |
+| Delete Church               | Folder                          | CASCADE   | start church-content physical deletion                                |
+| Delete Folder               | Bookmark                        | CASCADE   | remove only bookmarks in that folder                                  |
+| Delete Bookmark             | ScriptureBookmark               | CASCADE   | remove typed payload                                                  |
+| Delete Church               | associated Users                | no FK     | service transaction explicitly deletes every member User after Church |
+| Delete Translation or Book  | names, verses, saved references | RESTRICT  | master removal requires explicit migration/reconciliation             |
+| Delete BibleVerse           | ScriptureBookmark endpoint      | RESTRICT  | saved ranges prevent endpoint deletion                                |
+| Delete Verification/Session | expired row                     | direct    | bounded cleanup; no retained auth history                             |
 
-Church deletion captures the initial membership User ID, deletes the Church
-aggregate and then the User in one transaction. This explicit step avoids a
-foreign-key cascade from a tenant into an identity that could later have other
-memberships. Suspension is not deletion and revokes sessions without deleting
-content.
+Church deletion captures every membership User ID, deletes the Church aggregate,
+removes password-reset Verification rows whose value is one of those User IDs,
+and then deletes every captured User in one transaction. User deletion cascades
+to Account and Session. This explicit step avoids a foreign-key cascade from a
+tenant into an identity that could later have another ownership model.
+Suspension is not deletion and revokes sessions without deleting content.
 
 ## Representative queries and index rationale
 

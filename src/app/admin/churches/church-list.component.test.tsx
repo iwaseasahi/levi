@@ -2,11 +2,12 @@ import "@testing-library/jest-dom/vitest";
 
 import axe from "axe-core";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { ChurchList } from "./church-list";
 
 describe("ChurchList", () => {
   it("shows church and user states without exposing authentication data", async () => {
+    const deleteAction = vi.fn();
     const { container } = render(
       <ChurchList
         churches={[
@@ -38,6 +39,7 @@ describe("ChurchList", () => {
             users: [],
           },
         ]}
+        deleteAction={deleteAction}
       />,
     );
 
@@ -62,6 +64,12 @@ describe("ChurchList", () => {
     expect(
       screen.queryByRole("link", { name: "第二教会に利用者を招待" }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "第一教会を削除" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "第二教会を削除" }),
+    ).toBeVisible();
     expect(container.textContent).not.toContain("password");
     expect(
       (
@@ -73,7 +81,7 @@ describe("ChurchList", () => {
   });
 
   it("shows an empty state when no churches are registered", () => {
-    render(<ChurchList churches={[]} />);
+    render(<ChurchList churches={[]} deleteAction={vi.fn()} />);
 
     expect(screen.getByText("教会はまだ登録されていません。")).toBeVisible();
   });

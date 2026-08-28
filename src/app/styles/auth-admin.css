@@ -540,6 +540,68 @@
   opacity: 0.55;
 }
 
+.admin-church-delete {
+  display: inline-flex;
+}
+
+.admin-delete-dialog-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 78%);
+}
+
+.admin-delete-dialog {
+  display: grid;
+  width: min(34rem, 100%);
+  gap: 1rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--error-text);
+  border-radius: 0.8rem;
+  background: var(--surface-panel);
+  box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 45%);
+}
+
+.admin-delete-dialog h2,
+.admin-delete-dialog p {
+  margin: 0;
+}
+
+.admin-delete-dialog form {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.admin-delete-dialog label {
+  font-weight: 750;
+}
+
+.admin-delete-dialog input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-delete-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-end;
+}
+
+.admin-delete-dialog-actions .secondary-button,
+.admin-delete-dialog-actions .admin-delete-button {
+  min-height: 2.75rem;
+  margin: 0;
+}
+
+.admin-church-delete-error {
+  color: var(--error-text);
+}
+
 .admin-user-list .current-admin-label {
   color: var(--text-muted);
   font-size: 0.78rem;

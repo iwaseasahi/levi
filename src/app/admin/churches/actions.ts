@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 
 import {
   createProvisionChurchController,
@@ -10,6 +11,11 @@ import {
   createInviteChurchUserController,
   type InviteChurchUserFormState,
 } from "@/application/admin/invite-church-user-controller";
+import {
+  createDeleteChurchController,
+  type DeleteChurchState,
+} from "@/application/admin/delete-church-controller";
+import { deleteChurch } from "@/infrastructure/auth/church-deletion";
 import { inviteChurchUser } from "@/infrastructure/auth/church-user-invitations";
 import { provisionChurch } from "@/infrastructure/auth/church-provisioning";
 import { getOperatorAccess } from "@/infrastructure/auth/operator-session";
@@ -61,6 +67,28 @@ const handleInviteChurchUser = createInviteChurchUserController({
   },
 });
 
+const handleDeleteChurch = createDeleteChurchController({
+  deleteChurch,
+  getOperatorAccess,
+  recordEvent(event) {
+    writeLog({
+      attributes: {
+        capability: "church.delete",
+        outcome: event.outcome,
+        ...(event.actorAdminUserId
+          ? { actorAdminUserId: event.actorAdminUserId }
+          : {}),
+        ...(event.targetChurchId
+          ? { targetChurchId: event.targetChurchId }
+          : {}),
+      },
+      event: "admin.church_deletion",
+      level: event.outcome === "failed" ? "error" : "info",
+      ...(event.requestId ? { requestId: event.requestId } : {}),
+    });
+  },
+});
+
 export async function provisionChurchAction(
   _previousState: ProvisionChurchFormState,
   formData: FormData,
@@ -91,4 +119,21 @@ export async function inviteChurchUserAction(
     },
     requestHeaders.get(REQUEST_ID_HEADER) ?? undefined,
   );
+}
+
+export async function deleteChurchAction(
+  _previousState: DeleteChurchState,
+  formData: FormData,
+): Promise<DeleteChurchState> {
+  const requestHeaders = await headers();
+  const result = await handleDeleteChurch(
+    requestHeaders,
+    formData.get("churchId"),
+    formData.get("confirmationName"),
+    requestHeaders.get(REQUEST_ID_HEADER) ?? undefined,
+  );
+  if (result.status === "success") {
+    revalidatePath("/admin/churches");
+  }
+  return result;
 }
