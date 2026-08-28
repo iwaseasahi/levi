@@ -42,9 +42,10 @@ The first complete operator flow is:
 5. The user moves through verses and controls the audience display.
 6. The user may save and reopen the search through folders and bookmarks.
 
-The release includes login, logout, platform-operator-managed password reset,
-tenant isolation, Bible data migration, search, projection, and Bible-search
-bookmarks and folders. It does not require an outbound email service.
+The release includes login, logout, email invitations, self-service password
+recovery, tenant isolation, Bible data migration, search, projection, and
+Bible-search bookmarks and folders. Production email is delivered through the
+approved Gmail SMTP account; development uses Mailpit.
 
 ## Bible catalog and migration
 
@@ -187,26 +188,24 @@ revocation, account suspension, and password reset invalidate access to protecte
 routes.
 
 An ordinary authenticated session remains valid for 30 days after its last
-eligible refresh and refreshes at most once per day. Logout, platform-operator
-reset, account suspension, and explicit revocation take effect immediately even
-within that period.
+eligible refresh and refreshes at most once per day. Logout, successful
+self-service password reset, account suspension, and explicit revocation take
+effect immediately even within that period.
 
-A church user cannot request an email reset. A platform operator resets the
-account from the protected administration UI. Reset revokes all existing
-sessions, issues a generated one-time temporary password that is displayed only
-once to the platform operator, and requires the church user to choose a new
-password at the next login. Until that change succeeds, the user may access only
-the password-change and logout operations. The temporary password is never
-stored or logged in plaintext, and Levi does not transmit it by email; the
-platform operator communicates it through an approved out-of-band method.
+A church user requests password recovery at `/forgot-password`. Levi always
+returns a generic response and sends a single-use setup link to the registered
+email address when the account is eligible. The link remains valid for 24 hours.
+A successful reset revokes existing sessions. A signed-in church user may also
+change their own password from the account screen. The administration UI does
+not issue, display, or communicate passwords.
 
 The login password and both new-password fields are hidden initially. Each field
 has an independently operable visibility control that reveals the current input
 without clearing or copying it and can hide it again before submission.
 
-The authentication library, session lifetime, administrator reset behavior, and
-temporary-password safeguards are selected through
-[Issue #40](https://github.com/iwaseasahi/levi/issues/40).
+The authentication library and session lifetime are selected through
+[Issue #40](https://github.com/iwaseasahi/levi/issues/40). Email invitation and
+self-service recovery are governed by ADR 0013.
 
 ## UI state and accessibility requirements
 

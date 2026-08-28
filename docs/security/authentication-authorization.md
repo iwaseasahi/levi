@@ -25,13 +25,12 @@ The implemented boundary follows these rules:
 - keep audience/display access narrower than controller/operator access;
 - keep public sign-up disabled and account creation behind the platform-operator
   use case;
-- hash passwords with Better Auth's `scrypt`, revoke all sessions after
-  administrator password reset/suspension, require a one-hour email setup link
-  for invitations, and never log secret values;
+- hash passwords with Better Auth's `scrypt`, revoke all sessions after a
+  successful self-service reset or suspension, require 24-hour single-use email
+  links for invitations and recovery, and never log secret values;
 - use exact trusted origins, host-only secure cookies, database-backed rate
   limits, and no initial session cookie cache; and
-- record security-relevant actions without recording credentials, tokens, or
-  temporary passwords.
+- record security-relevant actions without recording credentials or tokens.
 
 The `/admin` route is challenged by Proxy. The login page then requires an
 individual `admin_users` credential, and every protected page and administration
@@ -67,8 +66,8 @@ fixtures.
   `ChurchScope`.
 - A database session expires 30 days after its last eligible refresh and may roll
   at most once per day.
-- Logout revokes the current session. Administrator reset, suspension, and
-  explicit revoke-all revoke every applicable session.
+- Logout revokes the current session. Successful self-service password reset,
+  suspension, and explicit revoke-all revoke every applicable session.
 - Administrator and church-user invitation and self-service reset use 24-hour
   email links.
   Successful setup/reset activates an invited identity and revokes existing
@@ -76,6 +75,7 @@ fixtures.
 - Expired session rows are removed on a bounded schedule; they are not retained
   as an authentication history.
 
-Password, Basic password verifier, temporary password, cookie, session token,
-and auth secret values are Restricted. Email addresses and retained IP/user-agent metadata are
-Confidential. See [`data-classification.md`](data-classification.md).
+Password, Basic password verifier, invitation/reset token, cookie, session
+token, and auth secret values are Restricted. Email addresses and retained
+IP/user-agent metadata are Confidential. See
+[`data-classification.md`](data-classification.md).

@@ -7,10 +7,6 @@ import { adminLogoutAction } from "./auth-actions";
 const items = [
   { href: "/admin", label: "トップ" },
   { href: "/admin/churches", label: "教会一覧" },
-  {
-    href: "/admin/churches/password-reset",
-    label: "パスワードを再設定",
-  },
   { href: "/admin/admin-users", label: "管理者一覧" },
 ] as const;
 

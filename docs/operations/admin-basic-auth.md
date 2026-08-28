@@ -26,7 +26,7 @@ is required to forget it.
 1. Open `/admin/admin-users` through the production HTTPS origin.
 2. Enter the administrator name and unique email address.
 3. Select **管理者を招待**.
-4. Levi sends a one-hour password setup link to the email address. It never
+4. Levi sends a 24-hour password setup link to the email address. It never
    displays or transfers a temporary password.
 5. The invited administrator opens the link, chooses a password, and signs in
    at `/admin/login` with the email address and selected password.
@@ -39,7 +39,7 @@ own account.
 ## Password reset
 
 An administrator selects **パスワードを忘れた場合** on `/admin/login`, enters
-their email address, and receives a one-hour reset link. The response is the same
+their email address, and receives a 24-hour reset link. The response is the same
 whether or not the address exists. Successful reset revokes all administrator
 sessions. The outer Basic authentication is still required for the reset pages.
 
@@ -89,7 +89,7 @@ production database edits. Do not send a reset request to a placeholder.
 - Basic authentication still protects every `/admin` and `/api/admin-auth`
   request.
 - Administrator login creates a separate 30-day database session.
-- Invitation and reset links expire after one hour and cannot be reused.
+- Invitation and reset links expire after 24 hours and cannot be reused.
 - Password reset revokes existing administrator sessions.
 - Local mail appears only in Mailpit.
 - Production secret validation succeeds without printing values.

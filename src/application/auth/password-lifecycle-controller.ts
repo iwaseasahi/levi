@@ -1,20 +1,7 @@
-import type { OperatorAccess } from "./operator-access";
 import {
   PasswordLifecycleAuthorizationError,
   PasswordLifecycleInputError,
-  type ResetChurchPasswordResult,
 } from "./password-lifecycle";
-
-export type ResetPasswordState =
-  | { status: "idle" }
-  | { status: "error"; message: string }
-  | {
-      status: "success";
-      churchName: string;
-      email: string;
-      temporaryPassword: string;
-      message: string;
-    };
 
 export type ChangePasswordState =
   | { status: "idle" }
@@ -22,87 +9,15 @@ export type ChangePasswordState =
   | { status: "success"; message: string };
 
 export type PasswordLifecycleAuditEvent = {
-  actorAdminUserId?: string;
   actorUserId?: string;
-  operation: "change" | "reset";
+  operation: "change";
   outcome: "denied" | "failed" | "succeeded" | "validation_failed";
   requestId?: string;
-  targetChurchId?: string;
   targetUserId?: string;
 };
 
 function withRequestId(requestId?: string) {
   return requestId ? { requestId } : {};
-}
-
-export function createResetPasswordController(dependencies: {
-  getOperatorAccess(headers: Headers): Promise<OperatorAccess>;
-  recordEvent(event: PasswordLifecycleAuditEvent): void;
-  resetChurchPassword(
-    operatorUserId: string,
-    userId: string,
-  ): Promise<ResetChurchPasswordResult>;
-}) {
-  return async function resetPassword(
-    headers: Headers,
-    input: { userId: unknown; confirmed: unknown },
-    requestId?: string,
-  ): Promise<ResetPasswordState> {
-    const access = await dependencies.getOperatorAccess(headers);
-    if (access.status !== "authorized") {
-      dependencies.recordEvent({
-        ...(access.status === "forbidden"
-          ? { actorAdminUserId: access.adminUserId }
-          : {}),
-        operation: "reset",
-        outcome: "denied",
-        ...withRequestId(requestId),
-      });
-      return { status: "error", message: "この操作を実行できません。" };
-    }
-    const userId = String(input.userId ?? "");
-    if (input.confirmed !== "yes") {
-      dependencies.recordEvent({
-        actorAdminUserId: access.adminUserId,
-        operation: "reset",
-        outcome: "validation_failed",
-        ...withRequestId(requestId),
-      });
-      return { status: "error", message: "確認欄を選択してください。" };
-    }
-    try {
-      const result = await dependencies.resetChurchPassword(
-        access.adminUserId,
-        userId,
-      );
-      dependencies.recordEvent({
-        actorAdminUserId: access.adminUserId,
-        operation: "reset",
-        outcome: "succeeded",
-        ...withRequestId(requestId),
-        targetChurchId: result.churchId,
-        targetUserId: result.userId,
-      });
-      return {
-        status: "success",
-        churchName: result.churchName,
-        email: result.email,
-        temporaryPassword: result.temporaryPassword,
-        message: "パスワードを再設定し、すべてのセッションを失効しました。",
-      };
-    } catch {
-      dependencies.recordEvent({
-        actorAdminUserId: access.adminUserId,
-        operation: "reset",
-        outcome: "failed",
-        ...withRequestId(requestId),
-      });
-      return {
-        status: "error",
-        message: "再設定できませんでした。対象と状態を確認してください。",
-      };
-    }
-  };
 }
 
 export function createChangePasswordController(dependencies: {

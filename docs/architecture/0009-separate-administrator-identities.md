@@ -31,7 +31,7 @@ ACTIVE church membership.
 
 - Administrator records cannot sign in through Better Auth as church users.
 - The shared Basic credential remains a transitional operational dependency.
-- Invitations send a one-hour Better Auth password setup link; plaintext
+- Invitations send a 24-hour Better Auth password setup link; plaintext
   temporary passwords are not returned to the inviting operator.
 - `platform_operators` is removed and the User actor-assignment constraint now
   describes Church users only.
