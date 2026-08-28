@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import type { DeleteChurchState } from "@/application/admin/delete-church-controller";
 import type { ChurchDirectoryEntry } from "@/infrastructure/database/church-directory";
+import { DeleteChurchButton } from "./delete-church-button";
 
 const churchStatusLabels = {
   ACTIVE: "利用中",
@@ -12,7 +14,16 @@ const userStatusLabels = {
   PENDING: "招待中",
 } as const;
 
-export function ChurchList({ churches }: { churches: ChurchDirectoryEntry[] }) {
+export function ChurchList({
+  churches,
+  deleteAction,
+}: {
+  churches: ChurchDirectoryEntry[];
+  deleteAction: (
+    state: DeleteChurchState,
+    formData: FormData,
+  ) => Promise<DeleteChurchState>;
+}) {
   return (
     <section
       aria-labelledby="churches-heading"
@@ -43,6 +54,11 @@ export function ChurchList({ churches }: { churches: ChurchDirectoryEntry[] }) {
                       利用者を招待
                     </Link>
                   ) : null}
+                  <DeleteChurchButton
+                    action={deleteAction}
+                    churchId={church.id}
+                    churchName={church.name}
+                  />
                 </div>
               </div>
               {church.users.length > 0 ? (
