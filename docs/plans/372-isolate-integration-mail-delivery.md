@@ -36,7 +36,7 @@
 2. [completed] 統合テストrunnerから配送破棄モードを強制し、ambient SMTPを除去する。
 3. [completed] unit、静的構成チェック、testing documentationを更新する。
 4. [completed] Mailpit件数不変、integration、canonical checksを検証する。
-5. [in_progress] PRを作成し、required CI通過後にmergeする。
+5. [completed] PRを作成し、required CI通過後にmergeする。
 
 ## Progress
 
@@ -46,6 +46,8 @@
   integration runnerからSMTP設定と認証情報を除去した。
 - 2026-08-29 JST — 統合テスト前後の開発用Mailpit件数が`5 -> 5`で不変であること、
   integration 84件、unit 301件、component 65件を含むcanonical checksを確認した。
+- 2026-08-29 JST — PR #373を作成し、Quality、Database、E2E、Securityの
+  required CIがすべて成功したことを確認した。
 
 ## Decisions
 
@@ -74,7 +76,7 @@
 
 ## Handoff or blockers
 
-- Completed: 原因調査、実装、Mailpit隔離確認、canonical verification。
-- Remaining: PR、required CI、merge。
+- Completed: 原因調査、実装、Mailpit隔離確認、canonical verification、PRとrequired CI。
+- Remaining: PRをmergeする。
 - Blocker: なし。
-- Resume with: PRを作成し、required CIを確認する。
+- Resume with: PR #373をmergeする。
