@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   assertDedicatedTestDatabaseTarget,
+  assertDedicatedIntegrationTestEnvironment,
   assertDedicatedTestEnvironment,
   e2eTestDatabaseEnvironment,
   integrationTestEnvironment,
@@ -50,9 +51,37 @@ describe("test environment resolution", () => {
   it("ignores an ambient development DATABASE_URL for integration", () => {
     const result = integrationTestEnvironment({
       DATABASE_URL: "postgresql://levi:levi@127.0.0.1:55432/levi",
+      MAIL_DELIVERY_MODE: "smtp",
+      SMTP_HOST: "smtp.gmail.com",
+      SMTP_PASSWORD: "must-not-be-inherited",
+      SMTP_PORT: "587",
+      SMTP_SECURE: "false",
+      SMTP_USER: "must-not-be-inherited@example.test",
       TEST_DATABASE_URL: dedicated,
     });
     expect(result.DATABASE_URL).toBe(dedicated);
+    expect(result).toMatchObject({
+      MAIL_DELIVERY_MODE: "discard",
+      MAIL_FROM: "levi-integration@example.invalid",
+    });
+    expect(result).not.toHaveProperty("SMTP_HOST");
+    expect(result).not.toHaveProperty("SMTP_PASSWORD");
+    expect(() =>
+      assertDedicatedIntegrationTestEnvironment(result),
+    ).not.toThrow();
+  });
+
+  it("rejects integration execution that could deliver mail", () => {
+    expect(() =>
+      assertDedicatedIntegrationTestEnvironment({
+        DATABASE_URL: dedicated,
+        MAIL_DELIVERY_MODE: "smtp",
+        NODE_ENV: "test",
+        SHADOW_DATABASE_URL:
+          "postgresql://levi:synthetic@localhost:55433/levi_shadow",
+        SMTP_HOST: "127.0.0.1",
+      }),
+    ).toThrow("discarded mail delivery");
   });
 
   it("ignores an ambient development DATABASE_URL for E2E", () => {

@@ -1,7 +1,11 @@
 import { prepareTestDatabase, runPnpm } from "./lib/test-runtime";
-import { integrationTestEnvironment } from "../src/infrastructure/database/test-database-guard";
+import {
+  assertDedicatedIntegrationTestEnvironment,
+  integrationTestEnvironment,
+} from "../src/infrastructure/database/test-database-guard";
 
 const testEnvironment = integrationTestEnvironment(process.env);
+assertDedicatedIntegrationTestEnvironment(testEnvironment);
 
 prepareTestDatabase(testEnvironment);
 runPnpm(

@@ -11,7 +11,13 @@ export interface AuthRuntimeConfig {
 
 export type AdminAuthRuntimeConfig = AuthRuntimeConfig;
 
-export interface MailRuntimeConfig {
+export interface DiscardMailRuntimeConfig {
+  deliveryMode: "discard";
+  from: string;
+}
+
+export interface SmtpMailRuntimeConfig {
+  deliveryMode: "smtp";
   from: string;
   host: string;
   password?: string;
@@ -19,6 +25,9 @@ export interface MailRuntimeConfig {
   secure: boolean;
   user?: string;
 }
+
+export type MailRuntimeConfig =
+  DiscardMailRuntimeConfig | SmtpMailRuntimeConfig;
 
 export interface AdminBasicAuthConfig {
   passwordHash: string;
@@ -185,6 +194,7 @@ export function getAdminAuthRuntimeConfig(): AdminAuthRuntimeConfig {
 
 export function parseMailRuntimeConfig(
   values: {
+    deliveryMode?: string | undefined;
     from: string | undefined;
     host: string | undefined;
     password: string | undefined;
@@ -194,12 +204,21 @@ export function parseMailRuntimeConfig(
   },
   nodeEnvironment: NodeEnvironment,
 ): MailRuntimeConfig {
-  const host = values.host?.trim();
   const from = values.from?.trim();
-  const port = Number(values.port ?? "");
-  if (!host) throw new Error("SMTP_HOST is required");
+  const deliveryMode = values.deliveryMode ?? "smtp";
   if (!from || !/^\S+@\S+\.\S+$/.test(from))
     throw new Error("MAIL_FROM must be an email address");
+  if (deliveryMode !== "smtp" && deliveryMode !== "discard")
+    throw new Error("MAIL_DELIVERY_MODE must be smtp or discard");
+  if (deliveryMode === "discard") {
+    if (nodeEnvironment !== "test")
+      throw new Error("Discarded mail delivery is allowed only in tests");
+    return { deliveryMode, from };
+  }
+
+  const host = values.host?.trim();
+  const port = Number(values.port ?? "");
+  if (!host) throw new Error("SMTP_HOST is required");
   if (!Number.isInteger(port) || port < 1 || port > 65_535)
     throw new Error("SMTP_PORT is invalid");
   if (!["true", "false"].includes(values.secure ?? "false"))
@@ -221,6 +240,7 @@ export function parseMailRuntimeConfig(
       );
   }
   return {
+    deliveryMode,
     from,
     host,
     port,
@@ -233,6 +253,7 @@ export function parseMailRuntimeConfig(
 export function getMailRuntimeConfig(): MailRuntimeConfig {
   return parseMailRuntimeConfig(
     {
+      deliveryMode: process.env.MAIL_DELIVERY_MODE,
       from: process.env.MAIL_FROM,
       host: process.env.SMTP_HOST,
       password: process.env.SMTP_PASSWORD,
