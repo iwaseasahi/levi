@@ -64,12 +64,40 @@ export function assertDedicatedTestEnvironment(
   assertDedicatedTestShadowTarget(environment.SHADOW_DATABASE_URL);
 }
 
+export function assertDedicatedIntegrationTestEnvironment(
+  environment: NodeJS.ProcessEnv,
+): void {
+  assertDedicatedTestEnvironment(environment);
+  if (environment.MAIL_DELIVERY_MODE !== "discard") {
+    throw new Error("Integration tests require discarded mail delivery");
+  }
+  for (const key of [
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_SECURE",
+    "SMTP_USER",
+    "SMTP_PASSWORD",
+  ]) {
+    if (environment[key] !== undefined) {
+      throw new Error(`Integration tests must not inherit ${key}`);
+    }
+  }
+}
+
 export function integrationTestEnvironment(
   environment: Readonly<Record<string, string | undefined>>,
 ): NodeJS.ProcessEnv {
+  const safeEnvironment = { ...environment };
+  delete safeEnvironment.SMTP_HOST;
+  delete safeEnvironment.SMTP_PASSWORD;
+  delete safeEnvironment.SMTP_PORT;
+  delete safeEnvironment.SMTP_SECURE;
+  delete safeEnvironment.SMTP_USER;
   return {
-    ...environment,
+    ...safeEnvironment,
     DATABASE_URL: environment.TEST_DATABASE_URL ?? DEFAULT_TEST_DATABASE_URL,
+    MAIL_DELIVERY_MODE: "discard",
+    MAIL_FROM: "levi-integration@example.invalid",
     NODE_ENV: "test",
     SHADOW_DATABASE_URL:
       environment.TEST_SHADOW_DATABASE_URL ?? DEFAULT_TEST_SHADOW_DATABASE_URL,

@@ -27,6 +27,8 @@ async function sendPasswordResetMail(
   copy: { audience: string; subject: string },
 ) {
   const config = getMailRuntimeConfig();
+  if (config.deliveryMode === "discard") return;
+
   const transport = nodemailer.createTransport({
     host: config.host,
     port: config.port,

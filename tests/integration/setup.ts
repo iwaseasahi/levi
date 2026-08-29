@@ -1,4 +1,4 @@
-import { assertDedicatedTestEnvironment } from "@/infrastructure/database/test-database-guard";
+import { assertDedicatedIntegrationTestEnvironment } from "@/infrastructure/database/test-database-guard";
 
 process.env.DATABASE_URL ??=
   "postgresql://levi:levi@127.0.0.1:55433/levi_test?schema=public";
@@ -8,9 +8,12 @@ process.env.BETTER_AUTH_SECRET ??= "x".repeat(32);
 process.env.ADMIN_BETTER_AUTH_SECRET ??= "a".repeat(32);
 process.env.BETTER_AUTH_BASE_URL ??= "http://localhost:3000";
 process.env.BETTER_AUTH_TRUSTED_ORIGINS ??= "http://localhost:3000";
-process.env.MAIL_FROM ??= "levi-integration@example.test";
-process.env.SMTP_HOST ??= "127.0.0.1";
-process.env.SMTP_PORT ??= "1125";
-process.env.SMTP_SECURE ??= "false";
+process.env.MAIL_DELIVERY_MODE = "discard";
+process.env.MAIL_FROM = "levi-integration@example.invalid";
+delete process.env.SMTP_HOST;
+delete process.env.SMTP_PORT;
+delete process.env.SMTP_SECURE;
+delete process.env.SMTP_USER;
+delete process.env.SMTP_PASSWORD;
 
-assertDedicatedTestEnvironment(process.env);
+assertDedicatedIntegrationTestEnvironment(process.env);

@@ -20,6 +20,8 @@ const packageJson = JSON.parse(read("package.json")) as {
 const mise = read("mise.toml");
 const setup = read("scripts/setup-local.sh");
 const e2eRunner = read("scripts/run-e2e-tests.ts");
+const integrationRunner = read("scripts/run-integration-tests.ts");
+const integrationSetup = read("tests/integration/setup.ts");
 const e2eOperatorTests = read("tests/e2e/operator-provisioning.spec.ts");
 const compose = read("compose.development.yaml");
 const ci = read(".github/workflows/ci.yml");
@@ -28,6 +30,16 @@ assert(read(".node-version").trim() === "24.19.0", ".node-version drifted");
 assert(
   /^node = "24\.19\.0"$/m.test(mise),
   "mise.toml must pin Node.js 24.19.0",
+);
+assert(
+  integrationRunner.includes(
+    "assertDedicatedIntegrationTestEnvironment(testEnvironment)",
+  ) &&
+    integrationSetup.includes('process.env.MAIL_DELIVERY_MODE = "discard"') &&
+    integrationSetup.includes("delete process.env.SMTP_HOST") &&
+    integrationSetup.includes("delete process.env.SMTP_PASSWORD") &&
+    !integrationSetup.includes('process.env.SMTP_PORT ??= "1125"'),
+  "Integration tests must discard mail without accessing the developer Mailpit or external SMTP",
 );
 assert(
   packageJson.engines?.node === ">=24.0.0 <25",

@@ -33,12 +33,53 @@ describe("parseMailRuntimeConfig", () => {
         "development",
       ),
     ).toEqual({
+      deliveryMode: "smtp",
       from: "levi-system@localhost.test",
       host: "127.0.0.1",
       port: 1125,
       secure: false,
     });
   });
+
+  it("accepts non-delivering mail only in tests", () => {
+    expect(
+      parseMailRuntimeConfig(
+        {
+          deliveryMode: "discard",
+          from: "levi-integration@example.invalid",
+          host: undefined,
+          password: undefined,
+          port: undefined,
+          secure: undefined,
+          user: undefined,
+        },
+        "test",
+      ),
+    ).toEqual({
+      deliveryMode: "discard",
+      from: "levi-integration@example.invalid",
+    });
+  });
+
+  it.each(["development", "production"] as const)(
+    "rejects non-delivering mail in %s",
+    (nodeEnvironment) => {
+      expect(() =>
+        parseMailRuntimeConfig(
+          {
+            deliveryMode: "discard",
+            from: "levi-system@example.test",
+            host: undefined,
+            password: undefined,
+            port: undefined,
+            secure: undefined,
+            user: undefined,
+          },
+          nodeEnvironment,
+        ),
+      ).toThrow("allowed only in tests");
+    },
+  );
 
   it("accepts authenticated Gmail submission in production", () => {
     expect(

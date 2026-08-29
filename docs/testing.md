@@ -23,6 +23,10 @@ migrations or fixture cleanup begin.
 
 Local development mail uses Mailpit. SMTP is available only on
 `127.0.0.1:1125`, and the developer inbox UI is <http://localhost:8026>.
+Integration tests force a `NODE_ENV=test`-only delivery-discard mode. They still
+exercise Better Auth verification-token creation and database state, but never
+create an SMTP transport, inherit SMTP credentials, or write to any Mailpit
+inbox. The discard mode is rejected in development and production.
 E2E uses a separate disposable Mailpit on SMTP port `1126` and API port `8027`.
 The runner starts that service only for the test, obtains invitation and reset
 URLs from its API, and removes the container and inbox on success or failure.
