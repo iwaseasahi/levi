@@ -380,6 +380,72 @@ describe("ScriptureSearch", () => {
     ).toBe(true);
   });
 
+  it("controls the ready audience with unmodified arrow keys from the search page", async () => {
+    renderSearch(successfulFetcher());
+    const user = userEvent.setup();
+    await chooseRange(user);
+
+    const beforeReady = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "ArrowDown",
+    });
+    act(() => window.dispatchEvent(beforeReady));
+    expect(beforeReady.defaultPrevented).toBe(false);
+    expect(audiencePostMessage).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Open" }));
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            schema: "levi.direct-audience",
+            type: "READY",
+            version: 1,
+          },
+          origin: window.location.origin,
+          source: audienceTarget,
+        }),
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "次の御言葉へ" }),
+      ).toBeEnabled(),
+    );
+
+    screen.getByLabelText("章").focus();
+    const next = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "ArrowDown",
+    });
+    const previous = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "ArrowUp",
+    });
+    const modified = new KeyboardEvent("keydown", {
+      altKey: true,
+      bubbles: true,
+      cancelable: true,
+      key: "ArrowDown",
+    });
+    act(() => {
+      window.dispatchEvent(next);
+      window.dispatchEvent(previous);
+      window.dispatchEvent(modified);
+    });
+
+    expect(next.defaultPrevented).toBe(true);
+    expect(previous.defaultPrevented).toBe(true);
+    expect(modified.defaultPrevented).toBe(false);
+    expect(audiencePostMessage.mock.calls.map(([message]) => message)).toEqual([
+      expect.objectContaining({ action: "next", type: "CONTROL" }),
+      expect.objectContaining({ action: "previous", type: "CONTROL" }),
+    ]);
+  });
+
   it("ignores readiness from another window", async () => {
     renderSearch(successfulFetcher());
     const user = userEvent.setup();

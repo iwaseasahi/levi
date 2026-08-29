@@ -109,6 +109,21 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     }),
   ).toBeVisible();
 
+  await page.bringToFront();
+  await page.getByLabel("章").focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 1:2",
+    }),
+  ).toBeVisible();
+  await page.keyboard.press("ArrowUp");
+  await expect(
+    audience.getByRole("heading", {
+      name: "新改訳聖書第3版 創世記 1:1",
+    }),
+  ).toBeVisible();
+
   const initialFontSize = await audience
     .locator(".audience-content")
     .evaluate((element) =>
