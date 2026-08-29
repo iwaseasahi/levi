@@ -93,6 +93,34 @@ export function useDirectAudienceController() {
     [ready],
   );
 
+  useEffect(() => {
+    function controlWithArrowKey(event: KeyboardEvent) {
+      if (
+        !ready ||
+        event.isComposing ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey
+      )
+        return;
+
+      const action =
+        event.key === "ArrowUp"
+          ? ("previous" as const)
+          : event.key === "ArrowDown"
+            ? ("next" as const)
+            : null;
+      if (!action) return;
+
+      event.preventDefault();
+      control(action);
+    }
+
+    window.addEventListener("keydown", controlWithArrowKey);
+    return () => window.removeEventListener("keydown", controlWithArrowKey);
+  }, [control, ready]);
+
   return {
     clearError: useCallback(() => setError(""), []),
     control,
