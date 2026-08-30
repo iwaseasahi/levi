@@ -71,7 +71,10 @@ The form follows Ginmaku's separate optional date and required meeting-name
 fields and stores their space-joined title. The date uses latest Chrome's native
 calendar control; its normalized value remains `YYYY-MM-DD`, while leaving it
 empty remains valid. After a successful creation, the form closes and the new
-folder opens. `フォルダの一覧` appears below creation and opens `/folders` in
+folder opens at the beginning of the saved order (after any pinned folders).
+Existing folders retain their relative order. This order survives reloads and
+does not change when a folder is selected; the optional date is not a sort key.
+`フォルダの一覧` appears below creation and opens `/folders` in
 the current tab. The modern dark list links to each folder's management surface.
 The list and folder editor provide explicit same-tab return links. Successful
 folder deletion returns to `/folders`.
