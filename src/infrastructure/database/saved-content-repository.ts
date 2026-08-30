@@ -42,10 +42,16 @@ export const savedContentRepository: SavedContentRepository = {
   async createFolder({ churchId }, name) {
     return prisma.$transaction(async (transaction) => {
       if (!(await lockChurch(transaction, churchId))) return null;
-      const position = await transaction.folder.count({ where: { churchId } });
+      await transaction.$executeRaw`
+        SET CONSTRAINTS "folders_church_position_uk" DEFERRED
+      `;
+      await transaction.folder.updateMany({
+        where: { churchId },
+        data: { position: { increment: 1 } },
+      });
       return folderView(
         await transaction.folder.create({
-          data: { churchId, name, position },
+          data: { churchId, name, position: 0 },
         }),
       );
     });

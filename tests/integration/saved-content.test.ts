@@ -126,6 +126,98 @@ afterAll(async () => {
 });
 
 describe("saved-content database contract", () => {
+  it("prepends new folders while preserving saved order and tenant isolation", async () => {
+    const fixture = await createFixture();
+    const scope = tenant(fixture.firstChurch.id);
+    const create = (name: string) =>
+      createFolderUseCase(savedContentRepository, scope, name);
+    const first = await create("2026-08-30 First");
+    expect(first.position).toBe(0);
+    const second = await create("2026-08-29 Second");
+    await expect(
+      savedContentRepository.listFolderOrder(scope),
+    ).resolves.toEqual([second.id, first.id]);
+    await savedContentRepository.reorderFolders(scope, [first.id, second.id]);
+    const foreign = await createFolderUseCase(
+      savedContentRepository,
+      tenant(fixture.secondChurch.id),
+      "Foreign",
+    );
+    const third = await create("Third");
+    await savedContentRepository.selectFolder(scope, second.id);
+    const folders = await savedContentRepository.listFolders(scope);
+    expect(folders.map(({ id }) => id)).toEqual([
+      third.id,
+      first.id,
+      second.id,
+    ]);
+    expect(folders.map(({ position }) => position)).toEqual([0, 1, 2]);
+    await expect(
+      savedContentRepository.listFolders(tenant(fixture.secondChurch.id)),
+    ).resolves.toEqual([foreign]);
+  });
+
+  it("keeps new folders visible at the sidebar limit and retains pinned priority", async () => {
+    const fixture = await createFixture();
+    const scope = tenant(fixture.firstChurch.id);
+    await prisma.folder.createMany({
+      data: Array.from({ length: 20 }, (_, position) => ({
+        churchId: scope.churchId,
+        name: `Existing ${position}`,
+        position,
+      })),
+    });
+    const created = await createFolderUseCase(
+      savedContentRepository,
+      scope,
+      "New",
+    );
+    const folders = await savedContentRepository.listFolders(scope);
+    expect(folders).toHaveLength(20);
+    expect(folders[0]).toMatchObject({ id: created.id });
+    expect(folders.slice(1).map(({ name }) => name)).toEqual(
+      Array.from({ length: 19 }, (_, index) => `Existing ${index}`),
+    );
+    const pinned = folders[2];
+    if (!pinned) throw new Error("Expected an existing folder to pin");
+    await savedContentRepository.updateFolder(scope, pinned.id, {
+      isPinned: true,
+    });
+    const newest = await createFolderUseCase(
+      savedContentRepository,
+      scope,
+      "Newest",
+    );
+    const pinnedFirst = await savedContentRepository.listFolders(scope);
+    expect(pinnedFirst).toHaveLength(20);
+    expect(pinnedFirst.slice(0, 3).map(({ id }) => id)).toEqual([
+      pinned.id,
+      newest.id,
+      created.id,
+    ]);
+  });
+
+  it("serializes simultaneous prepends without losing or duplicating positions", async () => {
+    const fixture = await createFixture();
+    const scope = tenant(fixture.firstChurch.id);
+    const original = await createFolderUseCase(
+      savedContentRepository,
+      scope,
+      "Original",
+    );
+    const created = await Promise.all(
+      ["First concurrent", "Second concurrent", "Third concurrent"].map(
+        (name) => createFolderUseCase(savedContentRepository, scope, name),
+      ),
+    );
+    const folders = await savedContentRepository.listFolders(scope);
+    expect(folders.map(({ position }) => position)).toEqual([0, 1, 2, 3]);
+    expect(folders[3]).toMatchObject({ id: original.id });
+    expect(new Set(folders.slice(0, 3).map(({ id }) => id))).toEqual(
+      new Set(created.map(({ id }) => id)),
+    );
+  });
+
   it("requires exactly one typed scripture payload at commit", async () => {
     const fixture = await createFixture();
     const folder = await prisma.folder.create({
