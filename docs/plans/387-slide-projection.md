@@ -46,3 +46,6 @@
   terminal failure guards cover late requests and navigation, saved revision
   mismatch disables buttons and global keys. One projection vertical slice uses
   shared transport plus domain adapter; splitting those would expose broken UI.
+- Administration fixture correction #400 merged via PR #402; incorporated main
+  without rewriting history. Final full E2E and CI are rerun with this correction.
+  Integration passed 128/128. No unresolved implementation finding.
