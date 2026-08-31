@@ -170,8 +170,15 @@ below “フォルダの一覧” with the same appearance. It does not embed sl
 creation/search controls, pagination or a slide-list request. Settings contains
 account actions only. The existing `/slides` page owns slide listing and creation.
 
+The `/slides` page is titled “スライドの一覧”. Per the #412 UI simplification,
+show all slides immediately in creation order (newest first), 20 per page, with
+prominent titles, optional author attribution and full-row detail links. Keep a
+clear create link and refresh/retry; show pagination only when needed. Do not
+show recent/all mode switches or body search controls. The search/recent API
+contract above remains supported and tested for compatibility.
+
 Use existing application surfaces and accessible names. List: loading, empty,
-no matches, error/retry, success and next-page states. Editor: validation,
+error/retry, success and next-page states. Editor: validation,
 unsaved preview, saving/disabled, success, conflict, failure with preserved input.
 Delete: explicit confirmation naming the synthetic/current title, cancel restores
 focus, failure retains context, success returns to the list. Never claim undo.
