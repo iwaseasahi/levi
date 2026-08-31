@@ -235,7 +235,9 @@ other browsers and offline operation are not compatibility claims.
 - Praise songs and song PDFs are excluded. Songs may be reconsidered later.
 - Message slides are excluded from the initial release but are mandatory later
   work under [Issue #59](https://github.com/iwaseasahi/levi/issues/59). Slides
-  will use physical deletion and will not retain edit history.
+  will use physical deletion and will not retain edit history. The post-release
+  [contract](slide-contract.md) and [child delivery plan](slide-delivery.md)
+  define the implementation sequence without expanding the initial release.
 - Church-internal multiple accounts, invitations, roles, and permissions are
   excluded.
 - Legacy song, slide, bookmark, folder, and PDF data are not migrated.

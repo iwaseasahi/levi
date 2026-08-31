@@ -62,3 +62,10 @@ approved access path.
 
 No row is parity-complete until its acceptance criterion and evidence artifact
 are both present and the Levi status is `verified`.
+
+## Post-release slides
+
+Issue #59's [slide contract](../product/slide-contract.md) rechecks the pinned
+legacy fields, search, page delimiter and preview behavior. Its
+[ADR](../architecture/0015-church-owned-slides.md) defines a new church-owned
+aggregate; creating that schema does not authorize importing legacy slides.

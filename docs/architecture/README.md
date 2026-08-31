@@ -47,3 +47,7 @@ Open product and operational decisions are tracked in
 5. Update this index in the same pull request.
 
 Changing an accepted decision requires a new ADR that supersedes the old one.
+
+Post-release slides: [ADR 0015](0015-church-owned-slides.md) defines their dedicated
+aggregate and transient presentation boundary; it extends ADR 0007 without
+adding slides to the initial-release schema.
