@@ -119,6 +119,13 @@ describe("administrator deletion of an individual church user", () => {
         translations: [{ code: "TDCUJ", displayOrder: 81, languageTag: "ja" }],
         sourceReference: "individual church user deletion synthetic fixture",
       });
+      const slide = await prisma.slide.create({
+        data: {
+          churchId: church.id,
+          title: "Synthetic retained Slide",
+          body: "Church-owned body",
+        },
+      });
       const folder = await prisma.folder.create({
         data: { churchId: church.id, name: "Preserved folder", position: 0 },
       });
@@ -206,6 +213,9 @@ describe("administrator deletion of an individual church user", () => {
       expect(
         await prisma.bookmark.findUnique({ where: { id: bookmark.id } }),
       ).not.toBeNull();
+      expect(
+        await prisma.slide.findUnique({ where: { id: slide.id } }),
+      ).toEqual(slide);
       expect(await prisma.bibleVerse.count()).toBe(bibleCount);
     },
   );

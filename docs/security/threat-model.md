@@ -60,3 +60,23 @@ Update this model when a new data class, actor/role, public endpoint, upload,
 external service, real-time channel, dependency execution path, deployment
 target, or production recovery process is introduced. A mitigation is complete
 only when linked to code/config and an executable check.
+
+## Slide delivery review (#388)
+
+[The Slide boundary matrix](tenant-isolation-review.md#slide-aggregate-audit-388)
+covers every new read/write/search/preview/audience path. User input never chooses
+a church scope; guessed/foreign UUIDs share a denial, and query cursors cannot
+transfer scope. Real church/admin sessions, revocation, suspension, user deletion,
+church cascade and revision conflicts have executable negative evidence.
+
+Projection owns only saved data. Authentication/revision failures clear its page
+array and permanently stop the document session; old in-flight responses cannot
+restore it. v2 messages bind exact peer, kind, generation, challenge, document
+instance and sequence, with no church content in transport. Literal text render,
+no-store reads, bounded requests/results, fixed mutation log attributes and
+recursive author/query/cursor redaction address injection/disclosure risks.
+Revocation is bounded by navigation/visibility/30 seconds, not instantaneous.
+Previously loaded management edit buffers are not remotely erased. Encrypted
+archives may contain physically deleted Slides; #389 requires reviewed deletion
+reconciliation before a separately approved restore promotion. No legacy Slide
+import, content history, new service or expanded administrator access is added.
