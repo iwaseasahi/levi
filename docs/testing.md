@@ -111,3 +111,15 @@ This table fixes the observable behavior that must survive structural refactors.
 | Password invitation/recovery     | `/forgot-password`, `/reset-password`, operator administration | email invitation, token expiry, activation, session revocation | unit, component, integration, E2E |
 | Signed-in password change        | `/account/change-password`                                     | current-password verification and other-session revocation     | component, integration, E2E       |
 | Tenant isolation                 | request proxy and church-scoped APIs                           | membership eligibility and church-scoped repositories          | unit, integration, E2E            |
+
+## Administration E2E Basic authentication
+
+Authenticated administration scenarios send their existing synthetic Basic
+credential on the first request, scoped by origin and administration path in
+`operator-provisioning.spec.ts`. Browser challenge negotiation otherwise makes
+parallel authorized contexts record failures in the same global limiter before
+retrying with their valid credential. The initial response is asserted successful
+and credential presence is checked as a boolean only. Deliberate unauthenticated
+challenge tests remain outside this setup. Production limits, zero retries,
+console guards, and credential-free administration artifact policy are unchanged;
+no rate-limit table is reset between concurrent tests. See Issue #400.
