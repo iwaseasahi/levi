@@ -16,7 +16,9 @@ const cursorSchema = z
   .object({
     version: z.literal(1),
     q: querySchema,
-    createdAt: z.iso.datetime(),
+    createdAt: z.iso
+      .datetime({ precision: 3 })
+      .refine((value) => !value.startsWith("0000-")),
     id: z.uuid(),
   })
   .strict();

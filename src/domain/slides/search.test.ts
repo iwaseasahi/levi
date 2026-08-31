@@ -62,6 +62,8 @@ describe("slide search contract", () => {
       { version: 2 },
       { id: "bad" },
       { createdAt: "yesterday" },
+      { createdAt: "0000-01-01T00:00:00.000Z" },
+      { createdAt: "2026-08-31T00:00:00.0001Z" },
       { churchId: id },
     ])
       expect(() =>

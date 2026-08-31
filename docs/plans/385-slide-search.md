@@ -45,3 +45,18 @@
 - Synthetic 100/10,000-row EXPLAIN recorded in `docs/testing-slide-search-performance.md`.
   Rare/absent 10,000-row search costs ~406–418 ms locally; follow-up #397, no
   production performance claim or new search provider.
+
+## Final review
+
+- Separate review checked SQL parameterization/C collation, tenant scoping,
+  metadata bounds, live keyset semantics, cursor validation, stale-response guards,
+  error/no-store responses and keyboard focus. Tightened cursor timestamps to
+  storage millisecond precision and excluded PostgreSQL-invalid year zero.
+- `pnpm test:e2e`: PASS all 24 Chromium scenarios, including actual GET
+  authentication, foreign tenant exclusion, recent/all/search/back/reset, literal
+  metacharacters and ASCII matching. 390/1280 screenshots visually reviewed; axe
+  and horizontal bounds passed. Existing editor/scripture E2E retained.
+- `pnpm security:check`: PASS, no known vulnerabilities and 315 license records.
+- `pnpm test:unit:coverage`: PASS 94.51% lines / 85.95% branches before the final
+  timestamp guard; final check/integration/coverage rerun recorded in PR #398.
+- No unresolved correctness findings. Performance follow-up #397 remains open.
