@@ -36,6 +36,30 @@ afterAll(() => {
 });
 
 describe("ChurchUserList deletion", () => {
+  it.each([
+    ["ACTIVE", "有効"],
+    ["PENDING", "招待中"],
+  ] as const)(
+    "places the compact delete button beside %s status",
+    (status, label) => {
+      render(
+        <ChurchUserList
+          {...props}
+          users={[{ ...member, status }]}
+          deleteAction={vi.fn()}
+        />,
+      );
+      const button = screen.getByRole("button", { name: /利用者A.*を削除/ });
+      expect(button).toHaveTextContent(/^削除$/);
+      expect(button).toHaveClass(
+        "admin-church-action-control",
+        "admin-delete-button",
+      );
+      expect(screen.getByText(label).nextElementSibling).toBe(button);
+      expect(button.closest("dd")).toHaveClass("admin-church-user-actions");
+    },
+  );
+
   it("requires matching confirmation, submits scoped IDs, and announces success", async () => {
     const action = vi.fn().mockResolvedValue({
       status: "success",
