@@ -9,7 +9,8 @@ the feature; closing #59 must not mark SLIDE parity as shipped or close #38.
 | ----------------------------------------------------- | ---------------------------------------------------------------- | ---------------------- |
 | [#382](https://github.com/iwaseasahi/levi/issues/382) | db: 教会所有Slideのschema・制約・物理削除境界を追加する          | #59 contract merge     |
 | [#383](https://github.com/iwaseasahi/levi/issues/383) | feat: スライド入力検証・改行正規化・ページ分割domainを実装する   | #59 contract merge     |
-| [#384](https://github.com/iwaseasahi/levi/issues/384) | feat: 教会別スライドの作成・編集・preview・物理削除を実装する    | #382, #383             |
+| [#394](https://github.com/iwaseasahi/levi/issues/394) | #384 API prerequisite: tenant-scoped CRUD/revision/deletion      | #382, #383             |
+| [#384](https://github.com/iwaseasahi/levi/issues/384) | feat: 教会別スライドの作成・編集・preview・物理削除を実装する    | #382, #383, #394       |
 | [#385](https://github.com/iwaseasahi/levi/issues/385) | feat: スライド本文検索・最近の更新・cursor paginationを実装する  | #382, #383             |
 | [#386](https://github.com/iwaseasahi/levi/issues/386) | refactor: 聖書とスライドが共有する投影接続・状態同期を抽出する   | #59 contract merge     |
 | [#387](https://github.com/iwaseasahi/levi/issues/387) | feat: スライドを別windowへ投影してページ選択・前後移動する       | #384, #386             |
