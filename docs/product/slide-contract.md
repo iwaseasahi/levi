@@ -47,6 +47,12 @@ Create/update errors retain the user's input. Invalid input is 400, missing or
 foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
+POST `/api/church/slides` accepts `{title, body, author?}`. GET/PUT/DELETE use
+`/api/church/slides/[id]`; PUT accepts `{input: {title, body, author?},
+expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
+return `{slide}` without `churchId`; delete has no response body. Mutation Origin
+must exactly match the configured canonical origin. CRUD detail routes reject
+query parameters; search/list parameters belong to the collection read contract.
 
 ## Page parsing, outline and preview
 
