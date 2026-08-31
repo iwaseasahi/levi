@@ -126,12 +126,36 @@ export function useProjectionAudience({
       peer.current = null;
       window.location.reload();
     }
+    function leavingDocument() {
+      snapshot.current = {
+        ...snapshot.current,
+        presentation: { ...snapshot.current.presentation, ready: false },
+      };
+      send();
+      invalidate();
+    }
+    function restoredDocument(event: PageTransitionEvent) {
+      if (event.persisted) changedGeneration();
+    }
     window.addEventListener("message", receive);
     window.addEventListener("hashchange", changedGeneration);
+    window.addEventListener("pagehide", leavingDocument);
+    window.addEventListener("pageshow", restoredDocument);
+    const binding = peer.current;
+    binding?.opener?.postMessage(
+      {
+        ...projectionEnvelope(kind, binding.generation),
+        type: "HELLO",
+        instance: binding.instance,
+      },
+      window.location.origin,
+    );
     return () => {
       peer.current = null;
       window.removeEventListener("message", receive);
       window.removeEventListener("hashchange", changedGeneration);
+      window.removeEventListener("pagehide", leavingDocument);
+      window.removeEventListener("pageshow", restoredDocument);
     };
   }, [kind, isAuthorized, navigate, invalidate, send]);
   useEffect(() => {

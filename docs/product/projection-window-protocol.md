@@ -37,7 +37,10 @@ and exact origin; the audience checks its retained opener, origin and current
 fragment generation. Reusing the named tab transfers its opener to the new
 controller. An old controller cannot operate the new generation or content kind.
 
-The controller sends `CONNECT` with a fresh challenge on Open and once per second.
+The audience sends a strict `HELLO` with its new document instance at startup.
+An unseen instance disables the controller until a fresh handshake; retired
+instances cannot trigger reconnection. No content/state from HELLO is adopted.
+The controller sends `CONNECT` with a fresh challenge on Open, HELLO and once per second.
 The audience echoes it in `READY` with a random per-document instance ID,
 monotonic sequence, presentation state and adapter-validated content coordinates.
 Each challenge is accepted once. A new document instance distinguishes reload
@@ -52,8 +55,10 @@ The audience rejects duplicate/out-of-order operations, stale identity, unknown
 fields and every command after authorization fails closed. `select-page` has a
 nonnegative integer transport bound (24,999); the Slide adapter additionally
 enforces its actual page count. The controller displays acknowledged state only.
-Unmodified ArrowUp/Down use the same navigation path as buttons. Inputs, textarea,
-selects, editable elements, IME and modified shortcuts keep their native keys.
+Unmodified ArrowUp/Down use the same navigation path as buttons. The shared
+default leaves inputs, textarea, selects and editable elements alone; the
+scripture adapter explicitly retains its existing search-field arrow behavior.
+Slide editors never opt in. IME and modified shortcuts keep their native keys.
 
 Five seconds without a valid response disables controls with a reopen instruction;
 probes can reconnect to a compatible live page. Browser timer throttling may delay
@@ -67,6 +72,10 @@ enable controls and users are instructed to refresh both screens and Open again.
 - A closed direct audience tab can be reopened with `Open` from the unchanged
   search screen.
 - Refresh reloads the scripture identified by the canonical audience URL.
+- Pagehide acknowledges not-ready and invalidates the old document. Chrome may
+  deliver an unload message with an unverifiable source, which is still rejected;
+  the new document's HELLO establishes the fresh handshake. A restored back/forward
+  cached document reloads and reauthorizes instead of reviving old content.
 - A new Open of identical coordinates changes the fragment; the audience clears
   its old authorization state and reloads to establish the new generation. Font
   and blank reset on reload. Late old-document loads are discarded.

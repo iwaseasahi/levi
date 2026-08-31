@@ -45,6 +45,9 @@ const actionSchema = z.discriminatedUnion("action", [
 export type ProjectionAction = z.infer<typeof actionSchema>;
 const messageSchema = z.discriminatedUnion("type", [
   z
+    .object({ ...envelope, type: z.literal("HELLO"), instance: z.uuid() })
+    .strict(),
+  z
     .object({ ...envelope, type: z.literal("CONNECT"), challenge: z.uuid() })
     .strict(),
   z
@@ -103,6 +106,7 @@ export function projectionArrow(
     | "shiftKey"
     | "target"
   >,
+  captureInputArrows = false,
 ): "previous" | "next" | null {
   if (
     event.isComposing ||
@@ -114,6 +118,7 @@ export function projectionArrow(
     return null;
   const target = event.target;
   if (
+    !captureInputArrows &&
     typeof Element !== "undefined" &&
     target instanceof Element &&
     target.closest(

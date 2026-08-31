@@ -10,6 +10,7 @@ export function useDirectAudienceController() {
   const projection = useProjectionController(
     "scripture",
     parseScriptureProjectionState,
+    { captureInputArrows: true },
   );
   const { open: openProjection, control: controlProjection } = projection;
   const open = useCallback(

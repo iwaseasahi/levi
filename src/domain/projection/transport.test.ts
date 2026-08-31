@@ -19,6 +19,7 @@ const state = {
 describe("projection v2 protocol", () => {
   it("accepts strict generation/kind-bound CONNECT, READY, ACK and bounded CONTROL", () => {
     for (const message of [
+      { ...envelope, type: "HELLO", instance: generation },
       { ...envelope, type: "CONNECT", challenge: generation },
       { ...envelope, ...state, type: "READY", challenge: generation },
       { ...envelope, ...state, type: "ACK" },

@@ -16,6 +16,9 @@ test("a reused projector follows its new controller and rejects the previous con
     page.getByRole("button", { name: "次の御言葉へ" }),
   ).toBeEnabled();
   const originalHash = new URL(audience.url()).hash;
+  await page.evaluate(() => {
+    Reflect.set(window, "syntheticProjector", window.open("", "projector"));
+  });
   // Same coordinates plus a new generation is a fragment-only navigation.
   await page.getByRole("button", { name: "空白と表示を切り替え" }).click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
@@ -45,7 +48,8 @@ test("a reused projector follows its new controller and rejects the previous con
   expect(context.pages()).toHaveLength(3);
   // Even a manually posted old-generation command cannot affect the reused tab.
   await page.evaluate((oldGeneration) => {
-    window.open("", "projector")?.postMessage(
+    const target = Reflect.get(window, "syntheticProjector") as Window;
+    target.postMessage(
       {
         schema: "levi.direct-audience",
         version: 2,

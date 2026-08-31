@@ -16,13 +16,16 @@ type Connection = {
   generation: string;
   challenge: string;
   instance: string | null;
+  pendingInstance: string | null;
   received: number;
   sent: number;
   lastSeen: number;
+  retired: Set<string>;
 };
 export function useProjectionController<T>(
   kind: ProjectionKind,
   parseContent: (value: unknown) => T | null,
+  { captureInputArrows = false }: { captureInputArrows?: boolean } = {},
 ) {
   const connection = useRef<Connection | null>(null);
   const [state, setState] = useState<{
@@ -61,20 +64,49 @@ export function useProjectionController<T>(
       if (
         !message ||
         message.kind !== kind ||
-        message.generation !== peer.generation ||
-        (message.type !== "ACK" && message.type !== "READY")
+        message.generation !== peer.generation
       )
         return;
+      if (message.type === "HELLO") {
+        if (
+          message.instance === peer.instance ||
+          peer.retired.has(message.instance)
+        )
+          return;
+        if (peer.pendingInstance && peer.pendingInstance !== message.instance)
+          peer.retired.add(peer.pendingInstance);
+        peer.pendingInstance = message.instance;
+        disconnect("");
+        try {
+          probe(peer);
+        } catch {
+          disconnect("投映画面に接続できません。再度Openしてください。");
+        }
+        return;
+      }
+      if (message.type !== "ACK" && message.type !== "READY") return;
       const content = parseContent(message.content);
       if (content === null) return;
       if (message.type === "READY") {
-        if (message.challenge !== peer.challenge) return;
+        if (
+          message.challenge !== peer.challenge ||
+          peer.retired.has(message.instance) ||
+          (peer.pendingInstance !== null &&
+            peer.pendingInstance !== message.instance)
+        )
+          return;
         if (message.instance !== peer.instance) {
+          if (peer.instance) peer.retired.add(peer.instance);
           peer.instance = message.instance;
           peer.received = -1;
           peer.sent = 0;
         }
-      } else if (message.instance !== peer.instance) return;
+        peer.pendingInstance = null;
+      } else if (
+        peer.pendingInstance !== null ||
+        message.instance !== peer.instance
+      )
+        return;
       if (message.sequence <= peer.received) return;
       if (message.type === "READY") peer.challenge = "";
       peer.received = message.sequence;
@@ -131,9 +163,11 @@ export function useProjectionController<T>(
           generation,
           challenge: "",
           instance: null,
+          pendingInstance: null,
           received: -1,
           sent: 0,
           lastSeen: Date.now(),
+          retired: new Set<string>(),
         };
         connection.current = peer;
         probe(peer);
@@ -169,14 +203,14 @@ export function useProjectionController<T>(
   );
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      const action = projectionArrow(event);
+      const action = projectionArrow(event, captureInputArrows);
       if (!ready || !action) return;
       event.preventDefault();
       control({ action });
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [control, ready]);
+  }, [control, ready, captureInputArrows]);
   return {
     open,
     control,

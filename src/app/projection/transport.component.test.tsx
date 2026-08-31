@@ -109,10 +109,39 @@ describe("projection controller transport", () => {
       content,
     };
     send(ready, target);
-    act(() => vi.advanceTimersByTime(1000));
+    send(
+      {
+        ...projectionEnvelope("scripture", connect.generation),
+        type: "HELLO",
+        instance: second,
+      },
+      target,
+    );
+    expect(result.current.ready).toBe(false);
     const [probe] = postMessage.mock.calls.at(-1)!;
     send(
+      {
+        ...projectionEnvelope("scripture", connect.generation),
+        type: "ACK",
+        instance: generation,
+        sequence: 91,
+        presentation,
+        content,
+      },
+      target,
+    );
+    expect(result.current.ready).toBe(false);
+    send(
       { ...ready, ...probe, type: "READY", instance: second, sequence: 1 },
+      target,
+    );
+    expect(result.current.ready).toBe(true);
+    send(
+      {
+        ...projectionEnvelope("scripture", connect.generation),
+        type: "HELLO",
+        instance: generation,
+      },
       target,
     );
     expect(result.current.ready).toBe(true);
@@ -241,6 +270,9 @@ describe("projection audience transport", () => {
       opener,
     );
     expect(navigate).toHaveBeenCalledWith({ action: "select-page", page: 3 });
+    act(() => window.dispatchEvent(new Event("pagehide")));
+    expect(postMessage.mock.calls.at(-1)![0].presentation.ready).toBe(false);
+    expect(invalidate).toHaveBeenCalledOnce();
     isAuthorized.mockReturnValue(false);
     rerender({ authorized: false });
     send({ ...command, sequence: 3, command: { action: "next" } }, opener);
