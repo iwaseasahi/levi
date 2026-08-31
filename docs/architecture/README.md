@@ -28,6 +28,7 @@ them in implementation code.
 | [0010](0010-admin-user-database-sessions.md)                        | accepted   | Database sessions inside the Basic admin boundary        |
 | [0012](0012-admin-better-auth-email.md)                             | accepted   | Dedicated Better Auth and email for administrators       |
 | [0013](0013-email-invitation-and-self-service-password-recovery.md) | accepted   | Email invitation and self-service password recovery      |
+| [0014](0014-password-link-purpose-and-validity.md)                  | accepted   | Separate setup/recovery emails and three-day links       |
 
 Implementation-level data rules are documented in
 [`database-conventions.md`](database-conventions.md) and the accepted

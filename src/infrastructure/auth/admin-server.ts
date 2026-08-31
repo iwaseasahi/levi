@@ -6,7 +6,7 @@ import {
   type AdminAuthRuntimeConfig,
 } from "@/config/env";
 import { prisma } from "@/infrastructure/database/client";
-import { sendAdminPasswordResetMail } from "@/infrastructure/mail/smtp-mailer";
+import { sendAdminPasswordLinkMail } from "./password-link-mail";
 import { buildAdminAuthOptions } from "./admin-options";
 
 interface AdminAuthDependencies {
@@ -39,7 +39,7 @@ export function createAdminAuth(
   return betterAuth({
     ...buildAdminAuthOptions(config, {
       onPasswordReset: activateInvitedAdminUserAfterPasswordReset,
-      sendResetPassword: sendAdminPasswordResetMail,
+      sendResetPassword: sendAdminPasswordLinkMail,
     }),
     database: prismaAdapter(prisma, { provider: "postgresql" }),
     databaseHooks: {

@@ -45,6 +45,7 @@ async function findPasswordResetUrl(
   page: Page,
   recipient: string,
   audience: "admin" | "church" = "admin",
+  purpose: "setup" | "reset" = "setup",
 ) {
   await expect
     .poll(
@@ -81,7 +82,17 @@ async function findPasswordResetUrl(
     `${mailpitApiUrl}/api/v1/message/${messageId}`,
   );
   expect(messageResponse.ok()).toBe(true);
-  const message = (await messageResponse.json()) as { Text: string };
+  const message = (await messageResponse.json()) as {
+    Text: string;
+    Subject: string;
+  };
+  expect(message.Subject).toBe(
+    `Levi ${audience === "admin" ? "管理者" : "教会利用者"}パスワードの${purpose === "setup" ? "設定" : "再設定"}`,
+  );
+  expect(message.Text).toContain("有効期限は3日間");
+  expect(message.Text).toContain(
+    purpose === "setup" ? "初回パスワードを設定" : "パスワードを再設定",
+  );
   const resetPath = audience === "admin" ? "admin-auth" : "auth";
   const resetUrl = message.Text.match(
     new RegExp(
@@ -291,7 +302,7 @@ test.describe("operator church provisioning", () => {
     await expect(success).toBeVisible();
     await expect(success).toBeFocused();
     await expect(success).toContainText(E2E_CREATED_EMAIL);
-    await expect(success).toContainText("24時間");
+    await expect(success).toContainText("3日間");
     const resetUrl = await findPasswordResetUrl(
       page,
       E2E_CREATED_EMAIL,
@@ -421,6 +432,24 @@ test.describe("administrator password setup", () => {
       username: E2E_ADMIN_BASIC_USERNAME,
     },
   });
+
+  for (const audience of ["church", "admin"] as const) {
+    test(`sends a separate reset email for an active ${audience} user`, async ({
+      page,
+    }) => {
+      await page.goto(
+        audience === "admin" ? "/admin/forgot-password" : "/forgot-password",
+      );
+      const email =
+        audience === "admin" ? E2E_ACTIVE_ADMIN_EMAIL : E2E_CHURCH_USER_EMAIL;
+      await page.getByLabel("メールアドレス").fill(email);
+      await page.getByRole("button", { name: "再設定メールを送信" }).click();
+      await expect(page.getByRole("status")).toContainText(
+        "再設定メールを送信しました",
+      );
+      await findPasswordResetUrl(page, email, audience, "reset");
+    });
+  }
 
   test("activates an invited administrator through the emailed reset link", async ({
     page,

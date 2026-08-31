@@ -1,16 +1,19 @@
 import type { BetterAuthOptions } from "better-auth";
 
 import type { AuthRuntimeConfig } from "@/config/env";
+import { PASSWORD_LINK_EXPIRES_IN_SECONDS } from "@/config/password-link";
 
 export const SESSION_EXPIRES_IN_SECONDS = 30 * 24 * 60 * 60;
 export const SESSION_UPDATE_AGE_SECONDS = 24 * 60 * 60;
-export const CHURCH_PASSWORD_RESET_EXPIRES_IN_SECONDS = 24 * 60 * 60;
+export const CHURCH_PASSWORD_RESET_EXPIRES_IN_SECONDS =
+  PASSWORD_LINK_EXPIRES_IN_SECONDS;
 
 export function buildAuthOptions(
   config: AuthRuntimeConfig,
   callbacks?: {
     onPasswordReset?(userId: string): Promise<void>;
     sendResetPassword?(input: {
+      userId: string;
       name: string;
       resetUrl: string;
       to: string;
@@ -32,6 +35,7 @@ export function buildAuthOptions(
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) =>
         callbacks?.sendResetPassword?.({
+          userId: user.id,
           name: user.name,
           resetUrl: url,
           to: user.email,

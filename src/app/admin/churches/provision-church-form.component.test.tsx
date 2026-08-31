@@ -99,7 +99,7 @@ describe("ProvisionChurchForm", () => {
     expect(screen.getByText("教会名を入力してください。")).toBeVisible();
   });
 
-  it("shows the invitation destination and 24-hour validity", async () => {
+  it("shows the invitation destination and 72-hour validity", async () => {
     const action = vi.fn().mockResolvedValue({
       churchName: "テスト教会",
       email: "church@example.invalid",
@@ -118,7 +118,7 @@ describe("ProvisionChurchForm", () => {
 
     expect(screen.getByText("メール招待")).toBeVisible();
     expect(
-      screen.getByText("メール内のパスワード設定リンクは24時間有効です。"),
+      screen.getByText("メール内のパスワード設定リンクは3日間有効です。"),
     ).toBeVisible();
   });
 });

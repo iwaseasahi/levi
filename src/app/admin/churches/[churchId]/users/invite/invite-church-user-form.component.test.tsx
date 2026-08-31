@@ -43,7 +43,7 @@ describe("InviteChurchUserForm", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(
       "第一教会 / additional@example.invalid",
     );
-    expect(screen.getByText(/24時間有効/)).toBeVisible();
+    expect(screen.getByText(/3日間有効/)).toBeVisible();
   });
 
   it("focuses validation feedback and associates field errors", async () => {

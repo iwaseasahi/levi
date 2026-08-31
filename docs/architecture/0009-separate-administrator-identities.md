@@ -6,6 +6,8 @@
 
 ## Context
 
+The password-link expiry clause is superseded by [ADR 0014](0014-password-link-purpose-and-validity.md).
+
 Levi originally represented the Basic-authenticated platform operator as a
 credential-free `users` row with a `platform_operators` subtype. That couples
 administration to the Better Auth identity model used by churches and cannot
