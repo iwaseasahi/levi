@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { parseJsonResponse } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
@@ -24,6 +24,13 @@ export function SlideEditor({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const deleteButton = useRef<HTMLButtonElement>(null);
   const [preview, setPreview] = useState<{
     body: string;
@@ -46,6 +53,7 @@ export function SlideEditor({
     pending.current = true;
     setBusy(true);
     setError(null);
+    let succeeded = false;
     try {
       const input = deleting
         ? undefined
@@ -67,7 +75,9 @@ export function SlideEditor({
           ),
         },
       );
+      if (!mounted.current) return;
       if (deleting && response.status === 204) {
+        succeeded = true;
         router.replace("/slides");
         return;
       }
@@ -75,13 +85,17 @@ export function SlideEditor({
         response,
         "SLIDE_UNAVAILABLE",
       );
+      if (!mounted.current) return;
+      succeeded = true;
       router.push(`/slides/${result.slide.id}`);
       router.refresh();
     } catch (cause) {
-      setError(slideErrorMessage(cause));
+      if (mounted.current) setError(slideErrorMessage(cause));
     } finally {
-      pending.current = false;
-      setBusy(false);
+      if (mounted.current && !succeeded) {
+        pending.current = false;
+        setBusy(false);
+      }
     }
   }
   function submit(event: FormEvent<HTMLFormElement>) {

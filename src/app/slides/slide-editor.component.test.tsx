@@ -103,6 +103,24 @@ describe("slide editor", () => {
     await waitFor(() =>
       expect(push).toHaveBeenCalledWith(`/slides/${initial.id}`),
     );
+    expect(screen.getByRole("button", { name: "処理中…" })).toBeDisabled();
+  });
+  it("does not redirect after a pending mutation's editor unmounts", async () => {
+    let resolve!: (response: Response) => void;
+    const fetcher = vi.fn<typeof fetch>(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        }),
+    );
+    const { unmount } = render(
+      <SlideEditor initial={initial} fetcher={fetcher} />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "保存" }));
+    unmount();
+    resolve(Response.json({ slide: initial }));
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    expect(push).not.toHaveBeenCalled();
   });
   it.each([409, 500, 401, 404])(
     "retains edits and focuses failure for status %s",

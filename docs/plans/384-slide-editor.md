@@ -46,3 +46,17 @@ and confirm physical deletion through the scoped API delivered by #394.
 ## Handoff or blockers
 
 - Blocker: none. Implementation and verification in progress.
+
+## Verification progress
+
+- `pnpm check`: passed 392 unit / 80 component tests, lint/typecheck/build.
+- `pnpm security:check`: passed audit and 315 license records.
+- `pnpm test:e2e`: passed all 23 Chromium scenarios; includes synthetic editor
+  CRUD, literal body-only preview, no write before Save, 390/1280 fit geometry,
+  no horizontal clipping, axe and delete cancel/focus. Both screenshots reviewed.
+- Separate diff review found navigation-lifetime/duplicate-save edge cases;
+  keep successful mutation disabled until navigation and ignore late responses
+  after unmount. Added regression; rerunning check/E2E on final patch.
+- API authorization, foreign IDs, transactional revision conflict and deletion
+  evidence lives in prerequisite #395; existing real-route E2E retained here.
+- Exact-head CI and final results will be recorded in PR #396.
