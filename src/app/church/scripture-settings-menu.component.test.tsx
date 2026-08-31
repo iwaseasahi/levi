@@ -38,6 +38,9 @@ describe("ScriptureSettingsMenu", () => {
     await user.click(settings);
     expect(settings).toHaveAttribute("aria-expanded", "true");
     expect(
+      screen.queryByRole("menuitem", { name: "スライド" }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByRole("menuitem", { name: "パスワードを変更" }),
     ).toHaveAttribute("href", "/account/change-password");
     expect(screen.getByRole("menuitem", { name: "ログアウト" })).toBeVisible();

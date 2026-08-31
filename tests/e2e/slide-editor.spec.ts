@@ -9,8 +9,8 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   scriptureAccount,
 }, testInfo) => {
   await loginToScripture(context, page, scriptureAccount);
-  await page.getByRole("button", { name: "設定", exact: true }).click();
-  await page.getByRole("menuitem", { name: "スライド", exact: true }).click();
+  const sidebar = page.getByRole("region", { name: "サイドバーのスライド" });
+  await expect(sidebar.getByText("スライドはまだありません。")).toBeVisible();
   await page.getByRole("link", { name: "スライドを作成" }).click();
   const body =
     "<script>synthetic</script>\n日本語の本文\n\n\n\n" + "長い行".repeat(50);
@@ -59,6 +59,40 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   }
   await page.getByLabel("タイトル（必須）").fill("Synthetic welcome");
   await page.getByRole("button", { name: "保存", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Synthetic welcome" }),
+  ).toBeVisible();
+  await page.goto("/scripture");
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const slideLink = sidebar.getByRole("link", {
+      name: "Synthetic welcome",
+      exact: true,
+    });
+    await expect(slideLink).toBeVisible();
+    await slideLink.focus();
+    await expect(slideLink).toBeFocused();
+    const folders = page.getByRole("region", {
+      name: "フォルダーとお気に入り",
+    });
+    const folderBox = await folders.boundingBox();
+    const sidebarBox = await sidebar.boundingBox();
+    expect(sidebarBox!.y).toBeGreaterThanOrEqual(
+      folderBox!.y + folderBox!.height,
+    );
+    expect(sidebarBox!.x + sidebarBox!.width).toBeLessThanOrEqual(width);
+    expect(
+      (await new AxeBuilder({ page }).include("#bookmark_container").analyze())
+        .violations,
+    ).toEqual([]);
+    await page.screenshot({
+      path: testInfo.outputPath(`slide-sidebar-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await sidebar
+    .getByRole("link", { name: "Synthetic welcome", exact: true })
+    .press("Enter");
   await expect(
     page.getByRole("heading", { name: "Synthetic welcome" }),
   ).toBeVisible();

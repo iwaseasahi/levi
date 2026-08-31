@@ -1,5 +1,11 @@
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { SlideSearchResult, SlideSummary } from "@/domain/slides/search";
@@ -14,6 +20,69 @@ const summary = (index: number): SlideSummary => ({
   updatedAt: "2026-08-31T00:00:00Z",
 });
 describe("SlideList", () => {
+  it("shows sidebar titles, direct routes and all-page navigation without stealing focus on failure", async () => {
+    let fail!: (response: Response) => void;
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            fail = resolve;
+          }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ slides: [summary(1)], nextCursor: "next" }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ slides: [summary(2)], nextCursor: null }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ slides: [summary(1)], nextCursor: "next" }),
+      )
+      .mockResolvedValueOnce(Response.json({ slides: [], nextCursor: null }));
+    const user = userEvent.setup();
+    render(
+      <>
+        <input aria-label="章" />
+        <SlideList sidebar fetcher={fetcher} />
+      </>,
+    );
+    const chapter = screen.getByLabelText("章");
+    chapter.focus();
+    expect(screen.getByText("読み込み中…")).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "スライドを作成" }),
+    ).toHaveAttribute("href", "/slides/new");
+    expect(
+      screen.getByRole("link", { name: "一覧・本文検索" }),
+    ).toHaveAttribute("href", "/slides");
+    expect(screen.queryByLabelText("本文を検索")).not.toBeInTheDocument();
+    await act(async () => fail(new Response(null, { status: 500 })));
+    expect(screen.getByRole("alert")).toBeVisible();
+    expect(chapter).toHaveFocus();
+    await user.click(screen.getByRole("button", { name: "再試行" }));
+    expect(
+      await screen.findByRole("link", { name: "Synthetic 1" }),
+    ).toHaveAttribute("href", `/slides/${summary(1).id}`);
+    expect(fetcher.mock.calls[0]).toEqual([
+      "/api/church/slides?mode=all&q=",
+      { cache: "no-store" },
+    ]);
+    expect(screen.getByRole("button", { name: "前の20件" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "次の20件" }));
+    await screen.findByRole("link", { name: "Synthetic 2" });
+    expect(
+      screen.queryByRole("link", { name: "Synthetic 1" }),
+    ).not.toBeInTheDocument();
+    expect(fetcher.mock.calls[2]![0]).toBe(
+      "/api/church/slides?mode=all&q=&cursor=next",
+    );
+    expect(screen.getByRole("button", { name: "次の20件" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "前の20件" }));
+    await screen.findByRole("link", { name: "Synthetic 1" });
+    await user.click(screen.getByRole("button", { name: "一覧を更新" }));
+    expect(await screen.findByText("スライドはまだありません。")).toBeVisible();
+  });
   it("shows loading, empty/retry/recent/all/no-match and keeps query whitespace", async () => {
     const responses: Array<Response | (() => Promise<Response>)> = [
       Response.json({ slides: [], nextCursor: null }),
