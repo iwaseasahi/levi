@@ -193,8 +193,10 @@ self-service password reset, account suspension, and explicit revocation take
 effect immediately even within that period.
 
 A church user requests password recovery at `/forgot-password`. Levi always
-returns a generic response and sends a single-use setup link to the registered
-email address when the account is eligible. The link remains valid for 24 hours.
+returns a generic response and sends a single-use password link to the registered
+email address when the account is eligible. Pending users receive initial-setup
+email; active users receive password-reset email with a distinct subject and body.
+The link remains valid for 72 hours.
 A successful reset revokes existing sessions. A signed-in church user may also
 change their own password from the account screen. The administration UI does
 not issue, display, or communicate passwords.

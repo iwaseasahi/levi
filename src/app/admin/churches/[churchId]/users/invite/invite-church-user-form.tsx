@@ -131,7 +131,7 @@ export function InviteChurchUserForm({
             <p>
               {churchName} / {state.email}
             </p>
-            <p>メール内のパスワード設定リンクは24時間有効です。</p>
+            <p>メール内のパスワード設定リンクは3日間有効です。</p>
           </div>
         ) : null}
       </div>

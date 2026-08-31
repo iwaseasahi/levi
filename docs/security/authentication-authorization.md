@@ -26,7 +26,7 @@ The implemented boundary follows these rules:
 - keep public sign-up disabled and account creation behind the platform-operator
   use case;
 - hash passwords with Better Auth's `scrypt`, revoke all sessions after a
-  successful self-service reset or suspension, require 24-hour single-use email
+  successful self-service reset or suspension, require 72-hour single-use email
   links for invitations and recovery, and never log secret values;
 - use exact trusted origins, host-only secure cookies, database-backed rate
   limits, and no initial session cookie cache; and
@@ -68,7 +68,7 @@ fixtures.
   at most once per day.
 - Logout revokes the current session. Successful self-service password reset,
   suspension, and explicit revoke-all revoke every applicable session.
-- Administrator and church-user invitation and self-service reset use 24-hour
+- Administrator and church-user invitation and self-service reset use 72-hour
   email links.
   Successful setup/reset activates an invited identity and revokes existing
   administrator sessions.

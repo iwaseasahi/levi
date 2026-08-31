@@ -4,6 +4,8 @@
 
 Accepted
 
+The password-link expiry clause is superseded by [ADR 0014](0014-password-link-purpose-and-validity.md).
+
 ## Context
 
 Levi originally implemented individual administrator login with custom password

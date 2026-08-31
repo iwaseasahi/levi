@@ -45,7 +45,7 @@ describe("Better Auth options", () => {
     expect(options.logger).toEqual({ disabled: true });
   });
 
-  it("configures 24-hour password recovery callbacks", async () => {
+  it("configures 72-hour password recovery callbacks", async () => {
     const sendResetPassword = vi.fn();
     const onPasswordReset = vi.fn();
     const options = buildAuthOptions(config("production"), {
@@ -65,11 +65,13 @@ describe("Better Auth options", () => {
       user: { id: "user-id" },
     } as never);
     expect(sendResetPassword).toHaveBeenCalledWith({
+      userId: "user-id",
       name: "利用者",
       resetUrl: "https://levi.example/reset",
       to: "user@example.com",
     });
     expect(onPasswordReset).toHaveBeenCalledWith("user-id");
+    expect(CHURCH_PASSWORD_RESET_EXPIRES_IN_SECONDS).toBe(3 * 24 * 60 * 60);
   });
 
   it("uses database rate limits and server-owned actor fields", () => {

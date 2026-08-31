@@ -4,7 +4,7 @@ import { betterAuth } from "better-auth";
 import { getAuthRuntimeConfig, type AuthRuntimeConfig } from "@/config/env";
 import { canActorStartSession } from "@/application/auth/session-eligibility";
 import { prisma } from "@/infrastructure/database/client";
-import { sendChurchPasswordResetMail } from "@/infrastructure/mail/smtp-mailer";
+import { sendChurchPasswordLinkMail } from "./password-link-mail";
 import { buildAuthOptions } from "./options";
 
 interface AuthDependencies {
@@ -33,7 +33,7 @@ export function createAuth(
   return betterAuth({
     ...buildAuthOptions(config, {
       onPasswordReset: activateInvitedChurchUserAfterPasswordReset,
-      sendResetPassword: sendChurchPasswordResetMail,
+      sendResetPassword: sendChurchPasswordLinkMail,
     }),
     database: prismaAdapter(prisma, { provider: "postgresql" }),
     databaseHooks: {

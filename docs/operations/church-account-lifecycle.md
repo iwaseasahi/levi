@@ -19,7 +19,7 @@ production database mutation. Those actions retain the human approval gates in
 ## Invitation and password setup
 
 After a successful commit, Levi sends a single-use password-setup link to the
-recipient. The link remains valid for 24 hours.
+recipient. The link remains valid for 72 hours.
 
 1. Confirm the administration screen reports that the invitation was accepted
    for delivery; do not treat this as proof that Gmail delivered it.
@@ -36,7 +36,7 @@ recipient. The link remains valid for 24 hours.
   sharing of a setup/reset link as exposure.
 - The user requests a new link through `/forgot-password`; Levi returns the same
   generic response whether the identity exists or not.
-- A valid replacement link remains usable for 24 hours. Successful reset revokes
+- A valid replacement link remains usable for 72 hours. Successful reset revokes
   existing sessions.
 - The platform operator does not issue or view a password. Never edit credential
   or verification rows directly.

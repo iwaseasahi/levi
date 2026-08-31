@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 
 import { getMailRuntimeConfig } from "@/config/env";
+import { PASSWORD_LINK_VALIDITY_LABEL } from "@/config/password-link";
 
 export interface PasswordResetMail {
   name: string;
@@ -10,21 +11,39 @@ export interface PasswordResetMail {
 
 export async function sendAdminPasswordResetMail(input: PasswordResetMail) {
   return sendPasswordResetMail(input, {
-    audience: "Levi管理画面",
-    subject: "Levi 管理者パスワードの設定・再設定",
+    instructions:
+      "Levi管理画面のパスワードを再設定するには、次のURLを開いてください。",
+    subject: "Levi 管理者パスワードの再設定",
   });
 }
 
 export async function sendChurchPasswordResetMail(input: PasswordResetMail) {
   return sendPasswordResetMail(input, {
-    audience: "Levi教会用画面",
-    subject: "Levi 教会利用者パスワードの設定・再設定",
+    instructions:
+      "Levi教会用画面のパスワードを再設定するには、次のURLを開いてください。",
+    subject: "Levi 教会利用者パスワードの再設定",
+  });
+}
+
+export async function sendAdminPasswordSetupMail(input: PasswordResetMail) {
+  return sendPasswordResetMail(input, {
+    instructions:
+      "Levi管理画面に招待されました。初回パスワードを設定するには、次のURLを開いてください。",
+    subject: "Levi 管理者パスワードの設定",
+  });
+}
+
+export async function sendChurchPasswordSetupMail(input: PasswordResetMail) {
+  return sendPasswordResetMail(input, {
+    instructions:
+      "Levi教会用画面に招待されました。初回パスワードを設定するには、次のURLを開いてください。",
+    subject: "Levi 教会利用者パスワードの設定",
   });
 }
 
 async function sendPasswordResetMail(
   input: PasswordResetMail,
-  copy: { audience: string; subject: string },
+  copy: { instructions: string; subject: string },
 ) {
   const config = getMailRuntimeConfig();
   if (config.deliveryMode === "discard") return;
@@ -44,10 +63,10 @@ async function sendPasswordResetMail(
     text: [
       `${input.name} 様`,
       "",
-      `${copy.audience}のパスワードを設定または再設定するには、次のURLを開いてください。`,
+      copy.instructions,
       input.resetUrl,
       "",
-      "このURLの有効期限は24時間です。心当たりがない場合は、このメールを破棄してください。",
+      `このURLの有効期限は${PASSWORD_LINK_VALIDITY_LABEL}です。心当たりがない場合は、このメールを破棄してください。`,
     ].join("\n"),
   });
 }

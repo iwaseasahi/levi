@@ -116,7 +116,7 @@ export function InviteAdminUserForm({ action }: { action: Action }) {
                 <dd>{state.email}</dd>
               </div>
             </dl>
-            <p>メール内のリンクは24時間有効です。</p>
+            <p>メール内のリンクは3日間有効です。</p>
             <button
               className="secondary-button"
               onClick={() => setDismissed(true)}

@@ -215,7 +215,7 @@ activates them.
 
 Dedicated Better Auth verification/reset tokens and database rate-limit state.
 They are not shared with Church identities. Verification values are Restricted
-and expire after the configured 24-hour administrator reset window.
+and expire after the configured 72-hour administrator reset window.
 
 ### `church_memberships`
 

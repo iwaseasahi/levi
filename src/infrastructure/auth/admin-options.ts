@@ -1,19 +1,22 @@
 import type { BetterAuthOptions } from "better-auth";
 
 import type { AdminAuthRuntimeConfig } from "@/config/env";
+import { PASSWORD_LINK_EXPIRES_IN_SECONDS } from "@/config/password-link";
 import {
   SESSION_EXPIRES_IN_SECONDS,
   SESSION_UPDATE_AGE_SECONDS,
 } from "./options";
 
 export const ADMIN_AUTH_BASE_PATH = "/api/admin-auth";
-export const ADMIN_PASSWORD_RESET_EXPIRES_IN_SECONDS = 24 * 60 * 60;
+export const ADMIN_PASSWORD_RESET_EXPIRES_IN_SECONDS =
+  PASSWORD_LINK_EXPIRES_IN_SECONDS;
 
 export function buildAdminAuthOptions(
   config: AdminAuthRuntimeConfig,
   callbacks?: {
     onPasswordReset?(userId: string): Promise<void>;
     sendResetPassword?(input: {
+      userId: string;
       name: string;
       resetUrl: string;
       to: string;
@@ -36,6 +39,7 @@ export function buildAdminAuthOptions(
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user, url }) =>
         callbacks?.sendResetPassword?.({
+          userId: user.id,
           name: user.name,
           resetUrl: url,
           to: user.email,
