@@ -64,10 +64,6 @@
   margin: 0;
 }
 
-.saved-feedback {
-  min-height: 1.5rem;
-}
-
 /* Scripture sidebar: Ginmaku-compatible interactions with Levi surfaces. */
 .ginmaku-bookmark-container {
   float: left;
