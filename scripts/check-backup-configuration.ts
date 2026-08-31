@@ -38,7 +38,9 @@ assert.match(backupScript, /LEVI_COMPOSE_PROJECT_NAME/);
 
 const restoreScript = readFileSync(scriptPaths[1]!, "utf8");
 assert.match(restoreScript, /Restored database reconciliation failed/);
-assert.match(restoreScript, /DELETE FROM sessions/);
+assert.match(restoreScript, /invalidate-restored-sessions\.sql/);
+assert.match(restoreScript, /restored-session-count\.sql/);
+assert.match(restoreScript, /Restored Slide reconciliation failed/);
 assert.match(restoreScript, /remaining_sessions.*!= "0"/s);
 assert.match(restoreScript, /LEVI_COMPOSE_PROJECT_NAME/);
 assert.match(restoreScript, /backup_root_real}\/operational/);

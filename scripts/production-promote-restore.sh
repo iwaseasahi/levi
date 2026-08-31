@@ -2,6 +2,7 @@
 set -euo pipefail
 umask 077
 
+readonly repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 readonly restore_database="${LEVI_RESTORE_DATABASE:-}"
 readonly approval_reference="${LEVI_RESTORE_APPROVAL_REFERENCE:-}"
 readonly compose_file="${LEVI_COMPOSE_FILE:-/opt/levi/deploy/production/compose.yaml}"
@@ -41,7 +42,7 @@ compose() {
 
 session_count="$(compose exec -T "$database_service" psql --no-psqlrc \
   --tuples-only --no-align --username "$database_user" --dbname "$restore_database" \
-  --command "SELECT count(*) FROM sessions;")"
+  <"${repository_root}/scripts/lib/restored-session-count.sql")"
 session_count="${session_count//[[:space:]]/}"
 if [[ "$session_count" != "0" ]]; then
   echo "Verified restore contains sessions; refusing promotion." >&2
@@ -61,8 +62,8 @@ compose exec -T "$database_service" psql --no-psqlrc --set ON_ERROR_STOP=1 \
   --username "$database_user" --dbname postgres --command \
   "ALTER DATABASE ${restore_database} RENAME TO ${source_database};"
 compose exec -T "$database_service" psql --no-psqlrc --set ON_ERROR_STOP=1 \
-  --username "$database_user" --dbname "$source_database" --command \
-  "DELETE FROM sessions;" >/dev/null
+  --username "$database_user" --dbname "$source_database" \
+  <"${repository_root}/scripts/lib/invalidate-restored-sessions.sql" >/dev/null
 
 if ! compose up --detach --wait app proxy; then
   echo "Promotion did not become ready. Services remain in their observed state; preserve ${rollback_database} and follow the rollback runbook." >&2

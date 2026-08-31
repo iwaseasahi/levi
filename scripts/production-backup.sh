@@ -87,13 +87,20 @@ signature="$(compose exec -T "$database_service" psql \
 signature="${signature//$'\r'/}"
 signature="${signature//$'\n'/}"
 
+slide_signature="$(compose exec -T "$database_service" psql \
+  --no-psqlrc --tuples-only --no-align --set ON_ERROR_STOP=1 \
+  --username "$database_user" --dbname "$database_name" <"${repository_root}/scripts/lib/backup-slide-reconciliation.sql")"
+slide_signature="${slide_signature//$'\r'/}"
+slide_signature="${slide_signature//$'\n'/}"
+
 {
-  printf 'format=levi-backup-v1\n'
+  printf 'format=levi-backup-v2\n'
   printf 'created_at=%s\n' "$created_at"
   printf 'created_epoch=%s\n' "$created_epoch"
   printf 'tier=%s\n' "$backup_tier"
   printf 'database=%s\n' "$database_name"
   printf 'signature=%s\n' "$signature"
+  printf 'slide_signature=%s\n' "$slide_signature"
 } >"$manifest_path"
 
 tar -C "$work_directory" -cf - database.dump manifest.env | \

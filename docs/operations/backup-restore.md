@@ -90,7 +90,7 @@ sudo /opt/levi/scripts/check-production-backups.sh
 
 ## Local disposable rehearsal
 
-`pnpm backup:rehearse` resets only the local `levi_test` database, inserts one synthetic session, creates an ephemeral RSA certificate, creates operational and weekly archives, restores the weekly archive, reconciles all critical tables and Bible hashes, proves that the restored session count is zero while the source remains one, and reports elapsed RTO. Temporary archives, key material, and the isolated database are removed on exit.
+`pnpm backup:rehearse` creates uniquely named local disposable source/restore databases, synthetic church and administrator sessions and Slide/Bible/bookmark fixtures, and an ephemeral RSA certificate. It creates operational and weekly archives, restores and reconciles them, proves both session types are invalidated, and reports elapsed RTO. It also verifies Slide expansion, deletion replay, invalid-fingerprint rejection and v1 archive compatibility. See the [Slide rollout/recovery checklist](../migration/slide-rollout-recovery.md). Temporary archives, key material, and the isolated database are removed on exit.
 
 ```bash
 pnpm backup:rehearse
@@ -110,11 +110,13 @@ sudo LEVI_BACKUP_PRIVATE_KEY=/etc/levi/temporary-backup-private.pem \
   /var/backups/levi/weekly/levi-weekly-YYYYMMDDTHHMMSSZ.tar.cms
 ```
 
-The script decrypts into a root-only temporary directory, restores to a new `levi_restore_*` database, compares the stored critical-table/Bible signature, deletes every restored session, verifies zero sessions, and records RPO/RTO evidence. It does not stop the application, rename the live database, or switch traffic. If verification fails, it drops the isolated database and leaves production untouched.
+The script decrypts into a root-only temporary directory, restores to a new `levi_restore_*` database, compares the stored critical-table/Bible signature (and Slide fingerprint for v2 archives), deletes every restored church and administrator session, verifies zero sessions, and records RPO/RTO evidence. It does not stop the application, rename the live database, or switch traffic. If verification fails, it drops the isolated database and leaves production untouched.
 
 Check account and membership state against the incident recovery point. If the backup predates an account creation, password change/reset, or temporary-password consumption, identify affected account IDs without exposing credentials and remediate them through the operator UI.
 
 ## Approved promotion and rollback
+
+Before promotion, complete the [Slide deletion reconciliation](../migration/slide-rollout-recovery.md#backup-and-deletion-boundary), including church/identity changes since the recovery point. Hard deletion does not purge older archives. Missing deletion evidence blocks promotion; do not silently revive content.
 
 Promotion requires a second, immediate approval comment whose URL names the already verified restore database. Set that exact URL and database name only for the command invocation.
 
