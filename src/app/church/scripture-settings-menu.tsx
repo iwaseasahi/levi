@@ -42,6 +42,13 @@ export function ScriptureSettingsMenu() {
         >
           <Link
             className="scripture-settings-logout"
+            href="/slides"
+            role="menuitem"
+          >
+            スライド
+          </Link>
+          <Link
+            className="scripture-settings-logout"
             href="/account/change-password"
             role="menuitem"
           >
