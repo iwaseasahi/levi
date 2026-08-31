@@ -172,6 +172,7 @@ export async function seedScriptureFixture() {
 
 export async function clearOperatorFixtures() {
   await prisma.rateLimit.deleteMany();
+  await prisma.adminRateLimit.deleteMany();
   await prisma.adminUser.deleteMany({
     where: { email: { startsWith: "test.e2e." } },
   });

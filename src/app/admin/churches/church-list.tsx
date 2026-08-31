@@ -3,26 +3,28 @@ import Link from "next/link";
 import type { DeleteChurchState } from "@/application/admin/delete-church-controller";
 import type { ChurchDirectoryEntry } from "@/infrastructure/database/church-directory";
 import { DeleteChurchButton } from "./delete-church-button";
+import { ChurchUserList } from "./church-user-list";
+import type { DeleteChurchUserState } from "@/application/admin/delete-church-user-controller";
 
 const churchStatusLabels = {
   ACTIVE: "利用中",
   SUSPENDED: "停止中",
 } as const;
 
-const userStatusLabels = {
-  ACTIVE: "有効",
-  PENDING: "招待中",
-} as const;
-
 export function ChurchList({
   churches,
   deleteAction,
+  deleteUserAction,
 }: {
   churches: ChurchDirectoryEntry[];
   deleteAction: (
     state: DeleteChurchState,
     formData: FormData,
   ) => Promise<DeleteChurchState>;
+  deleteUserAction: (
+    state: DeleteChurchUserState,
+    formData: FormData,
+  ) => Promise<DeleteChurchUserState>;
 }) {
   return (
     <section
@@ -61,36 +63,12 @@ export function ChurchList({
                   />
                 </div>
               </div>
-              {church.users.length > 0 ? (
-                <ul className="admin-church-users">
-                  {church.users.map((user) => (
-                    <li key={user.id}>
-                      <dl>
-                        <div>
-                          <dt>利用者</dt>
-                          <dd>{user.name}</dd>
-                        </div>
-                        <div>
-                          <dt>メールアドレス</dt>
-                          <dd>{user.email}</dd>
-                        </div>
-                        <div>
-                          <dt>利用者の状態</dt>
-                          <dd>
-                            <span
-                              className={`status-badge status-${user.status.toLowerCase()}`}
-                            >
-                              {userStatusLabels[user.status]}
-                            </span>
-                          </dd>
-                        </div>
-                      </dl>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="admin-church-no-user">利用者は未登録です。</p>
-              )}
+              <ChurchUserList
+                churchId={church.id}
+                churchName={church.name}
+                users={church.users}
+                deleteAction={deleteUserAction}
+              />
             </li>
           ))}
         </ul>

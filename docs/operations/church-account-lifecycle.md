@@ -52,6 +52,23 @@ The current provisioning slice defines this operational requirement but does
 not expose a manual database procedure. Session revocation and suspension UI are
 completed in the authentication lifecycle Issues before production release.
 
+## Delete an individual Church user
+
+An authenticated administrator opens `/admin/churches`, selects **利用者を削除**
+for the intended member, and types that member's email in the confirmation
+dialog. Both active members and pending invitees can be deleted. Cancel or
+Escape closes the dialog without changing data (closing is disabled while the
+request is pending).
+
+The server rechecks the administrator, the Church membership, and the email in
+one transaction. Deletion permanently removes the User, credential accounts,
+all sessions, membership, and outstanding invitation/reset verification links.
+Existing sessions and password links no longer authorize access. The Church,
+shared folders/bookmarks, other users, administrator identities, and Bible data
+remain unchanged. Deleting the last member leaves an empty Church; a new member
+can subsequently be invited. This is not Church deletion or a recoverable
+suspension. Any transaction failure rolls back the entire deletion.
+
 ## Safe records
 
 Record only the internal operator ID, capability, target Church/User IDs,

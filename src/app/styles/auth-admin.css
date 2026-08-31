@@ -602,6 +602,25 @@
   color: var(--error-text);
 }
 
+.admin-church-user-delete {
+  margin-top: 0.75rem;
+}
+
+dialog.admin-church-user-dialog:not([open]) {
+  display: none;
+}
+
+dialog.admin-church-user-dialog {
+  box-sizing: border-box;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  color: var(--text-primary);
+}
+
+dialog.admin-church-user-dialog::backdrop {
+  background: rgb(0 0 0 / 78%);
+}
+
 .admin-user-list .current-admin-label {
   color: var(--text-muted);
   font-size: 0.78rem;

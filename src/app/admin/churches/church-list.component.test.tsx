@@ -40,6 +40,7 @@ describe("ChurchList", () => {
           },
         ]}
         deleteAction={deleteAction}
+        deleteUserAction={vi.fn()}
       />,
     );
 
@@ -81,7 +82,13 @@ describe("ChurchList", () => {
   });
 
   it("shows an empty state when no churches are registered", () => {
-    render(<ChurchList churches={[]} deleteAction={vi.fn()} />);
+    render(
+      <ChurchList
+        churches={[]}
+        deleteAction={vi.fn()}
+        deleteUserAction={vi.fn()}
+      />,
+    );
 
     expect(screen.getByText("教会はまだ登録されていません。")).toBeVisible();
   });
