@@ -253,7 +253,9 @@ describe("SavedContentPanel", () => {
     fireEvent.dragOver(first, { dataTransfer });
     fireEvent.drop(first, { dataTransfer });
 
-    const list = await screen.findByRole("list", { name: "保存した聖書箇所" });
+    const list = await screen.findByRole("list", {
+      name: "保存したコンテンツ",
+    });
     await waitFor(() =>
       expect(within(list).getAllByRole("listitem")[0]).toHaveAttribute(
         "data-bookmark-id",

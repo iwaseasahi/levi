@@ -5,6 +5,8 @@ import { lockChurch, lockFolder } from "./saved-content-locks";
 import {
   bookmarkInclude,
   bookmarkView,
+  scriptureBookmarkView,
+  slideBookmarkView,
   folderView,
 } from "./saved-content-mappers";
 import {
@@ -151,7 +153,33 @@ export const savedContentRepository: SavedContentRepository = {
             : {}),
         },
       });
-      return bookmarkView(
+      return scriptureBookmarkView(
+        await transaction.bookmark.findUniqueOrThrow({
+          where: { id: bookmark.id },
+          include: bookmarkInclude,
+        }),
+      );
+    });
+  },
+
+  async createSlideBookmark({ churchId }, folderId, slideId) {
+    return prisma.$transaction(async (transaction) => {
+      const [slide] = await transaction.$queryRaw<Array<{ title: string }>>`
+        SELECT title FROM slides
+        WHERE id=${slideId}::uuid AND church_id=${churchId}::uuid
+        FOR KEY SHARE`;
+      if (!slide) return null;
+      if (!(await lockFolder(transaction, churchId, folderId))) return null;
+      const position = await transaction.bookmark.count({
+        where: { churchId, folderId },
+      });
+      const bookmark = await transaction.bookmark.create({
+        data: { churchId, folderId, position, title: slide.title },
+      });
+      await transaction.slideBookmark.create({
+        data: { bookmarkId: bookmark.id, churchId, slideId },
+      });
+      return slideBookmarkView(
         await transaction.bookmark.findUniqueOrThrow({
           where: { id: bookmark.id },
           include: bookmarkInclude,

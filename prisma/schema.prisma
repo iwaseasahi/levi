@@ -324,7 +324,9 @@ model Bookmark {
   updatedAt DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
   folder    Folder             @relation(fields: [folderId, churchId], references: [id, churchId], onDelete: Cascade, onUpdate: NoAction, map: "bookmarks_folder_church_fk")
   scripture ScriptureBookmark?
+  slide     SlideBookmark?
 
+  @@unique([id, churchId], map: "bookmarks_id_church_uk")
   @@unique([folderId, position], map: "bookmarks_folder_position_uk")
   @@index([churchId, folderId, position, id], map: "bookmarks_church_folder_position_idx")
   @@map("bookmarks")
@@ -351,17 +353,31 @@ model ScriptureBookmark {
 }
 
 model Slide {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  churchId  String   @map("church_id") @db.Uuid
-  title     String   @db.VarChar(200)
-  body      String   @db.Text
-  author    String?  @db.VarChar(200)
-  revision  Int      @default(1)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
-  church    Church   @relation(fields: [churchId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "slides_church_id_fkey")
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  churchId  String          @map("church_id") @db.Uuid
+  title     String          @db.VarChar(200)
+  body      String          @db.Text
+  author    String?         @db.VarChar(200)
+  revision  Int             @default(1)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  church    Church          @relation(fields: [churchId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "slides_church_id_fkey")
+  bookmarks SlideBookmark[]
 
+  @@unique([id, churchId], map: "slides_id_church_uk")
   @@index([churchId, createdAt(sort: Desc), id(sort: Desc)], map: "slides_church_created_id_idx")
   @@index([churchId, updatedAt(sort: Desc), id(sort: Desc)], map: "slides_church_updated_id_idx")
   @@map("slides")
+}
+
+model SlideBookmark {
+  bookmarkId String   @id @map("bookmark_id") @db.Uuid
+  churchId   String   @map("church_id") @db.Uuid
+  slideId    String   @map("slide_id") @db.Uuid
+  bookmark   Bookmark @relation(fields: [bookmarkId, churchId], references: [id, churchId], onDelete: Cascade, onUpdate: NoAction, map: "slide_bookmarks_bookmark_church_fk")
+  slide      Slide    @relation(fields: [slideId, churchId], references: [id, churchId], onDelete: Cascade, onUpdate: NoAction, map: "slide_bookmarks_slide_church_fk")
+
+  @@unique([bookmarkId, churchId], map: "slide_bookmarks_bookmark_church_uk")
+  @@index([churchId, slideId, bookmarkId], map: "slide_bookmarks_church_slide_idx")
+  @@map("slide_bookmarks")
 }

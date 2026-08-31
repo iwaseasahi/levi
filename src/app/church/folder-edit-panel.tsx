@@ -2,7 +2,7 @@
 
 import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ScriptureBookmarkView } from "@/domain/saved-content";
+import type { SavedBookmarkView } from "@/domain/saved-content";
 import { moveTo } from "@/domain/order";
 import { useFolderEditor } from "./use-folder-editor";
 
@@ -41,7 +41,7 @@ export function FolderEditPanel({
     await editor.deleteFolder();
   }
 
-  async function deleteBookmark(bookmark: ScriptureBookmarkView) {
+  async function deleteBookmark(bookmark: SavedBookmarkView) {
     if (!window.confirm(`「${bookmark.title}」を削除しますか？`)) return;
     await editor.deleteBookmark(bookmark.id);
   }
@@ -107,7 +107,7 @@ export function FolderEditPanel({
             >
               <div className="management-card-heading">
                 <div>
-                  <p className="management-card-kicker">Saved scripture</p>
+                  <p className="management-card-kicker">Saved content</p>
                   <h2 id="folder-bookmarks">お気に入り</h2>
                 </div>
                 <span className="count-badge">
@@ -158,7 +158,7 @@ export function FolderEditPanel({
                       </span>
                       <div className="modern-bookmark-copy">
                         <strong>{bookmark.title}</strong>
-                        <span>保存した聖書箇所</span>
+                        <span>保存したコンテンツ</span>
                       </div>
                       <div className="modern-bookmark-actions">
                         <button

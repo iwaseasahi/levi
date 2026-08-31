@@ -20,6 +20,14 @@ export type ScriptureBookmarkView = {
   title: string;
   search: ScriptureBookmarkSearch;
 };
+export type SlideBookmarkView = {
+  id: string;
+  folderId: string;
+  position: number;
+  title: string;
+  slideId: string;
+};
+export type SavedBookmarkView = ScriptureBookmarkView | SlideBookmarkView;
 
 export type SavedContentErrorCode =
   | "INVALID_SAVED_CONTENT_INPUT"
@@ -60,6 +68,9 @@ const createBookmarkSchema = z
   .refine(
     (value) => value.endVerse === null || value.endVerse >= value.startVerse,
   );
+const createSlideBookmarkSchema = z
+  .object({ folderId: z.uuid(), slideId: z.uuid() })
+  .strict();
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
   const result = schema.safeParse(value);
@@ -90,6 +101,11 @@ export type SavedContentCommand =
       action: "update-folder";
       folderId: string;
       input: ReturnType<typeof parseUpdateFolder>;
+    }
+  | {
+      action: "create-slide-bookmark";
+      folderId: string;
+      slideId: string;
     }
   | { action: "reorder-folders"; ids: string[] }
   | { action: "delete-folder"; folderId: string }
@@ -135,6 +151,11 @@ export function parseSavedContentCommand(value: unknown): SavedContentCommand {
         input: parseCreateBookmark(input),
       };
     }
+    case "create-slide-bookmark":
+      return {
+        action: command.action,
+        ...parse(createSlideBookmarkSchema, payload),
+      };
     case "open-bookmark":
     case "delete-bookmark":
       return {

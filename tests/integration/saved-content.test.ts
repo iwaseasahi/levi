@@ -5,6 +5,7 @@ import type { ChurchScope } from "@/application/auth/church-access";
 import { prisma } from "@/infrastructure/database/client";
 import {
   createBookmark as createBookmarkUseCase,
+  createSlideBookmark,
   createFolder as createFolderUseCase,
   openBookmark,
   reorderBookmarks,
@@ -13,6 +14,7 @@ import {
   updateFolder,
 } from "@/application/saved-content/manage-saved-content";
 import { savedContentRepository } from "@/infrastructure/database/saved-content-repository";
+import { slideRepository } from "@/infrastructure/database/slide-repository";
 import {
   clearSyntheticBibleFixture,
   createSyntheticBibleFixture,
@@ -126,6 +128,66 @@ afterAll(async () => {
 });
 
 describe("saved-content database contract", () => {
+  it("stores owned slides as typed bookmarks and removes references with compact order on Slide deletion", async () => {
+    const fixture = await createFixture();
+    const scope = tenant(fixture.firstChurch.id);
+    const folder = await createFolderUseCase(
+      savedContentRepository,
+      scope,
+      "Slides",
+    );
+    const first = await slideRepository.create(scope, {
+      title: "First slide",
+      body: "First body",
+      author: null,
+    });
+    const second = await slideRepository.create(scope, {
+      title: "Second slide",
+      body: "Second body",
+      author: null,
+    });
+    const foreign = await slideRepository.create(
+      tenant(fixture.secondChurch.id),
+      { title: "Foreign", body: "Foreign body", author: null },
+    );
+
+    await expect(
+      createSlideBookmark(savedContentRepository, scope, folder.id, first.id),
+    ).resolves.toMatchObject({
+      title: "First slide",
+      slideId: first.id,
+      position: 0,
+    });
+    await expect(
+      createSlideBookmark(savedContentRepository, scope, folder.id, second.id),
+    ).resolves.toMatchObject({
+      title: "Second slide",
+      slideId: second.id,
+      position: 1,
+    });
+    await expect(
+      createSlideBookmark(savedContentRepository, scope, folder.id, foreign.id),
+    ).rejects.toMatchObject({ code: "SAVED_CONTENT_NOT_FOUND" });
+    await expect(
+      createSlideBookmark(
+        savedContentRepository,
+        tenant(fixture.secondChurch.id),
+        folder.id,
+        first.id,
+      ),
+    ).rejects.toMatchObject({ code: "SAVED_CONTENT_NOT_FOUND" });
+
+    await slideRepository.delete(scope, first.id, first.revision);
+    await expect(
+      selectFolder(savedContentRepository, scope, folder.id),
+    ).resolves.toMatchObject({
+      bookmarks: [{ title: "Second slide", slideId: second.id, position: 0 }],
+    });
+    await expect(
+      prisma.bookmark.findMany({ where: { churchId: scope.churchId } }),
+    ).resolves.toHaveLength(1);
+  });
+
   it("prepends new folders while preserving saved order and tenant isolation", async () => {
     const fixture = await createFixture();
     const scope = tenant(fixture.firstChurch.id);

@@ -193,9 +193,13 @@ without clipping. Test short/long lines and Japanese text for fit and line-break
 parity. Use synthetic data and latest project-pinned Chromium; retain the
 existing scripture and bookmark E2E suite.
 
-Legacy slide bookmarks are outside this first slide delivery: the parent
-excludes importing them and #59 does not request a new bookmark subtype. Adding
-slide bookmarks requires its own typed FK contract; never reuse route JSON.
+Legacy slide bookmark import remains outside delivery. Issue #420 adds a native
+`SlideBookmark` subtype with a typed, church-scoped Slide FK; it never reuses
+route JSON. Each row on `/slides` can append the Slide to the folder selected in
+the shared sidebar. The server derives the title from the owned Slide. Mixed
+Scripture/Slide bookmarks share ordering and deletion controls; selecting a
+Slide bookmark navigates to its detail page in the same tab. Physical Slide
+deletion removes its saved references and compacts affected folders.
 Songs, PDF, soft delete, history, real legacy imports and production operations
 remain excluded. Schema expansion is required, but legacy slide data migration
 is not; the migration child records and verifies that distinction.

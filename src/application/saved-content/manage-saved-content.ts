@@ -1,6 +1,8 @@
 import type {
   FolderSummary,
   ScriptureBookmarkView,
+  SavedBookmarkView,
+  SlideBookmarkView,
 } from "@/domain/saved-content";
 import type { ChurchScope } from "@/application/auth/church-access";
 import { SavedContentError } from "@/domain/saved-content";
@@ -20,7 +22,7 @@ export type SavedContentRepository = {
     folderId: string,
   ): Promise<{
     folder: FolderSummary;
-    bookmarks: ScriptureBookmarkView[];
+    bookmarks: SavedBookmarkView[];
   } | null>;
   reorderFolders(scope: ChurchScope, ids: string[]): Promise<boolean>;
   deleteFolder(scope: ChurchScope, folderId: string): Promise<boolean>;
@@ -36,10 +38,15 @@ export type SavedContentRepository = {
       language: ScriptureLanguage;
     },
   ): Promise<ScriptureBookmarkView | null>;
+  createSlideBookmark(
+    scope: ChurchScope,
+    folderId: string,
+    slideId: string,
+  ): Promise<SlideBookmarkView | null>;
   openBookmark(
     scope: ChurchScope,
     bookmarkId: string,
-  ): Promise<ScriptureBookmarkView | null>;
+  ): Promise<SavedBookmarkView | null>;
   reorderBookmarks(
     scope: ChurchScope,
     folderId: string,
@@ -124,6 +131,15 @@ export async function openBookmark(
   bookmarkId: string,
 ) {
   return found(await repository.openBookmark(scope, bookmarkId));
+}
+
+export async function createSlideBookmark(
+  repository: SavedContentRepository,
+  scope: ChurchScope,
+  folderId: string,
+  slideId: string,
+) {
+  return found(await repository.createSlideBookmark(scope, folderId, slideId));
 }
 
 export async function reorderBookmarks(

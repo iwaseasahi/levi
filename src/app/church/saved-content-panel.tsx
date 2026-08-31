@@ -20,17 +20,26 @@ export function SavedContentPanel({
   currentSearchTitle,
   fetcher,
   onSelectSearch,
+  onSelectSlide,
+  onSelectedFolderChange,
+  refreshKey,
 }: {
   currentSearch: ScriptureBookmarkSearch | null;
   currentSearchTitle: string;
   fetcher: typeof fetch;
   onSelectSearch(search: ScriptureBookmarkSearch): Promise<void>;
+  onSelectSlide?(slideId: string): Promise<void>;
+  onSelectedFolderChange?(folderId: string | null): void;
+  refreshKey?: number;
 }) {
   const controller = useSavedContentController({
     currentSearch,
     currentSearchTitle,
     fetcher,
     onSelectSearch,
+    ...(onSelectSlide ? { onSelectSlide } : {}),
+    ...(onSelectedFolderChange ? { onSelectedFolderChange } : {}),
+    ...(refreshKey === undefined ? {} : { refreshKey }),
   });
   const [newFolderDate, setNewFolderDate] = useState("");
   const [newFolderMeeting, setNewFolderMeeting] = useState("");
@@ -175,7 +184,7 @@ export function SavedContentPanel({
                       {selected.bookmarks.length === 0 ? null : (
                         <ul
                           className="bookmark-list"
-                          aria-label="保存した聖書箇所"
+                          aria-label="保存したコンテンツ"
                         >
                           {selected.bookmarks.map((bookmark) => (
                             <li
@@ -222,8 +231,14 @@ export function SavedContentPanel({
                                 className="bookmark-document-icon"
                               />
                               <a
-                                href="/scripture"
+                                href={
+                                  "slideId" in bookmark
+                                    ? `/slides/${bookmark.slideId}`
+                                    : "/scripture"
+                                }
                                 onClick={(event) => {
+                                  if ("slideId" in bookmark && !onSelectSlide)
+                                    return;
                                   event.preventDefault();
                                   void controller.selectBookmark(bookmark.id);
                                 }}

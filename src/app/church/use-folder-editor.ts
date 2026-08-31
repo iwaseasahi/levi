@@ -1,16 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  FolderSummary,
-  ScriptureBookmarkView,
-} from "@/domain/saved-content";
+import type { FolderSummary, SavedBookmarkView } from "@/domain/saved-content";
 import { postJson, requestJson } from "./client-api";
 import { useComponentLifetimeValue } from "./use-component-lifetime-value";
 
 type SelectedFolder = {
   folder: FolderSummary;
-  bookmarks: ScriptureBookmarkView[];
+  bookmarks: SavedBookmarkView[];
 };
 
 export function useFolderEditor({

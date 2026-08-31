@@ -87,6 +87,53 @@ describe("SlideList", () => {
     expect(previous).toHaveFocus();
     expect(fetcher.mock.calls.at(-1)![0]).toBe("/api/church/slides?mode=all");
   });
+  it("adds a row to the selected folder and reports mutation failures", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({ slides: [summary(1)], nextCursor: null }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ bookmark: { slideId: summary(1).id } }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ slides: [summary(2)], nextCursor: null }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 404 }));
+    const saved = vi.fn();
+    const user = userEvent.setup();
+    const first = render(
+      <SlideList
+        fetcher={fetcher}
+        selectedFolderId="00000000-0000-4000-8000-000000000100"
+        onFavoriteSaved={saved}
+      />,
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "お気に入りに追加" }),
+    );
+    expect(fetcher.mock.calls[1]).toEqual([
+      "/api/saved-content",
+      expect.objectContaining({
+        body: expect.stringContaining(`\"slideId\":\"${summary(1).id}\"`),
+        method: "POST",
+      }),
+    ]);
+    expect(saved).toHaveBeenCalledOnce();
+    first.unmount();
+    render(
+      <SlideList
+        fetcher={fetcher}
+        selectedFolderId="00000000-0000-4000-8000-000000000100"
+      />,
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "お気に入りに追加" }),
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "お気に入りに追加できませんでした",
+    );
+  });
   it("keeps a remounted list independent of an old read and renders titles as text", async () => {
     let resolve!: (response: Response) => void;
     const title = "<script>synthetic</script>";

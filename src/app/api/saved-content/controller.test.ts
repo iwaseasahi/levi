@@ -6,6 +6,7 @@ import { createSavedContentHandlers } from "./controller";
 const churchId = "00000000-0000-4000-8000-000000000054";
 const folderId = "00000000-0000-4000-8000-000000000055";
 const bookmarkId = "00000000-0000-4000-8000-000000000056";
+const slideId = "00000000-0000-4000-8000-000000000057";
 const scope = { churchId } as ChurchScope;
 const authorized = {
   mustChangePassword: false,
@@ -47,6 +48,13 @@ function repository(): SavedContentRepository {
         endVerse: 1,
         language: "both",
       },
+    }),
+    createSlideBookmark: vi.fn().mockResolvedValue({
+      id: bookmarkId,
+      folderId,
+      position: 0,
+      title: "Synthetic slide",
+      slideId,
     }),
     openBookmark: vi.fn().mockResolvedValue({
       id: bookmarkId,
@@ -99,6 +107,13 @@ describe("saved content HTTP handlers", () => {
   });
 
   it.each([
+    [
+      "create-slide-bookmark",
+      { action: "create-slide-bookmark", folderId, slideId },
+      "createSlideBookmark",
+      [scope, folderId, slideId],
+      { bookmark: expect.objectContaining({ id: bookmarkId, slideId }) },
+    ],
     [
       "update-folder",
       { action: "update-folder", folderId, name: " 更新後 ", isPinned: true },
