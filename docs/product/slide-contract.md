@@ -173,9 +173,9 @@ account actions only. The existing `/slides` page owns slide listing and creatio
 The `/slides` page is titled “スライドの一覧”. Per the #412 UI simplification,
 show all slides immediately in creation order (newest first), 20 per page, with
 prominent titles, optional author attribution and full-row detail links. Keep a
-clear create link and refresh/retry; show pagination only when needed. Do not
-show recent/all mode switches or body search controls. The search/recent API
-contract above remains supported and tested for compatibility.
+clear create link and error retry; show pagination only when needed. Do not
+show a list-refresh button, recent/all mode switches or body search controls.
+The search/recent API contract above remains supported and tested for compatibility.
 
 Use existing application surfaces and accessible names. List: loading, empty,
 error/retry, success and next-page states. Editor: validation,
