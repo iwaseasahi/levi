@@ -92,3 +92,18 @@
   white-space: pre;
   overflow-wrap: normal;
 }
+.slide-list {
+  padding: 0;
+  list-style: none;
+}
+.slide-list li {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+.slide-list span {
+  color: var(--text-muted);
+}

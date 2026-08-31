@@ -110,6 +110,15 @@ replace the old incidental ID/collation behavior. No production full-text search
 service or extension is required; measure tenant-scoped query plans before
 adding one.
 
+GET `/api/church/slides` accepts optional `mode=all|recent` (default `all`),
+`q` (default empty), and `cursor`. Recent rejects nonempty queries/cursors.
+Duplicate or unknown parameters are invalid. Responses contain `{slides,
+nextCursor}`; list entries omit body and church ID. Cursor is a bounded strict
+JSON string with `{version:1,q,createdAt,id}`, encoded by URLSearchParams in the
+request. It is not an authorization token and never determines church scope.
+See the [synthetic query-plan baseline](../testing-slide-search-performance.md)
+and measured performance follow-up #397.
+
 ## Projection and page operation
 
 Reuse the [direct audience foundation](projection-window-protocol.md): a
