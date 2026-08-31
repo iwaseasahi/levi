@@ -1,5 +1,5 @@
 import { requireChurchPageAccess } from "@/app/church/require-church-page-access";
-import { SlideDocument } from "@/app/slides/slide-document";
+import { SlideDetailWorkspace } from "@/app/slides/slide-detail-workspace";
 
 export default async function SlidePage({
   params,
@@ -8,5 +8,5 @@ export default async function SlidePage({
 }) {
   await requireChurchPageAccess();
   const { id } = await params;
-  return <SlideDocument key={id} id={id} />;
+  return <SlideDetailWorkspace key={id} id={id} />;
 }

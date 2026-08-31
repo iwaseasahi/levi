@@ -130,9 +130,22 @@ test("Slide list shows clear rows and pagination while search/recent APIs retain
       .getByRole("link", { name: longTitle, exact: true })
       .press("Enter");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(longTitle);
+    const detailSidebar = page.getByRole("complementary", {
+      name: "サイドバー",
+    });
+    await expect(detailSidebar).toBeVisible();
     await expect(
-      page.getByRole("complementary", { name: "サイドバー" }),
-    ).toHaveCount(0);
+      detailSidebar.getByRole("link", {
+        name: "フォルダの一覧",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      detailSidebar.getByRole("link", {
+        name: "スライドの一覧",
+        exact: true,
+      }),
+    ).toBeVisible();
     await context.clearCookies();
     expect(
       (await context.request.get("/api/church/slides?q=ABC")).status(),
