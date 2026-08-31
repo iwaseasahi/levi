@@ -425,6 +425,75 @@ test.describe("operator church provisioning", () => {
   });
 });
 
+test.describe("church user deletion", () => {
+  test.use({
+    httpCredentials: {
+      password: E2E_PASSWORD,
+      username: E2E_ADMIN_BASIC_USERNAME,
+    },
+  });
+
+  test("confirms deletion of an invited user while preserving its church", async ({
+    page,
+  }) => {
+    await signInAdmin(page);
+    await page.goto("/admin/churches");
+    await page
+      .getByRole("link", { name: "test.e2e member churchに利用者を招待" })
+      .click();
+    const email = "test.e2e.deleted.member@example.test";
+    await page.getByLabel("利用者名").fill("Synthetic Deleted Member");
+    await page.getByLabel("ログイン用メールアドレス").fill(email);
+    await page.getByRole("button", { name: "利用者を招待" }).click();
+    await expect(page.getByRole("status")).toContainText(email);
+    await page.goto("/admin/churches");
+    const trigger = page.getByRole("button", {
+      name: `Synthetic Deleted Member（${email}）を削除`,
+    });
+    await trigger.click();
+    const dialog = page.getByRole("dialog", {
+      name: "利用者を削除",
+      exact: true,
+    });
+    const confirmation = dialog.getByLabel(
+      "確認のため利用者のメールアドレスを入力してください",
+    );
+    await expect(confirmation).toBeFocused();
+    await expect(
+      dialog.getByRole("button", { name: "利用者を完全に削除" }),
+    ).toBeDisabled();
+    await page.keyboard.press("Escape");
+    await expect(dialog).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+    await trigger.click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await confirmation.fill(email);
+    const submit = dialog.getByRole("button", { name: "利用者を完全に削除" });
+    await submit.focus();
+    await page.keyboard.press("Tab");
+    await expect(confirmation).toBeFocused();
+    await submit.click();
+    await expect(dialog).not.toBeVisible();
+    await expect(page.getByRole("status")).toHaveText("利用者を削除しました。");
+    await expect(trigger).toHaveCount(0);
+    await expect(
+      page.getByText(E2E_CHURCH_USER_EMAIL, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "test.e2e member churchに利用者を招待" }),
+    ).toBeVisible();
+    await expect(
+      page.locator('[aria-label="test.e2e member churchの利用者"]'),
+    ).toBeFocused();
+  });
+});
+
 test.describe("administrator password setup", () => {
   test.use({
     httpCredentials: {
