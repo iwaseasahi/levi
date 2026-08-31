@@ -12,10 +12,11 @@ export function DirectAudienceDisplay({
 }: {
   selection: ScriptureSearch;
 }) {
-  const { current, isAuthorized, message, navigate, status } =
+  const { current, isAuthorized, message, navigate, status, failClosed } =
     useAudienceData(selection);
   const { blank, fontScale } = useAudienceControls({
     current,
+    invalidate: failClosed,
     isAuthorized,
     navigate,
     status,

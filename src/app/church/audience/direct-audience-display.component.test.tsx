@@ -32,6 +32,7 @@ function item(verse: number, book = "GEN", chapter = 1) {
 }
 
 afterEach(() => {
+  window.history.replaceState(null, "", "/");
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -134,6 +135,8 @@ describe("DirectAudienceDisplay", () => {
   });
 
   it("accepts Ginmaku display controls only from its opener", async () => {
+    const generation = "00000000-0000-4000-8000-000000000386";
+    window.history.replaceState(null, "", `/#levi=${generation}`);
     const opener = { postMessage: vi.fn() } as unknown as Window;
     vi.stubGlobal("opener", opener);
     const fetcher = vi.fn((input: RequestInfo | URL) => {
@@ -154,23 +157,42 @@ describe("DirectAudienceDisplay", () => {
       <DirectAudienceDisplay selection={selection} />,
     );
     await screen.findByText("架空の日本語 1:1");
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          source: opener,
+          origin: window.location.origin,
+          data: {
+            schema: "levi.direct-audience",
+            version: 2,
+            type: "CONNECT",
+            kind: "scripture",
+            generation,
+            challenge: generation,
+          },
+        }),
+      ),
+    );
     expect(opener.postMessage).toHaveBeenCalledWith(
-      {
-        schema: "levi.direct-audience",
-        type: "READY",
-        version: 1,
-      },
+      expect.objectContaining({ type: "READY", version: 2, generation }),
       window.location.origin,
     );
+    const instance = vi.mocked(opener.postMessage).mock.calls.at(-1)![0]
+      .instance as string;
+    let sequence = 0;
 
     const send = (action: string, source: MessageEventSource = opener) =>
       window.dispatchEvent(
         new MessageEvent("message", {
           data: {
-            action,
+            command: { action },
             schema: "levi.direct-audience",
             type: "CONTROL",
-            version: 1,
+            version: 2,
+            kind: "scripture",
+            generation,
+            instance,
+            sequence: ++sequence,
           },
           origin: window.location.origin,
           source,
@@ -211,10 +233,14 @@ describe("DirectAudienceDisplay", () => {
       window.dispatchEvent(
         new MessageEvent("message", {
           data: {
-            action: "toggle-blank",
+            command: { action: "toggle-blank" },
             schema: "levi.direct-audience",
             type: "CONTROL",
-            version: 1,
+            version: 2,
+            kind: "scripture",
+            generation,
+            instance,
+            sequence: ++sequence,
           },
           origin: "https://untrusted.example",
           source: opener,
