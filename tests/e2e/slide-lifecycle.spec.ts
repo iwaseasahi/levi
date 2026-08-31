@@ -3,7 +3,7 @@ import { prisma } from "@/infrastructure/database/client";
 import { test, expect } from "./scripture-fixture";
 import { loginToScripture } from "./scripture-helpers";
 
-test("Slide lifecycle keeps drafts private while saved content is searched, projected, edited and deleted", async ({
+test("Slide lifecycle keeps drafts private while saved content is listed, projected, edited and deleted", async ({
   context,
   page,
   scriptureAccount,
@@ -33,8 +33,6 @@ test("Slide lifecycle keeps drafts private while saved content is searched, proj
   ).toBeVisible();
   const detail = page.url();
   await page.goto("/slides");
-  await page.getByLabel("本文を検索").fill("%_\\ abc");
-  await page.getByRole("button", { name: "検索", exact: true }).click();
   const results = page.getByRole("region", { name: "スライド一覧" });
   await expect(results.getByRole("listitem")).toHaveCount(1);
   await results.getByRole("link", { name: "Synthetic lifecycle" }).click();

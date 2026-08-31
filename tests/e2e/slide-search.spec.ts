@@ -1,21 +1,27 @@
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
+import type { SlideSearchResult } from "@/domain/slides/search";
 import { prisma } from "@/infrastructure/database/client";
 import { test, expect } from "./scripture-fixture";
 import { loginToScripture } from "./scripture-helpers";
 
-test("Slide recent, all and literal body search traverse pages without exposing another church", async ({
+test("Slide list shows clear rows and pagination while search/recent APIs retain tenant isolation", async ({
   context,
   page,
   scriptureAccount,
 }, testInfo) => {
   const date = new Date("2026-08-31T00:00:00Z");
+  const longTitle = "長いスライドタイトル".repeat(15);
   await prisma.slide.createMany({
     data: Array.from({ length: 25 }, (_, index) => ({
       churchId: scriptureAccount.churchId,
-      title: `Synthetic ${String(index).padStart(2, "0")}`,
+      title:
+        index === 24
+          ? longTitle
+          : `Synthetic ${String(index).padStart(2, "0")}`,
+      author: index === 24 ? "Synthetic author" : null,
       body: index === 0 ? "Literal %_\\ 日本語 ABC" : "Ordinary body",
-      createdAt: date,
+      createdAt: index === 24 ? new Date(date.getTime() + 1000) : date,
       updatedAt: date,
     })),
   });
@@ -30,28 +36,31 @@ test("Slide recent, all and literal body search traverse pages without exposing 
   try {
     await loginToScripture(context, page, scriptureAccount);
     await page.goto("/slides");
-    const list = page.getByRole("region", { name: "スライド一覧" });
-    await expect(list.getByRole("listitem")).toHaveCount(10);
-    await page.getByRole("button", { name: "すべて", exact: true }).click();
-    await expect(list.getByRole("listitem")).toHaveCount(20);
-    const first = await list.getByRole("link").allTextContents();
-    await page.getByRole("button", { name: "次の20件" }).click();
-    await expect(list.getByRole("listitem")).toHaveCount(5);
-    const second = await list.getByRole("link").allTextContents();
-    expect(new Set([...first, ...second]).size).toBe(25);
-    await expect(page.getByRole("button", { name: "次の20件" })).toBeDisabled();
-    await page.getByRole("button", { name: "前の20件" }).click();
-    await expect(list.getByRole("listitem")).toHaveCount(20);
-    expect(await list.getByRole("link").allTextContents()).toEqual(first);
-    await page.getByLabel("本文を検索").fill("%_\\ 日本語 abc");
-    await page.getByRole("button", { name: "検索", exact: true }).click();
-    await expect(list.getByRole("listitem")).toHaveCount(1);
+    await expect(page).toHaveTitle("スライドの一覧");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "スライドの一覧",
+    );
+    await expect(page.getByRole("button", { name: "最近の更新" })).toHaveCount(
+      0,
+    );
     await expect(
-      list.getByRole("link", { name: "Synthetic 00" }),
-    ).toBeVisible();
-    await expect(page.getByRole("button", { name: "前の20件" })).toBeDisabled();
+      page.getByRole("button", { name: "すべて", exact: true }),
+    ).toHaveCount(0);
+    await expect(page.getByLabel("本文を検索")).toHaveCount(0);
+    const list = page.getByRole("region", { name: "スライド一覧" });
+    await expect(list.getByRole("listitem")).toHaveCount(20);
+    await expect(list.getByRole("link").first()).toHaveAccessibleName(
+      longTitle,
+    );
+    const first = await list
+      .getByRole("link")
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+    await expect(list.getByText("Foreign synthetic")).toHaveCount(0);
     for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 900 });
+      const link = list.getByRole("link", { name: longTitle, exact: true });
+      await link.focus();
+      await expect(link).toBeFocused();
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= innerWidth,
@@ -59,15 +68,54 @@ test("Slide recent, all and literal body search traverse pages without exposing 
       ).toBe(true);
       expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
       await page.screenshot({
-        path: testInfo.outputPath(`slide-search-${width}.png`),
+        path: testInfo.outputPath(`slide-list-${width}.png`),
         fullPage: true,
       });
     }
-    await page.getByLabel("本文を検索").fill("Synthetic 00");
-    await page.getByRole("button", { name: "検索", exact: true }).click();
-    await expect(
-      page.getByText("一致するスライドはありません。"),
-    ).toBeVisible();
+    await page.getByRole("button", { name: "次の20件" }).click();
+    await expect(list.getByRole("listitem")).toHaveCount(5);
+    const second = await list
+      .getByRole("link")
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+    expect(new Set([...first, ...second]).size).toBe(25);
+    await expect(page.getByRole("button", { name: "次の20件" })).toBeDisabled();
+    await page.getByRole("button", { name: "前の20件" }).click();
+    await expect(list.getByRole("listitem")).toHaveCount(20);
+    expect(
+      await list
+        .getByRole("link")
+        .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
+    ).toEqual(first);
+    // The simplified UI no longer exposes these controls; the API contract remains.
+    const recentResponse = await context.request.get(
+      "/api/church/slides?mode=recent",
+    );
+    expect(recentResponse.status()).toBe(200);
+    const recent = (await recentResponse.json()) as SlideSearchResult;
+    expect(recent.slides).toHaveLength(10);
+    expect(
+      recent.slides.some((slide) => slide.title === "Foreign synthetic"),
+    ).toBe(false);
+    const query = new URLSearchParams({ q: "%_\\ 日本語 abc" });
+    const searchResponse = await context.request.get(
+      `/api/church/slides?${query}`,
+    );
+    expect(searchResponse.status()).toBe(200);
+    const matches = (await searchResponse.json()) as SlideSearchResult;
+    expect(matches.slides.map((slide) => slide.title)).toEqual([
+      "Synthetic 00",
+    ]);
+    const titleResponse = await context.request.get(
+      "/api/church/slides?q=Synthetic+00",
+    );
+    expect(titleResponse.status()).toBe(200);
+    expect(((await titleResponse.json()) as SlideSearchResult).slides).toEqual(
+      [],
+    );
+    await list
+      .getByRole("link", { name: longTitle, exact: true })
+      .press("Enter");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(longTitle);
     await context.clearCookies();
     expect(
       (await context.request.get("/api/church/slides?q=ABC")).status(),
