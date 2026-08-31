@@ -92,8 +92,7 @@
   white-space: pre;
   overflow-wrap: normal;
 }
-.slide-list-header,
-.slide-list-toolbar {
+.slide-list-header {
   display: flex;
   align-items: center;
   justify-content: space-between;

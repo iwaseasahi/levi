@@ -50,20 +50,15 @@ export function SlideList({
     Boolean(loaded?.result?.nextCursor);
   return (
     <section aria-label="スライド一覧" aria-busy={!active}>
-      <div className="slide-list-toolbar">
-        <p className="slide-list-status" role="status">
-          {!active
-            ? "読み込み中…"
-            : result
-              ? result.slides.length
-                ? `${page}ページ目 · ${result.slides.length}件（新しく作成した順）`
-                : "スライドはまだありません。"
-              : "一覧を読み込めませんでした。"}
-        </p>
-        <button type="button" onClick={() => setSelection({ cursors: [null] })}>
-          一覧を更新
-        </button>
-      </div>
+      <p className="slide-list-status" role="status">
+        {!active
+          ? "読み込み中…"
+          : result
+            ? result.slides.length
+              ? `${page}ページ目 · ${result.slides.length}件（新しく作成した順）`
+              : "スライドはまだありません。"
+            : "一覧を読み込めませんでした。"}
+      </p>
       {active?.error && (
         <>
           <SlideError message={active.error} />

@@ -47,6 +47,9 @@ test("Slide list shows clear rows and pagination while search/recent APIs retain
       page.getByRole("button", { name: "すべて", exact: true }),
     ).toHaveCount(0);
     await expect(page.getByLabel("本文を検索")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "一覧を更新" })).toHaveCount(
+      0,
+    );
     const list = page.getByRole("region", { name: "スライド一覧" });
     await expect(list.getByRole("listitem")).toHaveCount(20);
     await expect(list.getByRole("link").first()).toHaveAccessibleName(

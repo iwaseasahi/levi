@@ -23,7 +23,7 @@ describe("SlideList", () => {
         Response.json({ slides: [summary(1)], nextCursor: null }),
       );
     const user = userEvent.setup();
-    render(<SlideList fetcher={fetcher} />);
+    const { unmount } = render(<SlideList fetcher={fetcher} />);
     expect(screen.getByRole("status")).toHaveTextContent("読み込み中");
     expect(await screen.findByText("スライドはまだありません。")).toBeVisible();
     expect(
@@ -40,7 +40,11 @@ describe("SlideList", () => {
       "/api/church/slides?mode=all",
       { cache: "no-store" },
     ]);
-    await user.click(screen.getByRole("button", { name: "一覧を更新" }));
+    expect(
+      screen.queryByRole("button", { name: "一覧を更新" }),
+    ).not.toBeInTheDocument();
+    unmount();
+    render(<SlideList fetcher={fetcher} />);
     expect(await screen.findByRole("alert")).toHaveFocus();
     await user.click(screen.getByRole("button", { name: "再試行" }));
     const link = await screen.findByRole("link", {
@@ -52,7 +56,7 @@ describe("SlideList", () => {
       screen.queryByRole("button", { name: "前の20件" }),
     ).not.toBeInTheDocument();
   });
-  it("holds cursors for Back, disables boundaries and refreshes from the first page", async () => {
+  it("holds cursors for Back and disables page boundaries", async () => {
     const first: SlideSearchResult = {
       slides: Array.from({ length: 20 }, (_, i) => summary(i)),
       nextCursor: "cursor-1",
@@ -61,7 +65,6 @@ describe("SlideList", () => {
       first,
       { slides: [summary(21)], nextCursor: null },
       first,
-      { slides: [], nextCursor: null },
     ];
     const fetcher = vi.fn<typeof fetch>(async () =>
       Response.json(pages.shift()),
@@ -82,14 +85,9 @@ describe("SlideList", () => {
     await user.click(previous);
     await screen.findByText(/1ページ目 · 20件/);
     expect(previous).toHaveFocus();
-    await user.click(screen.getByRole("button", { name: "一覧を更新" }));
-    await screen.findByText("スライドはまだありません。");
-    expect(
-      screen.queryByRole("button", { name: "次の20件" }),
-    ).not.toBeInTheDocument();
     expect(fetcher.mock.calls.at(-1)![0]).toBe("/api/church/slides?mode=all");
   });
-  it("ignores a stale response after refreshing and renders titles as text", async () => {
+  it("keeps a remounted list independent of an old read and renders titles as text", async () => {
     let resolve!: (response: Response) => void;
     const title = "<script>synthetic</script>";
     const fetcher = vi
@@ -103,9 +101,9 @@ describe("SlideList", () => {
       .mockResolvedValue(
         Response.json({ slides: [{ ...summary(2), title }], nextCursor: null }),
       );
-    const user = userEvent.setup();
+    const old = render(<SlideList fetcher={fetcher} />);
+    old.unmount();
     const { container } = render(<SlideList fetcher={fetcher} />);
-    await user.click(screen.getByRole("button", { name: "一覧を更新" }));
     expect(await screen.findByRole("link", { name: title })).toBeVisible();
     expect(container.querySelector("script")).toBeNull();
     await act(async () =>
