@@ -128,3 +128,16 @@ dependency is selected here.
 - Revision is a concurrency token only; keeping it does not create edit history.
 - Revisit this ADR for approved slide bookmarks, import, durable presentation,
   collaboration, retention changes or measured search/transport problems.
+
+## 2026-09-01 amendment: typed folder bookmarks
+
+Issue #420 approves Slide favorites as a second, explicit `Bookmark` subtype.
+`SlideBookmark` stores an opaque Slide FK and church ID; composite foreign keys
+require its parent Bookmark, destination Folder and Slide to share one church.
+The deferred total-subtype constraint requires exactly one `ScriptureBookmark`
+or `SlideBookmark`, so route JSON and generic payloads remain prohibited.
+
+The server derives the saved title from the owned Slide. Deleting a Slide also
+deletes its Bookmark parents and compacts each affected folder in the same
+transaction. Folder and church deletion retain their existing cascades. This is
+a forward schema expansion with no legacy import or production operation.

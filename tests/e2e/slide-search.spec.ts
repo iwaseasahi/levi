@@ -147,6 +147,13 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   page,
   scriptureAccount,
 }) => {
+  const savedSlide = await prisma.slide.create({
+    data: {
+      churchId: scriptureAccount.churchId,
+      title: "Synthetic favorite slide",
+      body: "Synthetic favorite body",
+    },
+  });
   await loginToScripture(context, page, scriptureAccount);
   await page.getByRole("button", { name: "新規フォルダ作成" }).click();
   await page.getByLabel("集会名").fill("Synthetic sidebar folder");
@@ -177,7 +184,14 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   ).toHaveAttribute("href", "/slides");
   await expect(
     page.getByRole("button", { name: "お気に入りに追加" }),
-  ).toHaveCount(0);
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "お気に入りに追加" }).click();
+  await expect(
+    sidebar.getByRole("link", {
+      name: "Synthetic favorite slide",
+      exact: true,
+    }),
+  ).toHaveAttribute("href", `/slides/${savedSlide.id}`);
   await sidebar.getByRole("button", { name: "新規フォルダ作成" }).click();
   await page.getByLabel("集会名").fill("Synthetic second folder");
   await page.getByRole("button", { name: "作成", exact: true }).click();
@@ -210,4 +224,14 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   expect(context.pages()).toHaveLength(pagesBefore);
   await page.getByRole("button", { name: "Reset", exact: true }).click();
   await expect(page.getByLabel("章")).toHaveValue("");
+  await page
+    .getByRole("button", { name: "Synthetic sidebar folder", exact: true })
+    .click();
+  await page
+    .getByRole("link", { name: "Synthetic favorite slide", exact: true })
+    .click();
+  await expect(page).toHaveURL(`/slides/${savedSlide.id}`);
+  await expect(
+    page.getByRole("heading", { name: "Synthetic favorite slide" }),
+  ).toBeVisible();
 });

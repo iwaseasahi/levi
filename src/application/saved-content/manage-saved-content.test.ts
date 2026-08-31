@@ -44,6 +44,7 @@ const bookmark = {
 function repository(): SavedContentRepository {
   return {
     createBookmark: vi.fn().mockResolvedValue(bookmark),
+    createSlideBookmark: vi.fn().mockResolvedValue(null),
     createFolder: vi.fn().mockResolvedValue(folder),
     deleteBookmark: vi.fn().mockResolvedValue(true),
     deleteFolder: vi.fn().mockResolvedValue(true),

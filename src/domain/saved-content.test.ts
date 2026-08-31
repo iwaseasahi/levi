@@ -52,6 +52,26 @@ describe("saved content input", () => {
     );
   });
 
+  it("accepts only strict folder and slide IDs for a slide bookmark", () => {
+    const folderId = "00000000-0000-4000-8000-000000000054";
+    const slideId = "00000000-0000-4000-8000-000000000055";
+    expect(
+      parseSavedContentCommand({
+        action: "create-slide-bookmark",
+        folderId,
+        slideId,
+      }),
+    ).toEqual({ action: "create-slide-bookmark", folderId, slideId });
+    expect(() =>
+      parseSavedContentCommand({
+        action: "create-slide-bookmark",
+        folderId,
+        slideId,
+        title: "client title",
+      }),
+    ).toThrow(expect.objectContaining({ code: "INVALID_SAVED_CONTENT_INPUT" }));
+  });
+
   it.each([
     [{ name: " " }, parseCreateFolder],
     [{}, parseUpdateFolder],

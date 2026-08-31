@@ -13,6 +13,7 @@ export const bookmarkInclude = {
       secondaryTranslation: true,
     },
   },
+  slide: true,
 } as const;
 
 type SavedBookmarkRow = Prisma.BookmarkGetPayload<{
@@ -35,7 +36,19 @@ export function folderView(folder: {
   };
 }
 
-export function bookmarkView(bookmark: SavedBookmarkRow) {
+export function slideBookmarkView(bookmark: SavedBookmarkRow) {
+  if (!bookmark.slide)
+    throw new SavedContentError("SAVED_CONTENT_CATALOG_ERROR");
+  return {
+    id: bookmark.id,
+    folderId: bookmark.folderId,
+    position: bookmark.position,
+    title: bookmark.title,
+    slideId: bookmark.slide.slideId,
+  };
+}
+
+export function scriptureBookmarkView(bookmark: SavedBookmarkRow) {
   const scripture = bookmark.scripture;
   if (!scripture) throw new SavedContentError("SAVED_CONTENT_CATALOG_ERROR");
   return {
@@ -54,4 +67,10 @@ export function bookmarkView(bookmark: SavedBookmarkRow) {
       ),
     },
   };
+}
+
+export function bookmarkView(bookmark: SavedBookmarkRow) {
+  return bookmark.slide
+    ? slideBookmarkView(bookmark)
+    : scriptureBookmarkView(bookmark);
 }

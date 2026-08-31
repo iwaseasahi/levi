@@ -3,6 +3,8 @@ import type { SlideRepository } from "@/application/slides/manage-slides";
 import { SlideError, type SlideRecord } from "@/domain/slides/commands";
 import type { Prisma, Slide } from "@/generated/prisma/client";
 import { prisma } from "./client";
+import { lockFolder } from "./saved-content-locks";
+import { writeBookmarkOrder } from "./saved-content-ordering";
 
 function record(row: Slide): SlideRecord {
   return {
@@ -61,6 +63,33 @@ export const slideRepository: SlideRepository = {
   },
   delete(scope, id, expectedRevision) {
     return mutate(scope, id, expectedRevision, async (transaction) => {
+      const references = await transaction.bookmark.findMany({
+        where: { churchId: scope.churchId, slide: { slideId: id } },
+        select: { folderId: true },
+      });
+      const folderIds = [
+        ...new Set(references.map(({ folderId }) => folderId)),
+      ].sort();
+      for (const folderId of folderIds) {
+        if (!(await lockFolder(transaction, scope.churchId, folderId)))
+          throw new SlideError("SLIDE_CONFLICT");
+      }
+      await transaction.bookmark.deleteMany({
+        where: { churchId: scope.churchId, slide: { slideId: id } },
+      });
+      for (const folderId of folderIds) {
+        const remaining = await transaction.bookmark.findMany({
+          where: { churchId: scope.churchId, folderId },
+          orderBy: [{ position: "asc" }, { id: "asc" }],
+          select: { id: true },
+        });
+        await writeBookmarkOrder(
+          transaction,
+          scope.churchId,
+          folderId,
+          remaining.map(({ id: bookmarkId }) => bookmarkId),
+        );
+      }
       await transaction.slide.delete({
         where: { id, churchId: scope.churchId, revision: expectedRevision },
       });

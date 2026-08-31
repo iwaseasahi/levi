@@ -4,14 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   FolderSummary,
   ScriptureBookmarkSearch,
-  ScriptureBookmarkView,
+  SavedBookmarkView,
 } from "@/domain/saved-content";
 import { postJson, requestJson } from "./client-api";
 import { useComponentLifetimeValue } from "./use-component-lifetime-value";
 
 export type SelectedFolder = {
   folder: FolderSummary;
-  bookmarks: ScriptureBookmarkView[];
+  bookmarks: SavedBookmarkView[];
 };
 
 export function useSavedContentController({
@@ -19,14 +19,21 @@ export function useSavedContentController({
   currentSearchTitle,
   fetcher,
   onSelectSearch,
+  onSelectSlide,
+  onSelectedFolderChange,
+  refreshKey = 0,
 }: {
   currentSearch: ScriptureBookmarkSearch | null;
   currentSearchTitle: string;
   fetcher: typeof fetch;
   onSelectSearch(search: ScriptureBookmarkSearch): Promise<void>;
+  onSelectSlide?(slideId: string): Promise<void>;
+  onSelectedFolderChange?(folderId: string | null): void;
+  refreshKey?: number;
 }) {
   const lifetimeFetcher = useComponentLifetimeValue(fetcher);
   const onSelectSearchRef = useRef(onSelectSearch);
+  const onSelectSlideRef = useRef(onSelectSlide);
   const [folders, setFolders] = useState<FolderSummary[]>([]);
   const [selected, setSelected] = useState<SelectedFolder | null>(null);
   const [pending, setPending] = useState(true);
@@ -34,7 +41,12 @@ export function useSavedContentController({
 
   useEffect(() => {
     onSelectSearchRef.current = onSelectSearch;
-  }, [onSelectSearch]);
+    onSelectSlideRef.current = onSelectSlide;
+  }, [onSelectSearch, onSelectSlide]);
+
+  useEffect(() => {
+    onSelectedFolderChange?.(selected?.folder.id ?? null);
+  }, [onSelectedFolderChange, selected?.folder.id]);
 
   const request = useCallback(
     <T>(body: object) => {
@@ -95,6 +107,14 @@ export function useSavedContentController({
     },
     [],
   );
+
+  const selectedFolderId = selected?.folder.id;
+  useEffect(() => {
+    if (refreshKey > 0 && selectedFolderId)
+      void Promise.resolve().then(() =>
+        run(() => loadFolder(selectedFolderId)),
+      );
+  }, [loadFolder, refreshKey, run, selectedFolderId]);
 
   useEffect(() => {
     void Promise.resolve().then(() =>
@@ -162,9 +182,11 @@ export function useSavedContentController({
     async (bookmarkId: string) => {
       await run(async () => {
         const { bookmark } = await request<{
-          bookmark: ScriptureBookmarkView;
+          bookmark: SavedBookmarkView;
         }>({ action: "open-bookmark", bookmarkId });
-        await onSelectSearchRef.current(bookmark.search);
+        if ("slideId" in bookmark)
+          await onSelectSlideRef.current?.(bookmark.slideId);
+        else await onSelectSearchRef.current(bookmark.search);
         await fetchFolders();
       });
     },

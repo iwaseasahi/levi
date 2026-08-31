@@ -1,6 +1,7 @@
 import type { ChurchAccess } from "@/application/auth/church-access";
 import {
   createBookmark,
+  createSlideBookmark,
   createFolder,
   deleteBookmark,
   deleteFolder,
@@ -129,6 +130,15 @@ export function createSavedContentHandlers(dependencies: Dependencies) {
                 access.scope,
                 command.folderId,
                 command.input,
+              ),
+            });
+          case "create-slide-bookmark":
+            return noStoreJson({
+              bookmark: await createSlideBookmark(
+                dependencies.repository,
+                access.scope,
+                command.folderId,
+                command.slideId,
               ),
             });
           case "open-bookmark":

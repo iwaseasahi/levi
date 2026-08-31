@@ -4,7 +4,13 @@ import { useRouter } from "next/navigation";
 import { SavedContentPanel } from "@/app/church/saved-content-panel";
 import { scriptureSearchLink } from "@/app/church/scripture-search-link";
 
-export function SlideSidebar() {
+export function SlideSidebar({
+  onSelectedFolderChange,
+  refreshKey,
+}: {
+  onSelectedFolderChange(folderId: string | null): void;
+  refreshKey: number;
+}) {
   const router = useRouter();
   return (
     <aside
@@ -19,6 +25,9 @@ export function SlideSidebar() {
         onSelectSearch={async (search) => {
           router.push(scriptureSearchLink(search));
         }}
+        onSelectSlide={async (slideId) => router.push(`/slides/${slideId}`)}
+        onSelectedFolderChange={onSelectedFolderChange}
+        refreshKey={refreshKey}
       />
     </aside>
   );
