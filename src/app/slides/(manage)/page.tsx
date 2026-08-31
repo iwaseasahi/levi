@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireChurchPageAccess } from "@/app/church/require-church-page-access";
-import { SlideList } from "./slide-list";
+import { SlideList } from "@/app/slides/slide-list";
 
 export default async function SlidesPage() {
   await requireChurchPageAccess();

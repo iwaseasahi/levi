@@ -9,6 +9,7 @@ import { slidePages } from "@/domain/slides/slide";
 import { SlideEditor } from "./slide-editor";
 import { SlideError, slideErrorMessage } from "./slide-error";
 import { SlidePreview } from "./slide-preview";
+import { SlideController } from "./slide-controller";
 
 export function SlideDocument({
   id,
@@ -64,6 +65,7 @@ export function SlideDocument({
       {slide.author && <p>著者: {slide.author}</p>}
       <p>保存済み · リビジョン {slide.revision}</p>
       <Link href={`/slides/${slide.id}/edit`}>編集</Link>
+      <SlideController slide={slide} />
       <SlidePreview pages={slidePages(slide.body)} />
     </>
   );
