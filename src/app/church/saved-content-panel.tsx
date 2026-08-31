@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   DragEvent,
   FormEvent,
@@ -292,6 +294,12 @@ export function SavedContentPanel({
           <a href="/folders">
             フォルダの一覧 <span aria-hidden="true">→</span>
           </a>
+        </p>
+
+        <p className="edit-folder-action">
+          <Link href="/slides" prefetch={false}>
+            スライドの一覧 <span aria-hidden="true">→</span>
+          </Link>
         </p>
 
         <div className="saved-feedback" aria-live="polite">

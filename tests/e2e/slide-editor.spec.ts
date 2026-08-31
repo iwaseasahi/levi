@@ -9,8 +9,43 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   scriptureAccount,
 }, testInfo) => {
   await loginToScripture(context, page, scriptureAccount);
-  const sidebar = page.getByRole("region", { name: "サイドバーのスライド" });
-  await expect(sidebar.getByText("スライドはまだありません。")).toBeVisible();
+  const sidebar = page.locator("#bookmark_container");
+  const slideListLink = sidebar.getByRole("link", {
+    name: "スライドの一覧",
+    exact: true,
+  });
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(slideListLink).toHaveAttribute("href", "/slides");
+    await expect(
+      sidebar.getByRole("link", { name: "スライドを作成" }),
+    ).toHaveCount(0);
+    await expect(
+      sidebar.getByRole("region", { name: "スライド一覧" }),
+    ).toHaveCount(0);
+    const folderBox = await sidebar
+      .getByRole("link", { name: "フォルダの一覧", exact: true })
+      .boundingBox();
+    const slideBox = await slideListLink.boundingBox();
+    expect(slideBox!.y).toBeGreaterThanOrEqual(
+      folderBox!.y + folderBox!.height,
+    );
+    expect(slideBox!.x).toBe(folderBox!.x);
+    expect(slideBox!.width).toBe(folderBox!.width);
+    expect(slideBox!.x + slideBox!.width).toBeLessThanOrEqual(width);
+    await slideListLink.focus();
+    await expect(slideListLink).toBeFocused();
+    expect(
+      (await new AxeBuilder({ page }).include("#bookmark_container").analyze())
+        .violations,
+    ).toEqual([]);
+    await page.screenshot({
+      path: testInfo.outputPath(`slide-sidebar-link-${width}.png`),
+      fullPage: true,
+    });
+  }
+  await slideListLink.press("Enter");
+  await expect(page).toHaveURL("/slides");
   await page.getByRole("link", { name: "スライドを作成" }).click();
   const body =
     "<script>synthetic</script>\n日本語の本文\n\n\n\n" + "長い行".repeat(50);
@@ -59,40 +94,6 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   }
   await page.getByLabel("タイトル（必須）").fill("Synthetic welcome");
   await page.getByRole("button", { name: "保存", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Synthetic welcome" }),
-  ).toBeVisible();
-  await page.goto("/scripture");
-  for (const width of [390, 1280]) {
-    await page.setViewportSize({ width, height: 900 });
-    const slideLink = sidebar.getByRole("link", {
-      name: "Synthetic welcome",
-      exact: true,
-    });
-    await expect(slideLink).toBeVisible();
-    await slideLink.focus();
-    await expect(slideLink).toBeFocused();
-    const folders = page.getByRole("region", {
-      name: "フォルダーとお気に入り",
-    });
-    const folderBox = await folders.boundingBox();
-    const sidebarBox = await sidebar.boundingBox();
-    expect(sidebarBox!.y).toBeGreaterThanOrEqual(
-      folderBox!.y + folderBox!.height,
-    );
-    expect(sidebarBox!.x + sidebarBox!.width).toBeLessThanOrEqual(width);
-    expect(
-      (await new AxeBuilder({ page }).include("#bookmark_container").analyze())
-        .violations,
-    ).toEqual([]);
-    await page.screenshot({
-      path: testInfo.outputPath(`slide-sidebar-${width}.png`),
-      fullPage: true,
-    });
-  }
-  await sidebar
-    .getByRole("link", { name: "Synthetic welcome", exact: true })
-    .press("Enter");
   await expect(
     page.getByRole("heading", { name: "Synthetic welcome" }),
   ).toBeVisible();

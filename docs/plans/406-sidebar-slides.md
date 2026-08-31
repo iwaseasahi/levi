@@ -50,3 +50,9 @@ authorization, projection or apply outstanding development migrations.
 
 Missing local Slide migration remains a separate known environment issue. This
 change does not reset/migrate the user's development DB. Tests use synthetic data.
+
+## User correction
+
+PR #407 merged at af09fae. The user then clarified that only a
+“スライドの一覧” link below “フォルダの一覧” was intended. Issue #408 supersedes
+this plan's embedded-list design and removes its extra requests and controls.
