@@ -11,7 +11,7 @@ export interface LogEntry {
 }
 
 const sensitiveKey =
-  /authorization|cookie|credential|password|secret|session|token|email|(?:church|folder|bookmark|user)?name|title|body|content|text|params|query/i;
+  /authorization|author|cursor|cookie|credential|password|secret|session|token|email|(?:church|folder|bookmark|user)?name|title|body|content|text|params|query/i;
 const allowedAttributeKeys = new Set([
   "actorUserId",
   "actorAdminUserId",

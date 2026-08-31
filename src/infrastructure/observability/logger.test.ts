@@ -40,6 +40,9 @@ describe("writeLog", () => {
     writeLog({
       attributes: {
         authorization: "Bearer not-a-real-token",
+        author: "Synthetic slide attribution",
+        cursor: "Synthetic cursor containing a body query",
+        nested: { author: "Nested attribution" },
         bookmarkTitle: "other tenant title",
         email: "other-tenant@example.invalid",
         errorDetail: "other tenant database detail",
@@ -58,6 +61,11 @@ describe("writeLog", () => {
     expect(serialized).not.toContain("other-tenant@example.invalid");
     expect(serialized).not.toContain("other tenant database detail");
     expect(serialized).not.toContain("folderId=foreign");
+    expect(serialized).not.toContain("Synthetic slide attribution");
+    expect(serialized).not.toContain(
+      "Synthetic cursor containing a body query",
+    );
+    expect(serialized).not.toContain("Nested attribution");
     expect(serialized).toContain("[REDACTED]");
     expect(serialized).toContain("GET");
   });
