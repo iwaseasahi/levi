@@ -73,6 +73,20 @@ describe("administrator church deletion", () => {
     const preservedChurch = await prisma.church.create({
       data: { name: `${namespace} preserved` },
     });
+    const targetSlide = await prisma.slide.create({
+      data: {
+        churchId: targetChurch.id,
+        title: "Target slide",
+        body: "Synthetic target",
+      },
+    });
+    const preservedSlide = await prisma.slide.create({
+      data: {
+        churchId: preservedChurch.id,
+        title: "Preserved slide",
+        body: "Synthetic preserved",
+      },
+    });
     const passwordHash = await hashPassword("test-only-password");
     const targetUsers = await Promise.all(
       ["first", "second"].map(async (key) => {
@@ -199,6 +213,12 @@ describe("administrator church deletion", () => {
     await expect(
       prisma.user.findUnique({ where: { id: preservedUser.id } }),
     ).resolves.toMatchObject({ email: preservedUser.email });
+    await expect(
+      prisma.slide.findUnique({ where: { id: targetSlide.id } }),
+    ).resolves.toBeNull();
+    await expect(
+      prisma.slide.findUnique({ where: { id: preservedSlide.id } }),
+    ).resolves.toMatchObject({ body: "Synthetic preserved" });
     await expect(prisma.bibleVerse.count()).resolves.toBe(sharedBibleCount);
     await expect(prisma.adminUser.count()).resolves.toBe(adminCount);
   });
