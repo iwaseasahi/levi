@@ -169,6 +169,42 @@ describe("ScriptureSearch", () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
+  it("loads a linked selection initially without a competing blank catalog request", async () => {
+    const fetcher = successfulFetcher();
+    render(
+      <ScriptureSearch
+        fetcher={fetcher}
+        savedContentFetcher={savedContentFetcher}
+        initialSelection={{
+          book: "JHN",
+          chapter: "3",
+          startVerse: "16",
+          endVerse: "",
+          language: "en",
+        }}
+      />,
+    );
+    await waitFor(() => expect(screen.getByLabelText("開始節")).toBeEnabled());
+    expect(screen.getByLabelText("章")).toHaveValue("3");
+    expect(screen.getByLabelText("開始節")).toHaveValue("16");
+    expect(screen.getByLabelText("終了節（省略可）")).toHaveValue("");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const url = new URL(
+      String(fetcher.mock.calls[0]![0]),
+      "https://levi.invalid",
+    );
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      book: "JHN",
+      chapter: "3",
+      language: "en",
+    });
+    expect(window.open).not.toHaveBeenCalled();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Reset" }));
+    await waitFor(() => expect(screen.getByLabelText("章")).toHaveValue(""));
+  });
+
   it("renders 66 canonically ordered bilingual book radio buttons", async () => {
     const catalogBooks = Array.from({ length: 66 }, (_, index) => ({
       code: `BOOK_${index + 1}`,

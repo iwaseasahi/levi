@@ -6,6 +6,7 @@ import {
   normalizeScriptureFavorite,
   normalizeScriptureSearch,
   scriptureFavoriteTitle,
+  type ScriptureSelection,
 } from "./scripture-search-selection";
 import {
   ScriptureSearchFeedback,
@@ -17,11 +18,13 @@ import { useScriptureCatalog } from "./use-scripture-catalog";
 export function ScriptureSearch({
   fetcher = fetch,
   savedContentFetcher = fetcher,
+  initialSelection,
 }: {
   fetcher?: typeof fetch;
   savedContentFetcher?: typeof fetch;
+  initialSelection?: ScriptureSelection;
 }) {
-  const catalog = useScriptureCatalog(fetcher);
+  const catalog = useScriptureCatalog(fetcher, initialSelection);
   const audience = useDirectAudienceController();
   const [validationError, setValidationError] = useState("");
   const currentSearch = normalizeScriptureSearch(

@@ -1,13 +1,10 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { SlideNavigation } from "@/app/slides/slide-navigation";
 
 export default function SlideLayout({ children }: { children: ReactNode }) {
   return (
     <main className="slide-page">
-      <nav aria-label="スライドナビゲーション">
-        <Link href="/scripture">聖書検索</Link>
-        <Link href="/slides">スライド</Link>
-      </nav>
+      <SlideNavigation />
       {children}
     </main>
   );
