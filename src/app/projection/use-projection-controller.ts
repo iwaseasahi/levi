@@ -25,7 +25,13 @@ type Connection = {
 export function useProjectionController<T>(
   kind: ProjectionKind,
   parseContent: (value: unknown) => T | null,
-  { captureInputArrows = false }: { captureInputArrows?: boolean } = {},
+  {
+    captureInputArrows = false,
+    canControl,
+  }: {
+    captureInputArrows?: boolean;
+    canControl?: (content: T) => boolean;
+  } = {},
 ) {
   const connection = useRef<Connection | null>(null);
   const [state, setState] = useState<{
@@ -33,7 +39,10 @@ export function useProjectionController<T>(
     content: T;
   } | null>(null);
   const [error, setError] = useState("");
-  const ready = !!state?.presentation.ready && state.presentation.authorized;
+  const ready =
+    !!state?.presentation.ready &&
+    state.presentation.authorized &&
+    (canControl?.(state.content) ?? true);
   const disconnect = useCallback((message: string) => {
     setState(null);
     setError(message);

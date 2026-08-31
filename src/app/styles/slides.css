@@ -107,3 +107,19 @@
 .slide-list span {
   color: var(--text-muted);
 }
+.slide-audience {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.slide-audience .slide-text-frame {
+  width: min(100vw, calc(100vh * 16 / 9));
+}
+.slide-audience > p {
+  max-width: 40rem;
+  padding: 2rem;
+}

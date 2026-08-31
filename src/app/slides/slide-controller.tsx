@@ -1,0 +1,124 @@
+"use client";
+
+import { useState } from "react";
+import { useProjectionController } from "@/app/projection/use-projection-controller";
+import type { SlideRecord } from "@/domain/slides/commands";
+import {
+  parseSlideProjectionState,
+  slideAudienceMessages,
+} from "@/domain/slides/projection";
+import { slideOutline, slidePages } from "@/domain/slides/slide";
+import { SlideError } from "./slide-error";
+
+export function SlideController({ slide }: { slide: SlideRecord }) {
+  const projection = useProjectionController(
+    "slide",
+    parseSlideProjectionState,
+    {
+      canControl: (content) =>
+        content.status === "ready" &&
+        content.id === slide.id &&
+        content.revision === slide.revision,
+    },
+  );
+  const [opened, setOpened] = useState(false);
+  const current = projection.state?.content;
+  const mismatch =
+    current?.status === "ready" &&
+    (current.id !== slide.id || current.revision !== slide.revision);
+  const ready = projection.ready && !mismatch;
+  const error = mismatch
+    ? slideAudienceMessages.stale
+    : current && current.status !== "ready" && current.status !== "loading"
+      ? slideAudienceMessages[current.status]
+      : projection.error;
+  const outline = slideOutline(slidePages(slide.body));
+  return (
+    <section aria-label="投影操作">
+      <h2>投影</h2>
+      <div className="slide-actions">
+        <button
+          className="primary-button"
+          type="button"
+          onClick={() => {
+            setOpened(true);
+            projection.open(`/slides/audience?id=${slide.id}&page=0`);
+          }}
+        >
+          Open
+        </button>
+        <button
+          type="button"
+          disabled={!ready || current?.page === 0}
+          onClick={() => projection.control({ action: "previous" })}
+        >
+          前のページへ投影
+        </button>
+        <button
+          type="button"
+          disabled={!ready || current?.page === (current?.pageCount ?? 0) - 1}
+          onClick={() => projection.control({ action: "next" })}
+        >
+          次のページへ投影
+        </button>
+        <button
+          type="button"
+          disabled={!ready || projection.state!.presentation.fontScale >= 2.2}
+          onClick={() => projection.control({ action: "font-larger" })}
+        >
+          文字を大きく
+        </button>
+        <button
+          type="button"
+          disabled={!ready || projection.state!.presentation.fontScale <= 0.6}
+          onClick={() => projection.control({ action: "font-smaller" })}
+        >
+          文字を小さく
+        </button>
+        <button
+          type="button"
+          disabled={!ready}
+          aria-pressed={projection.state?.presentation.blank ?? false}
+          onClick={() => projection.control({ action: "toggle-blank" })}
+        >
+          空白と表示を切り替え
+        </button>
+      </div>
+      <p role="status">
+        {error
+          ? "投影停止"
+          : ready
+            ? `${projection.state!.presentation.blank ? "空白投影" : "投影中"} · ${(current?.page ?? 0) + 1} / ${current?.pageCount} · ${Math.round(projection.state!.presentation.fontScale * 100)}%`
+            : opened
+              ? "接続中…"
+              : "投映画面は開いていません。"}
+      </p>
+      {error && (
+        <>
+          <SlideError message={error} />
+          <button type="button" onClick={() => window.location.reload()}>
+            最新の内容を読み込む
+          </button>
+        </>
+      )}
+      <label htmlFor="slide-projection-page">投影ページ</label>
+      <select
+        id="slide-projection-page"
+        disabled={!ready}
+        value={ready ? (current?.page ?? 0) : 0}
+        onChange={(event) =>
+          projection.control({
+            action: "select-page",
+            page: Number(event.target.value),
+          })
+        }
+      >
+        {outline.map((line, index) => (
+          <option key={index} value={index}>
+            {index + 1}. {Array.from(line).slice(0, 80).join("")}
+          </option>
+        ))}
+      </select>
+    </section>
+  );
+}

@@ -1,12 +1,12 @@
 import { requireChurchPageAccess } from "@/app/church/require-church-page-access";
-import { SlideDocument } from "../slide-document";
+import { SlideDocument } from "@/app/slides/slide-document";
 
-export default async function SlidePage({
+export default async function EditSlidePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   await requireChurchPageAccess();
   const { id } = await params;
-  return <SlideDocument key={id} id={id} />;
+  return <SlideDocument key={id} id={id} editing />;
 }
