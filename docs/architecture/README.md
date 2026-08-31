@@ -29,6 +29,7 @@ them in implementation code.
 | [0012](0012-admin-better-auth-email.md)                             | accepted   | Dedicated Better Auth and email for administrators       |
 | [0013](0013-email-invitation-and-self-service-password-recovery.md) | accepted   | Email invitation and self-service password recovery      |
 | [0014](0014-password-link-purpose-and-validity.md)                  | accepted   | Separate setup/recovery emails and three-day links       |
+| [0015](0015-church-owned-slides.md)                                 | accepted   | Church-owned slides and transient presentation           |
 
 Implementation-level data rules are documented in
 [`database-conventions.md`](database-conventions.md) and the accepted
@@ -47,7 +48,3 @@ Open product and operational decisions are tracked in
 5. Update this index in the same pull request.
 
 Changing an accepted decision requires a new ADR that supersedes the old one.
-
-Post-release slides: [ADR 0015](0015-church-owned-slides.md) defines their dedicated
-aggregate and transient presentation boundary; it extends ADR 0007 without
-adding slides to the initial-release schema.

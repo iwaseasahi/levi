@@ -31,7 +31,7 @@ No songs, PDFs, legacy content import, production operations, or dependencies.
 2. [x] Record pinned legacy evidence and page/search/preview examples.
 3. [x] Define Slide ownership/storage and presentation boundaries in an ADR.
 4. [x] Create scoped child Issues with dependencies and verification criteria.
-5. [ ] Update parity and specification links, run applicable checks, review diff.
+5. [x] Update parity and specification links, run applicable checks, review diff.
 6. [ ] Open PR, verify exact-commit CI, merge, and verify Issue status.
 
 ## Decisions
@@ -58,13 +58,19 @@ No songs, PDFs, legacy content import, production operations, or dependencies.
   Node for package lifecycle subprocesses. Retried with the existing bundled
   Node 24.19.0 on PATH; frozen install passed without dependency changes.
 
+- 2026-08-31 JST — `pnpm check` passed: formatting, lint, generated Prisma/Next
+  types, 330 unit tests, 70 component tests, configuration checks and build.
+  Opened draft PR #391. A separate full-diff review found no blockers; aligned
+  timestamp precision to existing millisecond Prisma values for lossless cursors
+  and added ADR 0015 to the index table. No runtime/schema changes.
+
 ## Verification
 
 - [x] Acceptance criteria mapped to contract and child Issues.
 - [x] Local documentation links and golden examples checked.
-- [ ] `pnpm format:check`, `pnpm check`, `git diff --check`.
+- [x] `pnpm format:check`, `pnpm check`, `git diff --check`.
 - [ ] Protected Quality, Database, E2E and Security on PR head.
-- [ ] Final diff reviewed for scope, secrets, deletion and compatibility.
+- [x] Final diff reviewed for scope, secrets, deletion and compatibility.
 
 No new runtime behavior or database migration is introduced. Database/E2E
 regression is retained through required CI; slide behavioral tests belong in
@@ -73,10 +79,13 @@ child implementation Issues rather than documentation-mirroring tests here.
 ## Handoff or blockers
 
 - Completed: intake, isolation, contract/ADR, parity links and nine child Issues.
-- Remaining: finish pnpm check, independent diff review, PR and exact-head CI.
+- Remaining: protected CI on final PR head, merge and Issue/main verification.
 - Blocker: none.
-- Resume with: inspect /tmp/levi-59-check.log and create the documentation PR.
+- Resume with: `gh pr checks 391 --repo iwaseasahi/levi`.
 
 ## Result
 
-Pending.
+Contract and decomposition are implemented in [PR #391](https://github.com/iwaseasahi/levi/pull/391).
+Final CI/merge evidence is recorded in that PR after this plan commit; merge
+remains gated until all four required checks succeed on its exact head. Runtime
+delivery remains in #382–#390, and #38/#302 remain open.
