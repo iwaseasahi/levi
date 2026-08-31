@@ -602,8 +602,10 @@
   color: var(--error-text);
 }
 
-.admin-church-user-delete {
-  margin-top: 0.75rem;
+.admin-church-user-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 dialog.admin-church-user-dialog:not([open]) {

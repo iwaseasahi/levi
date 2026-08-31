@@ -61,28 +61,28 @@ export function ChurchUserList({
                 </div>
                 <div>
                   <dt>利用者の状態</dt>
-                  <dd>
+                  <dd className="admin-church-user-actions">
                     <span
                       className={`status-badge status-${user.status.toLowerCase()}`}
                     >
                       {statusLabels[user.status]}
                     </span>
+                    <button
+                      aria-label={`${user.name}（${user.email}）を削除`}
+                      className="admin-church-action-control admin-delete-button"
+                      onClick={(event) => {
+                        trigger.current = event.currentTarget;
+                        setConfirmation("");
+                        setShowFeedback(false);
+                        setSelected(user);
+                      }}
+                      type="button"
+                    >
+                      削除
+                    </button>
                   </dd>
                 </div>
               </dl>
-              <button
-                aria-label={`${user.name}（${user.email}）を削除`}
-                className="admin-delete-button admin-church-user-delete"
-                onClick={(event) => {
-                  trigger.current = event.currentTarget;
-                  setConfirmation("");
-                  setShowFeedback(false);
-                  setSelected(user);
-                }}
-                type="button"
-              >
-                利用者を削除
-              </button>
             </li>
           ))}
         </ul>

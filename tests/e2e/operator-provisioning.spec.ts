@@ -450,6 +450,31 @@ test.describe("church user deletion", () => {
     const trigger = page.getByRole("button", {
       name: `Synthetic Deleted Member（${email}）を削除`,
     });
+    const users = page.locator('[aria-label="test.e2e member churchの利用者"]');
+    const churchDelete = page.getByRole("button", {
+      name: "test.e2e member churchを削除",
+      exact: true,
+    });
+    for (const width of [1280, 768, 390]) {
+      await page.setViewportSize({ width, height: 844 });
+      const churchBox = await churchDelete.boundingBox();
+      expect(churchBox).not.toBeNull();
+      for (const row of await users.locator("li").all()) {
+        const button = row.getByRole("button");
+        await expect(button).toHaveText("削除");
+        const buttonBox = await button.boundingBox();
+        const statusBox = await row.locator(".status-badge").boundingBox();
+        expect(buttonBox).not.toBeNull();
+        expect(statusBox).not.toBeNull();
+        expect(buttonBox!.x).toBeGreaterThan(statusBox!.x + statusBox!.width);
+        expect(buttonBox!.y + buttonBox!.height / 2).toBeCloseTo(
+          statusBox!.y + statusBox!.height / 2,
+          0,
+        );
+        expect(buttonBox!.width).toBeCloseTo(churchBox!.width, 0);
+        expect(buttonBox!.height).toBeCloseTo(churchBox!.height, 0);
+      }
+    }
     await trigger.click();
     const dialog = page.getByRole("dialog", {
       name: "利用者を削除",
