@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import type { Page } from "@playwright/test";
+import type { BrowserContext, Page } from "@playwright/test";
 
 import { expect, test } from "./fixtures";
 import {
@@ -21,6 +21,26 @@ test.use({ screenshot: "off", trace: "off", video: "off" });
 const mailpitApiUrl =
   process.env.E2E_MAILPIT_API_URL ?? "http://127.0.0.1:8027";
 
+// Chromium's challenge-first httpCredentials can race the global failure bucket
+// across otherwise authorized parallel contexts. Send only the existing synthetic
+// Basic credential, only to the local application's administration boundary.
+async function authorizeAdministration(context: BrowserContext) {
+  await context.route(
+    (url) =>
+      url.origin === "http://127.0.0.1:3100" &&
+      (url.pathname === "/admin" ||
+        url.pathname.startsWith("/admin/") ||
+        url.pathname.startsWith("/api/admin-auth/")),
+    (route) =>
+      route.continue({
+        headers: {
+          ...route.request().headers(),
+          authorization: `Basic ${Buffer.from(`${E2E_ADMIN_BASIC_USERNAME}:${E2E_PASSWORD}`).toString("base64")}`,
+        },
+      }),
+  );
+}
+
 async function signIn(page: Page, email: string) {
   const response = await page.request.post("/api/auth/sign-in/email", {
     data: { email, password: E2E_PASSWORD },
@@ -34,7 +54,12 @@ async function signInAdmin(
   email = E2E_ACTIVE_ADMIN_EMAIL,
   password = E2E_PASSWORD,
 ) {
-  await page.goto("/admin/login");
+  const response = await page.goto("/admin/login");
+  expect(response?.status()).toBe(200);
+  // Check presence without putting a credential value into an assertion artifact.
+  expect(Boolean(await response!.request().headerValue("authorization"))).toBe(
+    true,
+  );
   await page.getByLabel("メールアドレス").fill(email);
   await page.getByLabel("パスワード", { exact: true }).fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();
@@ -150,6 +175,9 @@ test.describe("administrator invitations", () => {
       username: E2E_ADMIN_BASIC_USERNAME,
     },
   });
+  test.beforeEach(async ({ context }) => {
+    await authorizeAdministration(context);
+  });
 
   test("uses the protected administration dashboard as the entry point", async ({
     page,
@@ -254,6 +282,9 @@ test.describe("operator church provisioning", () => {
       password: E2E_PASSWORD,
       username: E2E_ADMIN_BASIC_USERNAME,
     },
+  });
+  test.beforeEach(async ({ context }) => {
+    await authorizeAdministration(context);
   });
 
   test("invites an account and lets the user set and change a password", async ({
@@ -432,6 +463,9 @@ test.describe("church user deletion", () => {
       username: E2E_ADMIN_BASIC_USERNAME,
     },
   });
+  test.beforeEach(async ({ context }) => {
+    await authorizeAdministration(context);
+  });
 
   test("confirms deletion of an invited user while preserving its church", async ({
     page,
@@ -525,6 +559,9 @@ test.describe("administrator password setup", () => {
       password: E2E_PASSWORD,
       username: E2E_ADMIN_BASIC_USERNAME,
     },
+  });
+  test.beforeEach(async ({ context }) => {
+    await authorizeAdministration(context);
   });
 
   for (const audience of ["church", "admin"] as const) {
