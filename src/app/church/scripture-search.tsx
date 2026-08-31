@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { SlideList } from "@/app/slides/slide-list";
 import { SavedContentPanel } from "./saved-content-panel";
 import {
   normalizeScriptureFavorite,
@@ -18,11 +17,9 @@ import { useScriptureCatalog } from "./use-scripture-catalog";
 export function ScriptureSearch({
   fetcher = fetch,
   savedContentFetcher = fetcher,
-  slideFetcher = fetcher,
 }: {
   fetcher?: typeof fetch;
   savedContentFetcher?: typeof fetch;
-  slideFetcher?: typeof fetch;
 }) {
   const catalog = useScriptureCatalog(fetcher);
   const audience = useDirectAudienceController();
@@ -82,7 +79,6 @@ export function ScriptureSearch({
           fetcher={savedContentFetcher}
           onSelectSearch={catalog.restoreSearch}
         />
-        <SlideList sidebar fetcher={slideFetcher} />
       </div>
 
       <div id="index_container">

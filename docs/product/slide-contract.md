@@ -165,10 +165,10 @@ no durable presentation history is added.
 
 ## UI and acceptance boundary
 
-The scripture sidebar shows the all-slide list below folders (20 titles per
-page), with direct links to create and open slides and to the full list/body
-search. Settings contains account actions only. Sidebar failures do not move
-focus away from scripture inputs.
+The scripture sidebar has a single “スライドの一覧” link to `/slides`, directly
+below “フォルダの一覧” with the same appearance. It does not embed slide titles,
+creation/search controls, pagination or a slide-list request. Settings contains
+account actions only. The existing `/slides` page owns slide listing and creation.
 
 Use existing application surfaces and accessible names. List: loading, empty,
 no matches, error/retry, success and next-page states. Editor: validation,

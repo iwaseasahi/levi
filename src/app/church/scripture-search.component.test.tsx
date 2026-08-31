@@ -100,11 +100,7 @@ function renderSearch(
   contentFetcher: typeof fetch = savedContentFetcher,
 ) {
   return render(
-    <ScriptureSearch
-      fetcher={fetcher}
-      savedContentFetcher={contentFetcher}
-      slideFetcher={async () => Response.json({ slides: [], nextCursor: null })}
-    />,
+    <ScriptureSearch fetcher={fetcher} savedContentFetcher={contentFetcher} />,
   );
 }
 
@@ -274,8 +270,8 @@ describe("ScriptureSearch", () => {
     );
     renderSearch(fetcher);
 
-    const loadingStatus = screen.getByText("検索候補を読み込んでいます。");
-    expect(loadingStatus).toHaveAttribute("role", "status");
+    const loadingStatus = screen.getByRole("status");
+    expect(loadingStatus).toHaveTextContent("検索候補を読み込んでいます。");
     expect(loadingStatus).toHaveClass("sr-only");
     expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
 

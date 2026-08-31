@@ -17,15 +17,13 @@ type Selection = {
 };
 export function SlideList({
   fetcher: providedFetcher = fetch,
-  sidebar = false,
 }: {
   fetcher?: typeof fetch;
-  sidebar?: boolean;
 }) {
   const fetcher = useComponentLifetimeValue(providedFetcher);
   const [query, setQuery] = useState("");
   const [selection, setSelection] = useState<Selection>({
-    mode: sidebar ? "all" : "recent",
+    mode: "recent",
     q: "",
     cursors: [null],
   });
@@ -76,59 +74,46 @@ export function SlideList({
     }
   }
   return (
-    <section
-      className={sidebar ? "sidebar-slides" : undefined}
-      aria-label={sidebar ? "サイドバーのスライド" : undefined}
-    >
-      {!sidebar && (
-        <>
-          <div className="slide-actions">
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                choose("recent");
-              }}
-            >
-              最近の更新
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                choose("all");
-              }}
-            >
-              すべて
-            </button>
-          </div>
-          <form onSubmit={submit}>
-            <label htmlFor="slide-query">本文を検索</label>
-            <textarea
-              id="slide-query"
-              rows={2}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-describedby="slide-query-help"
-            />
-            <p id="slide-query-help">
-              200文字以内。空白・改行も検索に含みます。タイトル・著者は検索しません。
-            </p>
-            <button type="submit">検索</button>
-          </form>
-          {validation && <SlideError message={validation} />}
-        </>
-      )}
+    <>
+      <div className="slide-actions">
+        <button
+          type="button"
+          onClick={() => {
+            setQuery("");
+            choose("recent");
+          }}
+        >
+          最近の更新
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setQuery("");
+            choose("all");
+          }}
+        >
+          すべて
+        </button>
+      </div>
+      <form onSubmit={submit}>
+        <label htmlFor="slide-query">本文を検索</label>
+        <textarea
+          id="slide-query"
+          rows={2}
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          aria-describedby="slide-query-help"
+        />
+        <p id="slide-query-help">
+          200文字以内。空白・改行も検索に含みます。タイトル・著者は検索しません。
+        </p>
+        <button type="submit">検索</button>
+      </form>
+      {validation && <SlideError message={validation} />}
       {!active && <p role="status">読み込み中…</p>}
       {active?.error && (
         <>
-          {sidebar ? (
-            <p className="slide-error" role="alert">
-              {active.error}
-            </p>
-          ) : (
-            <SlideError message={active.error} />
-          )}
+          <SlideError message={active.error} />
           <button type="button" onClick={() => setSelection({ ...selection })}>
             再試行
           </button>
@@ -136,20 +121,12 @@ export function SlideList({
       )}
       <section aria-label="スライド一覧" aria-busy={!active}>
         <h2>
-          {sidebar
-            ? "スライド"
-            : selection.mode === "recent"
-              ? "最近の更新（最大10件）"
-              : selection.q
-                ? "検索結果"
-                : "すべてのスライド"}
+          {selection.mode === "recent"
+            ? "最近の更新（最大10件）"
+            : selection.q
+              ? "検索結果"
+              : "すべてのスライド"}
         </h2>
-        {sidebar && (
-          <div className="slide-actions">
-            <Link href="/slides/new">スライドを作成</Link>
-            <Link href="/slides">一覧・本文検索</Link>
-          </div>
-        )}
         {result && (
           <p role="status">
             {result.slides.length
@@ -200,6 +177,6 @@ export function SlideList({
           </button>
         </div>
       </section>
-    </section>
+    </>
   );
 }
