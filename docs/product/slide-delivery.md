@@ -45,3 +45,15 @@ additional cross-cutting audit, not permission to defer tenant protection.
    E2E. Only then update SLIDE-001/002 to verified and report delivery to #38.
 5. Obtain separate exact-operation approval for production schema/application
    rollout. #302 remains the owner of unmeasured Sunday traffic/capacity.
+
+## Runtime acceptance (2026-08-31)
+
+Implementation children have delivered schema, domain, CRUD/preview, search,
+shared transport, Slide projection, tenant audit and recovery. #390 adds the
+[final executable acceptance map](../testing-slide-e2e.md): local verification
+passed 438 unit, 92 component, 132 integration and 32 Chromium E2E tests (zero
+retries), dependency/security checks and a 5-second synthetic encrypted restore
+rehearsal. Its PR records the final exact-head CI and merge outcome. SLIDE-001/002
+are verified for this contract; this does not claim a production deployment,
+legacy Slide import, production capacity or Sunday measurement. #397/#302 remain
+explicit follow-ups. #59's earlier closure meant decomposition, not this acceptance.
