@@ -28,7 +28,9 @@ export function useAudienceData(selection: ScriptureSearch) {
   }, []);
 
   useEffect(() => {
+    let active = true;
     void Promise.resolve().then(async () => {
+      if (!active) return;
       try {
         const query = new URLSearchParams({
           book: selection.book,
@@ -41,6 +43,7 @@ export function useAudienceData(selection: ScriptureSearch) {
           cache: "no-store",
           headers: { Accept: "application/json" },
         });
+        if (!active) return;
         if (response.status === 401 || response.status === 403) {
           failClosed();
           return;
@@ -50,16 +53,19 @@ export function useAudienceData(selection: ScriptureSearch) {
         }>(response, "search unavailable");
         const first = result.items[0];
         if (!first) throw new Error("search empty");
-        if (!authorizedRef.current) return;
+        if (!active || !authorizedRef.current) return;
         currentRef.current = first;
         setCurrent(first);
         setStatus("ready");
       } catch {
-        if (!authorizedRef.current) return;
+        if (!active || !authorizedRef.current) return;
         setStatus("error");
         setMessage("投影する御言葉を読み込めませんでした。");
       }
     });
+    return () => {
+      active = false;
+    };
   }, [failClosed, selection]);
 
   useEffect(() => {
@@ -126,6 +132,7 @@ export function useAudienceData(selection: ScriptureSearch) {
 
   return {
     current,
+    failClosed,
     isAuthorized: useCallback(() => authorizedRef.current, []),
     message,
     navigate,

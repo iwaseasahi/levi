@@ -276,7 +276,7 @@ test("validates the Ginmaku search form and projects each language mode", async 
   await openButton.click();
   const normalizedAudience = await normalizedAudienceOpened;
   await expect(normalizedAudience).toHaveURL(
-    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1$/,
+    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=2&language=both&startVerse=1#levi=[0-9a-f-]{36}$/,
   );
   await normalizedAudience.close();
 

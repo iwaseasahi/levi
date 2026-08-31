@@ -80,7 +80,7 @@ export async function openGenesisAudience(
   await expect(page).toHaveURL(/\/scripture$/);
   await expect(audience).toHaveURL(
     new RegExp(
-      `/scripture/audience\\?book=GEN&chapter=1&endVerse=${expectedEndVerse}&language=${language}&startVerse=${startVerse}$`,
+      `/scripture/audience\\?book=GEN&chapter=1&endVerse=${expectedEndVerse}&language=${language}&startVerse=${startVerse}#levi=[0-9a-f-]{36}$`,
     ),
   );
   return audience;

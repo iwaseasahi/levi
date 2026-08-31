@@ -77,6 +77,19 @@ const savedContentFetcher = vi.fn<typeof fetch>(() =>
   response({ folders: [], orderIds: [] }),
 );
 const audiencePostMessage = vi.fn();
+function readyMessage() {
+  const [connect] = audiencePostMessage.mock.calls.findLast(
+    ([message]) => message.type === "CONNECT",
+  )!;
+  return {
+    ...connect,
+    type: "READY",
+    instance: "00000000-0000-4000-8000-000000000386",
+    sequence: 1,
+    presentation: { ready: true, authorized: true, fontScale: 1, blank: false },
+    content: { location: { book: "JHN", chapter: 3, verse: 16 } },
+  };
+}
 const audienceTarget = {
   closed: false,
   postMessage: audiencePostMessage,
@@ -317,7 +330,9 @@ describe("ScriptureSearch", () => {
     await user.click(screen.getByRole("button", { name: "Open" }));
 
     expect(window.open).toHaveBeenCalledWith(
-      "/scripture/audience?book=JHN&chapter=3&endVerse=17&language=both&startVerse=16",
+      expect.stringContaining(
+        "/scripture/audience?book=JHN&chapter=3&endVerse=17&language=both&startVerse=16#levi=",
+      ),
       "projector",
     );
     expect(screen.queryByText("検索結果")).not.toBeInTheDocument();
@@ -349,11 +364,7 @@ describe("ScriptureSearch", () => {
     act(() =>
       window.dispatchEvent(
         new MessageEvent("message", {
-          data: {
-            schema: "levi.direct-audience",
-            type: "READY",
-            version: 1,
-          },
+          data: readyMessage(),
           origin: window.location.origin,
           source: audienceTarget,
         }),
@@ -366,7 +377,11 @@ describe("ScriptureSearch", () => {
     await user.click(previous);
     await user.click(next);
     await user.click(toggleBlank);
-    expect(audiencePostMessage.mock.calls.map(([message]) => message)).toEqual([
+    expect(
+      audiencePostMessage.mock.calls
+        .filter(([message]) => message.type === "CONTROL")
+        .map(([message]) => ({ ...message.command, type: message.type })),
+    ).toEqual([
       expect.objectContaining({ action: "font-larger", type: "CONTROL" }),
       expect.objectContaining({ action: "font-smaller", type: "CONTROL" }),
       expect.objectContaining({ action: "previous", type: "CONTROL" }),
@@ -398,11 +413,7 @@ describe("ScriptureSearch", () => {
     act(() =>
       window.dispatchEvent(
         new MessageEvent("message", {
-          data: {
-            schema: "levi.direct-audience",
-            type: "READY",
-            version: 1,
-          },
+          data: readyMessage(),
           origin: window.location.origin,
           source: audienceTarget,
         }),
@@ -440,7 +451,11 @@ describe("ScriptureSearch", () => {
     expect(next.defaultPrevented).toBe(true);
     expect(previous.defaultPrevented).toBe(true);
     expect(modified.defaultPrevented).toBe(false);
-    expect(audiencePostMessage.mock.calls.map(([message]) => message)).toEqual([
+    expect(
+      audiencePostMessage.mock.calls
+        .filter(([message]) => message.type === "CONTROL")
+        .map(([message]) => ({ ...message.command, type: message.type })),
+    ).toEqual([
       expect.objectContaining({ action: "next", type: "CONTROL" }),
       expect.objectContaining({ action: "previous", type: "CONTROL" }),
     ]);
@@ -455,11 +470,7 @@ describe("ScriptureSearch", () => {
     act(() =>
       window.dispatchEvent(
         new MessageEvent("message", {
-          data: {
-            schema: "levi.direct-audience",
-            type: "READY",
-            version: 1,
-          },
+          data: readyMessage(),
           origin: window.location.origin,
           source: {} as Window,
         }),
@@ -476,11 +487,7 @@ describe("ScriptureSearch", () => {
     act(() =>
       window.dispatchEvent(
         new MessageEvent("message", {
-          data: {
-            schema: "levi.direct-audience",
-            type: "READY",
-            version: 1,
-          },
+          data: readyMessage(),
           origin: window.location.origin,
           source: audienceTarget,
         }),
@@ -497,11 +504,7 @@ describe("ScriptureSearch", () => {
     act(() =>
       window.dispatchEvent(
         new MessageEvent("message", {
-          data: {
-            schema: "levi.direct-audience",
-            type: "READY",
-            version: 1,
-          },
+          data: readyMessage(),
           origin: window.location.origin,
           source: audienceTarget,
         }),
@@ -526,7 +529,9 @@ describe("ScriptureSearch", () => {
     await user.click(screen.getByRole("button", { name: "Open" }));
 
     expect(window.open).toHaveBeenCalledWith(
-      "/scripture/audience?book=JHN&chapter=3&endVerse=18&language=both&startVerse=16",
+      expect.stringContaining(
+        "/scripture/audience?book=JHN&chapter=3&endVerse=18&language=both&startVerse=16#levi=",
+      ),
       "projector",
     );
   });
@@ -592,7 +597,9 @@ describe("ScriptureSearch", () => {
 
     await user.click(screen.getByRole("button", { name: "Open" }));
     expect(window.open).toHaveBeenCalledWith(
-      "/scripture/audience?book=JHN&chapter=3&endVerse=17&language=ja&startVerse=16",
+      expect.stringContaining(
+        "/scripture/audience?book=JHN&chapter=3&endVerse=17&language=ja&startVerse=16#levi=",
+      ),
       "projector",
     );
   });

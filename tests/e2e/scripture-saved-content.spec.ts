@@ -211,7 +211,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   await page.getByRole("button", { name: "Open" }).click();
   const bookmarkedAudience = await bookmarkOpened;
   await expect(bookmarkedAudience).toHaveURL(
-    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=3&language=both&startVerse=1$/,
+    /\/scripture\/audience\?book=GEN&chapter=1&endVerse=3&language=both&startVerse=1#levi=[0-9a-f-]{36}$/,
   );
   await expect(
     bookmarkedAudience.getByRole("heading", {
