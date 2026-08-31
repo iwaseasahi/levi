@@ -1,7 +1,8 @@
 # Post-release slide contract
 
 Delivery: [Issue #59](https://github.com/iwaseasahi/levi/issues/59). This is the
-contract for child implementation Issues, not a claim that slides are shipped.
+contract for child implementation Issues. The [acceptance map](../testing-slide-e2e.md)
+records runtime verification; production rollout is separately approved.
 Ownership/storage: [ADR 0015](../architecture/0015-church-owned-slides.md).
 
 ## Pinned legacy evidence
