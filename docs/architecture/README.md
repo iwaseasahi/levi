@@ -29,6 +29,7 @@ them in implementation code.
 | [0012](0012-admin-better-auth-email.md)                             | accepted   | Dedicated Better Auth and email for administrators       |
 | [0013](0013-email-invitation-and-self-service-password-recovery.md) | accepted   | Email invitation and self-service password recovery      |
 | [0014](0014-password-link-purpose-and-validity.md)                  | accepted   | Separate setup/recovery emails and three-day links       |
+| [0015](0015-church-owned-slides.md)                                 | accepted   | Church-owned slides and transient presentation           |
 
 Implementation-level data rules are documented in
 [`database-conventions.md`](database-conventions.md) and the accepted

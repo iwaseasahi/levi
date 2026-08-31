@@ -50,3 +50,12 @@ Navigation outside the initial result range and across chapter boundaries uses
 the [scripture navigation contract](scripture-navigation-contract.md) without
 changing this protocol envelope. Canonical book and testament boundaries use
 the same current-item-only message flow.
+
+## Planned slide extension
+
+The v1 protocol above remains the shipped scripture contract. Before introducing
+slides, [ADR 0015](../architecture/0015-church-owned-slides.md) requires a
+content/generation-bound handshake and acknowledged state, preserving scripture
+regressions. The [slide contract](slide-contract.md) separates slide page state
+from transport and scripture coordinates. This section does not claim that the
+extension is implemented.
