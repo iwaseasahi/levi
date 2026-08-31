@@ -1,0 +1,94 @@
+.slide-page {
+  width: min(100% - 2rem, 70rem);
+  margin: 2rem auto;
+  overflow-wrap: anywhere;
+}
+.slide-page nav,
+.slide-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.slide-page h1 {
+  margin: 2rem 0;
+}
+.slide-page fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.slide-page label {
+  display: block;
+  margin: 1.25rem 0 0.5rem;
+}
+.slide-page input,
+.slide-page textarea,
+.slide-page select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem;
+  color: var(--text-primary);
+  background: var(--surface-control);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.25rem;
+  font: inherit;
+}
+.slide-page textarea {
+  resize: vertical;
+}
+.slide-page form p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+.slide-page button {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.25rem;
+  color: var(--text-primary);
+  background: var(--surface-control);
+  font: inherit;
+  cursor: pointer;
+}
+.slide-page button.primary-button {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.slide-page button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.slide-page :focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+.slide-error {
+  border: 1px solid var(--error-border);
+  background: var(--error-surface);
+  color: var(--error-text);
+  padding: 1rem;
+}
+.slide-preview {
+  margin-top: 1.5rem;
+}
+.slide-text-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+}
+.slide-text-frame pre {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-family: inherit;
+  line-height: 1.4;
+  white-space: pre;
+  overflow-wrap: normal;
+}
