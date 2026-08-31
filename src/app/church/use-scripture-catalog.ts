@@ -139,10 +139,17 @@ function catalogReducer(
   }
 }
 
-export function useScriptureCatalog(fetcher: typeof fetch) {
+export function useScriptureCatalog(
+  fetcher: typeof fetch,
+  initialSelection: ScriptureSelection = initialScriptureSelection,
+) {
   const lifetimeFetcher = useComponentLifetimeValue(fetcher);
+  const startingSelection = useComponentLifetimeValue(initialSelection);
   const requestSequence = useRef(0);
-  const [state, dispatch] = useReducer(catalogReducer, initialState);
+  const [state, dispatch] = useReducer(catalogReducer, {
+    ...initialState,
+    selection: startingSelection,
+  });
 
   const loadCatalog = useCallback(
     async (selection: ScriptureSelection) => {
@@ -166,8 +173,8 @@ export function useScriptureCatalog(fetcher: typeof fetch) {
   );
 
   useEffect(() => {
-    void Promise.resolve().then(() => loadCatalog(initialScriptureSelection));
-  }, [loadCatalog]);
+    void Promise.resolve().then(() => loadCatalog(startingSelection));
+  }, [loadCatalog, startingSelection]);
 
   const updateLanguage = useCallback(
     (language: ScriptureLanguage) => {

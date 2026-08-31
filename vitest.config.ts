@@ -23,6 +23,7 @@ export default defineConfig({
         "src/app/church/audience/audience-fit.ts",
         "src/app/church/client-api.ts",
         "src/app/church/scripture-search-selection.ts",
+        "src/app/church/scripture-search-link.ts",
         "src/config/**/*.ts",
         "src/domain/**/*.ts",
         "src/infrastructure/auth/admin-basic-auth.ts",
