@@ -107,7 +107,8 @@ if [[ ! -f "$dump_path" || ! -f "$manifest_path" ]]; then
   echo "Decrypted backup does not contain the expected files." >&2
   exit 1
 fi
-if [[ "$(awk -F= '$1 == "format" {print $2}' "$manifest_path")" != "levi-backup-v1" ]]; then
+manifest_format="$(awk -F= '$1 == "format" {print $2}' "$manifest_path")"
+if [[ "$manifest_format" != "levi-backup-v1" && "$manifest_format" != "levi-backup-v2" ]]; then
   echo "Unsupported backup manifest format." >&2
   exit 1
 fi
@@ -137,13 +138,30 @@ if [[ "$restored_signature" != "$expected_signature" ]]; then
   exit 1
 fi
 
+if [[ "$manifest_format" == "levi-backup-v2" ]]; then
+  expected_slide_signature="$(awk -F= '$1 == "slide_signature" {print $2}' "$manifest_path")"
+  if [[ "$expected_slide_signature" != "absent" && ! "$expected_slide_signature" =~ ^[0-9]+:[a-f0-9]{32}$ ]]; then
+    echo "Backup Slide reconciliation signature is missing or invalid." >&2
+    exit 1
+  fi
+  restored_slide_signature="$(compose exec -T "$database_service" psql \
+    --no-psqlrc --tuples-only --no-align --set ON_ERROR_STOP=1 \
+    --username "$database_user" --dbname "$restore_database" <"${repository_root}/scripts/lib/backup-slide-reconciliation.sql")"
+  restored_slide_signature="${restored_slide_signature//$'\r'/}"
+  restored_slide_signature="${restored_slide_signature//$'\n'/}"
+  if [[ "$restored_slide_signature" != "$expected_slide_signature" ]]; then
+    echo "Restored Slide reconciliation failed." >&2
+    exit 1
+  fi
+fi
+
 compose exec -T "$database_service" psql \
   --no-psqlrc --set ON_ERROR_STOP=1 --username "$database_user" \
-  --dbname "$restore_database" --command "DELETE FROM sessions;" >/dev/null
+  --dbname "$restore_database" <"${repository_root}/scripts/lib/invalidate-restored-sessions.sql" >/dev/null
 remaining_sessions="$(compose exec -T "$database_service" psql \
   --no-psqlrc --tuples-only --no-align --set ON_ERROR_STOP=1 \
   --username "$database_user" --dbname "$restore_database" \
-  --command "SELECT count(*) FROM sessions;")"
+  <"${repository_root}/scripts/lib/restored-session-count.sql")"
 remaining_sessions="${remaining_sessions//[[:space:]]/}"
 if [[ "$remaining_sessions" != "0" ]]; then
   echo "Restored sessions were not fully invalidated." >&2
