@@ -165,6 +165,11 @@ no durable presentation history is added.
 
 ## UI and acceptance boundary
 
+The scripture sidebar shows the all-slide list below folders (20 titles per
+page), with direct links to create and open slides and to the full list/body
+search. Settings contains account actions only. Sidebar failures do not move
+focus away from scripture inputs.
+
 Use existing application surfaces and accessible names. List: loading, empty,
 no matches, error/retry, success and next-page states. Editor: validation,
 unsaved preview, saving/disabled, success, conflict, failure with preserved input.
