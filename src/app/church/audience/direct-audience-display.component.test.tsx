@@ -211,13 +211,17 @@ describe("DirectAudienceDisplay", () => {
         }),
       );
     act(() => send("font-larger"));
-    expect(container.querySelector(".audience-screen")).toHaveStyle({
-      "--audience-scale": "1.1",
-    });
+    await waitFor(() =>
+      expect(container.querySelector(".audience-screen")).toHaveStyle({
+        "--audience-scale": "1.1",
+      }),
+    );
     act(() => send("font-smaller"));
-    expect(container.querySelector(".audience-screen")).toHaveStyle({
-      "--audience-scale": "1",
-    });
+    await waitFor(() =>
+      expect(container.querySelector(".audience-screen")).toHaveStyle({
+        "--audience-scale": "1",
+      }),
+    );
     act(() => send("toggle-blank"));
     expect(screen.getByRole("main", { name: "空白投影" })).toBeVisible();
     expect(screen.queryByText("架空の日本語 1:1")).not.toBeInTheDocument();

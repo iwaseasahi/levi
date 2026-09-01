@@ -108,6 +108,48 @@ describe("Slide audience and controller", () => {
       "利用できません",
     );
   });
+  it("silently disables controls when the projection tab closes", () => {
+    vi.useFakeTimers();
+    const postMessage = vi.fn();
+    const target = { postMessage, closed: false } as unknown as Window;
+    vi.spyOn(window, "open").mockReturnValue(target);
+    render(<SlideController slide={slide} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Open" }));
+    const [connect] = postMessage.mock.calls.at(-1)!;
+    send(
+      {
+        ...connect,
+        type: "READY",
+        instance: generation,
+        sequence: 1,
+        presentation: {
+          ready: true,
+          authorized: true,
+          fontScale: 1,
+          blank: false,
+        },
+        content: {
+          id,
+          page: 0,
+          pageCount: 1,
+          revision: 1,
+          status: "ready",
+        },
+      },
+      target,
+    );
+    expect(screen.getByRole("button", { name: "文字を大きく" })).toBeEnabled();
+
+    Object.assign(target, { closed: true });
+    act(() => vi.advanceTimersByTime(1_000));
+
+    expect(screen.getByRole("button", { name: "文字を大きく" })).toBeDisabled();
+    expect(
+      screen.queryByText("投映画面を閉じました。再度Openしてください。"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
   it("shows single-page font/blank controls and disables an unexpected saved revision", async () => {
     const postMessage = vi.fn();
     const target = { postMessage, closed: false } as unknown as Window;

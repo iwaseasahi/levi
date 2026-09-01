@@ -134,7 +134,7 @@ export function useProjectionController<T>(
       if (!peer) return;
       if (peer.target.closed) {
         connection.current = null;
-        disconnect("投映画面を閉じました。再度Openしてください。");
+        disconnect("");
         return;
       }
       if (Date.now() - peer.lastSeen > 5_000)

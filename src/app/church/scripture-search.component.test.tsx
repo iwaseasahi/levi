@@ -536,6 +536,10 @@ describe("ScriptureSearch", () => {
 
     Object.assign(audienceTarget, { closed: true });
     await waitFor(() => expect(larger).toBeDisabled(), { timeout: 1_500 });
+    expect(
+      screen.queryByText("投映画面を閉じました。再度Openしてください。"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
     Object.assign(audienceTarget, { closed: false });
     await user.click(screen.getByRole("button", { name: "Open" }));
