@@ -20,6 +20,9 @@
   flex-wrap: wrap;
   gap: 1rem;
 }
+.slide-editor-actions {
+  margin-top: 1.25rem;
+}
 .slide-page h1 {
   margin: 2rem 0;
 }

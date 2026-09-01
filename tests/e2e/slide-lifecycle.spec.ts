@@ -14,7 +14,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await expect(page.getByText("スライドはまだありません。")).toBeVisible();
   await page.getByRole("link", { name: "スライドを作成" }).click();
   const original = "礼拝 %_\\ ABC\n日本語の二行目\n\n\n\n二番目\n\n\n\n三番目";
-  await page.getByLabel("本文（必須）").fill(original);
+  await page.getByLabel("本文").fill(original);
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
     page.getByRole("region", { name: "本文プレビュー" }).locator("pre"),
@@ -25,7 +25,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
       where: { churchId: scriptureAccount.churchId },
     }),
   ).toBe(0);
-  await page.getByLabel("タイトル（必須）").fill("Synthetic lifecycle");
+  await page.getByLabel("タイトル").fill("Synthetic lifecycle");
   await expect(page.getByLabel(/著者/)).toHaveCount(0);
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
@@ -69,8 +69,8 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   const editor = await context.newPage();
   await editor.goto(`${detail}/edit`);
   const draft = "未保存の日本語\n第二行\n\n\n\n更新後の二番目";
-  await editor.getByLabel("本文（必須）").fill(draft);
-  await editor.getByLabel("本文（必須）").press("ArrowUp");
+  await editor.getByLabel("本文").fill(draft);
+  await editor.getByLabel("本文").press("ArrowUp");
   await editor.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
     editor.getByRole("region", { name: "本文プレビュー" }).locator("pre"),
@@ -83,9 +83,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
       })
     ).body,
   ).toBe(original);
-  await editor
-    .getByLabel("タイトル（必須）")
-    .fill("Synthetic edited lifecycle");
+  await editor.getByLabel("タイトル").fill("Synthetic edited lifecycle");
   await editor.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
     editor.getByRole("heading", { name: "Synthetic edited lifecycle" }),
@@ -173,12 +171,12 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   await page.goto(`/slides/${slide.id}/edit`);
   const other = await context.newPage();
   await other.goto(`/slides/${slide.id}/edit`);
-  await expect(page.getByLabel("タイトル（必須）")).toHaveValue(slide.title);
-  await other.getByLabel("タイトル（必須）").fill("First saved editor");
+  await expect(page.getByLabel("タイトル")).toHaveValue(slide.title);
+  await other.getByLabel("タイトル").fill("First saved editor");
   await other.getByRole("button", { name: "保存", exact: true }).click();
   await expect(other.getByText(/保存済み · リビジョン/)).toHaveCount(0);
-  await page.getByLabel("タイトル（必須）").fill("Retained unsaved conflict");
-  await page.getByLabel("本文（必須）").fill("Retained unsaved body");
+  await page.getByLabel("タイトル").fill("Retained unsaved conflict");
+  await page.getByLabel("本文").fill("Retained unsaved body");
   pageErrorGuard.allowConsoleError(
     "Failed to load resource: the server responded with a status of 409 (Conflict)",
   );
@@ -186,12 +184,10 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   const error = page.getByRole("main").getByRole("alert");
   await expect(error).toContainText("別の編集が保存されています");
   await expect(error).toBeFocused();
-  await expect(page.getByLabel("タイトル（必須）")).toHaveValue(
+  await expect(page.getByLabel("タイトル")).toHaveValue(
     "Retained unsaved conflict",
   );
-  await expect(page.getByLabel("本文（必須）")).toHaveValue(
-    "Retained unsaved body",
-  );
+  await expect(page.getByLabel("本文")).toHaveValue("Retained unsaved body");
   expect(
     await prisma.slide.findUnique({ where: { id: slide.id } }),
   ).toMatchObject({

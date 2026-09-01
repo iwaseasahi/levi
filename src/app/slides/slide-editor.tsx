@@ -121,28 +121,22 @@ export function SlideEditor({
       {error && <SlideError message={error} />}
       <form onSubmit={submit} noValidate>
         <fieldset disabled={busy}>
-          <label htmlFor="slide-title">タイトル（必須）</label>
+          <label htmlFor="slide-title">タイトル</label>
           <input
             id="slide-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            aria-describedby="slide-title-help"
             required
           />
-          <p id="slide-title-help">1〜200文字・1行</p>
-          <label htmlFor="slide-body">本文（必須）</label>
+          <label htmlFor="slide-body">本文</label>
           <textarea
             id="slide-body"
             rows={12}
             value={body}
             onChange={(event) => setBody(event.target.value)}
-            aria-describedby="slide-body-help"
             required
           />
-          <p id="slide-body-help">
-            1〜100,000文字。HTMLは文字として表示します。
-          </p>
-          <div className="slide-actions">
+          <div className="slide-actions slide-editor-actions">
             <button className="primary-button" type="submit">
               {busy ? "処理中…" : "保存"}
             </button>
@@ -165,11 +159,9 @@ export function SlideEditor({
       {preview && (
         <>
           <h2>保存前プレビュー</h2>
-          <p>
-            保存・投影は行いません。
-            {preview.body !== body &&
-              "本文を変更しました。プレビューを更新してください。"}
-          </p>
+          {preview.body !== body && (
+            <p>本文を変更しました。プレビューを更新してください。</p>
+          )}
           <SlidePreview key={preview.version} text={preview.text} />
         </>
       )}

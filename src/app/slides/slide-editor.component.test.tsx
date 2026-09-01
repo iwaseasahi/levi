@@ -29,12 +29,24 @@ describe("slide editor", () => {
     push.mockClear();
     replace.mockClear();
   });
+  it("does not show input guidance below the text fields", () => {
+    render(<SlideEditor fetcher={vi.fn<typeof fetch>()} />);
+    const title = screen.getByLabelText("タイトル");
+    const body = screen.getByLabelText("本文");
+    expect(title).not.toHaveAccessibleDescription();
+    expect(body).not.toHaveAccessibleDescription();
+    expect(
+      screen.queryByText(
+        /1〜200文字|1〜100,000文字|1行|HTMLは文字として表示します。/,
+      ),
+    ).toBeNull();
+  });
   it("previews the complete body without a valid title, writing or opening an audience", async () => {
     const fetcher = vi.fn<typeof fetch>();
     const open = vi.spyOn(window, "open");
     const user = userEvent.setup();
     render(<SlideEditor fetcher={fetcher} />);
-    const textarea = screen.getByLabelText("本文（必須）");
+    const textarea = screen.getByLabelText("本文");
     fireEvent.change(textarea, {
       target: { value: "<script>synthetic</script>\n\n\n\nSecond" },
     });
@@ -44,6 +56,7 @@ describe("slide editor", () => {
         .getByRole("region", { name: "本文プレビュー" })
         .querySelector("pre")?.textContent,
     ).toBe("<script>synthetic</script>\n\n\n\nSecond");
+    expect(screen.queryByText("保存・投影は行いません。")).toBeNull();
     expect(document.querySelector("script")).toBeNull();
     expect(screen.queryByRole("button", { name: "前のページ" })).toBeNull();
     expect(screen.queryByRole("button", { name: "次のページ" })).toBeNull();
@@ -66,7 +79,7 @@ describe("slide editor", () => {
   it("keeps native arrows and composition in the editor and validates before writing", async () => {
     const fetcher = vi.fn<typeof fetch>();
     render(<SlideEditor fetcher={fetcher} />);
-    const textarea = screen.getByLabelText("本文（必須）");
+    const textarea = screen.getByLabelText("本文");
     for (const key of ["ArrowUp", "ArrowDown"]) {
       expect(fireEvent.keyDown(textarea, { key, isComposing: true })).toBe(
         true,
@@ -87,14 +100,14 @@ describe("slide editor", () => {
     );
     const user = userEvent.setup();
     render(<SlideEditor fetcher={fetcher} />);
-    fireEvent.change(screen.getByLabelText("タイトル（必須）"), {
+    fireEvent.change(screen.getByLabelText("タイトル"), {
       target: { value: "  Synthetic  " },
     });
-    fireEvent.change(screen.getByLabelText("本文（必須）"), {
+    fireEvent.change(screen.getByLabelText("本文"), {
       target: { value: "First\r\nSecond" },
     });
     await user.click(screen.getByRole("button", { name: "保存" }));
-    expect(screen.getByLabelText("本文（必須）")).toBeDisabled();
+    expect(screen.getByLabelText("本文")).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "処理中…" }));
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(JSON.parse(String(fetcher.mock.calls[0]![1]!.body))).toEqual({
@@ -132,13 +145,13 @@ describe("slide editor", () => {
         Response.json({ error: { code: "FAILED" } }, { status }),
       );
       render(<SlideEditor initial={initial} fetcher={fetcher} />);
-      fireEvent.change(screen.getByLabelText("本文（必須）"), {
+      fireEvent.change(screen.getByLabelText("本文"), {
         target: { value: "Unsaved edit" },
       });
       await userEvent.click(screen.getByRole("button", { name: "保存" }));
       const alert = await screen.findByRole("alert");
       expect(alert).toHaveFocus();
-      expect(screen.getByLabelText("本文（必須）")).toHaveValue("Unsaved edit");
+      expect(screen.getByLabelText("本文")).toHaveValue("Unsaved edit");
       expect(screen.getByRole("button", { name: "保存" })).toBeEnabled();
       expect(fetcher.mock.calls[0]![1]?.method).toBe("PUT");
       expect(
@@ -212,7 +225,7 @@ describe("slide editor", () => {
         <SlideDocument id={initial.id} editing fetcher={fetcher} />
       </StrictMode>,
     );
-    const body = await screen.findByLabelText("本文（必須）");
+    const body = await screen.findByLabelText("本文");
     fireEvent.change(body, { target: { value: "Keep this draft" } });
     resolve(Response.json({ slide: { ...initial, body: "Stale" } }));
     await waitFor(() => expect(body).toHaveValue("Keep this draft"));
