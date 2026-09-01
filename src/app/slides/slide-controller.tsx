@@ -70,8 +70,7 @@ export function SlideController({
       ? slideAudienceMessages[current.status]
       : projection.error;
   return (
-    <section aria-label="投影操作">
-      <h2>投影</h2>
+    <section className="slide-controller" aria-label="投影操作">
       <div className="slide-actions">
         <button
           className="primary-button"
@@ -84,26 +83,29 @@ export function SlideController({
           Open
         </button>
         <button
+          aria-label="文字を大きく"
           type="button"
           disabled={!ready || projection.state!.presentation.fontScale >= 2.2}
           onClick={() => projection.control({ action: "font-larger" })}
         >
-          文字を大きく
+          文字 +
         </button>
         <button
+          aria-label="文字を小さく"
           type="button"
           disabled={!ready || projection.state!.presentation.fontScale <= 0.6}
           onClick={() => projection.control({ action: "font-smaller" })}
         >
-          文字を小さく
+          文字 -
         </button>
         <button
+          aria-label="空白と表示を切り替え"
           type="button"
           disabled={!ready}
           aria-pressed={projection.state?.presentation.blank ?? false}
           onClick={() => projection.control({ action: "toggle-blank" })}
         >
-          空白と表示を切り替え
+          空白⇔表示
         </button>
         <button
           className="slide-favorite-button"

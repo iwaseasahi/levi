@@ -112,6 +112,17 @@ describe("Slide audience and controller", () => {
     vi.spyOn(window, "open").mockReturnValue(target);
     const user = userEvent.setup();
     render(<SlideController slide={slide} />);
+    expect(screen.queryByRole("heading", { name: "投影" })).toBeNull();
+    expect(screen.getByRole("region", { name: "投影操作" })).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "文字を大きく" }),
+    ).toHaveTextContent("文字 +");
+    expect(
+      screen.getByRole("button", { name: "文字を小さく" }),
+    ).toHaveTextContent("文字 -");
+    expect(
+      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+    ).toHaveTextContent("空白⇔表示");
     expect(
       screen.getByRole("button", { name: "お気に入りに追加" }),
     ).toBeDisabled();
