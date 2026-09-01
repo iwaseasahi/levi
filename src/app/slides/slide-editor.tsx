@@ -126,20 +126,16 @@ export function SlideEditor({
             id="slide-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            aria-describedby="slide-title-help"
             required
           />
-          <p id="slide-title-help">1行</p>
           <label htmlFor="slide-body">本文（必須）</label>
           <textarea
             id="slide-body"
             rows={12}
             value={body}
             onChange={(event) => setBody(event.target.value)}
-            aria-describedby="slide-body-help"
             required
           />
-          <p id="slide-body-help">HTMLは文字として表示します。</p>
           <div className="slide-actions">
             <button className="primary-button" type="submit">
               {busy ? "処理中…" : "保存"}

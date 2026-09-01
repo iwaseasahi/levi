@@ -29,13 +29,17 @@ describe("slide editor", () => {
     push.mockClear();
     replace.mockClear();
   });
-  it("keeps non-count input guidance associated with each field", () => {
+  it("does not show input guidance below the text fields", () => {
     render(<SlideEditor fetcher={vi.fn<typeof fetch>()} />);
     const title = screen.getByLabelText("タイトル（必須）");
     const body = screen.getByLabelText("本文（必須）");
-    expect(title).toHaveAccessibleDescription("1行");
-    expect(body).toHaveAccessibleDescription("HTMLは文字として表示します。");
-    expect(screen.queryByText(/1〜200文字|1〜100,000文字/)).toBeNull();
+    expect(title).not.toHaveAccessibleDescription();
+    expect(body).not.toHaveAccessibleDescription();
+    expect(
+      screen.queryByText(
+        /1〜200文字|1〜100,000文字|1行|HTMLは文字として表示します。/,
+      ),
+    ).toBeNull();
   });
   it("previews the complete body without a valid title, writing or opening an audience", async () => {
     const fetcher = vi.fn<typeof fetch>();
