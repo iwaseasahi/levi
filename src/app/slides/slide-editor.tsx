@@ -121,14 +121,14 @@ export function SlideEditor({
       {error && <SlideError message={error} />}
       <form onSubmit={submit} noValidate>
         <fieldset disabled={busy}>
-          <label htmlFor="slide-title">タイトル（必須）</label>
+          <label htmlFor="slide-title">タイトル</label>
           <input
             id="slide-title"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             required
           />
-          <label htmlFor="slide-body">本文（必須）</label>
+          <label htmlFor="slide-body">本文</label>
           <textarea
             id="slide-body"
             rows={12}

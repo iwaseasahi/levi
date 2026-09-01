@@ -60,7 +60,7 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   await expect(sidebar).toBeVisible();
   const body =
     "<script>synthetic</script>\n日本語の本文\n\n\n\n" + "長い行".repeat(50);
-  await page.getByLabel("本文（必須）").fill(body);
+  await page.getByLabel("本文").fill(body);
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(page.locator(".slide-text-frame pre")).toHaveText(body);
   await expect(page.getByRole("button", { name: "前のページ" })).toHaveCount(0);
@@ -99,14 +99,14 @@ test("church member previews unsaved literal text, creates, edits and confirms d
       fullPage: true,
     });
   }
-  await page.getByLabel("タイトル（必須）").fill("Synthetic welcome");
+  await page.getByLabel("タイトル").fill("Synthetic welcome");
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Synthetic welcome" }),
   ).toBeVisible();
   await page.getByRole("link", { name: "編集", exact: true }).click();
   await expect(sidebar).toBeVisible();
-  await page.getByLabel("タイトル（必須）").fill("Synthetic edited welcome");
+  await page.getByLabel("タイトル").fill("Synthetic edited welcome");
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Synthetic edited welcome" }),
