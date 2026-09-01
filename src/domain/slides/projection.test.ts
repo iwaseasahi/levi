@@ -6,8 +6,8 @@ import {
 } from "./projection";
 const id = "00000000-0000-4000-8000-000000000387";
 describe("slide projection coordinates", () => {
-  it("accepts only an opaque ID and uses the single internal page", () => {
-    expect(parseSlideProjectionQuery({ id })).toEqual({ id, page: 0 });
+  it("accepts only an opaque ID", () => {
+    expect(parseSlideProjectionQuery({ id })).toEqual({ id });
   });
   it.each([
     { id: "bad" },
@@ -22,18 +22,17 @@ describe("slide projection coordinates", () => {
   ])("rejects invalid URL coordinates %#", (value) => {
     expect(() => parseSlideProjectionQuery(value)).toThrow();
   });
-  it("produces strict metadata acknowledgements without body and validates page bounds", () => {
+  it("produces fixed single-surface metadata acknowledgements without body", () => {
     const state = slideProjectionState(id, {
       status: "ready",
-      pages: ["secret synthetic", "second"],
-      page: 1,
+      text: "secret synthetic",
       revision: 2,
     });
     expect(parseSlideProjectionState(state)).toEqual({
       id,
       status: "ready",
-      page: 1,
-      pageCount: 2,
+      page: 0,
+      pageCount: 1,
       revision: 2,
     });
     expect(JSON.stringify(state)).not.toContain("synthetic");
@@ -44,8 +43,7 @@ describe("slide projection coordinates", () => {
       parseSlideProjectionState(
         slideProjectionState(id, {
           status: "stale",
-          pages: [],
-          page: 0,
+          text: null,
           revision: 1,
         }),
       ),

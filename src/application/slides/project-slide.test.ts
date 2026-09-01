@@ -10,85 +10,61 @@ const slide: SlideRecord = {
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
 };
-function setup(initialPage = 0) {
+
+function setup() {
   const load = vi.fn(async () => slide);
   const publish = vi.fn();
-  const pageChanged = vi.fn();
   const session = createSlideAudienceSession({
     id: slide.id,
-    initialPage,
     load,
     publish,
-    pageChanged,
   });
-  return { load, publish, pageChanged, session };
+  return { load, publish, session };
 }
+
 describe("saved Slide audience lifetime", () => {
-  it("starts once with the complete body and ignores page navigation", async () => {
-    const { session, publish, load, pageChanged } = setup();
+  it("starts once with the complete single-surface body", async () => {
+    const { session, publish, load } = setup();
     await session.start();
     await session.start();
     expect(load).toHaveBeenCalledTimes(1);
     expect(publish).toHaveBeenLastCalledWith({
       status: "ready",
-      pages: ["First\n\n\n\nSecond\n\n\n\nThird"],
-      page: 0,
+      text: "First\n\n\n\nSecond\n\n\n\nThird",
       revision: 1,
     });
-    await Promise.all([
-      session.navigate("next"),
-      session.navigate("next"),
-      session.navigate("previous"),
-    ]);
-    expect(pageChanged).not.toHaveBeenCalled();
-    await session.navigate(0);
-    await session.navigate("previous");
-    await session.navigate(3);
-    await session.navigate(0.5);
-    expect(pageChanged).not.toHaveBeenCalled();
-    expect(load).toHaveBeenCalledTimes(8);
+    await expect(session.verify()).resolves.toBe(true);
+    expect(load).toHaveBeenCalledTimes(2);
     session.dispose();
-    await session.navigate("next");
+    await expect(session.verify()).resolves.toBe(false);
     await session.start();
-    expect(load).toHaveBeenCalledTimes(8);
+    expect(load).toHaveBeenCalledTimes(2);
   });
-  it.each([-1, 1, 0.5])(
-    "rejects out-of-bounds initial page %s without clamping",
-    async (page) => {
-      const { session, publish } = setup(page);
-      await session.start();
-      expect(publish).toHaveBeenLastCalledWith(
-        expect.objectContaining({ status: "invalid", pages: [] }),
-      );
-      expect(session.isAuthorized()).toBe(false);
-    },
-  );
-  it("clears on revision change and refuses subsequent commands/checks", async () => {
+
+  it("clears on revision change and refuses subsequent checks", async () => {
     const { session, publish, load } = setup();
     await session.start();
     load.mockResolvedValue({ ...slide, revision: 2, body: "New content" });
-    await session.navigate("next");
+    await expect(session.verify()).resolves.toBe(false);
     expect(publish).toHaveBeenLastCalledWith({
       status: "stale",
-      pages: [],
-      page: 0,
+      text: null,
       revision: 1,
     });
     await session.verify();
-    await session.navigate("next");
     expect(load).toHaveBeenCalledTimes(2);
   });
-  it.each(["read", "verify", "navigate"])(
+
+  it.each(["read", "verify"])(
     "clears on failed %s (denied/deleted/network) without revealing content",
     async (action) => {
       const { session, load, publish } = setup();
-      if (action !== "read") await session.start();
+      if (action === "verify") await session.start();
       load.mockRejectedValue(new Error("synthetic restricted error"));
       if (action === "read") await session.start();
-      else if (action === "verify") await session.verify();
-      else await session.navigate("next");
+      else await session.verify();
       expect(publish).toHaveBeenLastCalledWith(
-        expect.objectContaining({ status: "unavailable", pages: [] }),
+        expect.objectContaining({ status: "unavailable", text: null }),
       );
       expect(JSON.stringify(publish.mock.calls.at(-1))).not.toContain(
         "restricted",
@@ -96,6 +72,7 @@ describe("saved Slide audience lifetime", () => {
       expect(session.isAuthorized()).toBe(false);
     },
   );
+
   it.each(["invalidate", "dispose"] as const)(
     "ignores an initial read completed after %s",
     async (action) => {
@@ -112,11 +89,12 @@ describe("saved Slide audience lifetime", () => {
       finish(slide);
       await started;
       expect(
-        publish.mock.calls.every(([state]) => state.pages.length === 0),
-      ).toBe(true);
+        publish.mock.calls.some(([state]) => state.status === "ready"),
+      ).toBe(false);
     },
   );
-  it("a failed concurrent eligibility check prevents late navigation from restoring text", async () => {
+
+  it("a failed concurrent eligibility check prevents a late success from restoring text", async () => {
     const { session, load, publish } = setup();
     await session.start();
     let finish!: (value: SlideRecord) => void;
@@ -128,23 +106,24 @@ describe("saved Slide audience lifetime", () => {
           }),
       )
       .mockRejectedValueOnce(new Error("denied"));
-    const navigation = session.navigate("next");
+    const late = session.verify();
     await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(2));
     await session.verify();
     finish(slide);
-    await navigation;
+    await late;
     expect(publish).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "unavailable", pages: [] }),
+      expect.objectContaining({ status: "unavailable", text: null }),
     );
     expect(session.isAuthorized()).toBe(false);
   });
+
   it("fails closed on mismatched identity and invalid saved body", async () => {
     for (const patch of [{ id: "foreign" }, { body: " " }]) {
       const { session, load, publish } = setup();
       load.mockResolvedValue({ ...slide, ...patch });
       await session.start();
       expect(publish).toHaveBeenLastCalledWith(
-        expect.objectContaining({ status: "unavailable", pages: [] }),
+        expect.objectContaining({ status: "unavailable", text: null }),
       );
     }
     const { session, load, publish } = setup();
@@ -152,7 +131,7 @@ describe("saved Slide audience lifetime", () => {
     load.mockResolvedValue({ ...slide, id: "foreign" });
     await session.verify();
     expect(publish).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "unavailable" }),
+      expect.objectContaining({ status: "unavailable", text: null }),
     );
   });
 });

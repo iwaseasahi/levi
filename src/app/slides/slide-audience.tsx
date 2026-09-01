@@ -9,20 +9,16 @@ import {
 import { SlideText } from "./slide-text";
 import { useSlideAudienceData } from "./use-slide-audience-data";
 
+const ignoreNavigation = () => undefined;
+
 export function SlideAudience({
   id,
-  page,
   fetcher = fetch,
 }: {
   id: string;
-  page: number;
   fetcher?: typeof fetch;
 }) {
-  const { state, navigate, isAuthorized, invalidate } = useSlideAudienceData(
-    id,
-    page,
-    fetcher,
-  );
+  const { state, isAuthorized, invalidate } = useSlideAudienceData(id, fetcher);
   const content = useMemo(() => slideProjectionState(id, state), [id, state]);
   const { fontScale, blank } = useProjectionAudience({
     kind: "slide",
@@ -31,7 +27,7 @@ export function SlideAudience({
     authorized: state.status === "loading" || state.status === "ready",
     isAuthorized,
     keyboardNavigation: false,
-    navigate,
+    navigate: ignoreNavigation,
     invalidate,
   });
   return (
@@ -42,11 +38,7 @@ export function SlideAudience({
       }
     >
       {state.status === "ready" ? (
-        <SlideText
-          text={state.pages[state.page] ?? ""}
-          fontScale={fontScale}
-          blank={blank}
-        />
+        <SlideText text={state.text} fontScale={fontScale} blank={blank} />
       ) : (
         <p role={state.status === "loading" ? "status" : "alert"}>
           {slideAudienceMessages[state.status]}

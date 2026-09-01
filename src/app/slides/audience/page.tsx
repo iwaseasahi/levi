@@ -28,11 +28,5 @@ export default async function SlideAudiencePage({
       </main>
     );
   }
-  return (
-    <SlideAudience
-      key={`${query.id}:${query.page}`}
-      id={query.id}
-      page={query.page}
-    />
-  );
+  return <SlideAudience key={query.id} id={query.id} />;
 }
