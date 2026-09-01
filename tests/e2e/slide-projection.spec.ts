@@ -19,6 +19,7 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
         "\n\n\n\nFinal",
     },
   });
+  const updatedBody = Array(4).fill("テストスライド").join("\n");
   await loginToScripture(context, page, scriptureAccount);
   await page.goto(`/slides/${slide.id}`);
   const controller = page.getByRole("region", { name: "投影操作" });
@@ -108,7 +109,7 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
 
   await prisma.slide.update({
     where: { id: slide.id },
-    data: { body: "Updated synthetic body", revision: { increment: 1 } },
+    data: { body: updatedBody, revision: { increment: 1 } },
   });
   await audience.bringToFront();
   await audience.evaluate(() =>
@@ -120,7 +121,17 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await expect(audience.locator("pre")).toHaveCount(0);
   await page.reload();
   await controller.getByRole("button", { name: "Open" }).click();
-  await expect(audience.locator("pre")).toHaveText("Updated synthetic body");
+  await expect(audience.locator("pre")).toHaveText(updatedBody);
+  await expect
+    .poll(() =>
+      audience
+        .locator("pre")
+        .evaluate((element) => getComputedStyle(element).fontSize),
+    )
+    .toBe("129.6px");
+  await audience.screenshot({
+    path: testInfo.outputPath("slide-audience-restored-size-1920.png"),
+  });
   expect(context.pages()).toHaveLength(2);
 
   await page.goto("/scripture");
@@ -131,7 +142,7 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   ).toBeVisible();
   await page.goto(`/slides/${slide.id}`);
   await controller.getByRole("button", { name: "Open" }).click();
-  await expect(audience.locator("pre")).toHaveText("Updated synthetic body");
+  await expect(audience.locator("pre")).toHaveText(updatedBody);
   expect(context.pages()).toHaveLength(2);
   pageErrorGuard.allowConsoleError(
     "Failed to load resource: the server responded with a status of 404 (Not Found)",
