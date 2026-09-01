@@ -76,10 +76,13 @@ Existing folders retain their relative order. This order survives reloads and
 does not change when a folder is selected; the optional date is not a sort key.
 `フォルダの一覧` appears below creation and opens `/folders` in
 the current tab. The modern dark list links to each folder's management surface.
-The list and folder editor provide explicit same-tab return links. Both screens
-also share the same top-level `聖書検索` and `スライド` navigation used by the
-Slide management screens. Scripture search and audience-only screens do not add
-this navigation. Successful folder deletion returns to `/folders`.
+The list and folder editor omit separate return links. Both screens share the
+same top-level `聖書検索` and `スライド` navigation used by the Slide management
+screens and show the shared folder/sidebar panel on the left. The same sidebar
+also appears on Slide create/edit and the signed-in account password screen.
+Scripture search keeps its existing integrated sidebar rather than adding a
+second one; audience-only, authentication, forced-password and administrator
+screens do not add it. Successful folder deletion returns to `/folders`.
 
 The open accordion body contains only document icons and saved scripture links;
 rename, pin, delete, and bookmark-title controls never appear there. Bookmarks

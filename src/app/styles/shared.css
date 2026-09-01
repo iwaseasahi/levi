@@ -123,3 +123,31 @@ select:focus-visible,
   flex-wrap: wrap;
   gap: 1rem;
 }
+
+.church-sidebar-workspace {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  align-items: start;
+  gap: 2rem;
+  margin: 8px;
+}
+
+.church-sidebar-workspace > .ginmaku-bookmark-container {
+  float: none;
+  margin: 0;
+}
+
+.church-sidebar-workspace > :last-child {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .church-sidebar-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .church-sidebar-workspace > .ginmaku-bookmark-container {
+    width: 100%;
+  }
+}

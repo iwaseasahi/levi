@@ -152,7 +152,9 @@ no durable presentation history is added.
 The scripture sidebar has a single “スライドの一覧” link to `/slides`, directly
 below “フォルダの一覧” with the same appearance. It does not embed slide titles,
 creation/search controls, pagination or a slide-list request. Settings contains
-account actions only. The existing `/slides` page owns slide listing and creation.
+account actions only. The existing `/slides` page owns slide listing and
+creation. Slide list, create, detail and edit screens all use the shared folder
+sidebar available on signed-in church management screens.
 
 The `/slides` page is titled “スライドの一覧”. Per the #412 UI simplification,
 show all slides immediately in creation order (newest first), 20 per page, with

@@ -1,15 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { SavedContentPanel } from "@/app/church/saved-content-panel";
-import { scriptureSearchLink } from "@/app/church/scripture-search-link";
+import { SavedContentPanel } from "./saved-content-panel";
+import { scriptureSearchLink } from "./scripture-search-link";
 
-export function SlideSidebar({
-  onSelectedFolderChange,
-  refreshKey,
+const ignoreFolderSelection = () => undefined;
+
+export function ChurchSidebar({
+  onSelectedFolderChange = ignoreFolderSelection,
+  refreshKey = 0,
+  fetcher = fetch,
 }: {
-  onSelectedFolderChange(folderId: string | null): void;
-  refreshKey: number;
+  onSelectedFolderChange?(folderId: string | null): void;
+  refreshKey?: number;
+  fetcher?: typeof fetch;
 }) {
   const router = useRouter();
   return (
@@ -21,7 +25,7 @@ export function SlideSidebar({
       <SavedContentPanel
         currentSearch={null}
         currentSearchTitle=""
-        fetcher={fetch}
+        fetcher={fetcher}
         onSelectSearch={async (search) => {
           router.push(scriptureSearchLink(search));
         }}

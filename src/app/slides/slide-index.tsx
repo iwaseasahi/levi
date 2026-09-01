@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ChurchNavigation } from "@/app/church/church-navigation";
+import { ChurchSidebar } from "@/app/church/church-sidebar";
 import { SlideList } from "./slide-list";
-import { SlideSidebar } from "./slide-sidebar";
 
 export function SlideIndex() {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   return (
-    <div className="slide-index-workspace">
-      <SlideSidebar
+    <div className="church-sidebar-workspace">
+      <ChurchSidebar
         onSelectedFolderChange={setSelectedFolderId}
         refreshKey={refreshKey}
       />

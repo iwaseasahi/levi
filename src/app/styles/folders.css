@@ -438,24 +438,8 @@
   margin: 0 auto;
 }
 
-.folder-management-shell > .church-navigation + .management-back-link {
+.folder-management-shell > .church-navigation + .folder-page-header {
   margin-top: 2rem;
-}
-
-.management-back-link {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: clamp(28px, 5vw, 48px);
-  color: var(--text-muted);
-  font-size: 14px;
-  font-weight: 650;
-  text-decoration: none;
-}
-
-.management-back-link:hover,
-.management-back-link:focus-visible {
-  color: #fff;
 }
 
 .folder-page-header {
@@ -583,8 +567,7 @@
   color: #bdbdbd;
 }
 
-.folder-card-link,
-.primary-link {
+.folder-card-link {
   color: #e1b779;
   font-weight: 750;
   text-decoration: none;

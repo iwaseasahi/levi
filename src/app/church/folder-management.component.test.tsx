@@ -153,6 +153,7 @@ describe("folder management", () => {
         name: "フォルダーを編集",
       }),
     ).toBeVisible();
+    expect(screen.queryByRole("link", { name: "フォルダの一覧へ" })).toBeNull();
     const navigation = screen.getByRole("navigation", {
       name: "主要ナビゲーション",
     });

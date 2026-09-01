@@ -10,6 +10,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
 }) => {
   test.setTimeout(60_000);
   await loginToScripture(context, page, scriptureAccount);
+  const sidebar = page.locator("#bookmark_container");
   await selectGenesis(page, { endVerse: "" });
   await expect(page.locator(".folder-sidebar-heading")).toHaveCount(0);
 
@@ -156,6 +157,11 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   await expect(
     page.getByRole("heading", { name: "フォルダの一覧" }),
   ).toBeVisible();
+  await expect(sidebar).toBeVisible();
+  await expect(
+    sidebar.getByRole("link", { name: "フォルダの一覧", exact: true }),
+  ).toHaveAttribute("href", "/folders");
+  await expect(page.getByRole("link", { name: "聖書検索へ" })).toHaveCount(0);
   const folderNavigation = page.getByRole("navigation", {
     name: "主要ナビゲーション",
   });
@@ -189,8 +195,15 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   ).toBe(true);
   await page.setViewportSize({ width: 1920, height: 1080 });
 
-  await page.getByRole("link", { name: "2026-08-23 第二礼拝を編集" }).click();
+  await page
+    .getByRole("region", { name: "フォルダー一覧" })
+    .getByRole("link", { name: "2026-08-23 第二礼拝を編集" })
+    .click();
   await expect(page).toHaveURL(/\/folders\/[^/]+\/edit$/);
+  await expect(sidebar).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "フォルダの一覧へ" }),
+  ).toHaveCount(0);
   const editorNavigation = page.getByRole("navigation", {
     name: "主要ナビゲーション",
   });
@@ -211,10 +224,17 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   await expect(page.getByRole("status")).toHaveText(
     "フォルダーを更新しました。",
   );
-  await expect(page.getByRole("link", { name: "編集" })).toHaveCount(0);
-  await page.getByRole("link", { name: "フォルダの一覧へ" }).click();
+  await expect(
+    page.getByRole("link", { name: "編集", exact: true }),
+  ).toHaveCount(0);
+  await sidebar
+    .getByRole("link", { name: "フォルダの一覧", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/folders$/);
-  await page.getByRole("link", { name: "聖書検索へ" }).click();
+  await page
+    .getByRole("navigation", { name: "主要ナビゲーション" })
+    .getByRole("link", { name: "聖書検索", exact: true })
+    .click();
   await expect(page).toHaveURL(/\/scripture$/);
   const renamedFolder = page.getByRole("button", {
     name: "礼拝用",
@@ -252,7 +272,10 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   await bookmarkedAudience.close();
 
   await folderListLink.click();
-  await page.getByRole("link", { name: "礼拝用を編集" }).click();
+  await page
+    .getByRole("region", { name: "フォルダー一覧" })
+    .getByRole("link", { name: "礼拝用を編集" })
+    .click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "削除", exact: true }).last().click();
   await expect(page.getByRole("status")).toHaveText(

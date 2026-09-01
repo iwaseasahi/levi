@@ -382,6 +382,9 @@ test.describe("operator church provisioning", () => {
     await expect(
       page.getByRole("heading", { name: "パスワードを変更" }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("complementary", { name: "サイドバー" }),
+    ).toBeVisible();
     await page
       .getByLabel("現在のパスワード", { exact: true })
       .fill(initialPassword);

@@ -57,6 +57,7 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   ).toHaveAttribute("href", "/slides");
   await page.getByRole("link", { name: "スライドを作成" }).click();
   await expect(navigation).toBeVisible();
+  await expect(sidebar).toBeVisible();
   const body =
     "<script>synthetic</script>\n日本語の本文\n\n\n\n" + "長い行".repeat(50);
   await page.getByLabel("本文（必須）").fill(body);
@@ -104,6 +105,7 @@ test("church member previews unsaved literal text, creates, edits and confirms d
     page.getByRole("heading", { name: "Synthetic welcome" }),
   ).toBeVisible();
   await page.getByRole("link", { name: "編集", exact: true }).click();
+  await expect(sidebar).toBeVisible();
   await page.getByLabel("タイトル（必須）").fill("Synthetic edited welcome");
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(

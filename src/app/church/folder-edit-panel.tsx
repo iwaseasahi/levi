@@ -71,9 +71,6 @@ export function FolderEditPanel({
     <main className="folder-management-page">
       <div className="folder-management-shell">
         <ChurchNavigation />
-        <a className="management-back-link" href="/folders">
-          <span aria-hidden="true">←</span> フォルダの一覧へ
-        </a>
 
         <header className="folder-page-header">
           <h1>フォルダーを編集</h1>
