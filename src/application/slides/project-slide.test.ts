@@ -7,7 +7,6 @@ const slide: SlideRecord = {
   revision: 1,
   title: "Synthetic",
   body: "First\n\n\n\nSecond\n\n\n\nThird",
-  author: null,
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
 };

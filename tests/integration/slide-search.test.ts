@@ -32,7 +32,7 @@ describe("literal tenant search", () => {
     const rows = await Promise.all(
       bodies.map((body) =>
         prisma.slide.create({
-          data: { ...owner, title: "title-only", author: "author-only", body },
+          data: { ...owner, title: "title-only", body },
         }),
       ),
     );
@@ -48,7 +48,6 @@ describe("literal tenant search", () => {
       ["\\", [4]],
       [" A\r\nB ", [6]],
       ["title-only", []],
-      ["author-only", []],
       ["' OR true --", []],
     ] as const) {
       expect(

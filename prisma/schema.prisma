@@ -357,7 +357,6 @@ model Slide {
   churchId  String          @map("church_id") @db.Uuid
   title     String          @db.VarChar(200)
   body      String          @db.Text
-  author    String?         @db.VarChar(200)
   revision  Int             @default(1)
   createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)

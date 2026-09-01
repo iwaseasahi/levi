@@ -28,6 +28,10 @@ decision trail. Evidence links are pinned to legacy commit
 
 ## Incremental parity evidence
 
+- Issue #432 narrows SLIDE-001 to the approved replacement fields `title` and
+  `body`. Ginmaku's historical author field remains pinned evidence but is not
+  stored or displayed by Levi; the forward migration intentionally discards any
+  existing Levi attribution values.
 - Issue #114 extends PRESENT-001 with Ginmaku's `空白⇔表示` behavior. Direct
   protocol and component tests plus the latest-Chromium two-tab E2E verify
   blank, navigation while blank, and display of the latest location after

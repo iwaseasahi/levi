@@ -8,7 +8,6 @@ import { SlideList } from "./slide-list";
 const summary = (index: number): SlideSummary => ({
   id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
   title: `Synthetic ${index}`,
-  author: index % 2 ? "Author" : null,
   revision: 1,
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
@@ -51,7 +50,7 @@ describe("SlideList", () => {
       name: "Synthetic 1",
     });
     expect(link).toHaveAttribute("href", `/slides/${summary(1).id}`);
-    expect(link).toHaveAccessibleDescription("著者：Author");
+    expect(link).not.toHaveAttribute("aria-describedby");
     expect(
       screen.queryByRole("button", { name: "前の20件" }),
     ).not.toBeInTheDocument();

@@ -18,7 +18,6 @@ const initial = {
   id: "00000000-0000-4000-8000-000000000384",
   title: "Synthetic title",
   body: "First\n\n\n\nSecond",
-  author: null,
   revision: 2,
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
@@ -101,8 +100,8 @@ describe("slide editor", () => {
     expect(JSON.parse(String(fetcher.mock.calls[0]![1]!.body))).toEqual({
       title: "Synthetic",
       body: "First\nSecond",
-      author: null,
     });
+    expect(screen.queryByLabelText(/著者/)).not.toBeInTheDocument();
     resolve(Response.json({ slide: initial }, { status: 201 }));
     await waitFor(() =>
       expect(push).toHaveBeenCalledWith(`/slides/${initial.id}`),

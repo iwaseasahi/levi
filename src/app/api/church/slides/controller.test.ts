@@ -16,7 +16,6 @@ const scope = {
 const input = {
   title: "Synthetic title",
   body: "Synthetic body",
-  author: null,
 };
 const record = {
   ...input,
@@ -71,7 +70,6 @@ describe("Slide HTTP boundary and scoped service", () => {
       request("POST", {
         title: "  Synthetic title\r\n",
         body: "Synthetic\r\nbody",
-        author: " ",
       }),
     );
     expect(created.status).toBe(201);
@@ -145,6 +143,7 @@ describe("Slide HTTP boundary and scoped service", () => {
     [{ ...input, churchId: scope.churchId }, {}],
     [{ ...input, id }, {}],
     [{ ...input, revision: 2 }, {}],
+    [{ ...input, author: "legacy attribution" }, {}],
     [{ ...input, body: "\ud800" }, {}],
     [{ ...input, body: "bad\0text" }, {}],
   ] as const)(

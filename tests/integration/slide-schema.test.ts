@@ -19,7 +19,7 @@ afterEach(async () => {
 afterAll(() => prisma.$disconnect());
 
 describe("Slide database contract", () => {
-  it("persists duplicate titles, optional attribution and code point boundaries", async () => {
+  it("persists duplicate titles and code point boundaries", async () => {
     const owner = await church();
     const first = await prisma.slide.create({
       data: { ...fields, churchId: owner.id },
@@ -28,14 +28,12 @@ describe("Slide database contract", () => {
       data: { ...fields, churchId: owner.id },
     });
     expect(first.revision).toBe(1);
-    expect(first.author).toBeNull();
     expect(second.id).not.toBe(first.id);
     expect(first.createdAt).toBeInstanceOf(Date);
     const unicode = await prisma.slide.create({
       data: {
         churchId: owner.id,
         title: "😀".repeat(200),
-        author: "著".repeat(200),
         body: "😀".repeat(100_000),
       },
     });
@@ -61,11 +59,6 @@ describe("Slide database contract", () => {
     { body: "CR\rLF" },
     { body: "x".repeat(100_001) },
     { body: "nul\0" },
-    { author: "" },
-    { author: " padded " },
-    { author: "line\nbreak" },
-    { author: "tab\tinside" },
-    { author: "x".repeat(201) },
     { revision: 0 },
     { revision: -1 },
   ])("rejects invalid persisted fields (case %#)", async (invalid) => {
@@ -104,7 +97,6 @@ describe("Slide database contract", () => {
       "church_id",
       "title",
       "body",
-      "author",
       "revision",
       "created_at",
       "updated_at",
@@ -118,10 +110,12 @@ describe("Slide database contract", () => {
         "slides_pkey",
         "slides_title_valid",
         "slides_body_valid",
-        "slides_author_valid",
         "slides_revision_positive",
         "slides_church_id_fkey",
       ]),
+    );
+    expect(constraints.map((row) => row.conname)).not.toContain(
+      "slides_author_valid",
     );
     expect(
       constraints.find((row) => row.conname === "slides_church_id_fkey")

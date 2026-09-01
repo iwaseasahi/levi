@@ -13,7 +13,6 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
     data: {
       churchId: scriptureAccount.churchId,
       title: "Synthetic projection title",
-      author: "Synthetic author",
       body:
         "<script>synthetic</script>\n日本語の本文\n\n\n\n" +
         "長い行".repeat(50) +
@@ -29,7 +28,6 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await expect(audience.locator("pre")).toHaveText(slide.body);
   await expect(audience.getByRole("navigation")).toHaveCount(0);
   await expect(audience.getByText(slide.title)).toHaveCount(0);
-  await expect(audience.getByText(slide.author!)).toHaveCount(0);
   expect(audience.url()).not.toContain("synthetic");
   await expect(
     controller.getByRole("button", { name: "前のページへ投影" }),

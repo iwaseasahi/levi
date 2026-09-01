@@ -66,7 +66,6 @@ export function SlideDocument({
   return (
     <>
       <h1>{slide.title}</h1>
-      {slide.author && <p>著者: {slide.author}</p>}
       <Link href={`/slides/${slide.id}/edit`}>編集</Link>
       <SlideController
         slide={slide}

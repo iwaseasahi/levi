@@ -26,7 +26,7 @@ route JSON are explicitly not carried over. No legacy edit history is required.
 
 ## Fields and validation
 
-A Slide belongs to a church, not its author or creator. All members with an
+A Slide belongs to a church, not an individual creator. All members with an
 eligible church session can manage that church's slides.
 
 | Field                    | Replacement rule                                                                                                                                                 |
@@ -34,7 +34,6 @@ eligible church session can manage that church's slides.
 | `id`, `churchId`         | Server-owned UUIDs; church from the authenticated actor only.                                                                                                    |
 | `title`                  | Required, trim leading/trailing ASCII space/tab/newline after EOL normalization, 1–200 Unicode code points, single line (no CR/LF/tab).                          |
 | `body`                   | Required plain text, normalize CRLF/CR to LF, preserve other whitespace; 1–100,000 Unicode code points and at least one character other than ASCII space/tab/LF. |
-| `author`                 | Optional attribution text, not an identity relationship; same trimming/single-line rule as title, at most 200 code points; blank becomes null.                   |
 | `revision`               | Server-owned positive integer, starts at 1 and increments on update; optimistic concurrency token, not edit history.                                             |
 | `createdAt`, `updatedAt` | Server-owned UTC timestamps; creation time immutable.                                                                                                            |
 
@@ -42,14 +41,17 @@ Reject NUL and malformed Unicode; reject unknown request fields. Count code
 points, not UTF-16 units. Reject excessive input without truncation, and bound
 JSON request size to 1 MiB before parsing. Required title/body and explicit limits
 are intentional Levi validation improvements, not observed legacy restrictions.
-These rules do not authorize rewriting or discarding existing legacy content.
+Issue #432 removes the former optional author attribution from Levi. Its forward
+migration intentionally discards existing `slides.author` values; production
+migration and deployment remain separately approved operations. Historical
+Ginmaku evidence above remains unchanged and does not define the active field set.
 
 Create/update errors retain the user's input. Invalid input is 400, missing or
 foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
-POST `/api/church/slides` accepts `{title, body, author?}`. GET/PUT/DELETE use
-`/api/church/slides/[id]`; PUT accepts `{input: {title, body, author?},
+POST `/api/church/slides` accepts `{title, body}`. GET/PUT/DELETE use
+`/api/church/slides/[id]`; PUT accepts `{input: {title, body},
 expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
 return `{slide}` without `churchId`; delete has no response body. Mutation Origin
 must exactly match the configured canonical origin. CRUD detail routes reject
@@ -65,16 +67,16 @@ active Levi behavior. Empty or ASCII-whitespace-only bodies remain invalid, and
 HTML-like input remains literal text rather than executable markup.
 
 Preview is an explicit local operation over unsaved body; it neither writes a
-Slide nor opens/changes the audience. Title/author errors do not prevent a valid
+Slide nor opens/changes the audience. Title errors do not prevent a valid
 body preview. Preview and audience preserve line breaks, use the same text-fit
-rules and aspect ratio, and show body only. Title/author stay in the controller.
+rules and aspect ratio, and show body only. The title stays in the controller.
 Preview has no page navigation or page selection controls.
 Opening projection requires a successfully saved Slide, not an unsaved draft.
 
 ## Search, recent and list pagination
 
-- Search only normalized `body`, with one literal substring; title and author
-  are not included. Empty query lists all. No tokenization, stemming, HTML,
+- Search only normalized `body`, with one literal substring; title is not
+  included. Empty query lists all. No tokenization, stemming, HTML,
   wildcard language or regex. Do not trim the query; whitespace is meaningful.
 - Normalize query EOL, limit to 200 code points, reject NUL/malformed Unicode.
   Escape SQL LIKE `%`, `_` and the escape character and parameterize values.
@@ -115,7 +117,7 @@ controller and one ordinary same-origin Chrome tab named `projector`, an exact
 retained Window reference, validated messages, READY handshake, blocked-tab
 feedback, and authenticated reads. Slide routes are `/slides`, `/slides/new`,
 `/slides/[id]`, `/slides/[id]/edit` and `/slides/audience`; audience URL contains
-only an opaque Slide ID, never content or author.
+only an opaque Slide ID, never content.
 APIs are church-scoped under `/api/church/slides`.
 
 The audience displays the complete saved body as one surface and owns font and
@@ -158,7 +160,7 @@ sidebar available on signed-in church management screens.
 
 The `/slides` page is titled “スライドの一覧”. Per the #412 UI simplification,
 show all slides immediately in creation order (newest first), 20 per page, with
-prominent titles, optional author attribution and full-row detail links. Keep a
+prominent titles and full-row detail links. Keep a
 clear create link and error retry; show pagination only when needed. Do not
 show a list-refresh button, recent/all mode switches or body search controls.
 The search/recent API contract above remains supported and tested for compatibility.

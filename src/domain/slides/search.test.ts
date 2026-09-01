@@ -10,7 +10,6 @@ const id = "00000000-0000-4000-8000-000000000385";
 const row: SlideSummary = {
   id,
   title: "Synthetic",
-  author: null,
   revision: 1,
   createdAt: "2026-08-31T00:00:00.000Z",
   updatedAt: "2026-08-31T00:00:00.000Z",

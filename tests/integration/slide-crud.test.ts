@@ -7,7 +7,7 @@ import { prisma } from "@/infrastructure/database/client";
 import { slideRepository } from "@/infrastructure/database/slide-repository";
 
 const prefix = "test.slide-crud.";
-const input = { title: "Synthetic", body: "Synthetic body", author: null };
+const input = { title: "Synthetic", body: "Synthetic body" };
 const service = createSlideService(slideRepository);
 async function scope() {
   const church = await prisma.church.create({
@@ -26,12 +26,10 @@ describe("scoped Slide persistence", () => {
     const created = await service.create(owner, {
       title: " Synthetic ",
       body: "A\r\nB",
-      author: " ",
     });
     expect(created).toMatchObject({
       title: "Synthetic",
       body: "A\nB",
-      author: null,
       revision: 1,
     });
     expect(created).not.toHaveProperty("churchId");

@@ -11,7 +11,7 @@ import { prisma } from "./client";
 export function slideSearchSql(scope: ChurchScope, search: SlideSearch) {
   const cursor = search.cursor;
   return Prisma.sql`
-    SELECT id, title, author, revision, created_at AS "createdAt", updated_at AS "updatedAt"
+    SELECT id, title, revision, created_at AS "createdAt", updated_at AS "updatedAt"
     FROM slides
     WHERE church_id = ${scope.churchId}::uuid
       ${search.q ? Prisma.sql`AND translate(body COLLATE "C", 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') LIKE ${slideSearchPattern(search.q)} COLLATE "C" ESCAPE chr(92)` : Prisma.empty}

@@ -55,6 +55,7 @@ SELECT jsonb_build_object(
  'bookmarks', (SELECT jsonb_agg(to_jsonb(b) ORDER BY id) FROM bookmarks b),
  'scripture', (SELECT jsonb_agg(to_jsonb(s) ORDER BY bookmark_id) FROM scripture_bookmarks s)
 ) AS snapshot;
+DROP TABLE slide_bookmarks;
 DROP TABLE slides;
 SQL
   cat "${repository_root}/scripts/lib/backup-slide-reconciliation.sql"

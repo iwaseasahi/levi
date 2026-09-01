@@ -3,10 +3,10 @@ BEGIN;
 INSERT INTO churches (id, name) VALUES
  ('00000000-0000-4000-8000-000000389001', 'test.restore.deleted-church'),
  ('00000000-0000-4000-8000-000000389002', 'test.restore.preserved-church');
-INSERT INTO slides (id, church_id, title, body, author, revision) VALUES
- ('00000000-0000-4000-8000-000000389011', '00000000-0000-4000-8000-000000389001', 'Synthetic cascade', 'Synthetic body', NULL, 1),
- ('00000000-0000-4000-8000-000000389012', '00000000-0000-4000-8000-000000389002', 'Synthetic deleted slide', 'Synthetic body', NULL, 2),
- ('00000000-0000-4000-8000-000000389013', '00000000-0000-4000-8000-000000389002', 'Synthetic preserved slide', E'日本語\n\n\n\nSecond', 'Synthetic author', 3);
+INSERT INTO slides (id, church_id, title, body, revision) VALUES
+ ('00000000-0000-4000-8000-000000389011', '00000000-0000-4000-8000-000000389001', 'Synthetic cascade', 'Synthetic body', 1),
+ ('00000000-0000-4000-8000-000000389012', '00000000-0000-4000-8000-000000389002', 'Synthetic deleted slide', 'Synthetic body', 2),
+ ('00000000-0000-4000-8000-000000389013', '00000000-0000-4000-8000-000000389002', 'Synthetic preserved slide', E'日本語\n\n\n\nSecond', 3);
 INSERT INTO bible_books (id, canonical_code, canonical_order, testament)
  VALUES ('00000000-0000-4000-8000-000000389020', 'TBR389', 90, 'NEW');
 INSERT INTO bible_verses (book_id, translation_id, chapter_number, verse_number, text)
