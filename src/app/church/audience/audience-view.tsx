@@ -27,14 +27,13 @@ export function AudienceView({
   status: AudienceStatus;
   verseRef: RefObject<HTMLDivElement | null>;
 }) {
+  if (status === "loading")
+    return <main className="audience-screen audience-waiting" />;
+
   if (status !== "ready" || !current)
     return (
       <main className="audience-screen audience-waiting">
-        <p role={status === "error" ? "alert" : "status"}>
-          {status === "loading"
-            ? "投影する御言葉を読み込んでいます。"
-            : message}
-        </p>
+        <p role={status === "error" ? "alert" : "status"}>{message}</p>
       </main>
     );
 

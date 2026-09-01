@@ -37,12 +37,10 @@ export function SlideAudience({
         blank && state.status === "ready" ? "空白投影" : "スライド投影"
       }
     >
-      {state.status === "ready" ? (
+      {state.status === "loading" ? null : state.status === "ready" ? (
         <SlideText text={state.text} fontScale={fontScale} blank={blank} />
       ) : (
-        <p role={state.status === "loading" ? "status" : "alert"}>
-          {slideAudienceMessages[state.status]}
-        </p>
+        <p role="alert">{slideAudienceMessages[state.status]}</p>
       )}
     </main>
   );

@@ -57,7 +57,8 @@ describe("Slide audience and controller", () => {
     // Each response has an independent consumable body.
     fetcher.mockImplementation(async () => Response.json({ slide }));
     render(<SlideAudience id={id} fetcher={fetcher} />);
-    expect(screen.getByRole("status")).toHaveTextContent("読み込み中");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("main")).toBeEmptyDOMElement();
     expect(
       (await screen.findByText(/<script>synthetic<\/script>/)).textContent,
     ).toBe(slide.body);
