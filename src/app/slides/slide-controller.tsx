@@ -70,8 +70,7 @@ export function SlideController({
       ? slideAudienceMessages[current.status]
       : projection.error;
   return (
-    <section aria-label="投影操作">
-      <h2>投影</h2>
+    <section className="slide-controller" aria-label="投影操作">
       <div className="slide-actions">
         <button
           className="primary-button"

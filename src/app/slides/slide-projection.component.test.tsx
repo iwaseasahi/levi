@@ -112,6 +112,8 @@ describe("Slide audience and controller", () => {
     vi.spyOn(window, "open").mockReturnValue(target);
     const user = userEvent.setup();
     render(<SlideController slide={slide} />);
+    expect(screen.queryByRole("heading", { name: "投影" })).toBeNull();
+    expect(screen.getByRole("region", { name: "投影操作" })).toBeVisible();
     expect(
       screen.getByRole("button", { name: "お気に入りに追加" }),
     ).toBeDisabled();
