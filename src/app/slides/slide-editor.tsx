@@ -20,7 +20,6 @@ export function SlideEditor({
   const router = useRouter();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [body, setBody] = useState(initial?.body ?? "");
-  const [author, setAuthor] = useState(initial?.author ?? "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
@@ -55,9 +54,7 @@ export function SlideEditor({
     setError(null);
     let succeeded = false;
     try {
-      const input = deleting
-        ? undefined
-        : parseSlideInput({ title, body, author });
+      const input = deleting ? undefined : parseSlideInput({ title, body });
       const response = await fetcher(
         initial ? `/api/church/slides/${initial.id}` : "/api/church/slides",
         {
@@ -133,14 +130,6 @@ export function SlideEditor({
             required
           />
           <p id="slide-title-help">1〜200文字・1行</p>
-          <label htmlFor="slide-author">著者（任意）</label>
-          <input
-            id="slide-author"
-            value={author}
-            onChange={(event) => setAuthor(event.target.value)}
-            aria-describedby="slide-author-help"
-          />
-          <p id="slide-author-help">200文字以内・1行</p>
           <label htmlFor="slide-body">本文（必須）</label>
           <textarea
             id="slide-body"

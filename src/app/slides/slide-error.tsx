@@ -6,7 +6,7 @@ import { SlideInputError } from "@/domain/slides/slide";
 
 export function slideErrorMessage(error: unknown) {
   if (error instanceof SlideInputError)
-    return "タイトルは1〜200文字、著者は200文字以内の1行、本文は空白以外を含む1〜100,000文字で入力してください。";
+    return "タイトルは1〜200文字の1行、本文は空白以外を含む1〜100,000文字で入力してください。";
   if (error instanceof ClientApiError) {
     if (error.status === 409)
       return "別の編集が保存されています。入力は保持しています。内容を控えてから再度開いてください。";

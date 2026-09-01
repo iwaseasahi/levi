@@ -46,26 +46,25 @@ a measured projection blocker must stop the affected implementation child.
 ## Slide aggregate and physical contract
 
 Use a dedicated Prisma `Slide` mapped to `slides`, with no generic payload table,
-page table, author identity FK, deletion marker, history table or history trigger.
+page table, creator identity FK, deletion marker, history table or history trigger.
 Pages are deterministically derived from body. Normalization and limits are in
 the product contract and must agree in application and database tests.
 
-| Column                     | Storage / invariant                                                  |
-| -------------------------- | -------------------------------------------------------------------- |
-| `id`                       | UUID primary key, server generated                                   |
-| `church_id`                | UUID NOT NULL; `slides_church_id_fkey` to `churches(id)`             |
-| `title`                    | varchar(200) NOT NULL; normalized nonempty single-line text          |
-| `body`                     | text NOT NULL; LF-normalized, 1–100,000 code points, nonblank        |
-| `author`                   | varchar(200) NULL; normalized nonempty single-line text when present |
-| `revision`                 | integer NOT NULL DEFAULT 1; positive, increment on update            |
-| `created_at`, `updated_at` | timestamptz(3) NOT NULL; server-owned UTC                            |
+| Column                     | Storage / invariant                                           |
+| -------------------------- | ------------------------------------------------------------- |
+| `id`                       | UUID primary key, server generated                            |
+| `church_id`                | UUID NOT NULL; `slides_church_id_fkey` to `churches(id)`      |
+| `title`                    | varchar(200) NOT NULL; normalized nonempty single-line text   |
+| `body`                     | text NOT NULL; LF-normalized, 1–100,000 code points, nonblank |
+| `revision`                 | integer NOT NULL DEFAULT 1; positive, increment on update     |
+| `created_at`, `updated_at` | timestamptz(3) NOT NULL; server-owned UTC                     |
 
-Named SQL CHECKs: `slides_title_valid`, `slides_body_valid`,
-`slides_author_valid`, `slides_revision_positive`. Use `char_length` for code
+Named SQL CHECKs: `slides_title_valid`, `slides_body_valid` and
+`slides_revision_positive`. Use `char_length` for code
 point bounds, exact ASCII trimming as specified, and explicit CR/LF/tab checks
-for single-line fields. PostgreSQL rejects NUL; application rejects it before
-persistence. Missing/blank author is null, not a sentinel. Duplicate titles in
-one church are allowed. No uniqueness on author/title/body is justified.
+for the title. PostgreSQL rejects NUL; application rejects it before persistence.
+Duplicate titles in one church are allowed. No uniqueness on title/body is
+justified.
 
 Indexes:
 
@@ -90,7 +89,7 @@ without exposing whether another tenant owns an ID. Do not log fields/query.
 
 Deleting a Slide removes that row physically; it does not delete its Church,
 users, folders, bookmarks or shared Bible data. User deletion must not delete
-slides: `author` is attribution, not ownership. Church deletion cascades to its
+slides because Slides have no individual owner. Church deletion cascades to its
 Slides through the named FK, an explicit aggregate-ownership exception to the
 restrictive default, matching the existing administrative church-deletion flow.
 Integration tests must prove both deletion scopes, transaction rollback and
@@ -141,3 +140,11 @@ The server derives the saved title from the owned Slide. Deleting a Slide also
 deletes its Bookmark parents and compacts each affected folder in the same
 transaction. Folder and church deletion retain their existing cascades. This is
 a forward schema expansion with no legacy import or production operation.
+
+## 2026-09-01 amendment: remove author attribution
+
+Issue #432 removes the optional author input and `slides.author` column from the
+active Levi contract. Slides remain church-owned, and individual creator or
+attribution data is not stored. The forward migration drops the column and its
+named check, intentionally discarding any existing values. Applying that change
+to production remains separately approval-gated.

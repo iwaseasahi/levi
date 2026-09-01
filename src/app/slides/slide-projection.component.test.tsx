@@ -17,7 +17,6 @@ const slide = {
   id,
   revision: 1,
   title: "Private title",
-  author: "Private author",
   body: "<script>synthetic</script>\n日本語\n\n\n\nSecond",
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
@@ -49,7 +48,6 @@ describe("Slide audience and controller", () => {
       (await screen.findByText(/<script>synthetic<\/script>/)).textContent,
     ).toBe(slide.body);
     expect(screen.queryByText(slide.title)).toBeNull();
-    expect(screen.queryByText(slide.author)).toBeNull();
     expect(document.querySelector("script")).toBeNull();
     expect(new URL(location.href).searchParams.has("page")).toBe(false);
     fetcher.mockImplementation(async () =>

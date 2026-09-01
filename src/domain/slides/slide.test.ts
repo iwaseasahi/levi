@@ -9,31 +9,22 @@ import {
 const input = { title: "Synthetic slide", body: "Synthetic body" };
 
 describe("Slide input", () => {
-  it("normalizes EOL and metadata without trimming body or Unicode whitespace", () => {
+  it("normalizes EOL and title without trimming body or Unicode whitespace", () => {
     expect(
       parseSlideInput({
         title: " \r\n題名\t",
-        author: "\t著者\r ",
         body: " \r\n本文\r次\n ",
       }),
-    ).toEqual({ title: "題名", author: "著者", body: " \n本文\n次\n " });
+    ).toEqual({ title: "題名", body: " \n本文\n次\n " });
     expect(normalizeSlideEol("A\r\nB\rC\nD")).toBe("A\nB\nC\nD");
     expect(
       parseSlideInput({ ...input, title: "\u3000題\u3000", body: "\u00a0" }),
     ).toMatchObject({ title: "\u3000題\u3000", body: "\u00a0" });
   });
 
-  it.each([undefined, null, "", " \t\r\n"])(
-    "normalizes absent attribution (case %#)",
-    (author) => {
-      expect(parseSlideInput({ ...input, author }).author).toBeNull();
-    },
-  );
-
   it("counts Unicode code points and preserves maximum-length content", () => {
     const value = {
       title: "😀".repeat(200),
-      author: "著".repeat(200),
       body: "😀".repeat(100_000),
     };
     expect(parseSlideInput(value)).toEqual(value);
@@ -49,14 +40,11 @@ describe("Slide input", () => {
     { ...input, title: "inside\tline" },
     { ...input, title: "two\nlines" },
     { ...input, title: "😀".repeat(201) },
-    { ...input, author: "😀".repeat(201) },
-    { ...input, author: "two\rlines" },
-    { ...input, author: 1 },
+    { ...input, author: "legacy attribution" },
     { ...input, body: " \t\r\n" },
     { ...input, body: "😀".repeat(100_001) },
     { ...input, body: "nul\0text" },
     { ...input, title: "bad\0" },
-    { ...input, author: "\ud800" },
     { ...input, body: "\udfff" },
     { ...input, title: "\ud800X" },
     { ...input, churchId: "forged-owner" },

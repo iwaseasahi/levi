@@ -35,7 +35,6 @@ const inputSchema = z
   .object({
     title: singleLine.refine((value) => value.length > 0),
     body: bodySchema,
-    author: singleLine.nullish().transform((value) => value || null),
   })
   .strict();
 
@@ -51,7 +50,7 @@ export function parseSlideInput(value: unknown): SlideInput {
   return parse(inputSchema, value);
 }
 
-// Preview validates only body; missing title/author must not prevent preview.
+// Preview validates only body; a missing title must not prevent preview.
 export function parseSlideBody(value: unknown): string {
   return parse(bodySchema, value);
 }

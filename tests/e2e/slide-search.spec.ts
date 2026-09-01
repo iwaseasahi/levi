@@ -19,7 +19,6 @@ test("Slide list shows clear rows and pagination while search/recent APIs retain
         index === 24
           ? longTitle
           : `Synthetic ${String(index).padStart(2, "0")}`,
-      author: index === 24 ? "Synthetic author" : null,
       body: index === 0 ? "Literal %_\\ 日本語 ABC" : "Ordinary body",
       createdAt: index === 24 ? new Date(date.getTime() + 1000) : date,
       updatedAt: date,
@@ -47,6 +46,7 @@ test("Slide list shows clear rows and pagination while search/recent APIs retain
       page.getByRole("button", { name: "すべて", exact: true }),
     ).toHaveCount(0);
     await expect(page.getByLabel("本文を検索")).toHaveCount(0);
+    await expect(page.getByText(/著者：/)).toHaveCount(0);
     await expect(page.getByRole("button", { name: "一覧を更新" })).toHaveCount(
       0,
     );

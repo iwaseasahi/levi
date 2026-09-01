@@ -12,7 +12,7 @@ DO $$ BEGIN
  IF (SELECT count(*) FROM slides) <> 1
   OR NOT EXISTS (SELECT 1 FROM slides WHERE id = '00000000-0000-4000-8000-000000389013'
    AND church_id = '00000000-0000-4000-8000-000000389002' AND revision = 3
-   AND body = E'日本語\n\n\n\nSecond' AND author = 'Synthetic author')
+   AND body = E'日本語\n\n\n\nSecond')
   OR NOT EXISTS (SELECT 1 FROM scripture_bookmarks WHERE bookmark_id = '00000000-0000-4000-8000-000000389031')
   OR NOT EXISTS (SELECT 1 FROM bible_verses WHERE book_id = '00000000-0000-4000-8000-000000389020' AND text = 'Synthetic recovery verse') THEN
   RAISE EXCEPTION 'Slide deletion/recovery tenant boundary failed';

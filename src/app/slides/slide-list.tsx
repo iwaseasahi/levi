@@ -106,9 +106,6 @@ export function SlideList({
               className="slide-list-row"
               href={`/slides/${slide.id}`}
               aria-labelledby={`slide-title-${slide.id}`}
-              aria-describedby={
-                slide.author ? `slide-author-${slide.id}` : undefined
-              }
             >
               <span className="slide-list-number" aria-hidden="true">
                 {(page - 1) * 20 + index + 1}
@@ -120,14 +117,6 @@ export function SlideList({
                 >
                   {slide.title}
                 </span>
-                {slide.author && (
-                  <span
-                    className="slide-list-author"
-                    id={`slide-author-${slide.id}`}
-                  >
-                    著者：{slide.author}
-                  </span>
-                )}
               </span>
               <span className="slide-list-arrow" aria-hidden="true">
                 →

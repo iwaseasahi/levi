@@ -22,7 +22,6 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
         ...input,
         churchId: foreign.id,
         title: "Synthetic foreign title",
-        author: "Synthetic foreign author",
       },
     });
     const missing = randomUUID();
@@ -106,12 +105,11 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
       // no-cache/must-revalidate. Protected Slide API payloads above are no-store.
       expect(result?.headers()["cache-control"]).toContain("no-cache");
       const shell = await result!.text();
-      for (const value of [row.title, row.body, row.author!])
+      for (const value of [row.title, row.body])
         expect(shell).not.toContain(value);
       await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
       await expect(page.getByText(row.title, { exact: true })).toHaveCount(0);
       await expect(page.getByText(row.body, { exact: true })).toHaveCount(0);
-      await expect(page.getByText(row.author!, { exact: true })).toHaveCount(0);
     }
     expect(await prisma.slide.findUnique({ where: { id: row.id } })).toEqual(
       row,

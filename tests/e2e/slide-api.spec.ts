@@ -14,7 +14,6 @@ test("Slide HTTP routes enforce session, Origin, revision and physical deletion"
   const input = {
     title: "Synthetic API slide",
     body: "First\n\n\n\nSecond",
-    author: null,
   };
   const denied = await context.request.post("/api/church/slides", {
     headers: { Origin: "https://foreign.example" },

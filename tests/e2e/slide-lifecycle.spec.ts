@@ -26,7 +26,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
     }),
   ).toBe(0);
   await page.getByLabel("タイトル（必須）").fill("Synthetic lifecycle");
-  await page.getByLabel("著者").fill("Synthetic attribution");
+  await expect(page.getByLabel(/著者/)).toHaveCount(0);
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Synthetic lifecycle" }),

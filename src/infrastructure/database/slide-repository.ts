@@ -11,7 +11,6 @@ function record(row: Slide): SlideRecord {
     id: row.id,
     title: row.title,
     body: row.body,
-    author: row.author,
     revision: row.revision,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
