@@ -50,8 +50,6 @@ export function slideProjectionState(
   };
 }
 export const slideAudienceMessages = {
-  loading: "読み込み中…",
-  ready: "",
   invalid: "スライドを表示できません。操作画面で再度Openしてください。",
   stale:
     "スライドが更新されました。操作画面で最新の内容を読み込み、再度Openしてください。",

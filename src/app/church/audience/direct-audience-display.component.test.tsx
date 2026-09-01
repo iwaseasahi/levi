@@ -38,6 +38,18 @@ afterEach(() => {
 });
 
 describe("DirectAudienceDisplay", () => {
+  it("keeps the projection surface empty while scripture is loading", () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise<Response>(() => undefined)),
+    );
+
+    render(<DirectAudienceDisplay selection={selection} />);
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("main")).toBeEmptyDOMElement();
+  });
+
   it("renders Ginmaku Japanese-English order and navigates with arrow keys", async () => {
     const fetcher = vi.fn((input: RequestInfo | URL) => {
       const url = String(input);
