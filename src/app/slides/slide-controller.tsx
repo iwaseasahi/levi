@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { postJson } from "@/app/church/client-api";
 import { useProjectionController } from "@/app/projection/use-projection-controller";
 import type { SlideRecord } from "@/domain/slides/commands";
 import {
@@ -9,6 +8,7 @@ import {
   slideAudienceMessages,
 } from "@/domain/slides/projection";
 import { SlideError } from "./slide-error";
+import { useSlideFavorite } from "./use-slide-favorite";
 
 export function SlideController({
   slide,
@@ -33,32 +33,11 @@ export function SlideController({
     },
   );
   const [opened, setOpened] = useState(false);
-  const [savingFavorite, setSavingFavorite] = useState(false);
-  const [favoriteError, setFavoriteError] = useState("");
-  async function saveFavorite() {
-    if (!selectedFolderId || savingFavorite) return;
-    setSavingFavorite(true);
-    setFavoriteError("");
-    try {
-      await postJson(
-        fetcher,
-        "/api/saved-content",
-        {
-          action: "create-slide-bookmark",
-          folderId: selectedFolderId,
-          slideId: slide.id,
-        },
-        "saved content unavailable",
-      );
-      onFavoriteSaved?.();
-    } catch {
-      setFavoriteError(
-        "お気に入りに追加できませんでした。再度お試しください。",
-      );
-    } finally {
-      setSavingFavorite(false);
-    }
-  }
+  const favorite = useSlideFavorite({
+    fetcher,
+    selectedFolderId,
+    onFavoriteSaved,
+  });
   const current = projection.state?.content;
   const mismatch =
     current?.status === "ready" &&
@@ -110,13 +89,13 @@ export function SlideController({
         <button
           className="slide-favorite-button"
           type="button"
-          disabled={!selectedFolderId || savingFavorite}
-          onClick={() => void saveFavorite()}
+          disabled={!selectedFolderId || favorite.savingId !== null}
+          onClick={() => void favorite.save(slide.id)}
         >
-          {savingFavorite ? "追加中…" : "お気に入りに追加"}
+          {favorite.savingId ? "追加中…" : "お気に入りに追加"}
         </button>
       </div>
-      {favoriteError && <SlideError message={favoriteError} />}
+      {favorite.error && <SlideError message={favorite.error} />}
       <p role="status">
         {error
           ? "投影停止"

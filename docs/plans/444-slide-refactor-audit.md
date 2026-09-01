@@ -35,8 +35,8 @@ Slide page modelと、お気に入り追加処理の重複を独立したPRで�
 ## Plan
 
 1. [x] #445でSlide audience state/sessionを単一本文へ整理し、到達不能なnavigationを削除する。
-2. [ ] #445のunit/component/E2Eとrequired CIを通し、mergeする。
-3. [ ] #446でfavorite mutationをlifetime/concurrency guard付きhookへ統合する。
+2. [x] #445のunit/component/E2Eとrequired CIを通し、mergeする。
+3. [x] #446でfavorite mutationをlifetime/concurrency guard付きhookへ統合する。
 4. [ ] #446のcomponent/E2Eとrequired CIを通し、mergeする。
 5. [ ] 親Issue #444へ最終mainの検証証跡を記録して閉じる。
 
@@ -44,6 +44,8 @@ Slide page modelと、お気に入り追加処理の重複を独立したPRで�
 
 - 2026-09-01 14:15 JST — 全体とSlide境界を監査し、#444〜#446へ分割した。
 - 2026-09-01 14:24 JST — #445の単一surface state化を完了し、unit 19件、component 6件、`pnpm check`を通した。
+- 2026-09-01 14:30 JST — #445をrequired CI成功後にPR #447でmergeした。
+- 2026-09-01 14:32 JST — #446のfavorite mutationを共通hookへ統合し、二重送信とunmount後完了をcomponent testへ追加した。
 
 ## Decisions
 
