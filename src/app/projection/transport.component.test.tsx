@@ -168,11 +168,11 @@ describe("projection controller transport", () => {
       target,
     );
     expect(result.current.state?.presentation.blank).toBe(false);
-    act(() => vi.advanceTimersByTime(6000));
+    act(() => vi.advanceTimersByTime(7000));
     expect(result.current.ready).toBe(false);
     expect(result.current.error).toContain("両画面を更新して再度Open");
   });
-  it("clears state without an error when the projection tab closes", () => {
+  it("allows the closed flag to settle before showing a heartbeat error", () => {
     vi.useFakeTimers();
     const postMessage = vi.fn();
     const target = { closed: false, postMessage } as unknown as Window;
@@ -193,6 +193,10 @@ describe("projection controller transport", () => {
       target,
     );
     expect(result.current.ready).toBe(true);
+
+    act(() => vi.advanceTimersByTime(6_000));
+    expect(result.current.ready).toBe(true);
+    expect(result.current.error).toBe("");
 
     Object.assign(target, { closed: true });
     act(() => vi.advanceTimersByTime(1_000));

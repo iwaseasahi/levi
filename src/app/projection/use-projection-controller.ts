@@ -20,6 +20,7 @@ type Connection = {
   received: number;
   sent: number;
   lastSeen: number;
+  missedHeartbeat: boolean;
   retired: Set<string>;
 };
 export function useProjectionController<T>(
@@ -122,6 +123,7 @@ export function useProjectionController<T>(
       if (message.type === "READY") peer.challenge = "";
       peer.received = message.sequence;
       peer.lastSeen = Date.now();
+      peer.missedHeartbeat = false;
       setState({ presentation: message.presentation, content });
       setError(
         message.presentation.authorized
@@ -137,10 +139,13 @@ export function useProjectionController<T>(
         disconnect("");
         return;
       }
-      if (Date.now() - peer.lastSeen > 5_000)
-        disconnect(
-          "投映画面との接続を確認できません。両画面を更新して再度Openしてください。",
-        );
+      if (Date.now() - peer.lastSeen > 5_000) {
+        if (peer.missedHeartbeat)
+          disconnect(
+            "投映画面との接続を確認できません。両画面を更新して再度Openしてください。",
+          );
+        peer.missedHeartbeat = true;
+      }
       try {
         probe(peer);
       } catch {
@@ -178,6 +183,7 @@ export function useProjectionController<T>(
           received: -1,
           sent: 0,
           lastSeen: Date.now(),
+          missedHeartbeat: false,
           retired: new Set<string>(),
         };
         connection.current = peer;

@@ -108,7 +108,7 @@ describe("Slide audience and controller", () => {
       "利用できません",
     );
   });
-  it("silently disables controls when the projection tab closes", () => {
+  it("does not flash a heartbeat alert while the projection tab is closing", () => {
     vi.useFakeTimers();
     const postMessage = vi.fn();
     const target = { postMessage, closed: false } as unknown as Window;
@@ -140,6 +140,9 @@ describe("Slide audience and controller", () => {
       target,
     );
     expect(screen.getByRole("button", { name: "文字を大きく" })).toBeEnabled();
+
+    act(() => vi.advanceTimersByTime(6_000));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
     Object.assign(target, { closed: true });
     act(() => vi.advanceTimersByTime(1_000));
