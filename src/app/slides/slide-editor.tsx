@@ -129,7 +129,7 @@ export function SlideEditor({
             aria-describedby="slide-title-help"
             required
           />
-          <p id="slide-title-help">1〜200文字・1行</p>
+          <p id="slide-title-help">1行</p>
           <label htmlFor="slide-body">本文（必須）</label>
           <textarea
             id="slide-body"
@@ -139,9 +139,7 @@ export function SlideEditor({
             aria-describedby="slide-body-help"
             required
           />
-          <p id="slide-body-help">
-            1〜100,000文字。HTMLは文字として表示します。
-          </p>
+          <p id="slide-body-help">HTMLは文字として表示します。</p>
           <div className="slide-actions">
             <button className="primary-button" type="submit">
               {busy ? "処理中…" : "保存"}
