@@ -88,7 +88,7 @@ export function SlideController({
           disabled={!ready || projection.state!.presentation.fontScale >= 2.2}
           onClick={() => projection.control({ action: "font-larger" })}
         >
-          文字+
+          文字 +
         </button>
         <button
           aria-label="文字を小さく"
@@ -96,7 +96,7 @@ export function SlideController({
           disabled={!ready || projection.state!.presentation.fontScale <= 0.6}
           onClick={() => projection.control({ action: "font-smaller" })}
         >
-          文字-
+          文字 -
         </button>
         <button
           aria-label="空白と表示を切り替え"
