@@ -23,7 +23,8 @@
 - URL holds ID/page plus the existing connection nonce fragment, never content.
 - No migration, dependency, production operation, content log/cache/history.
 - Loading/error audience contains generic feedback only; no login or management UI.
-- Search performance follow-up #397 and Sunday measurement #302 remain separate.
+- Search performance was assigned to #397 and later removed with the unused
+  search API; Sunday measurement #302 remains separate.
 
 ## Progress / blockers
 

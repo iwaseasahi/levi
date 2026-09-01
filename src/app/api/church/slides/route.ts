@@ -1,6 +1,6 @@
 import { slideHandlers } from "./runtime";
-import { slideSearchHandler } from "./search/runtime";
+import { slideListHandler } from "./list/runtime";
 
 export const dynamic = "force-dynamic";
 export const POST = slideHandlers.create;
-export const GET = slideSearchHandler;
+export const GET = slideListHandler;

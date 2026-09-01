@@ -21,7 +21,8 @@ Read Slide contract, testing, governance and current migration evidence.
 
 Synthetic fixtures only; latest project-pinned Chromium; retries zero; observable
 state waits. No production deploy/migration, real import, history or provider.
-#397 search performance and #302 Sunday measurements remain explicit follow-ups.
+#397 originally owned search performance and later removed that unused API;
+#302 Sunday measurements remain an explicit follow-up.
 
 ## Verification progress
 

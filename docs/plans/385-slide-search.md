@@ -42,9 +42,9 @@
 - `pnpm test:integration`: PASS 128; literal/case/cursor/tenant/live membership.
 - `pnpm check`: PASS 413 unit / 84 component tests, lint/typecheck/build before
   final multiline-search UI adjustment; final rerun and E2E pending.
-- Synthetic 100/10,000-row EXPLAIN recorded in `docs/testing-slide-search-performance.md`.
-  Rare/absent 10,000-row search costs ~406–418 ms locally; follow-up #397, no
-  production performance claim or new search provider.
+- Synthetic 100/10,000-row EXPLAIN originally recorded rare/absent 10,000-row
+  search at ~406–418 ms locally. The obsolete benchmark and search path were
+  later removed by product decision in #397.
 
 ## Final review
 
@@ -59,4 +59,5 @@
 - `pnpm security:check`: PASS, no known vulnerabilities and 315 license records.
 - `pnpm test:unit:coverage`: PASS 94.51% lines / 85.95% branches before the final
   timestamp guard; final check/integration/coverage rerun recorded in PR #398.
-- No unresolved correctness findings. Performance follow-up #397 remains open.
+- No unresolved correctness findings at delivery. #397 later superseded the
+  performance follow-up by removing the unused search/recent API.

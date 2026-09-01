@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { requestJson } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
-import type { SlideSearchResult } from "@/domain/slides/search";
+import type { SlideListResult } from "@/domain/slides/list";
 import { SlideError, slideErrorMessage } from "./slide-error";
 import { useSlideFavorite } from "./use-slide-favorite";
 
@@ -22,7 +22,7 @@ export function SlideList({
   const [selection, setSelection] = useState<Selection>({ cursors: [null] });
   const [loaded, setLoaded] = useState<{
     selection: Selection;
-    result?: SlideSearchResult;
+    result?: SlideListResult;
     error?: string;
   } | null>(null);
   const favorite = useSlideFavorite({
@@ -32,12 +32,13 @@ export function SlideList({
   });
   useEffect(() => {
     let current = true;
-    const params = new URLSearchParams({ mode: "all" });
+    const params = new URLSearchParams();
     const cursor = selection.cursors.at(-1);
     if (cursor) params.set("cursor", cursor);
-    void requestJson<SlideSearchResult>(
+    const query = params.size ? `?${params}` : "";
+    void requestJson<SlideListResult>(
       fetcher,
-      `/api/church/slides?${params}`,
+      `/api/church/slides${query}`,
       { cache: "no-store" },
       "SLIDE_UNAVAILABLE",
     )

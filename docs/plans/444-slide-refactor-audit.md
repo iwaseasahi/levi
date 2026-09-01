@@ -18,7 +18,7 @@ Slide page modelと、お気に入り追加処理の重複を独立したPRで�
   page callbackが残り、単一ページでもnavigationごとに再認可readを行う。
 - `src/app/slides/slide-list.tsx`と`slide-controller.tsx`は同じfavorite
   mutationとpending/error処理を重複実装している。
-- 大規模検索の計測と最適化判断は既存Issue #397が所有する。
+- 当時の大規模検索の計測と最適化判断はIssue #397へ分離したが、後のユーザー判断で検索API自体を削除した。
 
 ## Constraints
 
@@ -79,7 +79,7 @@ Slide page modelと、お気に入り追加処理の重複を独立したPRで�
 - Completed: 監査、scope分割、#445と#446の実装・検証・merge、最終main同期。
 - Remaining: なし。
 - Blocker: なし。
-- Resume with: 既存Issue #397で大規模Slide検索の計測を行う。
+- Resume with: なし。検索性能scopeは後のIssue #397で削除判断へ変更された。
 
 ## Result
 
@@ -92,5 +92,5 @@ component lifetime固定のfetcher、unmount後のstate/callback更新防止を�
 DB schema、API payload、UI、production dependency、migrationは変更していない。
 
 最終検証はunit 436件、component 98件、integration 128件、E2E 33件、production
-build、security audit、license checkが成功した。検索性能の計測はscopeを重複させず
-既存Issue #397へ残した。
+build、security audit、license checkが成功した。当時は検索性能の計測をIssue #397へ
+残したが、その後のユーザー判断により本文検索/recent API自体を削除した。

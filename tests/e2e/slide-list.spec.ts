@@ -1,11 +1,10 @@
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
-import type { SlideSearchResult } from "@/domain/slides/search";
 import { prisma } from "@/infrastructure/database/client";
 import { test, expect } from "./scripture-fixture";
 import { loginToScripture, selectGenesis } from "./scripture-helpers";
 
-test("Slide list shows clear rows and pagination while search/recent APIs retain tenant isolation", async ({
+test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
   context,
   page,
   scriptureAccount,
@@ -19,16 +18,16 @@ test("Slide list shows clear rows and pagination while search/recent APIs retain
         index === 24
           ? longTitle
           : `Synthetic ${String(index).padStart(2, "0")}`,
-      body: index === 0 ? "Literal %_\\ 日本語 ABC" : "Ordinary body",
+      body: "Ordinary body",
       createdAt: index === 24 ? new Date(date.getTime() + 1000) : date,
       updatedAt: date,
     })),
   });
   const foreign = await prisma.church.create({
     data: {
-      name: `test.e2e.slide-search.${randomUUID()}`,
+      name: `test.e2e.slide-list.${randomUUID()}`,
       slides: {
-        create: { title: "Foreign synthetic", body: "Literal %_\\ 日本語 ABC" },
+        create: { title: "Foreign synthetic", body: "Foreign body" },
       },
     },
   });
@@ -100,32 +99,6 @@ test("Slide list shows clear rows and pagination while search/recent APIs retain
         .getByRole("link")
         .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
     ).toEqual(first);
-    // The simplified UI no longer exposes these controls; the API contract remains.
-    const recentResponse = await context.request.get(
-      "/api/church/slides?mode=recent",
-    );
-    expect(recentResponse.status()).toBe(200);
-    const recent = (await recentResponse.json()) as SlideSearchResult;
-    expect(recent.slides).toHaveLength(10);
-    expect(
-      recent.slides.some((slide) => slide.title === "Foreign synthetic"),
-    ).toBe(false);
-    const query = new URLSearchParams({ q: "%_\\ 日本語 abc" });
-    const searchResponse = await context.request.get(
-      `/api/church/slides?${query}`,
-    );
-    expect(searchResponse.status()).toBe(200);
-    const matches = (await searchResponse.json()) as SlideSearchResult;
-    expect(matches.slides.map((slide) => slide.title)).toEqual([
-      "Synthetic 00",
-    ]);
-    const titleResponse = await context.request.get(
-      "/api/church/slides?q=Synthetic+00",
-    );
-    expect(titleResponse.status()).toBe(200);
-    expect(((await titleResponse.json()) as SlideSearchResult).slides).toEqual(
-      [],
-    );
     await list
       .getByRole("link", { name: longTitle, exact: true })
       .press("Enter");
@@ -147,9 +120,9 @@ test("Slide list shows clear rows and pagination while search/recent APIs retain
       }),
     ).toBeVisible();
     await context.clearCookies();
-    expect(
-      (await context.request.get("/api/church/slides?q=ABC")).status(),
-    ).toBe(401);
+    expect((await context.request.get("/api/church/slides")).status()).toBe(
+      401,
+    );
   } finally {
     await prisma.church.delete({ where: { id: foreign.id } });
   }
