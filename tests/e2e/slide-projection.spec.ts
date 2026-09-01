@@ -26,6 +26,23 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
   await expect(audience.locator("pre")).toHaveText(slide.body);
+  expect(
+    await audience.locator("pre").evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        color: style.color,
+        fontFamily: style.fontFamily,
+        lineHeight: style.lineHeight,
+        textShadow: style.textShadow,
+      };
+    }),
+  ).toEqual({
+    color: "rgb(255, 255, 255)",
+    fontFamily: "Helvetica, Arial, sans-serif",
+    lineHeight: "normal",
+    textShadow:
+      "rgb(0, 0, 255) -1px -1px 0px, rgb(0, 0, 255) 1px -1px 0px, rgb(0, 0, 255) -1px 1px 0px, rgb(0, 0, 255) 1px 1px 0px",
+  });
   await expect(audience.getByRole("navigation")).toHaveCount(0);
   await expect(audience.getByText(slide.title)).toHaveCount(0);
   expect(audience.url()).not.toContain("synthetic");

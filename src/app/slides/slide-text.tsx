@@ -2,6 +2,8 @@
 
 import { useLayoutEffect, useRef } from "react";
 
+const SCRIPTURE_AUDIENCE_FONT_RATIO = 64 / 1080;
+
 /** Shared body-only 16:9 surface for preview and the slide audience. */
 export function SlideText({
   text,
@@ -21,7 +23,8 @@ export function SlideText({
     let disposed = false;
     const fit = () => {
       if (disposed || !box.clientWidth || !box.clientHeight) return;
-      const desired = box.clientHeight * 0.12 * fontScale;
+      const desired =
+        box.clientHeight * SCRIPTURE_AUDIENCE_FONT_RATIO * fontScale;
       pre.style.fontSize = `${desired}px`;
       const scale = Math.min(
         1,
@@ -44,7 +47,11 @@ export function SlideText({
   }, [text, fontScale]);
   return (
     <div className="slide-text-frame" ref={frame}>
-      <pre ref={content} style={{ visibility: blank ? "hidden" : "visible" }}>
+      <pre
+        className="audience-shadow"
+        ref={content}
+        style={{ visibility: blank ? "hidden" : "visible" }}
+      >
         {text}
       </pre>
     </div>

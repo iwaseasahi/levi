@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SlideAudience } from "./slide-audience";
 import { SlideController } from "./slide-controller";
+import { SlideText } from "./slide-text";
 
 const id = "00000000-0000-4000-8000-000000000387";
 const generation = "00000000-0000-4000-8000-000000000388";
@@ -35,6 +36,19 @@ function send(data: unknown, source: MessageEventSource) {
   );
 }
 describe("Slide audience and controller", () => {
+  it("uses the scripture projection typography and proportional base size", () => {
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1920);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(
+      1080,
+    );
+    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(960);
+    vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(540);
+    const { container } = render(<SlideText text="日本語の本文" />);
+    const text = container.querySelector("pre");
+    expect(text).toHaveClass("audience-shadow");
+    expect(text).toHaveStyle({ fontSize: "64px" });
+  });
+
   it("renders the complete literal body and clears on visibility/revision checks", async () => {
     window.history.replaceState(null, "", `/slides/audience?id=${id}`);
     const fetcher = vi
