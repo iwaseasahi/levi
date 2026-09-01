@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FolderSummary } from "@/domain/saved-content";
+import { ChurchNavigation } from "./church-navigation";
 import { requestJson } from "./client-api";
 import { useComponentLifetimeValue } from "./use-component-lifetime-value";
 
@@ -50,6 +51,7 @@ export function FolderListPanel({
   return (
     <main className="folder-management-page">
       <div className="folder-management-shell">
+        <ChurchNavigation />
         <a className="management-back-link" href="/scripture">
           <span aria-hidden="true">←</span> 聖書検索へ
         </a>

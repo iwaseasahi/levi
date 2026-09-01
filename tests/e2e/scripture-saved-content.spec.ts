@@ -156,6 +156,23 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   await expect(
     page.getByRole("heading", { name: "フォルダの一覧" }),
   ).toBeVisible();
+  const folderNavigation = page.getByRole("navigation", {
+    name: "主要ナビゲーション",
+  });
+  await expect(
+    folderNavigation.getByRole("link", { name: "聖書検索", exact: true }),
+  ).toHaveAttribute("href", "/scripture");
+  await expect(
+    folderNavigation.getByRole("link", { name: "スライド", exact: true }),
+  ).toHaveAttribute("href", "/slides");
+  await expect(
+    folderNavigation.getByRole("link", { name: "スライド", exact: true }),
+  ).not.toHaveAttribute("target");
+  const folderNavigationBox = await folderNavigation.boundingBox();
+  const folderHeadingBox = await page
+    .getByRole("heading", { name: "フォルダの一覧" })
+    .boundingBox();
+  expect(folderNavigationBox!.y).toBeLessThan(folderHeadingBox!.y);
   expect(
     (
       await new AxeBuilder({ page })
@@ -174,6 +191,20 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
 
   await page.getByRole("link", { name: "2026-08-23 第二礼拝を編集" }).click();
   await expect(page).toHaveURL(/\/folders\/[^/]+\/edit$/);
+  const editorNavigation = page.getByRole("navigation", {
+    name: "主要ナビゲーション",
+  });
+  await expect(
+    editorNavigation.getByRole("link", { name: "聖書検索", exact: true }),
+  ).toHaveAttribute("href", "/scripture");
+  await expect(
+    editorNavigation.getByRole("link", { name: "スライド", exact: true }),
+  ).toHaveAttribute("href", "/slides");
+  const editorNavigationBox = await editorNavigation.boundingBox();
+  const editorHeadingBox = await page
+    .getByRole("heading", { name: "フォルダーを編集" })
+    .boundingBox();
+  expect(editorNavigationBox!.y).toBeLessThan(editorHeadingBox!.y);
   await expect(page.getByLabel("よく使うフォルダーに固定")).toHaveCount(0);
   await page.getByLabel("フォルダー名").fill("礼拝用");
   await page.getByRole("button", { name: "変更を保存" }).click();
