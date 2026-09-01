@@ -56,7 +56,7 @@ describe("Slide audience and controller", () => {
       .mockResolvedValue(Response.json({ slide }));
     // Each response has an independent consumable body.
     fetcher.mockImplementation(async () => Response.json({ slide }));
-    render(<SlideAudience id={id} page={0} fetcher={fetcher} />);
+    render(<SlideAudience id={id} fetcher={fetcher} />);
     expect(screen.getByRole("status")).toHaveTextContent("読み込み中");
     expect(
       (await screen.findByText(/<script>synthetic<\/script>/)).textContent,
@@ -83,7 +83,7 @@ describe("Slide audience and controller", () => {
       .fn<typeof fetch>()
       .mockResolvedValueOnce(Response.json({ slide }))
       .mockResolvedValueOnce(Response.json({ error: {} }, { status: 403 }));
-    render(<SlideAudience id={id} page={0} fetcher={fetcher} />);
+    render(<SlideAudience id={id} fetcher={fetcher} />);
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
@@ -96,23 +96,10 @@ describe("Slide audience and controller", () => {
     expect(document.querySelector("pre")).toBeNull();
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
-  it("shows invalid page and initial read errors without protected text", async () => {
-    const { unmount } = render(
-      <SlideAudience
-        id={id}
-        page={2}
-        fetcher={async () => Response.json({ slide })}
-      />,
-    );
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "スライドを表示できません",
-    );
-    expect(document.querySelector("pre")).toBeNull();
-    unmount();
+  it("shows initial read errors without protected text", async () => {
     render(
       <SlideAudience
         id={id}
-        page={0}
         fetcher={async () => Response.json({ error: {} }, { status: 404 })}
       />,
     );

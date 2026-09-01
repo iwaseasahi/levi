@@ -5,31 +5,25 @@ import { parseSlideBody } from "@/domain/slides/slide";
 /** One document lifetime. A failed/disposed session cannot regain protected text. */
 export function createSlideAudienceSession({
   id,
-  initialPage,
   load,
   publish,
-  pageChanged,
 }: {
   id: string;
-  initialPage: number;
   load: () => Promise<SlideRecord>;
   publish: (state: SlideAudienceState) => void;
-  pageChanged: (page: number) => void;
 }) {
   let disposed = false;
   let failed = false;
   let started = false;
   let state: SlideAudienceState = {
     status: "loading",
-    pages: [],
-    page: initialPage,
+    text: null,
     revision: null,
   };
-  let queue = Promise.resolve();
-  function fail(status: "invalid" | "stale" | "unavailable" = "unavailable") {
+  function fail(status: "stale" | "unavailable" = "unavailable") {
     if (disposed || failed) return;
     failed = true;
-    state = { status, pages: [], page: 0, revision: state.revision };
+    state = { status, text: null, revision: state.revision };
     publish(state);
   }
   async function start() {
@@ -42,19 +36,9 @@ export function createSlideAudienceSession({
         fail();
         return;
       }
-      const pages = [parseSlideBody(slide.body)];
-      if (
-        !Number.isInteger(initialPage) ||
-        initialPage < 0 ||
-        initialPage >= pages.length
-      ) {
-        fail("invalid");
-        return;
-      }
       state = {
         status: "ready",
-        pages,
-        page: initialPage,
+        text: parseSlideBody(slide.body),
         revision: slide.revision,
       };
       publish(state);
@@ -81,37 +65,14 @@ export function createSlideAudienceSession({
       return false;
     }
   }
-  function navigate(direction: "previous" | "next" | number) {
-    queue = queue
-      .then(async () => {
-        if (!(await verify())) return;
-        const target =
-          typeof direction === "number"
-            ? direction
-            : state.page + (direction === "next" ? 1 : -1);
-        if (
-          !Number.isInteger(target) ||
-          target < 0 ||
-          target >= state.pages.length ||
-          target === state.page
-        )
-          return;
-        state = { ...state, page: target };
-        publish(state);
-        pageChanged(target);
-      })
-      .catch(() => fail());
-    return queue;
-  }
   return {
     start,
     verify,
-    navigate,
     invalidate: () => fail(),
     isAuthorized: () => !disposed && !failed,
     dispose: () => {
       disposed = true;
-      state = { status: "unavailable", pages: [], page: 0, revision: null };
+      state = { status: "unavailable", text: null, revision: null };
     },
   };
 }
