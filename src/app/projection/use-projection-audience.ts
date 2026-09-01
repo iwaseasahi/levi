@@ -17,6 +17,7 @@ export function useProjectionAudience({
   ready,
   authorized,
   isAuthorized,
+  keyboardNavigation = true,
   navigate,
   invalidate,
 }: {
@@ -25,6 +26,7 @@ export function useProjectionAudience({
   ready: boolean;
   authorized: boolean;
   isAuthorized: () => boolean;
+  keyboardNavigation?: boolean;
   navigate: (command: ProjectionAction) => void;
   invalidate: () => void;
 }) {
@@ -160,6 +162,7 @@ export function useProjectionAudience({
   }, [kind, isAuthorized, navigate, invalidate, send]);
   useEffect(() => {
     function keyboard(event: KeyboardEvent) {
+      if (!keyboardNavigation) return;
       const action = projectionArrow(event);
       if (!action || !isAuthorized()) return;
       event.preventDefault();
@@ -167,6 +170,6 @@ export function useProjectionAudience({
     }
     window.addEventListener("keydown", keyboard);
     return () => window.removeEventListener("keydown", keyboard);
-  }, [isAuthorized, navigate]);
+  }, [isAuthorized, navigate, keyboardNavigation]);
   return { fontScale, blank };
 }

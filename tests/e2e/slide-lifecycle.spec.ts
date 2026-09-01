@@ -18,7 +18,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
     page.getByRole("region", { name: "本文プレビュー" }).locator("pre"),
-  ).toHaveText("礼拝 %_\\ ABC\n日本語の二行目");
+  ).toHaveText(original);
   expect(context.pages()).toHaveLength(1);
   expect(
     await prisma.slide.count({
@@ -40,31 +40,24 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
-  await expect(audience.locator("pre")).toHaveText(
-    "礼拝 %_\\ ABC\n日本語の二行目",
-  );
-  await expect(controller.getByRole("status")).toContainText("1 / 3");
-  await page.evaluate(() =>
-    window.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "ArrowDown", isComposing: true }),
-    ),
-  );
-  await page.keyboard.press("ArrowDown");
-  await expect(controller.getByRole("status")).toContainText("2 / 3");
-  await expect(audience.locator("pre")).toHaveText("二番目");
-  await controller.getByRole("button", { name: "前のページへ投影" }).click();
-  await expect(controller.getByRole("status")).toContainText("1 / 3");
+  await expect(audience.locator("pre")).toHaveText(original);
+  await expect(controller.getByRole("status")).toContainText("投影中 · 100%");
+  await expect(
+    controller.getByRole("button", { name: "前のページへ投影" }),
+  ).toHaveCount(0);
+  await expect(
+    controller.getByRole("button", { name: "次のページへ投影" }),
+  ).toHaveCount(0);
+  await expect(controller.getByLabel("投影ページ")).toHaveCount(0);
   await controller.getByRole("button", { name: "文字を大きく" }).click();
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
-  await controller.getByLabel("投影ページ").selectOption("2");
-  await expect(controller.getByRole("status")).toContainText("3 / 3 · 110%");
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
-  await expect(audience.locator("pre")).toHaveText("三番目");
+  await expect(audience.locator("pre")).toHaveText(original);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(
     (await new AxeBuilder({ page: audience }).analyze()).violations,
@@ -81,8 +74,8 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await editor.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
     editor.getByRole("region", { name: "本文プレビュー" }).locator("pre"),
-  ).toHaveText("未保存の日本語\n第二行");
-  await expect(audience.locator("pre")).toHaveText("三番目");
+  ).toHaveText(draft);
+  await expect(audience.locator("pre")).toHaveText(original);
   expect(
     (
       await prisma.slide.findFirstOrThrow({
@@ -114,8 +107,8 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
     page.getByRole("heading", { name: "Synthetic edited lifecycle" }),
   ).toBeVisible();
   await controller.getByRole("button", { name: "Open" }).click();
-  await expect(audience.locator("pre")).toHaveText("未保存の日本語\n第二行");
-  await expect(controller.getByRole("status")).toContainText("1 / 2 · 100%");
+  await expect(audience.locator("pre")).toHaveText(draft);
+  await expect(controller.getByRole("status")).toContainText("投影中 · 100%");
   await editor.getByRole("link", { name: "編集", exact: true }).click();
   editor.once("dialog", (dialog) => dialog.dismiss());
   await editor.getByRole("button", { name: "スライドを削除" }).click();

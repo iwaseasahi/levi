@@ -25,15 +25,15 @@ function setup(initialPage = 0) {
   return { load, publish, pageChanged, session };
 }
 describe("saved Slide audience lifetime", () => {
-  it("starts once, serializes rapid navigation, bounds pages and resumes an explicit page", async () => {
-    const { session, publish, load, pageChanged } = setup(1);
+  it("starts once with the complete body and ignores page navigation", async () => {
+    const { session, publish, load, pageChanged } = setup();
     await session.start();
     await session.start();
     expect(load).toHaveBeenCalledTimes(1);
     expect(publish).toHaveBeenLastCalledWith({
       status: "ready",
-      pages: ["First", "Second", "Third"],
-      page: 1,
+      pages: ["First\n\n\n\nSecond\n\n\n\nThird"],
+      page: 0,
       revision: 1,
     });
     await Promise.all([
@@ -41,19 +41,19 @@ describe("saved Slide audience lifetime", () => {
       session.navigate("next"),
       session.navigate("previous"),
     ]);
-    expect(pageChanged.mock.calls.flat()).toEqual([2, 1]);
+    expect(pageChanged).not.toHaveBeenCalled();
     await session.navigate(0);
     await session.navigate("previous");
     await session.navigate(3);
     await session.navigate(0.5);
-    expect(pageChanged).toHaveBeenLastCalledWith(0);
+    expect(pageChanged).not.toHaveBeenCalled();
     expect(load).toHaveBeenCalledTimes(8);
     session.dispose();
     await session.navigate("next");
     await session.start();
     expect(load).toHaveBeenCalledTimes(8);
   });
-  it.each([-1, 3, 0.5])(
+  it.each([-1, 1, 0.5])(
     "rejects out-of-bounds initial page %s without clamping",
     async (page) => {
       const { session, publish } = setup(page);

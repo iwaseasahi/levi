@@ -5,14 +5,9 @@ const page = z.number().int().min(0).max(24_999);
 const querySchema = z
   .object({
     id: z.uuid(),
-    page: z
-      .string()
-      .regex(/^(0|[1-9]\d{0,4})$/)
-      .transform(Number)
-      .pipe(page)
-      .default(0),
   })
-  .strict();
+  .strict()
+  .transform(({ id }) => ({ id, page: 0 }));
 export function parseSlideProjectionQuery(value: unknown) {
   const result = querySchema.safeParse(value);
   if (!result.success) throw new SlideInputError();
@@ -60,7 +55,7 @@ export function slideProjectionState(
 export const slideAudienceMessages = {
   loading: "読み込み中…",
   ready: "",
-  invalid: "ページを表示できません。操作画面で再度Openしてください。",
+  invalid: "スライドを表示できません。操作画面で再度Openしてください。",
   stale:
     "スライドが更新されました。操作画面で最新の内容を読み込み、再度Openしてください。",
   unavailable: "スライドを利用できません。操作画面で再度Openしてください。",
