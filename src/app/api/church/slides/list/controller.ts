@@ -4,16 +4,16 @@ import {
   type ChurchAccessResolver,
 } from "@/app/api/church-api-support";
 import {
-  createSlideSearchService,
-  type SlideSearchRepository,
-} from "@/application/slides/search-slides";
+  createSlideListService,
+  type SlideListRepository,
+} from "@/application/slides/list-slides";
 import { SlideInputError } from "@/domain/slides/slide";
 
-export function createSlideSearchHandler(dependencies: {
+export function createSlideListHandler(dependencies: {
   getChurchAccess: ChurchAccessResolver;
-  repository: SlideSearchRepository;
+  repository: SlideListRepository;
 }) {
-  const search = createSlideSearchService(dependencies.repository);
+  const list = createSlideListService(dependencies.repository);
   return async (request: Request) => {
     try {
       const access = await resolveChurchApiAccess(
@@ -24,9 +24,7 @@ export function createSlideSearchHandler(dependencies: {
       const params = new URL(request.url).searchParams;
       if ([...params.keys()].some((key) => params.getAll(key).length !== 1))
         throw new SlideInputError();
-      return noStoreJson(
-        await search(access.scope, Object.fromEntries(params)),
-      );
+      return noStoreJson(await list(access.scope, Object.fromEntries(params)));
     } catch (cause) {
       const invalid = cause instanceof SlideInputError;
       return noStoreJson(

@@ -64,20 +64,21 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
         })
       ).status(),
     ).toBe(400);
-    for (const query of ["", "?mode=recent", "?q=Synthetic"]) {
-      const response = await context.request.get(`/api/church/slides${query}`);
-      expect(response.status()).toBe(200);
-      expect(response.headers()["cache-control"]).toBe("no-store");
-      expect(await response.json()).toEqual({ slides: [], nextCursor: null });
-    }
+    const listResponse = await context.request.get("/api/church/slides");
+    expect(listResponse.status()).toBe(200);
+    expect(listResponse.headers()["cache-control"]).toBe("no-store");
+    expect(await listResponse.json()).toEqual({ slides: [], nextCursor: null });
+    for (const query of ["?mode=all", "?mode=recent", "?q=Synthetic"])
+      expect(
+        (await context.request.get(`/api/church/slides${query}`)).status(),
+      ).toBe(400);
     const cursor = JSON.stringify({
       version: 1,
-      q: "Synthetic",
       id: row.id,
       createdAt: row.createdAt.toISOString(),
     });
     const response = await context.request.get(
-      `/api/church/slides?${new URLSearchParams({ q: "Synthetic", cursor })}`,
+      `/api/church/slides?${new URLSearchParams({ cursor })}`,
     );
     expect(await response.json()).toEqual({ slides: [], nextCursor: null });
     const forged = JSON.stringify({
@@ -87,7 +88,7 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
     expect(
       (
         await context.request.get(
-          `/api/church/slides?${new URLSearchParams({ q: "Synthetic", cursor: forged })}`,
+          `/api/church/slides?${new URLSearchParams({ cursor: forged })}`,
         )
       ).status(),
     ).toBe(400);

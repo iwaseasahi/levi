@@ -10,7 +10,8 @@
 1. [x] Set heading/browser title, remove mode/search UI, use all mode from mount.
 2. [x] Add readable full-width title rows, secondary authors and clear create link.
        Keep bounded cursors, refresh/retry, stale-read guard and conditional paging.
-3. [x] Adapt component/lifecycle/list E2E; preserve search/recent API assertions.
+3. [x] Adapt component/lifecycle/list E2E; preserve search/recent API assertions
+       at that point. #397 later removes those dormant API modes.
 4. [x] Run checks, inspect narrow/wide synthetic screenshots and review the diff.
        Exact required CI/merge status is recorded in the PR.
 

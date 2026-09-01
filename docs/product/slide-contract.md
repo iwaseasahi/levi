@@ -55,7 +55,7 @@ POST `/api/church/slides` accepts `{title, body}`. GET/PUT/DELETE use
 expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
 return `{slide}` without `churchId`; delete has no response body. Mutation Origin
 must exactly match the configured canonical origin. CRUD detail routes reject
-query parameters; search/list parameters belong to the collection read contract.
+query parameters; list cursor parameters belong to the collection read contract.
 
 ## Single-page body and preview
 
@@ -76,42 +76,24 @@ in the controller.
 Preview has no page navigation or page selection controls.
 Opening projection requires a successfully saved Slide, not an unsaved draft.
 
-## Search, recent and list pagination
+## List pagination
 
-- Search only normalized `body`, with one literal substring; title is not
-  included. Empty query lists all. No tokenization, stemming, HTML,
-  wildcard language or regex. Do not trim the query; whitespace is meaningful.
-- Normalize query EOL, limit to 200 code points, reject NUL/malformed Unicode.
-  Escape SQL LIKE `%`, `_` and the escape character and parameterize values.
-- ASCII A–Z matching is case-insensitive; all other code points match literally
-  (no kana-width, accent or Unicode normalization). Implement/test this explicit
-  fold under a deterministic PostgreSQL collation; do not inherit host locale.
-- Recent means the last 10 updates, ordered `updated_at DESC, id DESC`, including
-  creates; reading, previewing and projecting never update recency.
-- All-list and search use `created_at DESC, id DESC`, 20 rows per page, using a
-  cursor for the last tuple. UUID is a tiebreaker, never a chronological ID.
-  Fetch one extra row to determine `hasNext`; no unbounded response or count is
-  required. Filter/tenant changes discard the cursor; the client retains prior
-  cursors for Back. Validate cursor shape and bind it to normalized query;
-  always derive tenant from the session, never from the cursor.
-- This is a live list, not a snapshot: concurrent creates appear on refresh;
-  deletes may shorten a later page; edits can change search membership. With
-  unchanged data, traversal has no duplicates or omissions. Test equal creation
-  timestamps, literal `%`/`_`/backslash, ASCII case and Japanese exact matching.
+Issue #397 removes the body-search and recent-update APIs after their controls
+were removed from the product in #412. The collection read now has one behavior:
+list Slides by `created_at DESC, id DESC`, 20 rows per page.
 
-Stable ordering, literal wildcard handling and explicit case behavior deliberately
-replace the old incidental ID/collation behavior. No production full-text search
-service or extension is required; measure tenant-scoped query plans before
-adding one.
+Use a cursor for the last tuple and fetch one extra row to determine `hasNext`;
+no unbounded response or count is required. UUID is a tiebreaker, never a
+chronological ID. The cursor is a bounded strict JSON string with
+`{version:1,createdAt,id}`. It is a position, not an authorization token, and
+never determines church scope. Unknown, duplicate, `q`, or `mode` parameters are
+invalid rather than silently changing to the all-list.
 
-GET `/api/church/slides` accepts optional `mode=all|recent` (default `all`),
-`q` (default empty), and `cursor`. Recent rejects nonempty queries/cursors.
-Duplicate or unknown parameters are invalid. Responses contain `{slides,
-nextCursor}`; list entries omit body and church ID. Cursor is a bounded strict
-JSON string with `{version:1,q,createdAt,id}`, encoded by URLSearchParams in the
-request. It is not an authorization token and never determines church scope.
-See the [synthetic query-plan baseline](../testing-slide-search-performance.md)
-and measured performance follow-up #397.
+This is a live list, not a snapshot: concurrent creates appear on refresh and
+deletes may shorten a later page. With unchanged data, traversal has no
+duplicates or omissions. Test equal creation timestamps, cursor tampering, and
+cross-tenant cursor reuse. Responses contain `{slides,nextCursor}`; list entries
+omit body and church ID.
 
 ## Projection
 
@@ -166,7 +148,7 @@ show all slides immediately in creation order (newest first), 20 per page, with
 prominent titles and full-row detail links. Keep a
 clear create link and error retry; show pagination only when needed. Do not
 show a list-refresh button, recent/all mode switches or body search controls.
-The search/recent API contract above remains supported and tested for compatibility.
+The corresponding search/recent API parameters are unsupported.
 
 Use existing application surfaces and accessible names. List: loading, empty,
 error/retry, success and next-page states. Editor: validation,

@@ -2,7 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { SlideSearchResult, SlideSummary } from "@/domain/slides/search";
+import type { SlideListResult, SlideSummary } from "@/domain/slides/list";
 import { SlideList } from "./slide-list";
 
 const summary = (index: number): SlideSummary => ({
@@ -36,7 +36,7 @@ describe("SlideList", () => {
       screen.queryByRole("button", { name: "次の20件" }),
     ).not.toBeInTheDocument();
     expect(fetcher.mock.calls[0]).toEqual([
-      "/api/church/slides?mode=all",
+      "/api/church/slides",
       { cache: "no-store" },
     ]);
     expect(
@@ -56,11 +56,11 @@ describe("SlideList", () => {
     ).not.toBeInTheDocument();
   });
   it("holds cursors for Back and disables page boundaries", async () => {
-    const first: SlideSearchResult = {
+    const first: SlideListResult = {
       slides: Array.from({ length: 20 }, (_, i) => summary(i)),
       nextCursor: "cursor-1",
     };
-    const pages: SlideSearchResult[] = [
+    const pages: SlideListResult[] = [
       first,
       { slides: [summary(21)], nextCursor: null },
       first,
@@ -79,12 +79,12 @@ describe("SlideList", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getByRole("listitem")).toHaveTextContent("21");
     expect(fetcher.mock.calls[1]![0]).toBe(
-      "/api/church/slides?mode=all&cursor=cursor-1",
+      "/api/church/slides?cursor=cursor-1",
     );
     await user.click(previous);
     await screen.findByText(/1ページ目 · 20件/);
     expect(previous).toHaveFocus();
-    expect(fetcher.mock.calls.at(-1)![0]).toBe("/api/church/slides?mode=all");
+    expect(fetcher.mock.calls.at(-1)![0]).toBe("/api/church/slides");
   });
   it("adds a row to the selected folder and reports mutation failures", async () => {
     const fetcher = vi

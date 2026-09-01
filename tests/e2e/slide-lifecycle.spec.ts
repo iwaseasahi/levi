@@ -154,7 +154,7 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   pageErrorGuard.allowConsoleError(
     "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
   );
-  await page.route("**/api/church/slides?*", (route) =>
+  await page.route("**/api/church/slides", (route) =>
     route.fulfill({
       status: 503,
       contentType: "application/json",
@@ -165,7 +165,7 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
   // StrictMode may start and discard an initial request; keep the simulated
   // outage active until the explicit user retry, not for an arbitrary count.
-  await page.unroute("**/api/church/slides?*");
+  await page.unroute("**/api/church/slides");
   await page.getByRole("button", { name: "再試行" }).click();
   await expect(page.getByRole("link", { name: slide.title })).toBeVisible();
   await page.goto(`/slides/${slide.id}/edit`);

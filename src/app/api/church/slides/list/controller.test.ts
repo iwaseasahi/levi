@@ -3,7 +3,7 @@ import type {
   ChurchAccess,
   ChurchScope,
 } from "@/application/auth/church-access";
-import { createSlideSearchHandler } from "./controller";
+import { createSlideListHandler } from "./controller";
 
 const scope = {
   churchId: "00000000-0000-4000-8000-000000000385",
@@ -14,6 +14,7 @@ const authorized: ChurchAccess = {
   userId: "synthetic",
   mustChangePassword: false,
 };
+
 describe("slide collection GET", () => {
   it.each([
     { status: "unauthenticated" } as ChurchAccess,
@@ -22,44 +23,49 @@ describe("slide collection GET", () => {
   ])(
     "denies ineligible access before parsing or repository",
     async (access) => {
-      const search = vi.fn();
-      const handler = createSlideSearchHandler({
+      const list = vi.fn();
+      const handler = createSlideListHandler({
         getChurchAccess: async () => access,
-        repository: { search },
+        repository: { list },
       });
       const response = await handler(
         new Request("https://levi.example/api/church/slides?churchId=x"),
       );
       expect([401, 403]).toContain(response.status);
-      expect(search).not.toHaveBeenCalled();
+      expect(list).not.toHaveBeenCalled();
       expect(response.headers.get("cache-control")).toBe("no-store");
     },
   );
-  it("passes only the authenticated scope and normalized search", async () => {
-    const search = vi.fn().mockResolvedValue([]);
-    const handler = createSlideSearchHandler({
+
+  it("passes only the authenticated scope and list position", async () => {
+    const list = vi.fn().mockResolvedValue([]);
+    const handler = createSlideListHandler({
       getChurchAccess: async () => authorized,
-      repository: { search },
+      repository: { list },
     });
     const response = await handler(
-      new Request("https://levi.example/api/church/slides?q=%20A%0DB%20"),
+      new Request("https://levi.example/api/church/slides"),
     );
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ slides: [], nextCursor: null });
-    expect(search).toHaveBeenCalledWith(scope, {
-      mode: "all",
-      q: " A\nB ",
-      cursor: null,
-    });
+    expect(list).toHaveBeenCalledWith(scope, { cursor: null });
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
-  it.each(["q=a&q=b", "churchId=x", "cursor=bad", "mode=recent&q=x"])(
-    "rejects unknown/duplicate/invalid query %s",
+
+  it.each([
+    "q=body",
+    "mode=all",
+    "mode=recent",
+    "churchId=x",
+    "cursor=bad",
+    "cursor=a&cursor=b",
+  ])(
+    "rejects removed, unknown, duplicate or invalid query %s",
     async (query) => {
-      const search = vi.fn();
-      const handler = createSlideSearchHandler({
+      const list = vi.fn();
+      const handler = createSlideListHandler({
         getChurchAccess: async () => authorized,
-        repository: { search },
+        repository: { list },
       });
       expect(
         (
@@ -68,14 +74,15 @@ describe("slide collection GET", () => {
           )
         ).status,
       ).toBe(400);
-      expect(search).not.toHaveBeenCalled();
+      expect(list).not.toHaveBeenCalled();
     },
   );
+
   it("hides persistence failures", async () => {
-    const handler = createSlideSearchHandler({
+    const handler = createSlideListHandler({
       getChurchAccess: async () => authorized,
       repository: {
-        search: async () => {
+        list: async () => {
           throw new Error("synthetic private query");
         },
       },

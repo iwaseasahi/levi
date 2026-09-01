@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import { makeSignature } from "better-auth/crypto";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
 import { createSlideHandlers } from "@/app/api/church/slides/controller";
-import { createSlideSearchHandler } from "@/app/api/church/slides/search/controller";
+import { createSlideListHandler } from "@/app/api/church/slides/list/controller";
 import { getChurchAccess } from "@/infrastructure/auth/church-session";
 import { getAdminSessionAccess } from "@/infrastructure/auth/admin-session";
 import { prisma } from "@/infrastructure/database/client";
 import { slideRepository } from "@/infrastructure/database/slide-repository";
-import { slideSearchRepository } from "@/infrastructure/database/slide-search-repository";
+import { slideListRepository } from "@/infrastructure/database/slide-list-repository";
 
 const prefix = "test.slide-authorization.";
 const origin = "https://levi.local.test";
@@ -20,9 +20,9 @@ const handlers = createSlideHandlers({
   repository: slideRepository,
   origin,
 });
-const search = createSlideSearchHandler({
+const list = createSlideListHandler({
   getChurchAccess,
-  repository: slideSearchRepository,
+  repository: slideListRepository,
 });
 async function fixture(admin = false) {
   const token = randomUUID();
@@ -68,9 +68,7 @@ async function matrix(cookie: string, id: string) {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   return Promise.all([
-    search(request("GET")),
-    search(request("GET", "?mode=recent")),
-    search(request("GET", "?q=Synthetic")),
+    list(request("GET")),
     handlers.read(request("GET", `/${id}`), id),
     handlers.create(request("POST", "", input)),
     handlers.update(
