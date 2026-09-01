@@ -60,9 +60,12 @@ default leaves inputs, textarea, selects and editable elements alone; the
 scripture adapter explicitly retains its existing search-field arrow behavior.
 Slide editors never opt in. IME and modified shortcuts keep their native keys.
 
-Five seconds without a valid response disables controls with a reopen instruction;
-probes can reconnect to a compatible live page. Browser timer throttling may delay
-background detection. This heartbeat never transfers text or invokes remote
+After five seconds without a valid response, one consecutive heartbeat check
+confirms that the audience is still open before disabling controls with a reopen
+instruction. This prevents a connection warning from flashing while the browser
+settles the closed-window flag. A confirmed closed tab disables controls silently,
+and probes can reconnect to a compatible live page. Browser timer throttling may
+delay background detection. This heartbeat never transfers text or invokes remote
 functions. Version 1 and malformed messages are ignored; incompatible tabs cannot
 enable controls and users are instructed to refresh both screens and Open again.
 
