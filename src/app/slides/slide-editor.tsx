@@ -136,7 +136,7 @@ export function SlideEditor({
             onChange={(event) => setBody(event.target.value)}
             required
           />
-          <div className="slide-actions">
+          <div className="slide-actions slide-editor-actions">
             <button className="primary-button" type="submit">
               {busy ? "処理中…" : "保存"}
             </button>
