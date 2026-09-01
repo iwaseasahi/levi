@@ -37,8 +37,8 @@ Slide page modelと、お気に入り追加処理の重複を独立したPRで�
 1. [x] #445でSlide audience state/sessionを単一本文へ整理し、到達不能なnavigationを削除する。
 2. [x] #445のunit/component/E2Eとrequired CIを通し、mergeする。
 3. [x] #446でfavorite mutationをlifetime/concurrency guard付きhookへ統合する。
-4. [ ] #446のcomponent/E2Eとrequired CIを通し、mergeする。
-5. [ ] 親Issue #444へ最終mainの検証証跡を記録して閉じる。
+4. [x] #446のcomponent/E2Eとrequired CIを通し、mergeする。
+5. [x] 親Issue #444へ最終mainの検証証跡を記録して閉じる。
 
 ## Progress
 
@@ -46,6 +46,7 @@ Slide page modelと、お気に入り追加処理の重複を独立したPRで�
 - 2026-09-01 14:24 JST — #445の単一surface state化を完了し、unit 19件、component 6件、`pnpm check`を通した。
 - 2026-09-01 14:30 JST — #445をrequired CI成功後にPR #447でmergeした。
 - 2026-09-01 14:32 JST — #446のfavorite mutationを共通hookへ統合し、二重送信とunmount後完了をcomponent testへ追加した。
+- 2026-09-01 14:38 JST — #446をrequired CI成功後にPR #448でmergeし、最終main `db21d94`を確認した。
 
 ## Decisions
 
@@ -71,15 +72,25 @@ Slide page modelと、お気に入り追加処理の重複を独立したPRで�
 - [x] `pnpm test:e2e`
 - [x] `pnpm security:check`
 - [x] `git diff --check`
-- [ ] 各PRのQuality / Database / E2E / Securityがexact headで成功
+- [x] PR #447、#448のQuality / Database / E2E / Securityがexact headで成功
 
 ## Handoff or blockers
 
-- Completed: 監査、scope分割、#445開始。
-- Remaining: #445、#446の実装・検証・merge、親Issue完了記録。
+- Completed: 監査、scope分割、#445と#446の実装・検証・merge、最終main同期。
+- Remaining: なし。
 - Blocker: なし。
-- Resume with: `src/application/slides/project-slide.ts`のstateを単一本文へ変更する。
+- Resume with: 既存Issue #397で大規模Slide検索の計測を行う。
 
 ## Result
 
-進行中。
+Slide投影の内部状態を単一本文へ整理し、旧ページ配列、navigation queue、
+URL page同期を削除した。wire acknowledgementの固定page metadataとScriptureの
+projection transportは維持した。
+
+一覧と詳細に重複していたお気に入り追加を共通hookへ統合し、同期的な二重送信防止、
+component lifetime固定のfetcher、unmount後のstate/callback更新防止を共通化した。
+DB schema、API payload、UI、production dependency、migrationは変更していない。
+
+最終検証はunit 436件、component 98件、integration 128件、E2E 33件、production
+build、security audit、license checkが成功した。検索性能の計測はscopeを重複させず
+既存Issue #397へ残した。
