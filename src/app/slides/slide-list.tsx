@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { requestJson } from "@/app/church/client-api";
-import { postJson } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
 import type { SlideSearchResult } from "@/domain/slides/search";
 import { SlideError, slideErrorMessage } from "./slide-error";
+import { useSlideFavorite } from "./use-slide-favorite";
 
 type Selection = { cursors: Array<string | null> };
 export function SlideList({
@@ -25,32 +25,11 @@ export function SlideList({
     result?: SlideSearchResult;
     error?: string;
   } | null>(null);
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [favoriteError, setFavoriteError] = useState("");
-  async function saveFavorite(slideId: string) {
-    if (!selectedFolderId || savingId) return;
-    setSavingId(slideId);
-    setFavoriteError("");
-    try {
-      await postJson(
-        fetcher,
-        "/api/saved-content",
-        {
-          action: "create-slide-bookmark",
-          folderId: selectedFolderId,
-          slideId,
-        },
-        "saved content unavailable",
-      );
-      onFavoriteSaved?.();
-    } catch {
-      setFavoriteError(
-        "お気に入りに追加できませんでした。再度お試しください。",
-      );
-    } finally {
-      setSavingId(null);
-    }
-  }
+  const favorite = useSlideFavorite({
+    fetcher,
+    selectedFolderId,
+    onFavoriteSaved,
+  });
   useEffect(() => {
     let current = true;
     const params = new URLSearchParams({ mode: "all" });
@@ -98,7 +77,7 @@ export function SlideList({
           </button>
         </>
       )}
-      {favoriteError && <SlideError message={favoriteError} />}
+      {favorite.error && <SlideError message={favorite.error} />}
       <ul className="slide-list">
         {result?.slides.map((slide, index) => (
           <li className="slide-list-item" key={slide.id}>
@@ -125,10 +104,10 @@ export function SlideList({
             <button
               className="slide-favorite-button"
               type="button"
-              disabled={!selectedFolderId || savingId !== null}
-              onClick={() => void saveFavorite(slide.id)}
+              disabled={!selectedFolderId || favorite.savingId !== null}
+              onClick={() => void favorite.save(slide.id)}
             >
-              {savingId === slide.id ? "追加中…" : "お気に入りに追加"}
+              {favorite.savingId === slide.id ? "追加中…" : "お気に入りに追加"}
             </button>
           </li>
         ))}

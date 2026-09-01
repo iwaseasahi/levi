@@ -133,6 +133,46 @@ describe("SlideList", () => {
       "お気に入りに追加できませんでした",
     );
   });
+  it("allows one favorite request at a time and ignores completion after unmount", async () => {
+    let finish!: (response: Response) => void;
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        Response.json({
+          slides: [summary(1), summary(2)],
+          nextCursor: null,
+        }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve;
+          }),
+      );
+    const saved = vi.fn();
+    const user = userEvent.setup();
+    const view = render(
+      <SlideList
+        fetcher={fetcher}
+        selectedFolderId="00000000-0000-4000-8000-000000000100"
+        onFavoriteSaved={saved}
+      />,
+    );
+    const buttons = await screen.findAllByRole("button", {
+      name: "お気に入りに追加",
+    });
+    await user.click(buttons[0]!);
+    expect(screen.getByRole("button", { name: "追加中…" })).toBeDisabled();
+    expect(buttons[1]).toBeDisabled();
+    buttons[1]!.click();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    view.unmount();
+    await act(async () => {
+      finish(Response.json({ item: {} }));
+      await Promise.resolve();
+    });
+    expect(saved).not.toHaveBeenCalled();
+  });
   it("keeps a remounted list independent of an old read and renders titles as text", async () => {
     let resolve!: (response: Response) => void;
     const title = "<script>synthetic</script>";
