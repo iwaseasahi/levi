@@ -52,9 +52,6 @@ export function FolderListPanel({
     <main className="folder-management-page">
       <div className="folder-management-shell">
         <ChurchNavigation />
-        <a className="management-back-link" href="/scripture">
-          <span aria-hidden="true">←</span> 聖書検索へ
-        </a>
 
         <header className="folder-page-header">
           <h1>フォルダの一覧</h1>
@@ -93,10 +90,7 @@ export function FolderListPanel({
                 ◇
               </span>
               <h2>フォルダーはまだありません</h2>
-              <p>御言葉の検索画面から最初のフォルダーを作成できます。</p>
-              <a className="primary-link" href="/scripture">
-                聖書検索へ
-              </a>
+              <p>左のサイドバーから最初のフォルダーを作成できます。</p>
             </div>
           ) : null}
 

@@ -1,4 +1,5 @@
 import { FolderEditPanel } from "@/app/church/folder-edit-panel";
+import { ChurchSidebarWorkspace } from "@/app/church/church-sidebar-workspace";
 import { requireChurchPageAccess } from "@/app/church/require-church-page-access";
 
 export default async function FolderEditPage({
@@ -8,5 +9,9 @@ export default async function FolderEditPage({
 }) {
   await requireChurchPageAccess();
   const { folderId } = await params;
-  return <FolderEditPanel folderId={folderId} />;
+  return (
+    <ChurchSidebarWorkspace>
+      <FolderEditPanel folderId={folderId} />
+    </ChurchSidebarWorkspace>
+  );
 }
