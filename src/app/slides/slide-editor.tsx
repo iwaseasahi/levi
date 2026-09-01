@@ -159,11 +159,9 @@ export function SlideEditor({
       {preview && (
         <>
           <h2>保存前プレビュー</h2>
-          <p>
-            保存・投影は行いません。
-            {preview.body !== body &&
-              "本文を変更しました。プレビューを更新してください。"}
-          </p>
+          {preview.body !== body && (
+            <p>本文を変更しました。プレビューを更新してください。</p>
+          )}
           <SlidePreview key={preview.version} text={preview.text} />
         </>
       )}

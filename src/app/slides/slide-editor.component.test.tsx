@@ -56,6 +56,7 @@ describe("slide editor", () => {
         .getByRole("region", { name: "本文プレビュー" })
         .querySelector("pre")?.textContent,
     ).toBe("<script>synthetic</script>\n\n\n\nSecond");
+    expect(screen.queryByText("保存・投影は行いません。")).toBeNull();
     expect(document.querySelector("script")).toBeNull();
     expect(screen.queryByRole("button", { name: "前のページ" })).toBeNull();
     expect(screen.queryByRole("button", { name: "次のページ" })).toBeNull();
