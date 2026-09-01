@@ -46,7 +46,7 @@ describe("Slide audience and controller", () => {
     const { container } = render(<SlideText text="日本語の本文" />);
     const text = container.querySelector("pre");
     expect(text).toHaveClass("audience-shadow");
-    expect(text).toHaveStyle({ fontSize: "64px" });
+    expect(text).toHaveStyle({ fontSize: "129.6px" });
   });
 
   it("renders the complete literal body and clears on visibility/revision checks", async () => {

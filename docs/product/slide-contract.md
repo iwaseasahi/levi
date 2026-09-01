@@ -70,8 +70,9 @@ Preview is an explicit local operation over unsaved body; it neither writes a
 Slide nor opens/changes the audience. Title errors do not prevent a valid
 body preview. Preview and audience preserve line breaks, use the same text-fit
 rules and aspect ratio, and show body only. Slide text uses the Scripture
-audience's Helvetica/Arial, normal line height, white text with blue edging and
-64px-at-1920×1080 proportional base size. The title stays in the controller.
+audience's Helvetica/Arial, normal line height and white text with blue edging.
+Its pre-existing base size remains 12% of the 16:9 surface height. The title stays
+in the controller.
 Preview has no page navigation or page selection controls.
 Opening projection requires a successfully saved Slide, not an unsaved draft.
 
