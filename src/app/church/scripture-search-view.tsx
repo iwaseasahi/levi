@@ -104,7 +104,7 @@ export function ScriptureSearchFields({
                   onClick={() => onControl("font-larger")}
                   type="button"
                 >
-                  大
+                  +
                 </button>
                 <button
                   aria-label="文字を小さく"
@@ -112,7 +112,7 @@ export function ScriptureSearchFields({
                   onClick={() => onControl("font-smaller")}
                   type="button"
                 >
-                  小
+                  -
                 </button>
               </div>
             </div>

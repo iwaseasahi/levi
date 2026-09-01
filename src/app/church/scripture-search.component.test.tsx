@@ -390,6 +390,8 @@ describe("ScriptureSearch", () => {
     const toggleBlank = screen.getByRole("button", {
       name: "空白と表示を切り替え",
     });
+    expect(larger).toHaveTextContent("+");
+    expect(smaller).toHaveTextContent("-");
     expect(larger).toBeDisabled();
     expect(smaller).toBeDisabled();
     expect(previous).toBeDisabled();
