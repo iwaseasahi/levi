@@ -6,15 +6,12 @@ import {
 } from "./projection";
 const id = "00000000-0000-4000-8000-000000000387";
 describe("slide projection coordinates", () => {
-  it("accepts opaque ID and canonical page, defaulting only a missing page", () => {
+  it("accepts only an opaque ID and uses the single internal page", () => {
     expect(parseSlideProjectionQuery({ id })).toEqual({ id, page: 0 });
-    expect(parseSlideProjectionQuery({ id, page: "24999" })).toEqual({
-      id,
-      page: 24999,
-    });
   });
   it.each([
     { id: "bad" },
+    { id, page: "0" },
     { id, page: "-1" },
     { id, page: "00" },
     { id, page: "1.5" },

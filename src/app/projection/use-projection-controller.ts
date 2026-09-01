@@ -28,9 +28,11 @@ export function useProjectionController<T>(
   {
     captureInputArrows = false,
     canControl,
+    keyboardNavigation = true,
   }: {
     captureInputArrows?: boolean;
     canControl?: (content: T) => boolean;
+    keyboardNavigation?: boolean;
   } = {},
 ) {
   const connection = useRef<Connection | null>(null);
@@ -212,6 +214,7 @@ export function useProjectionController<T>(
   );
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
+      if (!keyboardNavigation) return;
       const action = projectionArrow(event, captureInputArrows);
       if (!ready || !action) return;
       event.preventDefault();
@@ -219,7 +222,7 @@ export function useProjectionController<T>(
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [control, ready, captureInputArrows]);
+  }, [control, ready, captureInputArrows, keyboardNavigation]);
   return {
     open,
     control,

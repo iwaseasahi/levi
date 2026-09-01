@@ -55,17 +55,3 @@ export function parseSlideInput(value: unknown): SlideInput {
 export function parseSlideBody(value: unknown): string {
   return parse(bodySchema, value);
 }
-
-export function slidePages(body: unknown): string[] {
-  const pages = parseSlideBody(body).split(/\n{4,}/);
-  // Preserve Ruby's trailing-empty removal, but keep a leading empty page.
-  while (pages.at(-1) === "") pages.pop();
-  return pages;
-}
-
-export function slideOutline(pages: readonly string[]): string[] {
-  return pages.map((page, index) => {
-    const line = page.split("\n")[0];
-    return line && trimAscii(line) ? line : `Page ${index + 1}`;
-  });
-}

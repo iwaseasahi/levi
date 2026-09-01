@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { requestJson } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
 import type { SlideRecord } from "@/domain/slides/commands";
-import { slidePages } from "@/domain/slides/slide";
+import { parseSlideBody } from "@/domain/slides/slide";
 import { SlideEditor } from "./slide-editor";
 import { SlideError, slideErrorMessage } from "./slide-error";
 import { SlidePreview } from "./slide-preview";
@@ -66,7 +66,7 @@ export function SlideDocument({
       <p>保存済み · リビジョン {slide.revision}</p>
       <Link href={`/slides/${slide.id}/edit`}>編集</Link>
       <SlideController slide={slide} />
-      <SlidePreview pages={slidePages(slide.body)} />
+      <SlidePreview text={parseSlideBody(slide.body)} />
     </>
   );
 }

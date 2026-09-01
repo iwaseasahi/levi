@@ -51,9 +51,10 @@ test("church member previews unsaved literal text, creates, edits and confirms d
     "<script>synthetic</script>\n日本語の本文\n\n\n\n" + "長い行".repeat(50);
   await page.getByLabel("本文（必須）").fill(body);
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
-  await expect(page.locator(".slide-text-frame pre")).toHaveText(
-    "<script>synthetic</script>\n日本語の本文",
-  );
+  await expect(page.locator(".slide-text-frame pre")).toHaveText(body);
+  await expect(page.getByRole("button", { name: "前のページ" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "次のページ" })).toHaveCount(0);
+  await expect(page.getByLabel("ページを選択")).toHaveCount(0);
   expect(
     await prisma.slide.count({
       where: { churchId: scriptureAccount.churchId },
@@ -62,10 +63,6 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   expect(context.pages()).toHaveLength(1);
   for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.getByRole("button", { name: "次のページ" }).click();
-    await expect(
-      page.getByRole("button", { name: "次のページ" }),
-    ).toBeDisabled();
     await expect
       .poll(() =>
         page.locator(".slide-text-frame").evaluate((frame) => {
@@ -90,7 +87,6 @@ test("church member previews unsaved literal text, creates, edits and confirms d
       path: testInfo.outputPath(`slide-editor-${width}.png`),
       fullPage: true,
     });
-    await page.getByRole("button", { name: "前のページ" }).click();
   }
   await page.getByLabel("タイトル（必須）").fill("Synthetic welcome");
   await page.getByRole("button", { name: "保存", exact: true }).click();

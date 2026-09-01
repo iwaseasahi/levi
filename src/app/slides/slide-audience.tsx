@@ -30,6 +30,7 @@ export function SlideAudience({
     ready: state.status === "ready",
     authorized: state.status === "loading" || state.status === "ready",
     isAuthorized,
+    keyboardNavigation: false,
     navigate,
     invalidate,
   });

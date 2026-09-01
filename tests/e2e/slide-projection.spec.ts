@@ -3,7 +3,7 @@ import { prisma } from "@/infrastructure/database/client";
 import { expect, test } from "./scripture-fixture";
 import { loginToScripture, selectGenesis } from "./scripture-helpers";
 
-test("saved slides project body only, acknowledge controls, resume pages, reauthorize and reuse scripture projector", async ({
+test("saved slides project the complete body, acknowledge controls, reauthorize and reuse scripture projector", async ({
   context,
   page,
   scriptureAccount,
@@ -26,19 +26,18 @@ test("saved slides project body only, acknowledge controls, resume pages, reauth
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
-  await expect(audience.locator("pre")).toHaveText(
-    "<script>synthetic</script>\n日本語の本文",
-  );
+  await expect(audience.locator("pre")).toHaveText(slide.body);
   await expect(audience.getByRole("navigation")).toHaveCount(0);
   await expect(audience.getByText(slide.title)).toHaveCount(0);
   await expect(audience.getByText(slide.author!)).toHaveCount(0);
   expect(audience.url()).not.toContain("synthetic");
   await expect(
     controller.getByRole("button", { name: "前のページへ投影" }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
   await expect(
     controller.getByRole("button", { name: "次のページへ投影" }),
-  ).toBeEnabled();
+  ).toHaveCount(0);
+  await expect(controller.getByLabel("投影ページ")).toHaveCount(0);
   for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: 900 });
     expect(
@@ -52,8 +51,6 @@ test("saved slides project body only, acknowledge controls, resume pages, reauth
       fullPage: true,
     });
   }
-  await controller.getByLabel("投影ページ").selectOption("1");
-  await expect(controller.getByRole("status")).toContainText("2 / 3");
   for (const [width, height] of [
     [1280, 720],
     [1920, 1080],
@@ -86,26 +83,22 @@ test("saved slides project body only, acknowledge controls, resume pages, reauth
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
-  await controller.getByRole("button", { name: "次のページへ投影" }).click();
-  await expect(controller.getByRole("status")).toContainText("3 / 3");
-  await expect(
-    controller.getByRole("button", { name: "次のページへ投影" }),
-  ).toBeDisabled();
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
-  await expect(audience.locator("pre")).toHaveText("Final");
+  await expect(audience.locator("pre")).toHaveText(slide.body);
   await audience.reload();
-  await expect(audience.locator("pre")).toHaveText("Final");
+  await expect(audience.locator("pre")).toHaveText(slide.body);
   await expect(controller.getByRole("status")).toContainText("100%");
-  await audience.keyboard.press("ArrowUp");
-  await expect(controller.getByRole("status")).toContainText("2 / 3");
 
   await prisma.slide.update({
     where: { id: slide.id },
     data: { body: "Updated synthetic body", revision: { increment: 1 } },
   });
-  await controller.getByRole("button", { name: "前のページへ投影" }).click();
+  await audience.bringToFront();
+  await audience.evaluate(() =>
+    document.dispatchEvent(new Event("visibilitychange")),
+  );
   await expect(audience.getByRole("main").getByRole("alert")).toContainText(
     "更新されました",
   );
@@ -157,19 +150,19 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   let audience = await opened;
-  await expect(audience.locator("pre")).toHaveText("First");
+  await expect(audience.locator("pre")).toHaveText(slide.body);
   const valid = new URL(audience.url());
   for (const value of ["-1", "2", "invalid"]) {
     const invalid = new URL(valid);
     invalid.searchParams.set("page", value);
     await audience.goto(invalid.href);
     await expect(audience.getByRole("main").getByRole("alert")).toContainText(
-      "ページを表示できません",
+      "スライドを表示できません",
     );
     await expect(audience.locator("pre")).toHaveCount(0);
     await expect(audience.getByRole("navigation")).toHaveCount(0);
     await controller.getByRole("button", { name: "Open" }).click();
-    await expect(audience.locator("pre")).toHaveText("First");
+    await expect(audience.locator("pre")).toHaveText(slide.body);
   }
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
@@ -181,7 +174,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   const reopened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   audience = await reopened;
-  await expect(audience.locator("pre")).toHaveText("First");
+  await expect(audience.locator("pre")).toHaveText(slide.body);
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
   ).toBeEnabled();

@@ -98,8 +98,8 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
     for (const path of [
       `/slides/${row.id}`,
       `/slides/${row.id}/edit`,
-      `/slides/audience?id=${row.id}&page=0`,
-      `/slides/audience?id=${missing}&page=0`,
+      `/slides/audience?id=${row.id}`,
+      `/slides/audience?id=${missing}`,
     ]) {
       const result = await page.goto(path);
       // The canonical browser suite runs next dev, whose page shell is
@@ -141,12 +141,7 @@ for (const denied of ["revoked", "suspended"] as const) {
     const opened = context.waitForEvent("page");
     await controller.getByRole("button", { name: "Open" }).click();
     const audience = await opened;
-    await expect(audience.locator("pre")).toHaveText(
-      "Synthetic protected page",
-    );
-    await expect(
-      controller.getByRole("button", { name: "次のページへ投影" }),
-    ).toBeEnabled();
+    await expect(audience.locator("pre")).toHaveText(slide.body);
     pageErrorGuard.allowConsoleError(
       denied === "revoked"
         ? "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
@@ -169,9 +164,6 @@ for (const denied of ["revoked", "suspended"] as const) {
       "利用できません",
     );
     await expect(audience.locator("pre")).toHaveCount(0);
-    await expect(
-      controller.getByRole("button", { name: "次のページへ投影" }),
-    ).toBeDisabled();
     await audience.keyboard.press("ArrowDown");
     await audience.reload();
     await expect(audience.getByRole("main").getByRole("alert")).toContainText(

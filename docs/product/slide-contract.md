@@ -55,32 +55,20 @@ return `{slide}` without `churchId`; delete has no response body. Mutation Origi
 must exactly match the configured canonical origin. CRUD detail routes reject
 query parameters; search/list parameters belong to the collection read contract.
 
-## Page parsing, outline and preview
+## Single-page body and preview
 
-Use one pure parser for saved projection, unsaved preview and outline. Normalize
-EOL first, then split at four **or more LF characters**. Three LFs remain within
-a page; spaces between LFs prevent a delimiter. Preserve leading empty pages
-and in-page whitespace, but discard trailing empty split elements like Ruby.
-A blank outline label is displayed as `Page N`; it does not alter page content.
-
-These are synthetic golden inputs (escape notation denotes actual characters):
-
-| Input body                          | Page strings                                        |
-| ----------------------------------- | --------------------------------------------------- |
-| `A\r\nB\rC`                         | `["A\nB\nC"]`                                       |
-| `A\n\n\nB`                          | `["A\n\n\nB"]`                                      |
-| `A\n\n\n\nB` or `A\n\n\n\n\nB`      | `["A", "B"]`                                        |
-| `A\r\n\r\n\r\n\r\nB`                | `["A", "B"]`                                        |
-| `\n\n\n\nA\n\n\n\n`                 | `["", "A"]`                                         |
-| `A\n\n \n\nB`                       | `["A\n\n \n\nB"]`                                   |
-| Empty or ASCII-whitespace-only body | Validation error; preview has no projectable pages. |
-| `<script>synthetic</script>\nB`     | One literal text page; never executable HTML.       |
+Issue #424 intentionally simplifies the replacement contract: one Slide body is
+one projected surface. Normalize EOL, then preserve every newline as body content;
+four or more consecutive LFs do not delimit pages. The pinned legacy section above
+continues to record Ginmaku's former split behavior as historical evidence, not as
+active Levi behavior. Empty or ASCII-whitespace-only bodies remain invalid, and
+HTML-like input remains literal text rather than executable markup.
 
 Preview is an explicit local operation over unsaved body; it neither writes a
 Slide nor opens/changes the audience. Title/author errors do not prevent a valid
 body preview. Preview and audience preserve line breaks, use the same text-fit
-rules and page aspect ratio, and show body only. Title/author stay in the
-controller. Preview labels/page controls are outside the projected content.
+rules and aspect ratio, and show body only. Title/author stay in the controller.
+Preview has no page navigation or page selection controls.
 Opening projection requires a successfully saved Slide, not an unsaved draft.
 
 ## Search, recent and list pagination
@@ -120,43 +108,39 @@ request. It is not an authorization token and never determines church scope.
 See the [synthetic query-plan baseline](../testing-slide-search-performance.md)
 and measured performance follow-up #397.
 
-## Projection and page operation
+## Projection
 
 Reuse the [direct audience foundation](projection-window-protocol.md): a
 controller and one ordinary same-origin Chrome tab named `projector`, an exact
 retained Window reference, validated messages, READY handshake, blocked-tab
 feedback, and authenticated reads. Slide routes are `/slides`, `/slides/new`,
 `/slides/[id]`, `/slides/[id]/edit` and `/slides/audience`; audience URL contains
-only an opaque Slide ID and zero-based page index, never content or author.
+only an opaque Slide ID, never content or author.
 APIs are church-scoped under `/api/church/slides`.
 
-The audience owns current page, font and blank state; the controller displays
-acknowledged state, never an optimistic page count. Start at page 0; previous at
-0 and next at the last page are no-ops, with disabled controller buttons.
-Outline selection validates page bounds. Blank retains page/font; navigation
-while blank changes the page shown after unblank. ArrowUp/Down use the same
-path as buttons. Do not steal keys from the slide editor's inputs, textarea,
-contenteditable, IME composition or modified shortcuts.
+The audience displays the complete saved body as one surface and owns font and
+blank state. The controller displays acknowledged state and provides Open, font
+size and blank controls. It has no previous/next buttons, page count or page
+selection. Scripture retains its own coordinate navigation.
 
 Shared presentation state is limited to connection generation, readiness,
-sequence, font scale, blank and authorization lifecycle. Slide ID, revision,
-page array/index and outline stay in the slide domain. Scripture canonical
+sequence, font scale, blank and authorization lifecycle. Slide ID and revision
+stay in the slide domain. Scripture canonical
 coordinates/navigation stay in scripture. Do not introduce a generic persisted
 presentation/JSON model or share church content through localStorage.
 
 A new Open invalidates the previous generation; v1 READY alone cannot identify
 which content is ready. The shared-foundation child must introduce a strict,
-versioned handshake bound to content kind and connection generation, acknowledged
-state and bounded page-selection commands. Reject stale generations, wrong
+versioned handshake bound to content kind and connection generation and acknowledged
+state. Reject stale generations, wrong
 origin/source/kind, unknown fields and out-of-order acknowledgements. Opening
 scripture after slides (or vice versa) cannot leave the old controller in charge.
 Preserve v1 scripture behavior during the staged rollout and fail closed for
 incompatible tab versions, with an explicit reopen instruction.
 
-Close/reopen and reload reauthorize and fetch saved data; a valid page URL resumes
-that page. An invalid/out-of-range URL shows a recoverable error, not a silently
-clamped page. A newer saved revision clears old text and asks to reopen; physical
-deletion clears text and shows unavailable. Revalidate the Slide on navigation,
+Close/reopen and reload reauthorize and fetch saved data. Unknown audience query
+parameters show a recoverable error. A newer saved revision clears old text and asks to reopen; physical
+deletion clears text and shows unavailable. Revalidate the Slide on visibility,
 visibility, and the existing 30-second eligibility cycle so an open audience
 cannot retain deleted/reassigned content indefinitely. Denied/failed checks
 clear text and stop commands; late responses cannot restore it. Immediate remote
@@ -182,11 +166,11 @@ error/retry, success and next-page states. Editor: validation,
 unsaved preview, saving/disabled, success, conflict, failure with preserved input.
 Delete: explicit confirmation naming the synthetic/current title, cancel restores
 focus, failure retains context, success returns to the list. Never claim undo.
-Controller: not open, blocked, connecting, ready, blank, first/last page,
+Controller: not open, blocked, connecting, ready, blank,
 disconnected, deleted, stale revision and denied session. Audience: only body,
 blank or generic unavailable/recovery feedback, never tenant/account metadata.
 
-Use semantic labels, visible focus, keyboard page/outline controls, status/error
+Use semantic labels, visible focus, status/error
 announcements and non-color-only feedback. Verify controller/editor at 390px and
 1280px widths and audience at 1280×720 and 1920×1080; controls must remain usable
 without clipping. Test short/long lines and Japanese text for fit and line-break

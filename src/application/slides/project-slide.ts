@@ -1,6 +1,6 @@
 import type { SlideRecord } from "@/domain/slides/commands";
 import type { SlideAudienceState } from "@/domain/slides/projection";
-import { slidePages } from "@/domain/slides/slide";
+import { parseSlideBody } from "@/domain/slides/slide";
 
 /** One document lifetime. A failed/disposed session cannot regain protected text. */
 export function createSlideAudienceSession({
@@ -42,7 +42,7 @@ export function createSlideAudienceSession({
         fail();
         return;
       }
-      const pages = slidePages(slide.body);
+      const pages = [parseSlideBody(slide.body)];
       if (
         !Number.isInteger(initialPage) ||
         initialPage < 0 ||
@@ -92,7 +92,8 @@ export function createSlideAudienceSession({
         if (
           !Number.isInteger(target) ||
           target < 0 ||
-          target >= state.pages.length
+          target >= state.pages.length ||
+          target === state.page
         )
           return;
         state = { ...state, page: target };

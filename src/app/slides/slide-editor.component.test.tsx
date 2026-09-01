@@ -30,7 +30,7 @@ describe("slide editor", () => {
     push.mockClear();
     replace.mockClear();
   });
-  it("previews body without a valid title, writing or opening an audience, with bounded pages and literal HTML", async () => {
+  it("previews the complete body without a valid title, writing or opening an audience", async () => {
     const fetcher = vi.fn<typeof fetch>();
     const open = vi.spyOn(window, "open");
     const user = userEvent.setup();
@@ -41,18 +41,22 @@ describe("slide editor", () => {
     });
     await user.click(screen.getByRole("button", { name: "保存前プレビュー" }));
     expect(
-      screen.getByRole("region", { name: "本文プレビュー" }),
-    ).toHaveTextContent("<script>synthetic</script>");
+      screen
+        .getByRole("region", { name: "本文プレビュー" })
+        .querySelector("pre")?.textContent,
+    ).toBe("<script>synthetic</script>\n\n\n\nSecond");
     expect(document.querySelector("script")).toBeNull();
-    expect(screen.getByRole("button", { name: "前のページ" })).toBeDisabled();
-    await user.click(screen.getByRole("button", { name: "次のページ" }));
-    expect(screen.getByRole("status")).toHaveTextContent("2 / 2");
-    expect(screen.getByRole("button", { name: "次のページ" })).toBeDisabled();
-    await user.selectOptions(screen.getByLabelText("ページを選択"), "0");
+    expect(screen.queryByRole("button", { name: "前のページ" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "次のページ" })).toBeNull();
+    expect(screen.queryByLabelText("ページを選択")).toBeNull();
     fireEvent.change(textarea, { target: { value: "Changed" } });
     expect(screen.getByText(/本文を変更しました/)).toBeVisible();
     await user.click(screen.getByRole("button", { name: "保存前プレビュー" }));
-    expect(screen.getByRole("status")).toHaveTextContent("1 / 1");
+    expect(
+      screen
+        .getByRole("region", { name: "本文プレビュー" })
+        .querySelector("pre")?.textContent,
+    ).toBe("Changed");
     fireEvent.change(textarea, { target: { value: " \n\t" } });
     await user.click(screen.getByRole("button", { name: "保存前プレビュー" }));
     expect(screen.queryByRole("region", { name: "本文プレビュー" })).toBeNull();

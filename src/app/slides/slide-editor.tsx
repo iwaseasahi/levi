@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { parseJsonResponse } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
 import type { SlideRecord } from "@/domain/slides/commands";
-import { parseSlideInput, slidePages } from "@/domain/slides/slide";
+import { parseSlideBody, parseSlideInput } from "@/domain/slides/slide";
 import { SlideError, slideErrorMessage } from "./slide-error";
 import { SlidePreview } from "./slide-preview";
 
@@ -34,7 +34,7 @@ export function SlideEditor({
   const deleteButton = useRef<HTMLButtonElement>(null);
   const [preview, setPreview] = useState<{
     body: string;
-    pages: string[];
+    text: string;
     version: number;
   } | null>(null);
 
@@ -104,10 +104,10 @@ export function SlideEditor({
   }
   function showPreview() {
     try {
-      const pages = slidePages(body);
+      const text = parseSlideBody(body);
       setPreview((previous) => ({
         body,
-        pages,
+        text,
         version: (previous?.version ?? 0) + 1,
       }));
       setError(null);
@@ -151,7 +151,7 @@ export function SlideEditor({
             required
           />
           <p id="slide-body-help">
-            1〜100,000文字。4回以上の改行でページを区切ります。HTMLは文字として表示します。
+            1〜100,000文字。HTMLは文字として表示します。
           </p>
           <div className="slide-actions">
             <button className="primary-button" type="submit">
@@ -181,7 +181,7 @@ export function SlideEditor({
             {preview.body !== body &&
               "本文を変更しました。プレビューを更新してください。"}
           </p>
-          <SlidePreview key={preview.version} pages={preview.pages} />
+          <SlidePreview key={preview.version} text={preview.text} />
         </>
       )}
     </>
