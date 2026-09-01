@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ChurchNavigation } from "@/app/church/church-navigation";
 import { SlideList } from "./slide-list";
-import { SlideNavigation } from "./slide-navigation";
 import { SlideSidebar } from "./slide-sidebar";
 
 export function SlideIndex() {
@@ -16,7 +16,7 @@ export function SlideIndex() {
         refreshKey={refreshKey}
       />
       <main className="slide-page">
-        <SlideNavigation />
+        <ChurchNavigation />
         <header className="slide-list-header">
           <h1>スライドの一覧</h1>
           <Link className="slide-create-link" href="/slides/new">

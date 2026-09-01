@@ -46,7 +46,17 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   }
   await slideListLink.press("Enter");
   await expect(page).toHaveURL("/slides");
+  const navigation = page.getByRole("navigation", {
+    name: "主要ナビゲーション",
+  });
+  await expect(
+    navigation.getByRole("link", { name: "聖書検索", exact: true }),
+  ).toHaveAttribute("href", "/scripture");
+  await expect(
+    navigation.getByRole("link", { name: "スライド", exact: true }),
+  ).toHaveAttribute("href", "/slides");
   await page.getByRole("link", { name: "スライドを作成" }).click();
+  await expect(navigation).toBeVisible();
   const body =
     "<script>synthetic</script>\n日本語の本文\n\n\n\n" + "長い行".repeat(50);
   await page.getByLabel("本文（必須）").fill(body);

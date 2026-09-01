@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { FolderListPanel } from "./folder-list-panel";
@@ -36,6 +36,16 @@ describe("FolderListPanel", () => {
     expect(
       await screen.findByRole("heading", { name: "フォルダの一覧" }),
     ).toBeVisible();
+    const navigation = screen.getByRole("navigation", {
+      name: "主要ナビゲーション",
+    });
+    expect(navigation.parentElement?.firstElementChild).toBe(navigation);
+    expect(
+      within(navigation).getByRole("link", { name: "聖書検索" }),
+    ).toHaveAttribute("href", "/scripture");
+    expect(
+      within(navigation).getByRole("link", { name: "スライド" }),
+    ).toHaveAttribute("href", "/slides");
     expect(screen.getByText("固定")).toBeVisible();
     expect(screen.getByText("最近使用したフォルダー")).toBeVisible();
     expect(

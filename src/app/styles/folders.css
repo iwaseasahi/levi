@@ -438,6 +438,10 @@
   margin: 0 auto;
 }
 
+.folder-management-shell > .church-navigation + .management-back-link {
+  margin-top: 2rem;
+}
+
 .management-back-link {
   display: inline-flex;
   gap: 8px;

@@ -116,3 +116,10 @@ select:focus-visible,
   white-space: nowrap;
   border: 0;
 }
+
+.church-navigation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}

@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { SlideNavigation } from "./slide-navigation";
+import { ChurchNavigation } from "@/app/church/church-navigation";
 
 export function SlideManageShell({ children }: { children: ReactNode }) {
   return (
     <main className="slide-page">
-      <SlideNavigation />
+      <ChurchNavigation />
       {children}
     </main>
   );

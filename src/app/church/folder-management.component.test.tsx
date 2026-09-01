@@ -1,6 +1,12 @@
 import "@testing-library/jest-dom/vitest";
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -147,6 +153,16 @@ describe("folder management", () => {
         name: "フォルダーを編集",
       }),
     ).toBeVisible();
+    const navigation = screen.getByRole("navigation", {
+      name: "主要ナビゲーション",
+    });
+    expect(navigation.parentElement?.firstElementChild).toBe(navigation);
+    expect(
+      within(navigation).getByRole("link", { name: "聖書検索" }),
+    ).toHaveAttribute("href", "/scripture");
+    expect(
+      within(navigation).getByRole("link", { name: "スライド" }),
+    ).toHaveAttribute("href", "/slides");
     expect(
       screen.queryByRole("heading", { name: "フォルダー設定" }),
     ).not.toBeInTheDocument();

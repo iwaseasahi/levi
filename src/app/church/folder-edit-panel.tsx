@@ -4,6 +4,7 @@ import { DragEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SavedBookmarkView } from "@/domain/saved-content";
 import { moveTo } from "@/domain/order";
+import { ChurchNavigation } from "./church-navigation";
 import { useFolderEditor } from "./use-folder-editor";
 
 export function FolderEditPanel({
@@ -69,6 +70,7 @@ export function FolderEditPanel({
   return (
     <main className="folder-management-page">
       <div className="folder-management-shell">
+        <ChurchNavigation />
         <a className="management-back-link" href="/folders">
           <span aria-hidden="true">←</span> フォルダの一覧へ
         </a>
