@@ -65,16 +65,16 @@
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm local:config:check && pnpm production:domain:check && pnpm production:config:check && pnpm backup:config:check && pnpm deployment:config:check && pnpm monitoring:config:check && pnpm build"
   },
   "dependencies": {
-    "@better-auth/prisma-adapter": "1.7.1",
-    "@prisma/adapter-pg": "7.9.1",
-    "@prisma/client": "7.9.1",
-    "better-auth": "1.7.1",
-    "next": "16.3.1",
-    "nodemailer": "9.0.5",
+    "@better-auth/prisma-adapter": "1.7.2",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "better-auth": "1.7.2",
+    "next": "16.3.3",
+    "nodemailer": "9.0.6",
     "pg": "8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "zod": "4.3.6"
+    "zod": "4.5.2"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
@@ -94,7 +94,7 @@
     "eslint-config-next": "16.3.3",
     "jsdom": "30.0.1",
     "prettier": "3.9.6",
-    "prisma": "7.9.1",
+    "prisma": "7.10.0",
     "tsx": "4.23.12",
     "typescript": "^5",
     "vitest": "4.1.11"
