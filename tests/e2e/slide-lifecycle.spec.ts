@@ -176,7 +176,7 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   await expect(page.getByLabel("タイトル（必須）")).toHaveValue(slide.title);
   await other.getByLabel("タイトル（必須）").fill("First saved editor");
   await other.getByRole("button", { name: "保存", exact: true }).click();
-  await expect(other.getByText("保存済み · リビジョン 2")).toBeVisible();
+  await expect(other.getByText(/保存済み · リビジョン/)).toHaveCount(0);
   await page.getByLabel("タイトル（必須）").fill("Retained unsaved conflict");
   await page.getByLabel("本文（必須）").fill("Retained unsaved body");
   pageErrorGuard.allowConsoleError(

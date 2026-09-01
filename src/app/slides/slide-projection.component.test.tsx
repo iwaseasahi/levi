@@ -115,6 +115,9 @@ describe("Slide audience and controller", () => {
     const user = userEvent.setup();
     render(<SlideController slide={slide} />);
     expect(
+      screen.getByRole("button", { name: "お気に入りに追加" }),
+    ).toBeDisabled();
+    expect(
       screen.queryByRole("button", { name: "次のページへ投影" }),
     ).toBeNull();
     expect(screen.queryByLabelText("投影ページ")).toBeNull();
@@ -180,5 +183,48 @@ describe("Slide audience and controller", () => {
         screen.getByRole("button", { name: "文字を小さく" }),
       ).toBeDisabled(),
     );
+  });
+  it("saves the detail Slide to the selected folder and reports a later failure", async () => {
+    const folderId = "00000000-0000-4000-8000-000000000420";
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ item: {} }))
+      .mockResolvedValueOnce(Response.json({ error: {} }, { status: 500 }));
+    const onFavoriteSaved = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <SlideController
+        slide={slide}
+        fetcher={fetcher}
+        selectedFolderId={folderId}
+        onFavoriteSaved={onFavoriteSaved}
+      />,
+    );
+    const blank = screen.getByRole("button", {
+      name: "空白と表示を切り替え",
+    });
+    const favorite = screen.getByRole("button", {
+      name: "お気に入りに追加",
+    });
+    expect(blank.nextElementSibling).toBe(favorite);
+    await user.click(favorite);
+    await waitFor(() => expect(onFavoriteSaved).toHaveBeenCalledOnce());
+    expect(fetcher).toHaveBeenLastCalledWith("/api/saved-content", {
+      body: JSON.stringify({
+        action: "create-slide-bookmark",
+        folderId,
+        slideId: slide.id,
+      }),
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+    await user.click(favorite);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "お気に入りに追加できませんでした",
+    );
+    expect(onFavoriteSaved).toHaveBeenCalledOnce();
   });
 });

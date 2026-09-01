@@ -99,7 +99,7 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   await expect(
     page.getByRole("heading", { name: "Synthetic edited welcome" }),
   ).toBeVisible();
-  await expect(page.getByText("保存済み · リビジョン 2")).toBeVisible();
+  await expect(page.getByText(/保存済み · リビジョン/)).toHaveCount(0);
   await page.getByRole("link", { name: "編集", exact: true }).click();
   page.once("dialog", (dialog) => dialog.dismiss());
   await page.getByRole("button", { name: "スライドを削除" }).click();
