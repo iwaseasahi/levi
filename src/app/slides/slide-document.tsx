@@ -15,10 +15,14 @@ export function SlideDocument({
   id,
   editing = false,
   fetcher: providedFetcher = fetch,
+  selectedFolderId = null,
+  onFavoriteSaved,
 }: {
   id: string;
   editing?: boolean;
   fetcher?: typeof fetch;
+  selectedFolderId?: string | null;
+  onFavoriteSaved?(): void;
 }) {
   const fetcher = useComponentLifetimeValue(providedFetcher);
   const [slide, setSlide] = useState<SlideRecord | null>(null);
@@ -63,9 +67,13 @@ export function SlideDocument({
     <>
       <h1>{slide.title}</h1>
       {slide.author && <p>著者: {slide.author}</p>}
-      <p>保存済み · リビジョン {slide.revision}</p>
       <Link href={`/slides/${slide.id}/edit`}>編集</Link>
-      <SlideController slide={slide} />
+      <SlideController
+        slide={slide}
+        fetcher={fetcher}
+        selectedFolderId={selectedFolderId}
+        {...(onFavoriteSaved ? { onFavoriteSaved } : {})}
+      />
       <SlidePreview text={parseSlideBody(slide.body)} />
     </>
   );

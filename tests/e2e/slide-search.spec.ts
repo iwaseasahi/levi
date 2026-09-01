@@ -214,6 +214,36 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
       exact: true,
     }),
   ).toHaveAttribute("aria-expanded", "true");
+  await page
+    .getByRole("region", { name: "スライド一覧" })
+    .getByRole("link", { name: "Synthetic favorite slide", exact: true })
+    .click();
+  await expect(page.getByText(/保存済み · リビジョン/)).toHaveCount(0);
+  const blank = page.getByRole("button", {
+    name: "空白と表示を切り替え",
+  });
+  const favorite = page.getByRole("button", { name: "お気に入りに追加" });
+  await expect(favorite).toBeEnabled();
+  await expect(blank.locator("xpath=following-sibling::*[1]")).toHaveText(
+    "お気に入りに追加",
+  );
+  await favorite.click();
+  await expect
+    .poll(() =>
+      prisma.slideBookmark.count({
+        where: {
+          bookmark: { folder: { name: "Synthetic second folder" } },
+          slideId: savedSlide.id,
+        },
+      }),
+    )
+    .toBe(1);
+  await expect(
+    sidebar.getByRole("link", {
+      name: "Synthetic favorite slide",
+      exact: true,
+    }),
+  ).toHaveAttribute("href", `/slides/${savedSlide.id}`);
   await folder.click();
   const pagesBefore = context.pages().length;
   const bookmark = sidebar.getByRole("link", {

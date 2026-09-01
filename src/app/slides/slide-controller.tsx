@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { postJson } from "@/app/church/client-api";
 import { useProjectionController } from "@/app/projection/use-projection-controller";
 import type { SlideRecord } from "@/domain/slides/commands";
 import {
@@ -9,7 +10,17 @@ import {
 } from "@/domain/slides/projection";
 import { SlideError } from "./slide-error";
 
-export function SlideController({ slide }: { slide: SlideRecord }) {
+export function SlideController({
+  slide,
+  fetcher = fetch,
+  selectedFolderId = null,
+  onFavoriteSaved,
+}: {
+  slide: SlideRecord;
+  fetcher?: typeof fetch;
+  selectedFolderId?: string | null;
+  onFavoriteSaved?(): void;
+}) {
   const projection = useProjectionController(
     "slide",
     parseSlideProjectionState,
@@ -22,6 +33,32 @@ export function SlideController({ slide }: { slide: SlideRecord }) {
     },
   );
   const [opened, setOpened] = useState(false);
+  const [savingFavorite, setSavingFavorite] = useState(false);
+  const [favoriteError, setFavoriteError] = useState("");
+  async function saveFavorite() {
+    if (!selectedFolderId || savingFavorite) return;
+    setSavingFavorite(true);
+    setFavoriteError("");
+    try {
+      await postJson(
+        fetcher,
+        "/api/saved-content",
+        {
+          action: "create-slide-bookmark",
+          folderId: selectedFolderId,
+          slideId: slide.id,
+        },
+        "saved content unavailable",
+      );
+      onFavoriteSaved?.();
+    } catch {
+      setFavoriteError(
+        "お気に入りに追加できませんでした。再度お試しください。",
+      );
+    } finally {
+      setSavingFavorite(false);
+    }
+  }
   const current = projection.state?.content;
   const mismatch =
     current?.status === "ready" &&
@@ -68,7 +105,16 @@ export function SlideController({ slide }: { slide: SlideRecord }) {
         >
           空白と表示を切り替え
         </button>
+        <button
+          className="slide-favorite-button"
+          type="button"
+          disabled={!selectedFolderId || savingFavorite}
+          onClick={() => void saveFavorite()}
+        >
+          {savingFavorite ? "追加中…" : "お気に入りに追加"}
+        </button>
       </div>
+      {favoriteError && <SlideError message={favoriteError} />}
       <p role="status">
         {error
           ? "投影停止"
