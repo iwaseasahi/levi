@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import type { BrowserContext, Page } from "@playwright/test";
+import type { BrowserContext, Locator, Page } from "@playwright/test";
 
 import { expect, test } from "./fixtures";
 import {
@@ -64,6 +64,22 @@ async function signInAdmin(
   await page.getByLabel("パスワード", { exact: true }).fill(password);
   await page.getByRole("button", { name: "ログイン" }).click();
   await expect(page).toHaveURL(/\/admin$/);
+}
+
+async function expectVerticalGap(
+  above: Locator,
+  below: Locator,
+  minimumGap: number,
+) {
+  const [aboveBox, belowBox] = await Promise.all([
+    above.boundingBox(),
+    below.boundingBox(),
+  ]);
+  expect(aboveBox).not.toBeNull();
+  expect(belowBox).not.toBeNull();
+  expect(belowBox!.y - (aboveBox!.y + aboveBox!.height)).toBeGreaterThanOrEqual(
+    minimumGap,
+  );
 }
 
 async function findPasswordResetUrl(
@@ -449,7 +465,14 @@ test.describe("operator church provisioning", () => {
     await expect(newPassword).toHaveValue(selectedPassword);
     await expect(confirmation).toHaveAttribute("type", "password");
     await page.getByRole("button", { name: "新しいパスワードを隠す" }).click();
-    await page.getByRole("button", { name: "パスワードを変更" }).click();
+    const changePasswordButton = page.getByRole("button", {
+      name: "パスワードを変更",
+    });
+    const passwordReturnLink = page.getByRole("link", {
+      name: "聖書検索へ戻る",
+    });
+    await expectVerticalGap(changePasswordButton, passwordReturnLink, 16);
+    await changePasswordButton.click();
     await expect(page.getByRole("status")).toContainText(
       "パスワードを変更しました。",
     );
@@ -469,6 +492,11 @@ test.describe("operator church provisioning", () => {
     ).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.setViewportSize({ width: 390, height: 844 });
+    await expectVerticalGap(
+      page.getByRole("button", { name: "確認メールを送信" }),
+      page.getByRole("link", { name: "聖書検索へ戻る" }),
+      16,
+    );
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,

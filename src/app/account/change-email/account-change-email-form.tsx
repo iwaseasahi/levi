@@ -101,7 +101,9 @@ export function AccountChangeEmailForm() {
           {message}
         </div>
       ) : null}
-      <Link href="/scripture">聖書検索へ戻る</Link>
+      <Link className="auth-form-return-link" href="/scripture">
+        聖書検索へ戻る
+      </Link>
     </form>
   );
 }
