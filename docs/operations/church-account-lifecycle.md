@@ -41,6 +41,23 @@ recipient. The link remains valid for 72 hours.
 - The platform operator does not issue or view a password. Never edit credential
   or verification rows directly.
 
+## Change a login email address
+
+An active Church user opens the settings menu and selects **メールアドレスを変更**.
+The user enters the current password and the new address twice. Levi verifies the
+current password, checks the Church session and same-origin request, and limits
+requests to five per user per hour. A successful request sends one confirmation
+link to the new mailbox; the link expires after one hour.
+
+The current login address remains valid until the recipient opens the link. A
+valid link changes the address, marks it verified, and updates the active session.
+The database's case-insensitive unique constraint rejects an address already used
+by another Church user, including a conflicting address claimed after the email
+was sent. A wrong password, invalid or conflicting address, delivery failure,
+expired link, or replay leaves the current address unchanged. Never copy an email
+confirmation link into logs, Issues, pull requests, screenshots, recordings, or
+ordinary notes.
+
 ## Suspension and resumption
 
 Account suspension is a protected operator operation. It sets the Church to

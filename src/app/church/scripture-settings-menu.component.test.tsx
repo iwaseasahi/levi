@@ -41,6 +41,9 @@ describe("ScriptureSettingsMenu", () => {
       screen.queryByRole("menuitem", { name: "スライド" }),
     ).not.toBeInTheDocument();
     expect(
+      screen.getByRole("menuitem", { name: "メールアドレスを変更" }),
+    ).toHaveAttribute("href", "/account/change-email");
+    expect(
       screen.getByRole("menuitem", { name: "パスワードを変更" }),
     ).toHaveAttribute("href", "/account/change-password");
     expect(screen.getByRole("menuitem", { name: "ログアウト" })).toBeVisible();

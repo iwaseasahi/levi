@@ -2,11 +2,40 @@ import nodemailer from "nodemailer";
 
 import { getMailRuntimeConfig } from "@/config/env";
 import { PASSWORD_LINK_VALIDITY_LABEL } from "@/config/password-link";
+import { EMAIL_CHANGE_VALIDITY_LABEL } from "@/config/email-change";
 
 export interface PasswordResetMail {
   name: string;
   resetUrl: string;
   to: string;
+}
+
+export interface EmailChangeVerificationMail {
+  name: string;
+  to: string;
+  verificationUrl: string;
+}
+
+export async function sendEmailChangeVerificationMail(
+  input: EmailChangeVerificationMail,
+) {
+  const config = getMailRuntimeConfig();
+  if (config.deliveryMode === "discard") return;
+
+  const transport = createTransport(config);
+  await transport.sendMail({
+    from: config.from,
+    to: input.to,
+    subject: "Levi ログイン用メールアドレスの変更",
+    text: [
+      `${input.name} 様`,
+      "",
+      "ログイン用メールアドレスの変更を完了するには、次のURLを開いてください。",
+      input.verificationUrl,
+      "",
+      `このURLの有効期限は${EMAIL_CHANGE_VALIDITY_LABEL}です。心当たりがない場合は、このメールを破棄してください。`,
+    ].join("\n"),
+  });
 }
 
 export async function sendAdminPasswordResetMail(input: PasswordResetMail) {
@@ -48,14 +77,7 @@ async function sendPasswordResetMail(
   const config = getMailRuntimeConfig();
   if (config.deliveryMode === "discard") return;
 
-  const transport = nodemailer.createTransport({
-    host: config.host,
-    port: config.port,
-    secure: config.secure,
-    ...(config.user
-      ? { auth: { user: config.user, pass: config.password } }
-      : {}),
-  });
+  const transport = createTransport(config);
   await transport.sendMail({
     from: config.from,
     to: input.to,
@@ -68,5 +90,21 @@ async function sendPasswordResetMail(
       "",
       `このURLの有効期限は${PASSWORD_LINK_VALIDITY_LABEL}です。心当たりがない場合は、このメールを破棄してください。`,
     ].join("\n"),
+  });
+}
+
+function createTransport(
+  config: Exclude<
+    ReturnType<typeof getMailRuntimeConfig>,
+    { deliveryMode: "discard" }
+  >,
+) {
+  return nodemailer.createTransport({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    ...(config.user
+      ? { auth: { user: config.user, pass: config.password } }
+      : {}),
   });
 }
