@@ -11,7 +11,7 @@ import { auth } from "@/infrastructure/auth/server";
 import { prisma } from "@/infrastructure/database/client";
 
 const prefix = "test.email-change-457.";
-const origin = "http://localhost:3000";
+const origin = getAuthRuntimeConfig().baseURL;
 const password = "synthetic-password-457";
 
 async function clear() {

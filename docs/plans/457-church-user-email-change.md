@@ -44,6 +44,7 @@
 - 2026-09-02 12:34 JST — `pnpm check` と coverage（93.38% statements / 86.27% branches）成功。`pnpm test:integration`: 25 files / 130 tests passed。
 - 2026-09-02 12:34 JST — `pnpm security:check` は既存 lockfile の `mysql2@3.15.3` に新規 high advisory GHSA-3f6p-5ww8-9rcr を検出。機能差分と分離して解消する。
 - 2026-09-02 12:44 JST — #459 / PR #460 で `mysql2@3.22.0` へ更新し required CI 後に main へ merge。main を本 branch に merge した。
+- 2026-09-02 12:49 JST — CI の origin が local default と異なることを integration test が固定値で扱っていたため Database が失敗。runtime config 由来へ修正し、CI と同じ `https://levi.example.test` で 25 files / 130 tests の成功を再現した。
 
 ## Decisions
 
