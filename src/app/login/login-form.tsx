@@ -60,7 +60,9 @@ export function LoginForm() {
           {pending ? "ログイン中…" : "ログイン"}
         </button>
       </fieldset>
-      <Link href="/forgot-password">パスワードを忘れた場合</Link>
+      <Link className="auth-form-footer-link" href="/forgot-password">
+        パスワードを忘れた場合
+      </Link>
       {error ? (
         <div
           className="notice notice-error"

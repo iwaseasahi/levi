@@ -933,7 +933,7 @@ dialog.admin-church-user-dialog::backdrop {
   width: 100%;
 }
 
-.auth-form-return-link {
+.auth-form-footer-link {
   display: inline-block;
   margin-top: 1rem;
 }

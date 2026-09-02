@@ -78,7 +78,7 @@ export function AccountChangePasswordForm() {
           {message}
         </div>
       ) : null}
-      <Link className="auth-form-return-link" href="/scripture">
+      <Link className="auth-form-footer-link" href="/scripture">
         聖書検索へ戻る
       </Link>
     </form>

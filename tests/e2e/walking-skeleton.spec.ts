@@ -46,10 +46,21 @@ test("minimal home directs users to login while health remains available", async
     "background-color",
     "rgb(27, 27, 27)",
   );
-  await expect(page.getByRole("button", { name: "ログイン" })).toHaveCSS(
-    "background-color",
-    "rgb(210, 165, 104)",
-  );
+  const loginButton = page.getByRole("button", { name: "ログイン" });
+  await expect(loginButton).toHaveCSS("background-color", "rgb(210, 165, 104)");
+  const forgotPasswordLink = page.getByRole("link", {
+    name: "パスワードを忘れた場合",
+  });
+  await expect(forgotPasswordLink).toHaveAttribute("href", "/forgot-password");
+  const [loginButtonBox, forgotPasswordLinkBox] = await Promise.all([
+    loginButton.boundingBox(),
+    forgotPasswordLink.boundingBox(),
+  ]);
+  expect(loginButtonBox).not.toBeNull();
+  expect(forgotPasswordLinkBox).not.toBeNull();
+  expect(
+    forgotPasswordLinkBox!.y - (loginButtonBox!.y + loginButtonBox!.height),
+  ).toBeGreaterThanOrEqual(16);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   await page.setViewportSize({ width: 390, height: 844 });
