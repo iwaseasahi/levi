@@ -110,6 +110,7 @@ This table fixes the observable behavior that must survive structural refactors.
 | Folders and bookmarks            | saved-content panel, `/folders`, saved-content controller      | tenant-scoped folder/bookmark commands and ordering            | unit, component, integration, E2E |
 | Password invitation/recovery     | `/forgot-password`, `/reset-password`, operator administration | email invitation, token expiry, activation, session revocation | unit, component, integration, E2E |
 | Signed-in password change        | `/account/change-password`                                     | current-password verification and other-session revocation     | component, integration, E2E       |
+| Signed-in email change           | `/account/change-email`, confirmation email                    | reauthentication, expiry, and verified identity replacement    | unit, component, integration, E2E |
 | Tenant isolation                 | request proxy and church-scoped APIs                           | membership eligibility and church-scoped repositories          | unit, integration, E2E            |
 
 ## Administration E2E Basic authentication

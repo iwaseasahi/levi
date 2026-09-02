@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AccountChangePasswordForm } from "./change-password/account-change-password-form";
+import { AccountChangeEmailForm } from "./change-email/account-change-email-form";
 import { ForgotPasswordForm } from "../forgot-password/forgot-password-form";
 import { ResetPasswordForm } from "../reset-password/reset-password-form";
 
@@ -110,5 +111,67 @@ describe("church password recovery forms", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "パスワードを変更しました。",
     );
+  });
+
+  it("requests email verification with normalized matching addresses", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json({ status: "verification-sent" }, { status: 202 }),
+      );
+    vi.stubGlobal("fetch", fetcher);
+    render(<AccountChangeEmailForm />);
+    const user = userEvent.setup();
+
+    await user.type(
+      screen.getByLabelText("現在のパスワード"),
+      "current-password",
+    );
+    await user.type(
+      screen.getByLabelText("新しいメールアドレス", { exact: true }),
+      "NEW@Example.com ",
+    );
+    await user.type(
+      screen.getByLabelText("新しいメールアドレス（確認）"),
+      "new@example.com",
+    );
+    await user.click(screen.getByRole("button", { name: "確認メールを送信" }));
+
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body))).toEqual({
+      confirmation: "new@example.com",
+      currentPassword: "current-password",
+      newEmail: "new@example.com",
+    });
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "メール内のリンクを開くまで、現在のメールアドレスでログインできます。",
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps the email form editable when confirmation does not match", async () => {
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    render(<AccountChangeEmailForm />);
+    const user = userEvent.setup();
+    await user.type(
+      screen.getByLabelText("現在のパスワード"),
+      "current-password",
+    );
+    await user.type(
+      screen.getByLabelText("新しいメールアドレス", { exact: true }),
+      "new@example.com",
+    );
+    await user.type(
+      screen.getByLabelText("新しいメールアドレス（確認）"),
+      "other@example.com",
+    );
+    await user.click(screen.getByRole("button", { name: "確認メールを送信" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "確認用メールアドレスが一致しません。",
+    );
+    expect(fetcher).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 });

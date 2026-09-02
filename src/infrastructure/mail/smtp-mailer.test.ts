@@ -14,6 +14,7 @@ vi.mock("@/config/env", () => ({
 }));
 
 import {
+  sendEmailChangeVerificationMail,
   sendChurchPasswordResetMail,
   sendChurchPasswordSetupMail,
   sendAdminPasswordResetMail,
@@ -93,4 +94,27 @@ describe("SMTP mailer", () => {
       expect(text).not.toContain("設定または再設定");
     },
   );
+
+  it("sends an expiring email-change verification link to the new address", async () => {
+    mocks.getMailRuntimeConfig.mockReturnValue({
+      deliveryMode: "smtp",
+      from: "sender@example.invalid",
+      host: "smtp.invalid",
+      port: 587,
+      secure: false,
+    });
+    await sendEmailChangeVerificationMail({
+      name: input.name,
+      to: input.to,
+      verificationUrl: "https://example.invalid/verify-email/synthetic",
+    });
+    expect(mocks.sendMail).toHaveBeenCalledExactlyOnceWith({
+      from: "sender@example.invalid",
+      to: input.to,
+      subject: "Levi ログイン用メールアドレスの変更",
+      text: expect.stringContaining("有効期限は1時間"),
+    });
+    const text = mocks.sendMail.mock.calls[0]?.[0].text;
+    expect(text).toContain("https://example.invalid/verify-email/synthetic");
+  });
 });

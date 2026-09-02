@@ -42,6 +42,13 @@ export function ScriptureSettingsMenu() {
         >
           <Link
             className="scripture-settings-logout"
+            href="/account/change-email"
+            role="menuitem"
+          >
+            メールアドレスを変更
+          </Link>
+          <Link
+            className="scripture-settings-logout"
             href="/account/change-password"
             role="menuitem"
           >

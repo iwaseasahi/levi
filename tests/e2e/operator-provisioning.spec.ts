@@ -128,6 +128,51 @@ async function findPasswordResetUrl(
   return resetUrl as string;
 }
 
+async function findEmailChangeUrl(page: Page, recipient: string) {
+  await expect
+    .poll(
+      async () => {
+        const response = await page.request.get(
+          `${mailpitApiUrl}/api/v1/messages`,
+        );
+        if (!response.ok()) return undefined;
+        const payload = (await response.json()) as {
+          messages: Array<{ ID: string; To: Array<{ Address: string }> }>;
+        };
+        return payload.messages.find((message) =>
+          message.To.some(({ Address }) => Address === recipient),
+        )?.ID;
+      },
+      { timeout: 20_000 },
+    )
+    .not.toBeUndefined();
+
+  const messagesResponse = await page.request.get(
+    `${mailpitApiUrl}/api/v1/messages`,
+  );
+  const messages = (await messagesResponse.json()) as {
+    messages: Array<{ ID: string; To: Array<{ Address: string }> }>;
+  };
+  const messageId = messages.messages.find((message) =>
+    message.To.some(({ Address }) => Address === recipient),
+  )?.ID;
+  expect(messageId).toBeDefined();
+  const messageResponse = await page.request.get(
+    `${mailpitApiUrl}/api/v1/message/${messageId}`,
+  );
+  const message = (await messageResponse.json()) as {
+    Text: string;
+    Subject: string;
+  };
+  expect(message.Subject).toBe("Levi ログイン用メールアドレスの変更");
+  expect(message.Text).toContain("有効期限は1時間");
+  const verificationUrl = message.Text.match(
+    /https?:\/\/\S+\/api\/auth\/verify-email\?\S+/,
+  )?.[0];
+  expect(verificationUrl).toBeDefined();
+  return verificationUrl as string;
+}
+
 test.describe("operator administration access", () => {
   test("challenges an unauthenticated visitor with Basic authentication", async ({
     page,
@@ -289,7 +334,11 @@ test.describe("operator church provisioning", () => {
 
   test("invites an account and lets the user set and change a password", async ({
     page,
+    pageErrorGuard,
   }) => {
+    pageErrorGuard.allowConsoleError(
+      "Failed to load resource: the server responded with a status of 401 (UNAUTHORIZED)",
+    );
     await signInAdmin(page);
     await page.goto("/admin/churches/new");
 
@@ -409,6 +458,55 @@ test.describe("operator church provisioning", () => {
     await expect(
       page.getByRole("radio", { name: "創世記/Genesis" }),
     ).toBeVisible();
+
+    await page.getByRole("button", { name: "設定" }).click();
+    await page.getByRole("menuitem", { name: "メールアドレスを変更" }).click();
+    await expect(
+      page.getByRole("heading", { name: "メールアドレスを変更" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("complementary", { name: "サイドバー" }),
+    ).toBeVisible();
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+
+    const changedEmail = E2E_CREATED_EMAIL.replace("@", ".changed@");
+    await page
+      .getByLabel("現在のパスワード", { exact: true })
+      .fill(selectedPassword);
+    await page
+      .getByLabel("新しいメールアドレス", { exact: true })
+      .fill(changedEmail.toUpperCase());
+    await page.getByLabel("新しいメールアドレス（確認）").fill(changedEmail);
+    await page.getByRole("button", { name: "確認メールを送信" }).click();
+    await expect(page.getByRole("status")).toContainText(
+      "メール内のリンクを開くまで、現在のメールアドレスでログインできます。",
+    );
+    const verificationUrl = await findEmailChangeUrl(page, changedEmail);
+    await page.goto(verificationUrl);
+    await expect(page).toHaveURL(/\/account\/change-email\?completed=1$/);
+    await expect(page.getByRole("status")).toContainText(
+      "ログイン用メールアドレスを変更しました。",
+    );
+
+    await page.goto("/scripture");
+    await page.getByRole("button", { name: "設定" }).click();
+    await page.getByRole("menuitem", { name: "ログアウト" }).click();
+    await expect(page).toHaveURL(/\/login$/);
+    await page.getByLabel("メールアドレス").fill(E2E_CREATED_EMAIL);
+    await page.getByLabel("パスワード", { exact: true }).fill(selectedPassword);
+    await page.getByRole("button", { name: "ログイン" }).click();
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole("alert")).toBeVisible();
+
+    await page.getByLabel("メールアドレス").fill(changedEmail);
+    await page.getByRole("button", { name: "ログイン" }).click();
+    await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
   });
 
   test("invites a second user to an existing church", async ({ page }) => {
