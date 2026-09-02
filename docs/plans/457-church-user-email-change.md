@@ -43,6 +43,7 @@
 - 2026-09-02 12:31 JST — API、画面、1時間 token、SMTP、1利用者5回/時の rate limit を実装。`pnpm test:e2e`: 33 passed。
 - 2026-09-02 12:34 JST — `pnpm check` と coverage（93.38% statements / 86.27% branches）成功。`pnpm test:integration`: 25 files / 130 tests passed。
 - 2026-09-02 12:34 JST — `pnpm security:check` は既存 lockfile の `mysql2@3.15.3` に新規 high advisory GHSA-3f6p-5ww8-9rcr を検出。機能差分と分離して解消する。
+- 2026-09-02 12:44 JST — #459 / PR #460 で `mysql2@3.22.0` へ更新し required CI 後に main へ merge。main を本 branch に merge した。
 
 ## Decisions
 
@@ -62,16 +63,16 @@
 - [x] `pnpm check`
 - [x] `pnpm test:integration`
 - [x] `pnpm test:e2e`
-- [ ] `pnpm security:check`
+- [x] `pnpm security:check`
 - [x] 未認証、Origin 不正、パスワード不一致、重複、期限付き確認前後を自動テストする。
 - [ ] 最終差分を scope、secret、migration、unsafe default の観点でレビューする。
 
 ## Handoff or blockers
 
-- Completed: 実装、unit/component/integration/E2E、build、coverage。
-- Remaining: transitive dependency advisory の分離解消、Security 再実行、PR、CI、merge。
-- Blocker: `mysql2@3.15.3` の high advisory により Security gate が失敗する。
-- Resume with: follow-up Issue で `mysql2` を修正版へ固定して main に取り込み、本 branch を更新する。
+- Completed: 実装、unit/component/integration/E2E、build、coverage、Security blocker の分離解消。
+- Remaining: exact-head CI、merge。
+- Blocker: なし。
+- Resume with: plan 更新を push し、required checks を確認する。
 
 ## Result
 
