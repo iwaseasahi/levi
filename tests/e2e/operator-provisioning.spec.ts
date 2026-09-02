@@ -433,7 +433,7 @@ test.describe("operator church provisioning", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("complementary", { name: "サイドバー" }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await page
       .getByLabel("現在のパスワード", { exact: true })
       .fill(initialPassword);
@@ -466,7 +466,7 @@ test.describe("operator church provisioning", () => {
     ).toBeVisible();
     await expect(
       page.getByRole("complementary", { name: "サイドバー" }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.setViewportSize({ width: 390, height: 844 });
     expect(
