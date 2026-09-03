@@ -205,6 +205,41 @@ describe("projection controller transport", () => {
     expect(result.current.state).toBeNull();
     expect(result.current.error).toBe("");
   });
+  it("does not show a probe error while the closed flag is settling", () => {
+    vi.useFakeTimers();
+    const postMessage = vi.fn();
+    const target = { closed: false, postMessage } as unknown as Window;
+    vi.spyOn(window, "open").mockReturnValue(target);
+    const { result } = renderHook(() =>
+      useProjectionController("scripture", parseScriptureProjectionState),
+    );
+    act(() => result.current.open("/scripture/audience"));
+    send(
+      {
+        ...postMessage.mock.calls.at(-1)![0],
+        type: "READY",
+        instance: generation,
+        sequence: 1,
+        presentation,
+        content,
+      },
+      target,
+    );
+    expect(result.current.ready).toBe(true);
+
+    postMessage.mockImplementation(() => {
+      throw new Error("closing WindowProxy");
+    });
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(result.current.ready).toBe(true);
+    expect(result.current.error).toBe("");
+
+    Object.assign(target, { closed: true });
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(result.current.ready).toBe(false);
+    expect(result.current.state).toBeNull();
+    expect(result.current.error).toBe("");
+  });
   it("does not steal arrows from inputs, textareas, editable elements or IME", () => {
     const postMessage = vi.fn();
     const target = { closed: false, postMessage } as unknown as Window;

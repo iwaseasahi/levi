@@ -534,6 +534,19 @@ describe("ScriptureSearch", () => {
     const larger = screen.getByRole("button", { name: "文字を大きく" });
     await waitFor(() => expect(larger).toBeEnabled());
 
+    const probeCount = audiencePostMessage.mock.calls.length;
+    audiencePostMessage.mockImplementation(() => {
+      throw new Error("closing WindowProxy");
+    });
+    await waitFor(
+      () =>
+        expect(audiencePostMessage.mock.calls.length).toBeGreaterThan(
+          probeCount,
+        ),
+      { timeout: 1_500 },
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
     Object.assign(audienceTarget, { closed: true });
     await waitFor(() => expect(larger).toBeDisabled(), { timeout: 1_500 });
     expect(
@@ -541,6 +554,7 @@ describe("ScriptureSearch", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
+    audiencePostMessage.mockImplementation(() => undefined);
     Object.assign(audienceTarget, { closed: false });
     await user.click(screen.getByRole("button", { name: "Open" }));
     act(() =>
