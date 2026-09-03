@@ -64,12 +64,15 @@ After five seconds without a valid response, one consecutive heartbeat check
 confirms that the audience is still open before disabling controls with a reopen
 instruction. Periodic probe delivery failures use this same grace period because
 a closing `WindowProxy` can reject a message before its `closed` flag settles.
-This prevents a connection warning from flashing while the browser finishes
-closing the tab. A confirmed closed tab disables controls silently, and probes
-can reconnect to a compatible live page. Browser timer throttling may delay
-background detection. This heartbeat never transfers text or invokes remote
-functions. Version 1 and malformed messages are ignored; incompatible tabs cannot
-enable controls and users are instructed to refresh both screens and Open again.
+An unauthorized acknowledgement disables controls immediately but likewise waits
+one monitoring cycle before showing its warning, so an audience teardown cannot
+flash an authorization error before `closed` settles. A live unauthorized tab
+still shows the existing warning after that grace. A confirmed closed tab disables
+controls silently, and probes can reconnect to a compatible live page. Browser
+timer throttling may delay background detection. This heartbeat never transfers
+text or invokes remote functions. Version 1 and malformed messages are ignored;
+incompatible tabs cannot enable controls and users are instructed to refresh both
+screens and Open again.
 
 ## Recovery and authorization
 
