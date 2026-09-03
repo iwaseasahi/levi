@@ -547,10 +547,42 @@ describe("ScriptureSearch", () => {
     );
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
+    const unauthorized = Object.fromEntries(
+      Object.entries(readyMessage()).filter(([key]) => key !== "challenge"),
+    );
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            ...unauthorized,
+            type: "ACK",
+            sequence: 2,
+            presentation: {
+              ready: false,
+              authorized: false,
+              fontScale: 1,
+              blank: false,
+            },
+          },
+          origin: window.location.origin,
+          source: audienceTarget,
+        }),
+      ),
+    );
+    expect(larger).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
     Object.assign(audienceTarget, { closed: true });
-    await waitFor(() => expect(larger).toBeDisabled(), { timeout: 1_500 });
+    await act(async () => {
+      await new Promise((resolve) => window.setTimeout(resolve, 1_100));
+    });
     expect(
       screen.queryByText("投映画面を閉じました。再度Openしてください。"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "表示の利用資格を確認できません。再度Openしてください。",
+      ),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 

@@ -240,6 +240,84 @@ describe("projection controller transport", () => {
     expect(result.current.state).toBeNull();
     expect(result.current.error).toBe("");
   });
+  it("defers an authorization warning until a live tab survives the close grace", () => {
+    vi.useFakeTimers();
+    const postMessage = vi.fn();
+    const target = { closed: false, postMessage } as unknown as Window;
+    vi.spyOn(window, "open").mockReturnValue(target);
+    const { result } = renderHook(() =>
+      useProjectionController("scripture", parseScriptureProjectionState),
+    );
+    act(() => result.current.open("/scripture/audience"));
+    const [connect] = postMessage.mock.calls.at(-1)!;
+    const ready = {
+      ...connect,
+      type: "READY",
+      instance: generation,
+      sequence: 1,
+      presentation,
+      content,
+    };
+    send(ready, target);
+
+    const ack = Object.fromEntries(
+      Object.entries(ready).filter(([key]) => key !== "challenge"),
+    );
+    send(
+      {
+        ...ack,
+        type: "ACK",
+        sequence: 2,
+        presentation: { ...presentation, ready: false, authorized: false },
+      },
+      target,
+    );
+    expect(result.current.ready).toBe(false);
+    expect(result.current.error).toBe("");
+
+    Object.assign(target, { closed: true });
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(result.current.state).toBeNull();
+    expect(result.current.error).toBe("");
+
+    Object.assign(target, { closed: false });
+    act(() => result.current.open("/scripture/audience"));
+    const [reconnect] = postMessage.mock.calls.at(-1)!;
+    send(
+      {
+        ...reconnect,
+        type: "READY",
+        instance: second,
+        sequence: 1,
+        presentation: { ...presentation, ready: false, authorized: false },
+        content,
+      },
+      target,
+    );
+    expect(result.current.error).toBe("");
+    act(() => vi.advanceTimersByTime(1_000));
+    expect(result.current.error).toBe(
+      "表示の利用資格を確認できません。再度Openしてください。",
+    );
+    const liveUnauthorized = Object.fromEntries(
+      Object.entries({ ...reconnect, instance: second }).filter(
+        ([key]) => key !== "challenge",
+      ),
+    );
+    send(
+      {
+        ...liveUnauthorized,
+        type: "ACK",
+        sequence: 2,
+        presentation: { ...presentation, ready: false, authorized: false },
+        content,
+      },
+      target,
+    );
+    expect(result.current.error).toBe(
+      "表示の利用資格を確認できません。再度Openしてください。",
+    );
+  });
   it("does not steal arrows from inputs, textareas, editable elements or IME", () => {
     const postMessage = vi.fn();
     const target = { closed: false, postMessage } as unknown as Window;

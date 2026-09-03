@@ -108,7 +108,7 @@ describe("Slide audience and controller", () => {
       "利用できません",
     );
   });
-  it("does not flash a heartbeat alert while the projection tab is closing", () => {
+  it("does not flash connection or authorization alerts while the projection tab is closing", () => {
     vi.useFakeTimers();
     const postMessage = vi.fn();
     const target = { postMessage, closed: false } as unknown as Window;
@@ -144,12 +144,55 @@ describe("Slide audience and controller", () => {
     act(() => vi.advanceTimersByTime(6_000));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
+    const unauthorized = Object.fromEntries(
+      Object.entries({
+        ...connect,
+        type: "READY",
+        instance: generation,
+        sequence: 1,
+        presentation: {
+          ready: true,
+          authorized: true,
+          fontScale: 1,
+          blank: false,
+        },
+        content: {
+          id,
+          page: 0,
+          pageCount: 1,
+          revision: 1,
+          status: "ready",
+        },
+      }).filter(([key]) => key !== "challenge"),
+    );
+    send(
+      {
+        ...unauthorized,
+        type: "ACK",
+        sequence: 2,
+        presentation: {
+          ready: false,
+          authorized: false,
+          fontScale: 1,
+          blank: false,
+        },
+      },
+      target,
+    );
+    expect(screen.getByRole("button", { name: "文字を大きく" })).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
     Object.assign(target, { closed: true });
     act(() => vi.advanceTimersByTime(1_000));
 
     expect(screen.getByRole("button", { name: "文字を大きく" })).toBeDisabled();
     expect(
       screen.queryByText("投映画面を閉じました。再度Openしてください。"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "表示の利用資格を確認できません。再度Openしてください。",
+      ),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });

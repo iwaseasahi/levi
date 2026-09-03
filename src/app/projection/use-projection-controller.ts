@@ -21,8 +21,12 @@ type Connection = {
   sent: number;
   lastSeen: number;
   missedHeartbeat: boolean;
+  authorizationFailureAt: number | null;
   retired: Set<string>;
 };
+const AUTHORIZATION_ERROR =
+  "表示の利用資格を確認できません。再度Openしてください。";
+const CLOSE_SETTLEMENT_GRACE_MS = 1_000;
 export function useProjectionController<T>(
   kind: ProjectionKind,
   parseContent: (value: unknown) => T | null,
@@ -88,6 +92,7 @@ export function useProjectionController<T>(
         if (peer.pendingInstance && peer.pendingInstance !== message.instance)
           peer.retired.add(peer.pendingInstance);
         peer.pendingInstance = message.instance;
+        peer.authorizationFailureAt = null;
         disconnect("");
         try {
           probe(peer);
@@ -125,11 +130,17 @@ export function useProjectionController<T>(
       peer.lastSeen = Date.now();
       peer.missedHeartbeat = false;
       setState({ presentation: message.presentation, content });
-      setError(
-        message.presentation.authorized
-          ? ""
-          : "表示の利用資格を確認できません。再度Openしてください。",
-      );
+      if (message.presentation.authorized) {
+        peer.authorizationFailureAt = null;
+        setError("");
+      } else if (peer.authorizationFailureAt === null) {
+        // Audience teardown can report its fail-closed state before Chrome
+        // settles Window.closed. Disable controls immediately through `state`,
+        // but allow the close check one monitoring cycle before showing an
+        // authorization warning for a tab that remains open.
+        peer.authorizationFailureAt = Date.now();
+        setError("");
+      }
     }
     const timer = window.setInterval(() => {
       const peer = connection.current;
@@ -151,6 +162,11 @@ export function useProjectionController<T>(
         disconnect("");
         return;
       }
+      if (
+        peer.authorizationFailureAt !== null &&
+        Date.now() - peer.authorizationFailureAt >= CLOSE_SETTLEMENT_GRACE_MS
+      )
+        setError(AUTHORIZATION_ERROR);
       if (Date.now() - peer.lastSeen > 5_000) {
         if (peer.missedHeartbeat)
           disconnect(
@@ -191,6 +207,7 @@ export function useProjectionController<T>(
           sent: 0,
           lastSeen: Date.now(),
           missedHeartbeat: false,
+          authorizationFailureAt: null,
           retired: new Set<string>(),
         };
         connection.current = peer;
