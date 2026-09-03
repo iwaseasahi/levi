@@ -40,7 +40,7 @@ authorization still shows the existing warning.
 2. [x] Add shared-controller and consuming-screen regression coverage for the
        close race and live authorization loss.
 3. [x] Update protocol documentation and run focused and canonical checks.
-4. [ ] Push a focused PR, wait for required CI, and merge after it passes.
+4. [x] Push a focused PR, wait for required CI, and merge after it passes.
 
 ## Progress
 
@@ -53,6 +53,8 @@ authorization still shows the existing warning.
   tests plus the production build; `pnpm test:e2e` passed all 33 latest-Chromium
   scenarios; `pnpm security:check` passed its high-severity threshold and license
   inventory (one existing moderate advisory reported).
+- 2026-09-03 JST — PR #469 passed Quality, Database, E2E, and Security on
+  commit `2b88984`; prepared the final plan record for merge.
 
 ## Decisions
 
@@ -78,17 +80,22 @@ authorization still shows the existing warning.
 - [x] Focused projection and screen component tests — 32 passed
 - [x] `pnpm check` — passed; 452 unit, 105 component, build and config checks
 - [x] Relevant latest-Chromium E2E — full suite, 33 passed
-- [ ] Required GitHub CI
+- [x] Required GitHub CI — Quality, Database, E2E, and Security passed
 - [x] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
 
 ## Handoff or blockers
 
 - Completed: root cause confirmed, issue scope updated, controller and regression
-  coverage implemented, protocol documented, and local checks passed.
-- Remaining: PR, required CI, and merge.
+  coverage implemented, protocol documented, local checks and required CI passed,
+  and PR #469 prepared for merge.
+- Remaining: none.
 - Blocker: none.
-- Resume with: commit the focused patch and open the Issue #455 PR.
+- Resume with: no remaining implementation work.
 
 ## Result
 
-Pending.
+PR #469 completes the lifecycle race fix for both Scripture and Slide controllers.
+Controls still fail closed immediately, closed audience tabs are silent, and live
+authorization loss retains the existing warning after one monitoring cycle.
+Local checks and all four required GitHub checks passed without schema or data
+changes.
