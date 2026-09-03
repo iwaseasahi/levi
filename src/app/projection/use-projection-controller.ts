@@ -139,17 +139,24 @@ export function useProjectionController<T>(
         disconnect("");
         return;
       }
+      try {
+        probe(peer);
+      } catch {
+        // A closing WindowProxy can reject a probe before `closed` settles.
+        // The heartbeat below reports a live but unreachable peer after its
+        // existing grace period, without flashing an error for a closed tab.
+      }
+      if (peer.target.closed) {
+        connection.current = null;
+        disconnect("");
+        return;
+      }
       if (Date.now() - peer.lastSeen > 5_000) {
         if (peer.missedHeartbeat)
           disconnect(
             "投映画面との接続を確認できません。両画面を更新して再度Openしてください。",
           );
         peer.missedHeartbeat = true;
-      }
-      try {
-        probe(peer);
-      } catch {
-        disconnect("投映画面に接続できません。再度Openしてください。");
       }
     }, 1_000);
     window.addEventListener("message", receive);
