@@ -27,6 +27,24 @@ async function expectImageContainedBySixteenByNineFrame(frame: Locator) {
   expect(layout.imageHeight).toBeCloseTo(layout.frameHeight, 0);
 }
 
+async function expectAudienceMargin(frame: Locator) {
+  const layout = await frame.evaluate((element) => {
+    const bounds = element.getBoundingClientRect();
+    return {
+      bottom: window.innerHeight - bounds.bottom,
+      left: bounds.left,
+      right: window.innerWidth - bounds.right,
+      top: bounds.top,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+    };
+  });
+  expect(layout.left).toBeGreaterThanOrEqual(layout.viewportWidth * 0.025);
+  expect(layout.right).toBeGreaterThanOrEqual(layout.viewportWidth * 0.025);
+  expect(layout.top).toBeGreaterThanOrEqual(layout.viewportHeight * 0.025);
+  expect(layout.bottom).toBeGreaterThanOrEqual(layout.viewportHeight * 0.025);
+}
+
 test("an image Slide is previewed, saved, projected with contain sizing, and blanked", async ({
   context,
   page,
@@ -84,6 +102,7 @@ test("an image Slide is previewed, saved, projected with contain sizing, and bla
   const audienceFrame = audience.locator(".slide-image-frame");
   await expect(audienceFrame).toHaveCSS("background-color", "rgb(0, 0, 0)");
   await expectImageContainedBySixteenByNineFrame(audienceFrame);
+  await expectAudienceMargin(audienceFrame);
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
   ).toHaveCount(0);

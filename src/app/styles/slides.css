@@ -259,7 +259,7 @@
   width: min(100vw, calc(100vh * 16 / 9));
 }
 .slide-audience .slide-image-frame {
-  width: min(100vw, calc(100vh * 16 / 9));
+  width: min(94vw, calc(94vh * 16 / 9));
 }
 .slide-audience > p {
   max-width: 40rem;
