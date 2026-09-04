@@ -121,6 +121,7 @@
 .slide-image-frame {
   width: 100%;
   aspect-ratio: 16 / 9;
+  position: relative;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -129,6 +130,8 @@
 }
 .slide-image-frame img {
   display: block;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;

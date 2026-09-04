@@ -1,11 +1,31 @@
+import type { Locator } from "@playwright/test";
+
 import { prisma } from "@/infrastructure/database/client";
 import { test, expect } from "./scripture-fixture";
 import { loginToScripture } from "./scripture-helpers";
 
 const syntheticPng = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAIAAAB7QOjdAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAD0lEQVQImWMwTptpnDYTAAeZAmUGcC4NAAAAAElFTkSuQmCC",
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWP4UCEHAAPiAYcK6fxlAAAAAElFTkSuQmCC",
   "base64",
 );
+
+async function expectImageContainedBySixteenByNineFrame(frame: Locator) {
+  const layout = await frame.evaluate((element) => {
+    const image = element.querySelector("img");
+    if (!image) throw new Error("Expected an image inside the Slide frame");
+    const frameBounds = element.getBoundingClientRect();
+    const imageBounds = image.getBoundingClientRect();
+    return {
+      frameHeight: frameBounds.height,
+      frameWidth: frameBounds.width,
+      imageHeight: imageBounds.height,
+      imageWidth: imageBounds.width,
+    };
+  });
+  expect(layout.frameWidth / layout.frameHeight).toBeCloseTo(16 / 9, 2);
+  expect(layout.imageWidth).toBeCloseTo(layout.frameWidth, 0);
+  expect(layout.imageHeight).toBeCloseTo(layout.frameHeight, 0);
+}
 
 test("an image Slide is previewed, saved, projected with contain sizing, and blanked", async ({
   context,
@@ -25,10 +45,20 @@ test("an image Slide is previewed, saved, projected with contain sizing, and bla
   await expect(
     page.getByRole("region", { name: "画像プレビュー" }).getByRole("img"),
   ).toBeVisible();
+  await expectImageContainedBySixteenByNineFrame(
+    page
+      .getByRole("region", { name: "画像プレビュー" })
+      .locator(".slide-image-frame"),
+  );
   await page.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Synthetic image lifecycle" }),
   ).toBeVisible();
+  const savedPreview = page.getByRole("region", { name: "画像プレビュー" });
+  await expect(savedPreview.getByRole("img")).toBeVisible();
+  await expectImageContainedBySixteenByNineFrame(
+    savedPreview.locator(".slide-image-frame"),
+  );
 
   const stored = await prisma.slide.findFirstOrThrow({
     where: { churchId: scriptureAccount.churchId },
@@ -37,7 +67,7 @@ test("an image Slide is previewed, saved, projected with contain sizing, and bla
   expect(stored).toMatchObject({ body: null, contentType: "IMAGE" });
   expect(stored.image).toMatchObject({
     mediaType: "image/png",
-    width: 2,
+    width: 1,
     height: 1,
   });
   expect(stored.image?.data.byteLength).toBeGreaterThan(0);
@@ -51,10 +81,9 @@ test("an image Slide is previewed, saved, projected with contain sizing, and bla
   });
   await expect(projected).toBeVisible();
   await expect(projected).toHaveCSS("object-fit", "contain");
-  await expect(audience.locator(".slide-image-frame")).toHaveCSS(
-    "background-color",
-    "rgb(0, 0, 0)",
-  );
+  const audienceFrame = audience.locator(".slide-image-frame");
+  await expect(audienceFrame).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  await expectImageContainedBySixteenByNineFrame(audienceFrame);
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
   ).toHaveCount(0);
