@@ -53,9 +53,16 @@ assert(
   nextConfig.devIndicators === false,
   "Next.js development indicators must remain hidden from Levi screens",
 );
+const pnpmSetupRef = "pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b";
 assert(
-  ci.includes("node-version: 24.19.0") && ci.includes("version: 11.19.0"),
-  "CI runtime pins must match the local Node.js and pnpm pins",
+  ci.match(new RegExp(pnpmSetupRef, "g"))?.length === 4 &&
+    ci.match(/runtime: node@24\.19\.0/g)?.length === 4 &&
+    ci.match(/cache: true/g)?.length === 4 &&
+    ci.match(/install: false/g)?.length === 4 &&
+    ci.match(/pnpm install --frozen-lockfile/g)?.length === 4 &&
+    !ci.includes("pnpm/action-setup") &&
+    !ci.includes("actions/setup-node"),
+  "Every CI job must use the pinned pnpm/setup action with the project runtimes and one pnpm store cache",
 );
 assert(
   packageJson.scripts?.["security:audit"] ===
