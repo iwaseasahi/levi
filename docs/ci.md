@@ -28,6 +28,16 @@ run for the same pull request or branch cancels its predecessor. Every job has a
 timeout and uploads its available reports for 14 days even when a prior step
 fails.
 
+All four required jobs use the commit-pinned `pnpm/setup` action to install the
+Node.js version declared by the workflow and the pnpm version declared by
+`package.json`. For pnpm 11 and newer this avoids the legacy
+`pnpm/action-setup` npm CLI bootstrap, which can dominate job time when the npm
+registry is slow. The action owns the single pnpm store cache, while the
+repository keeps `pnpm install --frozen-lockfile` as an explicit step. When
+updating this setup, compare the `Set up pnpm and Node.js` duration in all four
+required jobs and run `pnpm local:config:check` to detect version, action, cache,
+or install-policy drift.
+
 ## Main branch protection
 
 Configure `main` with the following repository rule:
