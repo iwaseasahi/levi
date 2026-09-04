@@ -1,8 +1,13 @@
 import { z } from "zod";
-import type { SlideRecord } from "./commands";
 import { SlideInputError } from "./slide";
 
-export type SlideSummary = Omit<SlideRecord, "body">;
+export type SlideSummary = {
+  id: string;
+  title: string;
+  revision: number;
+  createdAt: string;
+  updatedAt: string;
+};
 export type SlideListResult = {
   slides: SlideSummary[];
   nextCursor: string | null;

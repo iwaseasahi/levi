@@ -5,9 +5,16 @@ import { useRouter } from "next/navigation";
 import { parseJsonResponse } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
 import type { SlideRecord } from "@/domain/slides/commands";
-import { parseSlideBody, parseSlideInput } from "@/domain/slides/slide";
+import { slideImageUploadLimit } from "@/domain/slides/image";
+import {
+  parseSlideBody,
+  parseSlideInput,
+  parseSlideTitle,
+} from "@/domain/slides/slide";
 import { SlideError, slideErrorMessage } from "./slide-error";
 import { SlidePreview } from "./slide-preview";
+
+type ContentType = "text" | "image";
 
 export function SlideEditor({
   initial,
@@ -18,27 +25,56 @@ export function SlideEditor({
 }) {
   const fetcher = useComponentLifetimeValue(providedFetcher);
   const router = useRouter();
+  const initialContentType: ContentType =
+    initial?.contentType === "image" ? "image" : "text";
+  const [contentType, setContentType] =
+    useState<ContentType>(initialContentType);
   const [title, setTitle] = useState(initial?.title ?? "");
-  const [body, setBody] = useState(initial?.body ?? "");
+  const [body, setBody] = useState(
+    initial?.contentType === "image" ? "" : (initial?.body ?? ""),
+  );
+  const [image, setImage] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [previewVersion, setPreviewVersion] = useState(0);
+  const [previewType, setPreviewType] = useState<ContentType | null>(null);
+  const [previewText, setPreviewText] = useState<string | null>(null);
   const pending = useRef(false);
   const mounted = useRef(true);
+  const deleteButton = useRef<HTMLButtonElement>(null);
+  const imageUrlRef = useRef<string | null>(null);
+
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      if (imageUrlRef.current) URL.revokeObjectURL(imageUrlRef.current);
     };
   }, []);
-  const deleteButton = useRef<HTMLButtonElement>(null);
-  const [preview, setPreview] = useState<{
-    body: string;
-    text: string;
-    version: number;
-  } | null>(null);
+
+  const savedImageUrl =
+    initial?.contentType === "image"
+      ? `/api/church/slides/${initial.id}/image?revision=${initial.revision}`
+      : null;
+  const currentImageUrl = imageUrl ?? savedImageUrl;
 
   async function mutate(deleting: boolean) {
     if (pending.current) return;
+    const replacesSavedContent =
+      !deleting &&
+      initial !== undefined &&
+      (initial.contentType === "image"
+        ? contentType === "text" || image !== null
+        : contentType === "image");
+    if (
+      replacesSavedContent &&
+      !window.confirm(
+        "保存済みのスライド内容を置き換えます。元の内容は復元できません。続けますか？",
+      )
+    ) {
+      return;
+    }
     if (
       deleting &&
       (!initial ||
@@ -54,23 +90,60 @@ export function SlideEditor({
     setError(null);
     let succeeded = false;
     try {
-      const input = deleting ? undefined : parseSlideInput({ title, body });
-      const response = await fetcher(
-        initial ? `/api/church/slides/${initial.id}` : "/api/church/slides",
-        {
-          method: deleting ? "DELETE" : initial ? "PUT" : "POST",
+      let request: RequestInit;
+      if (deleting) {
+        request = {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ expectedRevision: initial!.revision }),
+        };
+      } else if (contentType === "text") {
+        const input = parseSlideInput({ title, body });
+        request = {
+          method: initial ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
           body: JSON.stringify(
-            deleting
-              ? { expectedRevision: initial!.revision }
-              : initial
-                ? { input, expectedRevision: initial.revision }
-                : input,
+            initial ? { input, expectedRevision: initial.revision } : input,
           ),
-        },
+        };
+      } else {
+        const normalizedTitle = parseSlideTitle(title);
+        if (!image && initial?.contentType === "image") {
+          request = {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({
+              input: { contentType: "image", title: normalizedTitle },
+              expectedRevision: initial.revision,
+            }),
+          };
+        } else {
+          if (!image || image.size > slideImageUploadLimit) {
+            throw new Error("INVALID_SLIDE_IMAGE");
+          }
+          const form = new FormData();
+          form.set("title", normalizedTitle);
+          form.set("image", image);
+          if (initial) form.set("expectedRevision", String(initial.revision));
+          request = {
+            method: initial ? "PUT" : "POST",
+            headers: { Accept: "application/json" },
+            body: form,
+          };
+        }
+      }
+      const response = await fetcher(
+        initial ? `/api/church/slides/${initial.id}` : "/api/church/slides",
+        request,
       );
       if (!mounted.current) return;
       if (deleting && response.status === 204) {
@@ -87,7 +160,13 @@ export function SlideEditor({
       router.push(`/slides/${result.slide.id}`);
       router.refresh();
     } catch (cause) {
-      if (mounted.current) setError(slideErrorMessage(cause));
+      if (mounted.current) {
+        setError(
+          cause instanceof Error && cause.message === "INVALID_SLIDE_IMAGE"
+            ? "JPEG、PNG、静止WebPの画像を1枚選択してください。画像は10 MiB以下にしてください。"
+            : slideErrorMessage(cause),
+        );
+      }
     } finally {
       if (mounted.current && !succeeded) {
         pending.current = false;
@@ -95,32 +174,68 @@ export function SlideEditor({
       }
     }
   }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void mutate(false);
   }
+
   function showPreview() {
     try {
-      const text = parseSlideBody(body);
-      setPreview((previous) => ({
-        body,
-        text,
-        version: (previous?.version ?? 0) + 1,
-      }));
+      if (contentType === "text") {
+        setPreviewText(parseSlideBody(body));
+      } else {
+        if (!currentImageUrl) throw new Error("INVALID_SLIDE_IMAGE");
+        setPreviewText(null);
+      }
+      setPreviewType(contentType);
+      setPreviewVersion((value) => value + 1);
       setError(null);
     } catch {
-      setPreview(null);
+      setPreviewType(null);
       setError(
-        "プレビューには空白以外を含む1〜100,000文字の本文を入力してください。",
+        contentType === "text"
+          ? "プレビューには空白以外を含む1〜100,000文字の本文を入力してください。"
+          : "プレビューする画像を選択してください。",
       );
     }
   }
+
   return (
     <>
       <h1>{initial ? "スライドを編集" : "スライドを作成"}</h1>
       {error && <SlideError message={error} />}
       <form onSubmit={submit} noValidate>
         <fieldset disabled={busy}>
+          <fieldset className="slide-content-choice">
+            <legend>スライドの種類</legend>
+            <label>
+              <input
+                type="radio"
+                name="slide-content-type"
+                value="text"
+                checked={contentType === "text"}
+                onChange={() => {
+                  setContentType("text");
+                  setPreviewType(null);
+                }}
+              />
+              テキスト
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="slide-content-type"
+                value="image"
+                checked={contentType === "image"}
+                onChange={() => {
+                  setContentType("image");
+                  setPreviewType(null);
+                }}
+              />
+              画像
+            </label>
+          </fieldset>
           <label htmlFor="slide-title">タイトル</label>
           <input
             id="slide-title"
@@ -128,14 +243,48 @@ export function SlideEditor({
             onChange={(event) => setTitle(event.target.value)}
             required
           />
-          <label htmlFor="slide-body">本文</label>
-          <textarea
-            id="slide-body"
-            rows={12}
-            value={body}
-            onChange={(event) => setBody(event.target.value)}
-            required
-          />
+          {contentType === "text" ? (
+            <>
+              <label htmlFor="slide-body">本文</label>
+              <textarea
+                id="slide-body"
+                rows={12}
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                required
+              />
+            </>
+          ) : (
+            <>
+              <label htmlFor="slide-image">画像</label>
+              <input
+                id="slide-image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                required={!savedImageUrl}
+                onChange={(event) => {
+                  const selected = event.target.files?.[0] ?? null;
+                  if (imageUrlRef.current)
+                    URL.revokeObjectURL(imageUrlRef.current);
+                  imageUrlRef.current = selected
+                    ? URL.createObjectURL(selected)
+                    : null;
+                  setImage(selected);
+                  setImageUrl(imageUrlRef.current);
+                  setPreviewType(null);
+                  if (selected && selected.size > slideImageUploadLimit) {
+                    setError("画像は10 MiB以下にしてください。");
+                  } else {
+                    setError(null);
+                  }
+                }}
+              />
+              <p>JPEG、PNG、静止WebPを選択できます。上限は10 MiBです。</p>
+              <p>
+                教会全体の画像容量上限に達した場合は保存できません。不要な画像スライドを削除してから再度お試しください。
+              </p>
+            </>
+          )}
           <div className="slide-actions slide-editor-actions">
             <button className="primary-button" type="submit">
               {busy ? "処理中…" : "保存"}
@@ -156,13 +305,24 @@ export function SlideEditor({
         </fieldset>
       </form>
       {busy && <p role="status">処理中です。</p>}
-      {preview && (
+      {previewType && (
         <>
           <h2>保存前プレビュー</h2>
-          {preview.body !== body && (
+          {previewType !== contentType && (
+            <p>スライドの種類を変更しました。プレビューを更新してください。</p>
+          )}
+          {previewType === "text" && previewText !== body && (
             <p>本文を変更しました。プレビューを更新してください。</p>
           )}
-          <SlidePreview key={preview.version} text={preview.text} />
+          {previewType === "image" && currentImageUrl ? (
+            <SlidePreview
+              key={previewVersion}
+              imageSrc={currentImageUrl}
+              title={title || "スライド画像"}
+            />
+          ) : previewText !== null ? (
+            <SlidePreview key={previewVersion} text={previewText} />
+          ) : null}
         </>
       )}
     </>

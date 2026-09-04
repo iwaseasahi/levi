@@ -31,7 +31,19 @@ export function parseSlideProjectionState(value: unknown) {
   return result.success ? result.data : null;
 }
 export type SlideAudienceState =
-  | { status: "ready"; text: string; revision: number }
+  | {
+      status: "ready";
+      contentType?: "text";
+      text: string;
+      revision: number;
+    }
+  | {
+      status: "ready";
+      contentType: "image";
+      text: null;
+      title: string;
+      revision: number;
+    }
   | {
       status: Exclude<SlideProjectionState["status"], "ready">;
       text: null;

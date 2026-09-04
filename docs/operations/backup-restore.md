@@ -13,6 +13,15 @@ This workflow protects against operator error and logical database corruption wh
 
 VPS loss, disk loss, provider-wide loss, and Tokyo-region loss have no recovery objective. Archives are stored on the same VPS and are not disaster recovery. WebARENA operational backups are not user restore points.
 
+Slide image bytes are stored in PostgreSQL and therefore included in the same
+encrypted logical archive; there is no separate image directory to copy. The
+Slide reconciliation signature hashes the restored bytes inside PostgreSQL and
+never prints them. The disposable `pnpm backup:rehearse` fixture includes a
+synthetic image and must remain within the same 120-minute RTO. Before raising a
+production image quota, estimate the corresponding full database/archive size
+and run an isolated restore with representative synthetic bytes. A restore proof
+that omits or changes image bytes is invalid.
+
 ## Encryption and access boundary
 
 Archives use OpenSSL CMS AuthEnvelopedData with AES-256-GCM and an RSA 3072-bit recipient certificate; the content key is wrapped with RSA-OAEP. Generate the certificate and encrypted private key on an operator-controlled machine. Copy only the public certificate to `/etc/levi/backup-recipient.crt` on the VPS. Keep the private key offline; place it temporarily on the VPS with `600 root:root` only during an immediately approved restore, then remove it through the operator's secure process.

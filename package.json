@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "BETTER_AUTH_SECRET=build-only-secret-at-least-thirty-two-characters ADMIN_BETTER_AUTH_SECRET=build-only-admin-secret-at-least-thirty-two-characters BETTER_AUTH_BASE_URL=https://levi.invalid BETTER_AUTH_TRUSTED_ORIGINS=https://levi.invalid next build",
+    "build": "BETTER_AUTH_SECRET=build-only-secret-at-least-thirty-two-characters ADMIN_BETTER_AUTH_SECRET=build-only-admin-secret-at-least-thirty-two-characters BETTER_AUTH_BASE_URL=https://levi.invalid BETTER_AUTH_TRUSTED_ORIGINS=https://levi.invalid SLIDE_IMAGE_BYTES_PER_CHURCH=1073741824 next build",
     "start": "next start",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -74,6 +74,7 @@
     "pg": "8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "sharp": "0.35.4",
     "zod": "4.5.2"
   },
   "devDependencies": {

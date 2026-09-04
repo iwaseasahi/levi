@@ -50,6 +50,13 @@ export function parseSlideInput(value: unknown): SlideInput {
   return parse(inputSchema, value);
 }
 
+export function parseSlideTitle(value: unknown): string {
+  return parse(
+    singleLine.refine((title) => title.length > 0),
+    value,
+  );
+}
+
 // Preview validates only body; a missing title must not prevent preview.
 export function parseSlideBody(value: unknown): string {
   return parse(bodySchema, value);

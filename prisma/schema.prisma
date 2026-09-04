@@ -352,21 +352,48 @@ model ScriptureBookmark {
   @@map("scripture_bookmarks")
 }
 
+enum SlideContentType {
+  TEXT
+  IMAGE
+
+  @@map("slide_content_type")
+}
+
 model Slide {
-  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  churchId  String          @map("church_id") @db.Uuid
-  title     String          @db.VarChar(200)
-  body      String          @db.Text
-  revision  Int             @default(1)
-  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
-  church    Church          @relation(fields: [churchId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "slides_church_id_fkey")
-  bookmarks SlideBookmark[]
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  churchId    String           @map("church_id") @db.Uuid
+  title       String           @db.VarChar(200)
+  body        String?          @db.Text
+  contentType SlideContentType @default(TEXT) @map("content_type")
+  revision    Int              @default(1)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  church      Church           @relation(fields: [churchId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "slides_church_id_fkey")
+  bookmarks   SlideBookmark[]
+  image       SlideImage?
 
   @@unique([id, churchId], map: "slides_id_church_uk")
   @@index([churchId, createdAt(sort: Desc), id(sort: Desc)], map: "slides_church_created_id_idx")
   @@index([churchId, updatedAt(sort: Desc), id(sort: Desc)], map: "slides_church_updated_id_idx")
   @@map("slides")
+}
+
+model SlideImage {
+  slideId   String   @id @map("slide_id") @db.Uuid
+  churchId  String   @map("church_id") @db.Uuid
+  mediaType String   @map("media_type") @db.VarChar(10)
+  byteSize  Int      @map("byte_size")
+  width     Int
+  height    Int
+  checksum  String   @db.Char(64)
+  data      Bytes    @db.ByteA
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  slide     Slide    @relation(fields: [slideId, churchId], references: [id, churchId], onDelete: Cascade, onUpdate: NoAction, map: "slide_images_slide_church_fk")
+
+  @@unique([slideId, churchId], map: "slide_images_slide_church_uk")
+  @@index([churchId], map: "slide_images_church_id_idx")
+  @@map("slide_images")
 }
 
 model SlideBookmark {

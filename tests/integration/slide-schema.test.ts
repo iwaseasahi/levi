@@ -37,7 +37,7 @@ describe("Slide database contract", () => {
         body: "😀".repeat(100_000),
       },
     });
-    expect([...unicode.body]).toHaveLength(100_000);
+    expect([...unicode.body!]).toHaveLength(100_000);
     await expect(
       prisma.slide.update({
         where: { id: unicode.id },
@@ -100,6 +100,7 @@ describe("Slide database contract", () => {
       "revision",
       "created_at",
       "updated_at",
+      "content_type",
     ]);
     const constraints = await prisma.$queryRaw<
       Array<{ conname: string; confdeltype: string }>
@@ -109,7 +110,7 @@ describe("Slide database contract", () => {
       expect.arrayContaining([
         "slides_pkey",
         "slides_title_valid",
-        "slides_body_valid",
+        "slides_content_valid",
         "slides_revision_positive",
         "slides_church_id_fkey",
       ]),
@@ -133,6 +134,72 @@ describe("Slide database contract", () => {
       indexes.find((row) => row.indexname === "slides_church_updated_id_idx")
         ?.indexdef,
     ).toContain("(church_id, updated_at DESC, id DESC)");
+  });
+
+  it("installs bounded one-to-one image binary storage", async () => {
+    const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`
+      SELECT column_name FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='slide_images' ORDER BY ordinal_position`;
+    expect(columns.map((row) => row.column_name)).toEqual([
+      "slide_id",
+      "church_id",
+      "media_type",
+      "byte_size",
+      "width",
+      "height",
+      "checksum",
+      "data",
+      "created_at",
+      "updated_at",
+    ]);
+    const constraints = await prisma.$queryRaw<
+      Array<{ conname: string; confdeltype: string }>
+    >`SELECT conname,confdeltype::text FROM pg_constraint WHERE conrelid='slide_images'::regclass`;
+    expect(constraints.map((row) => row.conname)).toEqual(
+      expect.arrayContaining([
+        "slide_images_pkey",
+        "slide_images_slide_church_uk",
+        "slide_images_media_type_valid",
+        "slide_images_byte_size_valid",
+        "slide_images_dimensions_valid",
+        "slide_images_checksum_valid",
+        "slide_images_slide_church_fk",
+      ]),
+    );
+    expect(
+      constraints.find(
+        ({ conname }) => conname === "slide_images_slide_church_fk",
+      )?.confdeltype,
+    ).toBe("c");
+    const triggers = await prisma.$queryRaw<Array<{ tgname: string }>>`
+      SELECT tgname FROM pg_trigger
+      WHERE NOT tgisinternal AND tgname IN ('slides_image_total_ck', 'slide_images_total_ck')`;
+    expect(triggers.map(({ tgname }) => tgname).sort()).toEqual([
+      "slide_images_total_ck",
+      "slides_image_total_ck",
+    ]);
+  });
+
+  it("rejects a Slide whose selected content type and image child disagree", async () => {
+    const owner = await church();
+    await expect(
+      prisma.slide.create({
+        data: {
+          churchId: owner.id,
+          title: "Missing image child",
+          body: null,
+          contentType: "IMAGE",
+        },
+      }),
+    ).rejects.toThrow();
+
+    const text = await prisma.slide.create({
+      data: { ...fields, churchId: owner.id },
+    });
+    await expect(
+      prisma.$executeRaw`
+        INSERT INTO slide_images(slide_id,church_id,media_type,byte_size,width,height,checksum,data)
+        VALUES (${text.id}::uuid,${owner.id}::uuid,'image/png',1,1,1,${"0".repeat(64)},decode('00','hex'))`,
+    ).rejects.toThrow();
   });
 
   it("physically deletes one slide without deleting siblings, its owner or other tenants", async () => {

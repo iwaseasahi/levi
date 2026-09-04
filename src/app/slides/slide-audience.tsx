@@ -7,6 +7,7 @@ import {
   slideProjectionState,
 } from "@/domain/slides/projection";
 import { SlideText } from "./slide-text";
+import { SlideImage } from "./slide-image";
 import { useSlideAudienceData } from "./use-slide-audience-data";
 
 const ignoreNavigation = () => undefined;
@@ -38,7 +39,15 @@ export function SlideAudience({
       }
     >
       {state.status === "loading" ? null : state.status === "ready" ? (
-        <SlideText text={state.text} fontScale={fontScale} blank={blank} />
+        state.contentType === "image" ? (
+          <SlideImage
+            src={`/api/church/slides/${id}/image?revision=${state.revision}`}
+            title={state.title}
+            blank={blank}
+          />
+        ) : (
+          <SlideText text={state.text} fontScale={fontScale} blank={blank} />
+        )
       ) : (
         <p role="alert">{slideAudienceMessages[state.status]}</p>
       )}

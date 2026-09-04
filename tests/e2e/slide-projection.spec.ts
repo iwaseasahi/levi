@@ -26,7 +26,7 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
-  await expect(audience.locator("pre")).toHaveText(slide.body);
+  await expect(audience.locator("pre")).toHaveText(slide.body!);
   expect(
     await audience.locator("pre").evaluate((element) => {
       const style = getComputedStyle(element);
@@ -102,9 +102,9 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
-  await expect(audience.locator("pre")).toHaveText(slide.body);
+  await expect(audience.locator("pre")).toHaveText(slide.body!);
   await audience.reload();
-  await expect(audience.locator("pre")).toHaveText(slide.body);
+  await expect(audience.locator("pre")).toHaveText(slide.body!);
   await expect(controller.getByRole("status")).toContainText("100%");
 
   await prisma.slide.update({
@@ -176,7 +176,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   let audience = await opened;
-  await expect(audience.locator("pre")).toHaveText(slide.body);
+  await expect(audience.locator("pre")).toHaveText(slide.body!);
   const valid = new URL(audience.url());
   for (const value of ["-1", "2", "invalid"]) {
     const invalid = new URL(valid);
@@ -188,7 +188,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
     await expect(audience.locator("pre")).toHaveCount(0);
     await expect(audience.getByRole("navigation")).toHaveCount(0);
     await controller.getByRole("button", { name: "Open" }).click();
-    await expect(audience.locator("pre")).toHaveText(slide.body);
+    await expect(audience.locator("pre")).toHaveText(slide.body!);
   }
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
@@ -200,7 +200,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   const reopened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   audience = await reopened;
-  await expect(audience.locator("pre")).toHaveText(slide.body);
+  await expect(audience.locator("pre")).toHaveText(slide.body!);
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
   ).toBeEnabled();
