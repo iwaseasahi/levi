@@ -35,7 +35,9 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await page.goto("/slides");
   const results = page.getByRole("region", { name: "スライド一覧" });
   await expect(results.getByRole("listitem")).toHaveCount(1);
-  await results.getByRole("link", { name: "Synthetic lifecycle" }).click();
+  await results
+    .getByRole("link", { name: "テキスト Synthetic lifecycle" })
+    .click();
   const controller = page.getByRole("region", { name: "投影操作" });
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
@@ -167,7 +169,9 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   // outage active until the explicit user retry, not for an arbitrary count.
   await page.unroute("**/api/church/slides");
   await page.getByRole("button", { name: "再試行" }).click();
-  await expect(page.getByRole("link", { name: slide.title })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: `テキスト ${slide.title}` }),
+  ).toBeVisible();
   await page.goto(`/slides/${slide.id}/edit`);
   const other = await context.newPage();
   await other.goto(`/slides/${slide.id}/edit`);

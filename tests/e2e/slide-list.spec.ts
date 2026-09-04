@@ -12,16 +12,33 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
   const date = new Date("2026-08-31T00:00:00Z");
   const longTitle = "長いスライドタイトル".repeat(15);
   await prisma.slide.createMany({
-    data: Array.from({ length: 25 }, (_, index) => ({
+    data: Array.from({ length: 24 }, (_, index) => ({
       churchId: scriptureAccount.churchId,
-      title:
-        index === 24
-          ? longTitle
-          : `Synthetic ${String(index).padStart(2, "0")}`,
+      title: `Synthetic ${String(index).padStart(2, "0")}`,
       body: "Ordinary body",
-      createdAt: index === 24 ? new Date(date.getTime() + 1000) : date,
+      createdAt: date,
       updatedAt: date,
     })),
+  });
+  await prisma.slide.create({
+    data: {
+      churchId: scriptureAccount.churchId,
+      title: longTitle,
+      body: null,
+      contentType: "IMAGE",
+      createdAt: new Date(date.getTime() + 1000),
+      updatedAt: date,
+      image: {
+        create: {
+          mediaType: "image/png",
+          byteSize: 1,
+          width: 1,
+          height: 1,
+          checksum: "a".repeat(64),
+          data: new Uint8Array([1]),
+        },
+      },
+    },
   });
   const foreign = await prisma.church.create({
     data: {
@@ -52,8 +69,11 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
     const list = page.getByRole("region", { name: "スライド一覧" });
     await expect(list.getByRole("listitem")).toHaveCount(20);
     await expect(list.getByRole("link").first()).toHaveAccessibleName(
-      longTitle,
+      `画像 ${longTitle}`,
     );
+    await expect(
+      list.getByRole("link", { name: "テキスト Synthetic 23", exact: true }),
+    ).toBeVisible();
     const first = await list
       .getByRole("link")
       .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
@@ -71,7 +91,10 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
           mainBox!.y,
         );
       }
-      const link = list.getByRole("link", { name: longTitle, exact: true });
+      const link = list.getByRole("link", {
+        name: `画像 ${longTitle}`,
+        exact: true,
+      });
       await link.focus();
       await expect(link).toBeFocused();
       expect(
@@ -100,7 +123,7 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
         .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
     ).toEqual(first);
     await list
-      .getByRole("link", { name: longTitle, exact: true })
+      .getByRole("link", { name: `画像 ${longTitle}`, exact: true })
       .press("Enter");
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(longTitle);
     const detailSidebar = page.getByRole("complementary", {
@@ -238,7 +261,10 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   ).toHaveAttribute("aria-expanded", "true");
   await page
     .getByRole("region", { name: "スライド一覧" })
-    .getByRole("link", { name: "Synthetic favorite slide", exact: true })
+    .getByRole("link", {
+      name: "テキスト Synthetic favorite slide",
+      exact: true,
+    })
     .click();
   await expect(page.getByText(/保存済み · リビジョン/)).toHaveCount(0);
   const blank = page.getByRole("button", {

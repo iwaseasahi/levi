@@ -119,7 +119,8 @@ This is a live list, not a snapshot: concurrent creates appear on refresh and
 deletes may shorten a later page. With unchanged data, traversal has no
 duplicates or omissions. Test equal creation timestamps, cursor tampering, and
 cross-tenant cursor reuse. Responses contain `{slides,nextCursor}`; list entries
-omit body and church ID.
+include the normalized `contentType: "text" | "image"` needed for the visible
+type label and omit body, image metadata, image bytes, and church ID.
 
 ## Projection
 

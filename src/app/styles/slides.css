@@ -239,9 +239,22 @@
   min-width: 0;
 }
 .slide-list-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   overflow-wrap: anywhere;
   font-size: 1.125rem;
   font-weight: 700;
+}
+.slide-list-type {
+  flex: 0 0 auto;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.25rem;
+  background: var(--surface-control);
+  color: var(--accent);
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 .slide-list-number {
   color: var(--text-muted);
