@@ -63,7 +63,7 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
        preview, audience, blanking, and image-specific controls with component tests.
 4. [x] Extend E2E acceptance, threat/data handling, backup/restore reconciliation,
        capacity monitoring, and deployment documentation/tests.
-5. [ ] Run focused checks, all applicable canonical checks, review the complete
+5. [x] Run focused checks, all applicable canonical checks, review the complete
        diff for security/data-loss/scope issues, and prepare a PR with exact evidence.
 
 ## Progress
@@ -83,6 +83,8 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
   npm-compatible registry because POST requests to the default npm audit endpoint
   timed out; it reports zero high/critical and one existing moderate MySQL-only
   transitive advisory. License policy approves 314 production records.
+- 2026-09-04 11:56 JST — Created PR #471 at commit `dd44fd8`; required Quality,
+  Database, E2E, and Security checks all passed on that implementation commit.
 
 ## Decisions
 
@@ -128,17 +130,19 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
 - [x] `npm_config_registry=https://registry.yarnpkg.com pnpm security:check`
 - [x] `pnpm check`
 - [x] `git diff --check`
+- [x] Required Quality, Database, E2E, and Security CI on implementation commit
 - [x] Final diff reviewed for scope, secrets, migration safety, authorization,
       bounded resource use, and unsafe defaults.
 
 ## Handoff or blockers
 
 - Completed: Issue intake, repository inspection, branch and lease setup.
-- Remaining: commit, PR creation, and exact-head CI handoff.
+- Remaining: human review and the separately approval-gated production quota,
+  representative capacity rehearsal, migration, and deployment.
 - Blocker: none. The exact production quota remains an explicit rollout gate and
   does not block implementing a required, validated configuration boundary.
-- Resume with: run the image E2E after its strict locator correction, then the
-  backup rehearsal and canonical checks.
+- Resume with: review PR #471; before production, approve the exact quota and
+  run the documented representative-size capacity/restore rehearsal.
 
 ## Result
 
