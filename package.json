@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "BETTER_AUTH_SECRET=build-only-secret-at-least-thirty-two-characters ADMIN_BETTER_AUTH_SECRET=build-only-admin-secret-at-least-thirty-two-characters BETTER_AUTH_BASE_URL=https://levi.invalid BETTER_AUTH_TRUSTED_ORIGINS=https://levi.invalid next build",
+    "build": "BETTER_AUTH_SECRET=build-only-secret-at-least-thirty-two-characters ADMIN_BETTER_AUTH_SECRET=build-only-admin-secret-at-least-thirty-two-characters BETTER_AUTH_BASE_URL=https://levi.invalid BETTER_AUTH_TRUSTED_ORIGINS=https://levi.invalid SLIDE_IMAGE_BYTES_PER_CHURCH=1073741824 next build",
     "start": "next start",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -36,7 +36,7 @@
     "test:integration": "tsx scripts/run-integration-tests.ts",
     "test:e2e": "tsx scripts/run-e2e-tests.ts",
     "test:e2e:install": "playwright install chromium",
-    "security:audit": "pnpm audit --prod --audit-level high",
+    "security:audit": "tsx scripts/check-vulnerabilities.ts",
     "security:licenses": "tsx scripts/check-licenses.ts",
     "security:check": "pnpm security:audit && pnpm security:licenses",
     "admin:hash-password": "tsx scripts/hash-admin-password.ts",
@@ -74,6 +74,7 @@
     "pg": "8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "sharp": "0.35.4",
     "zod": "4.5.2"
   },
   "devDependencies": {

@@ -9,6 +9,7 @@
 - no encrypted weekly backup is newer than eight days;
 - the newest isolated restore proof is older than 90 days;
 - root disk or backup filesystem use reaches 80%;
+- any church's Slide image bytes reach 80% of its configured quota;
 - host memory use reaches 90%;
 - Caddy records at least five 5xx responses in five minutes.
 
@@ -26,6 +27,20 @@ while the failure continues, and posts one recovery message after the first
 successful check. The message never contains check output, request data, or a
 secret. When no webhook is configured, health checks and their systemd result
 continue to work without Slack.
+
+`SLIDE_IMAGE_BYTES_PER_CHURCH` is read from the protected production environment
+and is the hard transactional write limit. `LEVI_SLIDE_IMAGE_CAPACITY_PERCENT`
+in `monitoring.env` defaults to 80 and is the earlier warning threshold. Health
+output reports only the maximum percentage across churches, never church IDs,
+titles, image metadata, checksums, or bytes. The operator must approve the exact
+production quota before deploying the image migration/application.
+
+Every successful minute also records `slide_image_table_bytes`, total
+`database_bytes`, and the newest `weekly_backup_bytes` in the bounded system
+journal. Compare these aggregate samples to assess 14-day growth without
+querying church content. The hard alerts remain the 80% per-church quota,
+root-disk, and backup-filesystem thresholds; abnormal growth below those limits
+requires an operations Issue and quota/S3 review under ADR 0016.
 
 ## Slack alert setup
 

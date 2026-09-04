@@ -110,7 +110,7 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
         expect(shell).not.toContain(value);
       await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
       await expect(page.getByText(row.title, { exact: true })).toHaveCount(0);
-      await expect(page.getByText(row.body, { exact: true })).toHaveCount(0);
+      await expect(page.getByText(row.body!, { exact: true })).toHaveCount(0);
     }
     expect(await prisma.slide.findUnique({ where: { id: row.id } })).toEqual(
       row,
@@ -140,7 +140,7 @@ for (const denied of ["revoked", "suspended"] as const) {
     const opened = context.waitForEvent("page");
     await controller.getByRole("button", { name: "Open" }).click();
     const audience = await opened;
-    await expect(audience.locator("pre")).toHaveText(slide.body);
+    await expect(audience.locator("pre")).toHaveText(slide.body!);
     pageErrorGuard.allowConsoleError(
       denied === "revoked"
         ? "Failed to load resource: the server responded with a status of 401 (Unauthorized)"

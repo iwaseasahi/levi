@@ -79,6 +79,7 @@ readonly smtp_secure="$(value_for "$production_environment" SMTP_SECURE)"
 readonly smtp_user="$(value_for "$production_environment" SMTP_USER)"
 readonly smtp_password="$(value_for "$production_environment" SMTP_PASSWORD)"
 readonly mail_from="$(value_for "$production_environment" MAIL_FROM)"
+readonly slide_image_bytes_per_church="$(value_for "$production_environment" SLIDE_IMAGE_BYTES_PER_CHURCH)"
 
 [[ "$(value_for "$production_environment" LEVI_DOMAIN)" == "levi-system.com" ]] || fail
 [[ "$(value_for "$production_environment" NODE_ENV)" == "production" ]] || fail
@@ -106,6 +107,8 @@ readonly mail_from="$(value_for "$production_environment" MAIL_FROM)"
 [[ "$smtp_user" == "levi.system.app@gmail.com" ]] || fail
 [[ "$mail_from" == "$smtp_user" ]] || fail
 [[ "$smtp_password" =~ ^[^[:space:]]{16,128}$ ]] || fail
+[[ "$slide_image_bytes_per_church" =~ ^[0-9]+$ ]] || fail
+(( slide_image_bytes_per_church >= 10485760 && slide_image_bytes_per_church <= 10737418240 )) || fail
 
 [[ "$(value_for "$backup_environment" LEVI_ENV_FILE)" == "$production_environment" ]] || fail
 [[ "$(value_for "$backup_environment" LEVI_BACKUP_CERTIFICATE)" == "$backup_certificate" ]] || fail

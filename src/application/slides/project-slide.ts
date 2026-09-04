@@ -36,11 +36,20 @@ export function createSlideAudienceSession({
         fail();
         return;
       }
-      state = {
-        status: "ready",
-        text: parseSlideBody(slide.body),
-        revision: slide.revision,
-      };
+      state =
+        slide.contentType === "image"
+          ? {
+              status: "ready",
+              contentType: "image",
+              text: null,
+              title: slide.title,
+              revision: slide.revision,
+            }
+          : {
+              status: "ready",
+              text: parseSlideBody(slide.body),
+              revision: slide.revision,
+            };
       publish(state);
     } catch {
       fail();

@@ -14,6 +14,10 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const monitor = path.join(root, "scripts", "run-production-health-monitor.sh");
+const healthCheck = readFileSync(
+  path.join(root, "scripts", "check-production-health.sh"),
+  "utf8",
+);
 const workflow = readFileSync(
   path.join(root, ".github", "workflows", "production-smoke.yml"),
   "utf8",
@@ -49,6 +53,13 @@ assert.match(service, /StateDirectory=levi-monitoring/);
 assert.match(service, /StateDirectoryMode=0700/);
 assert.match(timer, /OnUnitActiveSec=1m/);
 assert.match(monitoringExample, /^LEVI_SLACK_WEBHOOK_URL=$/m);
+assert.match(monitoringExample, /^LEVI_SLIDE_IMAGE_CAPACITY_PERCENT=80$/m);
+assert.match(healthCheck, /SLIDE_IMAGE_BYTES_PER_CHURCH/);
+assert.match(healthCheck, /FROM slide_images/);
+assert.match(healthCheck, /slide_image_percent=/);
+assert.match(healthCheck, /slide_image_table_bytes=/);
+assert.match(healthCheck, /database_bytes=/);
+assert.match(healthCheck, /weekly_backup_bytes=/);
 
 const fixture = mkdtempSync(path.join(tmpdir(), "levi-monitoring."));
 try {

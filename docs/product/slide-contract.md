@@ -3,7 +3,8 @@
 Delivery: [Issue #59](https://github.com/iwaseasahi/levi/issues/59). This is the
 contract for child implementation Issues. The [acceptance map](../testing-slide-e2e.md)
 records runtime verification; production rollout is separately approved.
-Ownership/storage: [ADR 0015](../architecture/0015-church-owned-slides.md).
+Ownership/storage: [ADR 0015](../architecture/0015-church-owned-slides.md) and
+[ADR 0016](../architecture/0016-store-slide-images-in-postgresql.md).
 
 ## Pinned legacy evidence
 
@@ -34,6 +35,8 @@ eligible church session can manage that church's slides.
 | `id`, `churchId`         | Server-owned UUIDs; church from the authenticated actor only.                                                                                                    |
 | `title`                  | Required, trim leading/trailing ASCII space/tab/newline after EOL normalization, 1–200 Unicode code points, single line (no CR/LF/tab).                          |
 | `body`                   | Required plain text, normalize CRLF/CR to LF, preserve other whitespace; 1–100,000 Unicode code points and at least one character other than ASCII space/tab/LF. |
+| `contentType`            | Server-returned `text` or `image`; one Slide has exactly one surface. Existing rows are `text`.                                                                  |
+| `image`                  | For image Slides only: media type, normalized byte size, width, and height; bytes are never embedded in Slide JSON.                                              |
 | `revision`               | Server-owned positive integer, starts at 1 and increments on update; optimistic concurrency token, not edit history.                                             |
 | `createdAt`, `updatedAt` | Server-owned UTC timestamps; creation time immutable.                                                                                                            |
 
@@ -57,6 +60,24 @@ return `{slide}` without `churchId`; delete has no response body. Mutation Origi
 must exactly match the configured canonical origin. CRUD detail routes reject
 query parameters; list cursor parameters belong to the collection read contract.
 
+Issue #470 adds multipart create/update for image Slides. The form contains
+exactly `title` and `image`, plus `expectedRevision` for update. Accept one
+decoded JPEG, PNG, or static WebP upload of at most 10 MiB; decoded dimensions
+are at most 8,192 × 8,192 and 40 million pixels. The server applies orientation,
+removes metadata, re-encodes, and rejects malformed or animated files. Updating
+an image Slide title without replacing its bytes uses JSON with
+`contentType: "image"`. Switching to text physically deletes the image child.
+Each application process permits two active normalizations and four queued
+normalizations; further work fails closed. A normalization request times out
+after 30 seconds while its native operation retains its slot until completion.
+The authenticated `GET /api/church/slides/[id]/image?revision=N` returns bytes
+only for the owned Slide and exact current revision with private no-store
+headers. Invalid, missing, stale, and foreign image requests disclose no bytes.
+
+Each production church has an explicit byte quota. Reaching it returns 409 and
+does not partially mutate the Slide. The deployment value requires operator
+approval; one GiB is only the checked-in development/test example.
+
 ## Single-page body and preview
 
 Issue #424 intentionally simplifies the replacement contract: one Slide body is
@@ -75,6 +96,11 @@ Its pre-existing base size remains 12% of the 16:9 surface height. The title sta
 in the controller.
 Preview has no page navigation or page selection controls.
 Opening projection requires a successfully saved Slide, not an unsaved draft.
+
+An image Slide preview and audience use the same 16:9 black surface. They retain
+the image aspect ratio and show the entire image with `object-fit: contain`; they
+do not crop, stretch, paginate, or expose text font controls. One Slide contains
+one image. Blank/unblank and revision/session revalidation match text Slides.
 
 ## List pagination
 

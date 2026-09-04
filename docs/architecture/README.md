@@ -30,6 +30,7 @@ them in implementation code.
 | [0013](0013-email-invitation-and-self-service-password-recovery.md) | accepted   | Email invitation and self-service password recovery      |
 | [0014](0014-password-link-purpose-and-validity.md)                  | accepted   | Separate setup/recovery emails and three-day links       |
 | [0015](0015-church-owned-slides.md)                                 | accepted   | Church-owned slides and transient presentation           |
+| [0016](0016-store-slide-images-in-postgresql.md)                    | accepted   | Bounded Slide images stored in PostgreSQL                |
 
 Implementation-level data rules are documented in
 [`database-conventions.md`](database-conventions.md) and the accepted

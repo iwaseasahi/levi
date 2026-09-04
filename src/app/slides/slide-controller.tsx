@@ -61,22 +61,30 @@ export function SlideController({
         >
           Open
         </button>
-        <button
-          aria-label="文字を大きく"
-          type="button"
-          disabled={!ready || projection.state!.presentation.fontScale >= 2.2}
-          onClick={() => projection.control({ action: "font-larger" })}
-        >
-          文字 +
-        </button>
-        <button
-          aria-label="文字を小さく"
-          type="button"
-          disabled={!ready || projection.state!.presentation.fontScale <= 0.6}
-          onClick={() => projection.control({ action: "font-smaller" })}
-        >
-          文字 -
-        </button>
+        {slide.contentType !== "image" && (
+          <>
+            <button
+              aria-label="文字を大きく"
+              type="button"
+              disabled={
+                !ready || projection.state!.presentation.fontScale >= 2.2
+              }
+              onClick={() => projection.control({ action: "font-larger" })}
+            >
+              文字 +
+            </button>
+            <button
+              aria-label="文字を小さく"
+              type="button"
+              disabled={
+                !ready || projection.state!.presentation.fontScale <= 0.6
+              }
+              onClick={() => projection.control({ action: "font-smaller" })}
+            >
+              文字 -
+            </button>
+          </>
+        )}
         <button
           aria-label="空白と表示を切り替え"
           type="button"
@@ -100,7 +108,11 @@ export function SlideController({
         {error
           ? "投影停止"
           : ready
-            ? `${projection.state!.presentation.blank ? "空白投影" : "投影中"} · ${Math.round(projection.state!.presentation.fontScale * 100)}%`
+            ? slide.contentType === "image"
+              ? projection.state!.presentation.blank
+                ? "空白投影"
+                : "投影中"
+              : `${projection.state!.presentation.blank ? "空白投影" : "投影中"} · ${Math.round(projection.state!.presentation.fontScale * 100)}%`
             : opened
               ? "接続中…"
               : "投映画面は開いていません。"}

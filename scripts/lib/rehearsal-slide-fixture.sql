@@ -7,6 +7,20 @@ INSERT INTO slides (id, church_id, title, body, revision) VALUES
  ('00000000-0000-4000-8000-000000389011', '00000000-0000-4000-8000-000000389001', 'Synthetic cascade', 'Synthetic body', 1),
  ('00000000-0000-4000-8000-000000389012', '00000000-0000-4000-8000-000000389002', 'Synthetic deleted slide', 'Synthetic body', 2),
  ('00000000-0000-4000-8000-000000389013', '00000000-0000-4000-8000-000000389002', 'Synthetic preserved slide', E'日本語\n\n\n\nSecond', 3);
+INSERT INTO slides (id, church_id, title, body, content_type, revision) VALUES
+ ('00000000-0000-4000-8000-000000389014', '00000000-0000-4000-8000-000000389002', 'Synthetic image slide', NULL, 'IMAGE', 1);
+INSERT INTO slide_images (
+  slide_id, church_id, media_type, byte_size, width, height, checksum, data
+) VALUES (
+  '00000000-0000-4000-8000-000000389014',
+  '00000000-0000-4000-8000-000000389002',
+  'image/png',
+  93,
+  2,
+  1,
+  'b4fc99c5e2ebf22b2b2eb35cdb9b02fbc03fceaa90aa2f10f69c428f3e440b57',
+  decode('iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAIAAAB7QOjdAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAD0lEQVQImWMwTptpnDYTAAeZAmUGcC4NAAAAAElFTkSuQmCC', 'base64')
+);
 INSERT INTO bible_books (id, canonical_code, canonical_order, testament)
  VALUES ('00000000-0000-4000-8000-000000389020', 'TBR389', 90, 'NEW');
 INSERT INTO bible_verses (book_id, translation_id, chapter_number, verse_number, text)

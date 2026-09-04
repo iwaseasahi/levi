@@ -7,7 +7,7 @@ decision.
 
 ## Assets and data
 
-- Song, slide, Bible, bookmark, and folder content and its licensing/provenance.
+- Song, slide text/image, Bible, bookmark, and folder content and its licensing/provenance.
 - User/operator identity, roles, sessions, and future audit records.
 - Database integrity, migration history, backups, and legacy-ID mappings.
 - Presentation availability and correctness during a worship service.
@@ -53,6 +53,8 @@ agent/development boundary.
 | Request/log forgery                   | `x-request-id`, log attributes                                      | Levi replaces caller IDs with UUIDs and emits JSON; sensitive keys redact recursively                                                                                                                                                  | Issue #85 must define and test the Caddy-to-Levi trusted proxy boundary                       |
 | Audience stale or unauthorized text   | Direct audience tab, cross-window controls, and authenticated APIs  | Canonical coordinates only in URL, strict versioned same-origin/exact-window messages, periodic/visibility session checks, fail-closed text removal and control rejection, direct-tab E2E                                              | Same-session latest-Chrome scope is retained                                                  |
 | CI permission abuse                   | Agent/dependency PR                                                 | Read-only CI permissions, protected required checks, pinned actions, no production secrets/deploy job                                                                                                                                  | Separate release workflow/environment later                                                   |
+| Malicious image upload                | Slide multipart upload and decoder                                  | 10 MiB request/output limits, signature-based decode, static JPEG/PNG/WebP allowlist, 8,192-side/40M-pixel bounds, metadata stripping, two active/four queued normalizations, 30-second response timeout, generalized errors           | Native work retains its concurrency slot after timeout; monitor process memory and latency    |
+| Unauthorized image disclosure         | Slide image byte route, browser cache, projection                   | Session-derived church scope, exact Slide revision, indistinguishable missing/foreign response, private no-store/nosniff response, no public URL or projection payload bytes, bounded audience revalidation                            | Already-rendered pixels persist until the bounded revalidation/browser lifecycle              |
 
 ## Review triggers
 
@@ -80,3 +82,28 @@ Previously loaded management edit buffers are not remotely erased. Encrypted
 archives may contain physically deleted Slides; #389 requires reviewed deletion
 reconciliation before a separately approved restore promotion. No legacy Slide
 import, content history, new service or expanded administrator access is added.
+
+## Slide image review (#470)
+
+Original filenames and claimed MIME types are untrusted and discarded. Sharp
+must decode an allowed static format before any database write, then orientation
+is applied and metadata is stripped through re-encoding. Request bytes, decoded
+pixels, output bytes, active/queued work, and response time are bounded. A timed
+out native operation is not treated as cancelled: it retains its normalization
+slot until completion so repeated timeouts cannot silently exceed the active-work
+limit.
+
+Image bytes are Confidential and live only in `slide_images.data` and encrypted
+database backups. Ordinary Slide selects name every returned field and include
+only image dimensions/media type/size. Byte reads require the authenticated
+image route for the server-derived church and exact current revision; URLs and
+window messages carry no bytes, checksum, filename, or storage credential.
+Mutation logs contain only fixed capability/status fields.
+
+Church-row locking serializes quota-changing writes. Composite ownership FKs,
+deferred content-type triggers, database bounds, and one transaction prevent
+cross-tenant children, orphan bytes, quota races, and text/image partial state.
+Physical deletion cascades, while encrypted backup retention remains the known
+delayed-erasure boundary. The restore rehearsal hashes actual synthetic bytes
+inside PostgreSQL without printing them. PostgreSQL/S3 migration conditions and
+the accepted single-VPS durability risk are recorded in ADR 0016.

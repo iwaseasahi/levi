@@ -8,6 +8,8 @@ export function slideErrorMessage(error: unknown) {
   if (error instanceof SlideInputError)
     return "タイトルは1〜200文字の1行、本文は空白以外を含む1〜100,000文字で入力してください。";
   if (error instanceof ClientApiError) {
+    if (error.code === "SLIDE_IMAGE_QUOTA_EXCEEDED")
+      return "教会で保存できる画像容量の上限に達しました。不要な画像スライドを削除してから再度お試しください。";
     if (error.status === 409)
       return "別の編集が保存されています。入力は保持しています。内容を控えてから再度開いてください。";
     if (error.status === 401 || error.status === 403)

@@ -13,11 +13,12 @@ writes update `updated_at`.
 
 ## Database enums
 
-| Enum               | Values                | Owner/use                     |
-| ------------------ | --------------------- | ----------------------------- |
-| `user_actor_state` | `PENDING`, `ACTIVE`   | safe identity provisioning    |
-| `church_status`    | `ACTIVE`, `SUSPENDED` | tenant access lifecycle       |
-| `bible_testament`  | `OLD`, `NEW`          | canonical book classification |
+| Enum                 | Values                | Owner/use                     |
+| -------------------- | --------------------- | ----------------------------- |
+| `user_actor_state`   | `PENDING`, `ACTIVE`   | safe identity provisioning    |
+| `church_status`      | `ACTIVE`, `SUSPENDED` | tenant access lifecycle       |
+| `bible_testament`    | `OLD`, `NEW`          | canonical book classification |
+| `slide_content_type` | `TEXT`, `IMAGE`       | exclusive Slide surface type  |
 
 Enums are mapped to explicit Prisma enums and physical values. Adding or
 renaming a value requires a forward migration and compatibility review.
@@ -384,6 +385,41 @@ Constraints:
 The composite FKs prove endpoints, not continuity of every intermediate verse.
 Search/import reconciliation must reject gaps in the inclusive range.
 
+### `slides` and `slide_images`
+
+`slides` is the church-owned aggregate root. `content_type` is `TEXT` by
+default. A database CHECK requires a text Slide to have a valid nonblank `body`
+and an image Slide to have a null `body`. Application writes create exactly one
+`slide_images` child for every image Slide.
+
+| `slides` column | Type           | Null | Contract                                     |
+| --------------- | -------------- | ---- | -------------------------------------------- |
+| `id`            | `uuid`         | no   | PK; server generated                         |
+| `church_id`     | `uuid`         | no   | Church FK with physical cascade              |
+| `title`         | `varchar(200)` | no   | normalized nonblank single-line title        |
+| `body`          | `text`         | yes  | valid text only for `TEXT`; null for `IMAGE` |
+| `content_type`  | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`            |
+| `revision`      | `integer`      | no   | positive optimistic concurrency token        |
+| timestamps      | `timestamptz`  | no   | creation/update                              |
+
+| `slide_images` column | Type          | Null | Contract                                   |
+| --------------------- | ------------- | ---- | ------------------------------------------ |
+| `slide_id`            | `uuid`        | no   | PK and Slide identity                      |
+| `church_id`           | `uuid`        | no   | repeated tenant key                        |
+| `media_type`          | `varchar(32)` | no   | JPEG, PNG, or WebP after decoding          |
+| `byte_size`           | `integer`     | no   | 1–10 MiB and equal to `octet_length(data)` |
+| `width`, `height`     | `integer`     | no   | each 1–8,192; product at most 40 million   |
+| `checksum`            | `char(64)`    | no   | lowercase SHA-256 of normalized bytes      |
+| `data`                | `bytea`       | no   | normalized image bytes; Confidential       |
+| timestamps            | `timestamptz` | no   | creation/update                            |
+
+`slide_images_slide_church_fk` references `slides(id, church_id) ON DELETE
+CASCADE`, preventing a cross-tenant child. `slide_images_church_slide_uk`
+supports that ownership shape and `slide_images_church_id_idx` supports per-church
+quota sums. The deferred `slides_image_total_ck` and `slide_images_total_ck`
+constraint triggers require one child for `IMAGE` and none for `TEXT` at commit.
+Church row locking serializes quota-changing writes.
+
 ## Ownership and deletion matrix
 
 | Parent or action            | Relation/target                 | DB action | Required behavior                                                     |
@@ -394,6 +430,7 @@ Search/import reconciliation must reject gaps in the inclusive range.
 | Delete Church               | Folder                          | CASCADE   | start church-content physical deletion                                |
 | Delete Folder               | Bookmark                        | CASCADE   | remove only bookmarks in that folder                                  |
 | Delete Bookmark             | ScriptureBookmark               | CASCADE   | remove typed payload                                                  |
+| Delete Slide or Church      | SlideImage                      | CASCADE   | remove normalized image bytes                                         |
 | Delete Church               | associated Users                | no FK     | service transaction explicitly deletes every member User after Church |
 | Delete Translation or Book  | names, verses, saved references | RESTRICT  | master removal requires explicit migration/reconciliation             |
 | Delete BibleVerse           | ScriptureBookmark endpoint      | RESTRICT  | saved ranges prevent endpoint deletion                                |

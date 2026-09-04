@@ -73,7 +73,14 @@ export function SlideDocument({
         selectedFolderId={selectedFolderId}
         {...(onFavoriteSaved ? { onFavoriteSaved } : {})}
       />
-      <SlidePreview text={parseSlideBody(slide.body)} />
+      {slide.contentType === "image" ? (
+        <SlidePreview
+          imageSrc={`/api/church/slides/${slide.id}/image?revision=${slide.revision}`}
+          title={slide.title}
+        />
+      ) : (
+        <SlidePreview text={parseSlideBody(slide.body)} />
+      )}
     </>
   );
 }

@@ -125,6 +125,7 @@ for (const variable of [
   "SMTP_PORT",
   "SMTP_SECURE",
   "SMTP_USER",
+  "SLIDE_IMAGE_BYTES_PER_CHURCH",
 ]) {
   delete composeEnvironment[variable];
 }
@@ -177,6 +178,7 @@ assert(app.cap_drop?.includes("ALL"));
 assert.deepEqual(Object.keys(app.networks ?? {}), ["egress", "private"]);
 assert(app.healthcheck, "app must define a readiness healthcheck");
 assert.match(app.environment?.DATABASE_URL ?? "", /^postgresql:\/\/levi_app:/);
+assert.equal(app.environment?.SLIDE_IMAGE_BYTES_PER_CHURCH, "1073741824");
 assert.equal(app.environment?.ADMIN_BASIC_AUTH_USERNAME, "levi-admin");
 assert.equal(
   app.environment?.ADMIN_BETTER_AUTH_SECRET,
