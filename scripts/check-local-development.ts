@@ -58,8 +58,11 @@ assert(
   "CI runtime pins must match the local Node.js and pnpm pins",
 );
 assert(
-  ci.includes('PNPM_CONFIG_FETCH_TIMEOUT: "120000"'),
-  "CI security audit must allow two minutes for each registry request",
+  packageJson.scripts?.["security:audit"] ===
+    "tsx scripts/check-vulnerabilities.ts" &&
+    ci.includes("pnpm security:check") &&
+    !ci.includes("PNPM_CONFIG_FETCH_TIMEOUT"),
+  "CI security audit must use the pinned OSV scanner instead of the npm advisory endpoint",
 );
 
 for (const task of ["setup", "dev", "smoke", "stop", "check"]) {

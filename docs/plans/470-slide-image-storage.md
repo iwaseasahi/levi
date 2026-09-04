@@ -68,6 +68,9 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
 6. [x] Allow the required Security audit two minutes per npm registry request,
        and verify the checked-in guard after repeated one-minute endpoint
        timeouts blocked PR verification.
+7. [x] Replace the unreliable npm bulk-advisory request with a pinned,
+       checksum-verified OSV-Scanner audit over a generated production SBOM that
+       preserves the High/Critical failure policy while failing closed on errors.
 
 ## Progress
 
@@ -96,6 +99,11 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
   step, added a checked-in configuration guard, and verified the real audit
   completed after 74.57 seconds with one existing moderate advisory, zero
   high/critical advisories, and 314 approved production license records.
+- 2026-09-04 14:00 JST — The two-minute workaround also exhausted all retries in
+  GitHub Actions. Replaced npm audit with OSV-Scanner 2.5.1, pinned its four
+  supported platform checksums, generated a CycloneDX SBOM from pnpm's
+  production-only inventory, retained the CVSS 7.0 threshold, and verified the
+  current moderate `mysql2` advisory remains reported without blocking the gate.
 
 ## Decisions
 
@@ -117,6 +125,15 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
     and the local environment; 120 seconds preserves a bounded fail-closed gate.
   - Alternatives: 180 seconds leaves too little headroom for three attempts and
     setup, while ignoring registry errors would weaken the required security gate.
+- 2026-09-04 — Decision: supersede the timeout workaround with a repository-owned
+  OSV-Scanner wrapper pinned to version 2.5.1 and official SHA-256 checksums.
+  - Reason: the npm bulk endpoint still timed out at 120 seconds per attempt;
+    OSV supports the generated CycloneDX inventory, emits machine-readable
+    severity, and uses an independent service while remaining fail-closed.
+  - Alternatives: `--ignore-registry-errors` can pass without completing a scan;
+    an even longer npm timeout consumes the entire job without addressing the
+    endpoint dependency; the OSV reusable workflow fails on every severity and
+    would silently change the current High/Critical policy.
 
 ## Risks and mitigations
 
@@ -149,6 +166,8 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
 - [x] `git diff --check`
 - [x] Required Quality, Database, E2E, and Security CI on implementation commit
 - [x] `PNPM_CONFIG_FETCH_TIMEOUT=120000 pnpm security:check`
+- [x] `pnpm security:check` with OSV-Scanner 2.5.1 (one moderate finding; zero
+      High/Critical; 314 approved production license records)
 - [x] Final diff reviewed for scope, secrets, migration safety, authorization,
       bounded resource use, and unsafe defaults.
 

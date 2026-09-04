@@ -36,7 +36,7 @@
     "test:integration": "tsx scripts/run-integration-tests.ts",
     "test:e2e": "tsx scripts/run-e2e-tests.ts",
     "test:e2e:install": "playwright install chromium",
-    "security:audit": "pnpm audit --prod --audit-level high",
+    "security:audit": "tsx scripts/check-vulnerabilities.ts",
     "security:licenses": "tsx scripts/check-licenses.ts",
     "security:check": "pnpm security:audit && pnpm security:licenses",
     "admin:hash-password": "tsx scripts/hash-admin-password.ts",

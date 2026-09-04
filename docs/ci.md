@@ -12,9 +12,15 @@ stable required-check names:
 - `Security`: production dependency audit, license inventory, Git-history secret
   scan, and pull-request dependency review.
 
-The Security audit allows each registry request up to 120 seconds. This remains
-inside the job's 15-minute bound while tolerating transient latency from the npm
-bulk-advisory endpoint; registry failures still fail the required check.
+The Security audit builds a CycloneDX SBOM from pnpm's production-only dependency
+inventory, then scans it with a checksum-verified, pinned Google OSV-Scanner
+binary. It fails for CVSS 7.0 or higher, missing severity data, an invalid report,
+a scanner error, or an unavailable vulnerability service. The SBOM and raw JSON
+report are retained with the other Security artifacts. This removes the required
+check's dependency on npm's intermittently timing-out bulk-advisory endpoint
+without turning network errors into a passing result. The scanner version and
+release checksums are reviewed together in `scripts/check-vulnerabilities.ts`;
+upgrades must update both values from the official release.
 
 The workflow only composes canonical package scripts; test behavior does not
 live in GitHub Actions. Dependency caches are keyed by the pnpm lockfile. A newer
