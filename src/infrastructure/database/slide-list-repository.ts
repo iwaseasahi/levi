@@ -7,7 +7,8 @@ import { prisma } from "./client";
 export function slideListSql(scope: ChurchScope, query: SlideListQuery) {
   const cursor = query.cursor;
   return Prisma.sql`
-    SELECT id, title, revision, created_at AS "createdAt", updated_at AS "updatedAt"
+    SELECT id, title, content_type AS "contentType", revision,
+           created_at AS "createdAt", updated_at AS "updatedAt"
     FROM slides
     WHERE church_id = ${scope.churchId}::uuid
       ${cursor ? Prisma.sql`AND (created_at, id) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)` : Prisma.empty}
@@ -15,7 +16,8 @@ export function slideListSql(scope: ChurchScope, query: SlideListQuery) {
     LIMIT 21`;
 }
 
-type Row = Omit<SlideSummary, "createdAt" | "updatedAt"> & {
+type Row = Omit<SlideSummary, "contentType" | "createdAt" | "updatedAt"> & {
+  contentType: "TEXT" | "IMAGE";
   createdAt: Date;
   updatedAt: Date;
 };
@@ -24,6 +26,7 @@ export const slideListRepository: SlideListRepository = {
     const rows = await prisma.$queryRaw<Row[]>(slideListSql(scope, query));
     return rows.map((row) => ({
       ...row,
+      contentType: row.contentType === "IMAGE" ? "image" : "text",
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     }));

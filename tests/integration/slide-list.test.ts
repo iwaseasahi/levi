@@ -95,4 +95,40 @@ describe("tenant Slide list", () => {
       ).updatedAt,
     ).not.toEqual(date);
   });
+
+  it("returns normalized text and image types without protected content", async () => {
+    const owner = await scope();
+    const textSlide = await prisma.slide.create({
+      data: { ...owner, title: "Text", body: "Protected text" },
+    });
+    const imageSlide = await prisma.slide.create({
+      data: {
+        ...owner,
+        title: "Image",
+        body: null,
+        contentType: "IMAGE",
+        image: {
+          create: {
+            mediaType: "image/png",
+            byteSize: 1,
+            width: 1,
+            height: 1,
+            checksum: "a".repeat(64),
+            data: new Uint8Array([1]),
+          },
+        },
+      },
+    });
+    const result = await list(owner, {});
+    expect(result.slides).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: textSlide.id, contentType: "text" }),
+        expect.objectContaining({ id: imageSlide.id, contentType: "image" }),
+      ]),
+    );
+    for (const slide of result.slides) {
+      expect(slide).not.toHaveProperty("body");
+      expect(slide).not.toHaveProperty("image");
+    }
+  });
 });
