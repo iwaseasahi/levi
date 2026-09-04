@@ -95,9 +95,9 @@ avoid the legacy action's npm-based self-installer.
 
 ## Handoff or blockers
 
-- Completed: implementation, local verification, PR #477, and first required CI
+- Completed: implementation, local verification, PR #477, and required CI
   timing comparison.
-- Remaining: final CI run for this evidence-only plan update.
+- Remaining: none.
 - Blocker: none.
 - Resume with: update `.github/workflows/ci.yml`.
 
