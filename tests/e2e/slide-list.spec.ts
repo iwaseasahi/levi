@@ -128,6 +128,55 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
   }
 });
 
+test("Slide list deletes a confirmed Slide from the action beside favorite", async ({
+  context,
+  page,
+  scriptureAccount,
+}) => {
+  const title = "Synthetic list deletion";
+  const slide = await prisma.slide.create({
+    data: {
+      churchId: scriptureAccount.churchId,
+      title,
+      body: "Synthetic body for list deletion",
+    },
+  });
+  await loginToScripture(context, page, scriptureAccount);
+  await page.goto("/slides");
+  const item = page
+    .getByRole("region", { name: "スライド一覧" })
+    .getByRole("listitem")
+    .filter({ hasText: title });
+  const favorite = item.getByRole("button", { name: "お気に入りに追加" });
+  const remove = item.getByRole("button", { name: `${title}を削除` });
+  const favoriteBox = await favorite.boundingBox();
+  const removeBox = await remove.boundingBox();
+  expect(removeBox!.x).toBeGreaterThanOrEqual(
+    favoriteBox!.x + favoriteBox!.width,
+  );
+
+  page.once("dialog", async (dialog) => {
+    expect(dialog.message()).toContain(title);
+    await dialog.dismiss();
+  });
+  await remove.click();
+  await expect(item).toBeVisible();
+  expect(await prisma.slide.count({ where: { id: slide.id } })).toBe(1);
+
+  page.once("dialog", async (dialog) => {
+    expect(dialog.message()).toContain(title);
+    await dialog.accept();
+  });
+  await remove.click();
+  await expect(item).toHaveCount(0);
+  await expect(page.getByRole("status")).toHaveText(
+    "スライドはまだありません。",
+  );
+  await expect
+    .poll(() => prisma.slide.count({ where: { id: slide.id } }))
+    .toBe(0);
+});
+
 test("Slide sidebar shares folders and restores a Scripture bookmark in the same tab", async ({
   context,
   page,

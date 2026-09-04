@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { requestJson } from "@/app/church/client-api";
+import { useEffect, useRef, useState } from "react";
+import {
+  ClientApiError,
+  parseJsonResponse,
+  requestJson,
+} from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
 import type { SlideListResult } from "@/domain/slides/list";
 import { SlideError, slideErrorMessage } from "./slide-error";
@@ -20,6 +24,10 @@ export function SlideList({
 }) {
   const fetcher = useComponentLifetimeValue(providedFetcher);
   const [selection, setSelection] = useState<Selection>({ cursors: [null] });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deletePending = useRef(false);
+  const mounted = useRef(true);
   const [loaded, setLoaded] = useState<{
     selection: Selection;
     result?: SlideListResult;
@@ -30,6 +38,12 @@ export function SlideList({
     selectedFolderId,
     onFavoriteSaved,
   });
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   useEffect(() => {
     let current = true;
     const params = new URLSearchParams();
@@ -59,6 +73,55 @@ export function SlideList({
     page > 1 ||
     (loaded?.selection.cursors.length ?? 1) > 1 ||
     Boolean(loaded?.result?.nextCursor);
+
+  async function deleteSlide(slide: SlideListResult["slides"][number]) {
+    if (
+      deletePending.current ||
+      !window.confirm(
+        `「${slide.title}」を完全に削除します。元に戻せません。削除しますか？`,
+      )
+    ) {
+      return;
+    }
+
+    deletePending.current = true;
+    setDeletingId(slide.id);
+    setDeleteError(null);
+    try {
+      const response = await fetcher(`/api/church/slides/${slide.id}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ expectedRevision: slide.revision }),
+      });
+      if (response.status !== 204) {
+        await parseJsonResponse(response, "SLIDE_UNAVAILABLE");
+        throw new ClientApiError("SLIDE_UNAVAILABLE", response.status);
+      }
+      if (!mounted.current) return;
+      setLoaded((current) => {
+        if (current?.selection !== selection || !current.result) return current;
+        return {
+          ...current,
+          result: {
+            ...current.result,
+            slides: current.result.slides.filter(
+              (currentSlide) => currentSlide.id !== slide.id,
+            ),
+          },
+        };
+      });
+    } catch (cause) {
+      if (mounted.current) setDeleteError(slideErrorMessage(cause));
+    } finally {
+      deletePending.current = false;
+      if (mounted.current) setDeletingId(null);
+    }
+  }
+
+  const mutating = deletingId !== null || favorite.savingId !== null;
   return (
     <section aria-label="スライド一覧" aria-busy={!active}>
       <p className="slide-list-status" role="status">
@@ -79,6 +142,7 @@ export function SlideList({
         </>
       )}
       {favorite.error && <SlideError message={favorite.error} />}
+      {deleteError && <SlideError message={deleteError} />}
       <ul className="slide-list">
         {result?.slides.map((slide, index) => (
           <li className="slide-list-item" key={slide.id}>
@@ -102,14 +166,31 @@ export function SlideList({
                 →
               </span>
             </Link>
-            <button
-              className="slide-favorite-button"
-              type="button"
-              disabled={!selectedFolderId || favorite.savingId !== null}
-              onClick={() => void favorite.save(slide.id)}
-            >
-              {favorite.savingId === slide.id ? "追加中…" : "お気に入りに追加"}
-            </button>
+            <span className="slide-list-item-actions">
+              <button
+                className="slide-favorite-button"
+                type="button"
+                disabled={!selectedFolderId || mutating}
+                onClick={() => void favorite.save(slide.id)}
+              >
+                {favorite.savingId === slide.id
+                  ? "追加中…"
+                  : "お気に入りに追加"}
+              </button>
+              <button
+                aria-label={
+                  deletingId === slide.id
+                    ? `${slide.title}を削除中`
+                    : `${slide.title}を削除`
+                }
+                className="slide-list-delete-button"
+                type="button"
+                disabled={mutating}
+                onClick={() => void deleteSlide(slide)}
+              >
+                {deletingId === slide.id ? "削除中…" : "削除"}
+              </button>
+            </span>
           </li>
         ))}
       </ul>
@@ -117,7 +198,7 @@ export function SlideList({
         <div className="slide-actions">
           <button
             type="button"
-            disabled={!result || page === 1}
+            disabled={!result || page === 1 || deletingId !== null}
             onClick={() =>
               setSelection({ cursors: selection.cursors.slice(0, -1) })
             }
@@ -126,7 +207,7 @@ export function SlideList({
           </button>
           <button
             type="button"
-            disabled={!result?.nextCursor}
+            disabled={!result?.nextCursor || deletingId !== null}
             onClick={() =>
               setSelection({
                 cursors: [...selection.cursors, result?.nextCursor ?? null],

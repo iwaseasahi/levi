@@ -213,8 +213,21 @@
   align-items: stretch;
   gap: 0.5rem;
 }
+.slide-list-item-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+}
 .slide-favorite-button {
   white-space: nowrap;
+}
+.slide-page button.slide-list-delete-button {
+  border-color: var(--error-border);
+  color: var(--error-text);
+  white-space: nowrap;
+}
+.slide-page button.slide-list-delete-button:hover:not(:disabled) {
+  background: var(--error-surface);
 }
 .slide-list-row:hover {
   border-color: var(--accent);
@@ -242,8 +255,9 @@
   .slide-list-item {
     grid-template-columns: minmax(0, 1fr);
   }
-  .slide-favorite-button {
-    justify-self: stretch;
+  .slide-list-item-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 }
 .slide-audience {
