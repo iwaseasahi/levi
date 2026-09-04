@@ -57,6 +57,10 @@ assert(
   ci.includes("node-version: 24.19.0") && ci.includes("version: 11.19.0"),
   "CI runtime pins must match the local Node.js and pnpm pins",
 );
+assert(
+  ci.includes('PNPM_CONFIG_FETCH_TIMEOUT: "120000"'),
+  "CI security audit must allow two minutes for each registry request",
+);
 
 for (const task of ["setup", "dev", "smoke", "stop", "check"]) {
   assert(

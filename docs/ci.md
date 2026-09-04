@@ -12,6 +12,10 @@ stable required-check names:
 - `Security`: production dependency audit, license inventory, Git-history secret
   scan, and pull-request dependency review.
 
+The Security audit allows each registry request up to 120 seconds. This remains
+inside the job's 15-minute bound while tolerating transient latency from the npm
+bulk-advisory endpoint; registry failures still fail the required check.
+
 The workflow only composes canonical package scripts; test behavior does not
 live in GitHub Actions. Dependency caches are keyed by the pnpm lockfile. A newer
 run for the same pull request or branch cancels its predecessor. Every job has a

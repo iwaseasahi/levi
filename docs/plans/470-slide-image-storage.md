@@ -65,6 +65,9 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
        capacity monitoring, and deployment documentation/tests.
 5. [x] Run focused checks, all applicable canonical checks, review the complete
        diff for security/data-loss/scope issues, and prepare a PR with exact evidence.
+6. [x] Allow the required Security audit two minutes per npm registry request,
+       and verify the checked-in guard after repeated one-minute endpoint
+       timeouts blocked PR verification.
 
 ## Progress
 
@@ -85,6 +88,14 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
   transitive advisory. License policy approves 314 production records.
 - 2026-09-04 11:56 JST — Created PR #471 at commit `dd44fd8`; required Quality,
   Database, E2E, and Security checks all passed on that implementation commit.
+- 2026-09-04 13:28 JST — npm's public status reported Security Audit operational,
+  but two exact-head Security runs exhausted all three one-minute requests to the
+  bulk-advisory endpoint. Local reproduction timed out once before succeeding on
+  retry; the operator approved extending the request timeout.
+- 2026-09-04 13:34 JST — Scoped the two-minute timeout to the Security audit
+  step, added a checked-in configuration guard, and verified the real audit
+  completed after 74.57 seconds with one existing moderate advisory, zero
+  high/critical advisories, and 314 approved production license records.
 
 ## Decisions
 
@@ -100,6 +111,12 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
   - Reason: the durable product requirement is a hard tenant quota, while its
     safe numeric value depends on backup amplification and restore evidence.
   - Alternatives: an unbounded database or an arbitrary hidden limit are unsafe.
+- 2026-09-04 — Decision: set `PNPM_CONFIG_FETCH_TIMEOUT` to 120 seconds only on
+  the required Security audit step while retaining its 15-minute job timeout.
+  - Reason: repeated 60-second registry request timeouts occurred from both CI
+    and the local environment; 120 seconds preserves a bounded fail-closed gate.
+  - Alternatives: 180 seconds leaves too little headroom for three attempts and
+    setup, while ignoring registry errors would weaken the required security gate.
 
 ## Risks and mitigations
 
@@ -131,6 +148,7 @@ of PostgreSQL so a later S3 migration does not change the Slide domain or UI.
 - [x] `pnpm check`
 - [x] `git diff --check`
 - [x] Required Quality, Database, E2E, and Security CI on implementation commit
+- [x] `PNPM_CONFIG_FETCH_TIMEOUT=120000 pnpm security:check`
 - [x] Final diff reviewed for scope, secrets, migration safety, authorization,
       bounded resource use, and unsafe defaults.
 
