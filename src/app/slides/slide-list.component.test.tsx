@@ -5,9 +5,13 @@ import { describe, expect, it, vi } from "vitest";
 import type { SlideListResult, SlideSummary } from "@/domain/slides/list";
 import { SlideList } from "./slide-list";
 
-const summary = (index: number): SlideSummary => ({
+const summary = (
+  index: number,
+  contentType: SlideSummary["contentType"] = "text",
+): SlideSummary => ({
   id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
   title: `Synthetic ${index}`,
+  contentType,
   revision: 1,
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
@@ -19,7 +23,10 @@ describe("SlideList", () => {
       .mockResolvedValueOnce(Response.json({ slides: [], nextCursor: null }))
       .mockResolvedValueOnce(new Response(null, { status: 500 }))
       .mockResolvedValueOnce(
-        Response.json({ slides: [summary(1)], nextCursor: null }),
+        Response.json({
+          slides: [summary(1), summary(2, "image")],
+          nextCursor: null,
+        }),
       );
     const user = userEvent.setup();
     const { unmount } = render(<SlideList fetcher={fetcher} />);
@@ -47,10 +54,13 @@ describe("SlideList", () => {
     expect(await screen.findByRole("alert")).toHaveFocus();
     await user.click(screen.getByRole("button", { name: "再試行" }));
     const link = await screen.findByRole("link", {
-      name: "Synthetic 1",
+      name: "テキスト Synthetic 1",
     });
     expect(link).toHaveAttribute("href", `/slides/${summary(1).id}`);
     expect(link).not.toHaveAttribute("aria-describedby");
+    expect(
+      screen.getByRole("link", { name: "画像 Synthetic 2" }),
+    ).toBeVisible();
     expect(
       screen.queryByRole("button", { name: "前の20件" }),
     ).not.toBeInTheDocument();
@@ -244,7 +254,9 @@ describe("SlideList", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "別の編集が保存されています",
     );
-    expect(screen.getByRole("link", { name: summary(1).title })).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: `テキスト ${summary(1).title}` }),
+    ).toBeVisible();
 
     await user.click(
       screen.getByRole("button", { name: `${summary(1).title}を削除` }),
@@ -256,7 +268,9 @@ describe("SlideList", () => {
         method: "DELETE",
       }),
     ]);
-    expect(screen.getByRole("link", { name: summary(1).title })).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: `テキスト ${summary(1).title}` }),
+    ).toBeVisible();
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "別の編集が保存されています",
     );
@@ -265,9 +279,11 @@ describe("SlideList", () => {
       screen.getByRole("button", { name: `${summary(1).title}を削除` }),
     );
     expect(
-      screen.queryByRole("link", { name: summary(1).title }),
+      screen.queryByRole("link", { name: `テキスト ${summary(1).title}` }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: summary(2).title })).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: `テキスト ${summary(2).title}` }),
+    ).toBeVisible();
   });
   it("keeps a remounted list independent of an old read and renders titles as text", async () => {
     let resolve!: (response: Response) => void;
@@ -286,12 +302,18 @@ describe("SlideList", () => {
     const old = render(<SlideList fetcher={fetcher} />);
     old.unmount();
     const { container } = render(<SlideList fetcher={fetcher} />);
-    expect(await screen.findByRole("link", { name: title })).toBeVisible();
+    expect(
+      await screen.findByRole("link", { name: `テキスト ${title}` }),
+    ).toBeVisible();
     expect(container.querySelector("script")).toBeNull();
     await act(async () =>
       resolve(Response.json({ slides: [summary(99)], nextCursor: null })),
     );
-    expect(screen.queryByRole("link", { name: "Synthetic 99" })).toBeNull();
-    expect(screen.getByRole("link", { name: title })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "テキスト Synthetic 99" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("link", { name: `テキスト ${title}` }),
+    ).toBeVisible();
   });
 });

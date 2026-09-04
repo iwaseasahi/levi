@@ -4,6 +4,7 @@ import { SlideInputError } from "./slide";
 export type SlideSummary = {
   id: string;
   title: string;
+  contentType: "text" | "image";
   revision: number;
   createdAt: string;
   updatedAt: string;

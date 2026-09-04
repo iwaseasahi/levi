@@ -149,17 +149,20 @@ export function SlideList({
             <Link
               className="slide-list-row"
               href={`/slides/${slide.id}`}
-              aria-labelledby={`slide-title-${slide.id}`}
+              aria-labelledby={`slide-type-${slide.id} slide-title-${slide.id}`}
             >
               <span className="slide-list-number" aria-hidden="true">
                 {(page - 1) * 20 + index + 1}
               </span>
               <span className="slide-list-content">
-                <span
-                  className="slide-list-title"
-                  id={`slide-title-${slide.id}`}
-                >
-                  {slide.title}
+                <span className="slide-list-title">
+                  <span
+                    className="slide-list-type"
+                    id={`slide-type-${slide.id}`}
+                  >
+                    {slide.contentType === "image" ? "画像" : "テキスト"}
+                  </span>
+                  <span id={`slide-title-${slide.id}`}>{slide.title}</span>
                 </span>
               </span>
               <span className="slide-list-arrow" aria-hidden="true">
