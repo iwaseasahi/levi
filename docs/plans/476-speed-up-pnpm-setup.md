@@ -38,7 +38,7 @@ avoid the legacy action's npm-based self-installer.
 1. [x] Replace the two runtime setup actions in all required jobs with pinned
        `pnpm/setup`, preserving the explicit frozen install.
 2. [x] Update CI documentation and the repository configuration guard.
-3. [ ] Run focused and canonical verification, then open a pull request and
+3. [x] Run focused and canonical verification, then open a pull request and
        compare required CI timings with the baseline.
 
 ## Progress
@@ -52,6 +52,9 @@ avoid the legacy action's npm-based self-installer.
   77 unit files / 488 tests, 25 component files / 113 tests, configuration
   guards, and production build. `pnpm security:check` passed with no high or
   critical vulnerability and 314 approved license records.
+- 2026-09-04 16:26 JST — Required CI passed on commit `bccb7d4`. The new setup
+  took 7 seconds in Quality, Database, and Security and 8 seconds in E2E,
+  compared with 7m03s, 36s, 6m07s, and 50s respectively in run 33847051505.
 
 ## Decisions
 
@@ -87,17 +90,20 @@ avoid the legacy action's npm-based self-installer.
 - [x] `pnpm security:check`
 - [x] Workflow YAML parses successfully
 - [x] `git diff --check`
-- [ ] Required CI jobs pass and setup timings are compared with run 33847051505
-- [ ] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
+- [x] Required CI jobs pass and setup timings are compared with run 33847051505
+- [x] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
 
 ## Handoff or blockers
 
-- Completed: Issue intake, baseline timing analysis, implementation, docs, and
-  focused configuration validation.
-- Remaining: canonical local verification, PR, and CI timing comparison.
+- Completed: implementation, local verification, PR #477, and first required CI
+  timing comparison.
+- Remaining: final CI run for this evidence-only plan update.
 - Blocker: none.
 - Resume with: update `.github/workflows/ci.yml`.
 
 ## Result
 
-Pending.
+PR #477 replaces both legacy setup actions with the supported pnpm 11 setup
+action in all required jobs. The first required CI run passed and reduced pnpm
+plus Node.js setup to 7–8 seconds per job. No application, test, timeout, or
+security policy behavior changed.
