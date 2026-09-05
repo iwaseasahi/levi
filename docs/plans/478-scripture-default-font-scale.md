@@ -4,13 +4,14 @@
 
 - Issue: #478
 - Branch: `codex/issue-478`
-- Base commit: `b0f7234261c8d865b5d46390b258e2152793560b`
+- Base commit: `779394e10df1661087d380081d0ca696386544b1`
 
 ## Outcome
 
-The scripture search screen shows the active projection font scale, and the
-settings menu persists a browser-local default that each newly opened scripture
-audience uses. Slide projection remains unchanged.
+The scripture search screen shows the active projection font scale. Its settings
+menu links to a dedicated default-settings screen, where a browser-local default
+can be changed for each newly opened scripture audience. Slide projection
+remains unchanged.
 
 ## Context
 
@@ -18,8 +19,10 @@ audience uses. Slide projection remains unchanged.
   currently receives only audience readiness.
 - `src/app/projection/use-projection-audience.ts` owns the transient audience
   font scale and currently initializes every content kind at `1`.
-- `src/app/church/scripture-settings-menu.tsx` is the existing browser-side
-  settings surface.
+- `src/app/church/scripture-settings-menu.tsx` currently edits the preference
+  inline, but user feedback requires it to link to a dedicated screen instead.
+- A protected `/settings` route is consistent with the existing standalone
+  account-setting routes and keeps the search workspace focused on projection.
 - `docs/product/scripture-search-contract.md` and
   `docs/product/projection-window-protocol.md` currently specify a 60–220% range
   and reset-on-reload behavior.
@@ -41,10 +44,11 @@ audience uses. Slide projection remains unchanged.
 
 ## Plan
 
-1. [x] Add a validated browser-local scripture font-scale preference boundary.
-2. [x] Connect the settings UI, search percentage display, and scripture
-       audience initialization without changing the slide adapter.
-3. [x] Add component and E2E regression coverage and update product contracts.
+1. [x] Replace the inline selector with a `デフォルト設定` navigation item and
+       add the protected dedicated settings screen.
+2. [x] Move preference editing and persistence coverage to the dedicated screen
+       while preserving scripture search and audience behavior.
+3. [x] Update the E2E scenario and product contract for the navigation flow.
 4. [x] Run relevant and canonical verification, then review the final diff.
 
 ## Progress
@@ -82,6 +86,30 @@ audience uses. Slide projection remains unchanged.
 - 2026-09-05 21:23 JST — The adjusted full E2E passed locally: 35 tests. This
   preserves the original fit test semantics while still verifying the saved
   default and acknowledged percentage behavior before the reset.
+- 2026-09-05 21:44 JST — Reopened Issue #478 after user feedback clarified that
+  the settings menu must link to a dedicated default-settings screen instead of
+  containing the font-size input directly. Updated the Issue acceptance criteria
+  and created a fresh worktree from merged commit `779394e`.
+- 2026-09-05 21:49 JST — Added protected `/settings`, moved the selector there,
+  and replaced the inline menu control with a navigation link. Evidence:
+  `pnpm test` passed (498 unit, 118 component), `pnpm lint` passed, `pnpm
+typecheck` passed, and the full `pnpm test:e2e` suite passed (35 tests).
+- 2026-09-05 21:51 JST — Added dedicated-screen axe and 390px viewport checks.
+  The changed scripture E2E passed, while an unrelated parallel Slide-list case
+  missed `Synthetic 23`; 34/35 passed. Retrying the unchanged suite to classify
+  the isolated failure without weakening its assertion.
+- 2026-09-05 21:53 JST — A second full-suite retry again passed the changed
+  scripture scenario and failed a different pre-existing Slide sidebar timing
+  assertion (34/35). The changed scripture scenario then passed alone (1/1),
+  including navigation, persistence, axe, narrow viewport, and projection.
+- 2026-09-05 21:56 JST — `mise run check` passed: formatting, lint, typecheck,
+  498 unit tests, 118 component tests, configuration safety checks, and the
+  production build. `git diff --check` passed. Reviewed the final diff for scope,
+  browser-storage isolation, route protection, responsive behavior, secrets,
+  migrations, and generated noise.
+- 2026-09-05 22:01 JST — Required Quality, Database, E2E, and Security jobs all
+  passed on implementation commit `40b84ef` in PR #481. The independent E2E job
+  passed the complete 35-test suite.
 
 ## Decisions
 
@@ -94,6 +122,14 @@ audience uses. Slide projection remains unchanged.
     a URL parameter would weaken the location-only audience URL contract.
   - ADR: Not required; this is a reversible UI preference within the accepted
     projection architecture.
+- 2026-09-05 — Decision: use protected route `/settings` with heading
+  `デフォルト設定` and an immediate-save selector.
+  - Reason: the user explicitly requested a navigation item and separate
+    settings screen; immediate persistence preserves the established behavior
+    and avoids a misleading save transaction for browser-local state.
+  - Alternatives: an inline menu control contradicts the clarified requirement;
+    a modal is not a screen transition.
+  - ADR: Not required; this is a reversible presentation-flow change.
 
 ## Risks and mitigations
 
@@ -109,24 +145,27 @@ audience uses. Slide projection remains unchanged.
 ## Verification
 
 - [x] `pnpm test:unit` — 498 passed
-- [x] `pnpm test:component` — 115 passed
-- [x] `pnpm test:e2e` — 35 passed
-- [x] `pnpm check` — passed, including format, lint, typecheck, tests,
+- [x] `pnpm test:component` — 118 passed
+- [x] changed `pnpm exec playwright test` scenario — 1 passed; required CI E2E
+      suite — 35 passed
+- [x] `mise run check` — passed, including format, lint, typecheck, tests,
       configuration checks, and production build
 - [x] `git diff --check` — passed
 - [x] Acceptance criteria verified and final diff reviewed
 
 ## Handoff or blockers
 
-- Completed: implementation, tests, documentation, and local verification.
-- Remaining: push the E2E assertion correction, pass required CI, and merge.
+- Completed: dedicated settings-screen correction, regression coverage,
+  documentation, local verification, PR #481, and required CI on the
+  implementation commit.
+- Remaining: pass required CI on the final plan-only commit and merge.
 - Blocker: none.
-- Resume with: commit and push the reviewed E2E assertion correction.
+- Resume with: push the final plan evidence, wait for required CI, and merge.
 
 ## Result
 
-Issue #478 is implemented locally. The scripture search panel displays the saved
-or acknowledged percentage, the settings dialog persists a validated 60–220%
-default, and new scripture audiences start from it while Slides remain at 100%.
-All local verification listed above passes; merge and production release remain
-outside this plan result until pull-request review and required CI complete.
+PR #481 implements the dedicated settings-screen correction. The menu now links
+to protected `/settings`, which persists the scripture default; existing search
+percentage and scripture-only audience initialization remain intact. Local and
+required CI verification passed on the implementation commit; final merge awaits
+CI on this evidence-only update.

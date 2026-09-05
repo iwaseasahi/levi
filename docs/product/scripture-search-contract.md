@@ -36,10 +36,11 @@ and `空白⇔表示` are visually distinct secondary actions. Hover, keyboard f
 loading, and disabled states remain visibly distinguishable. The screen has no
 Church header, explanatory copy, or result-preview region. A fixed settings icon
 in the bottom-right opens a compact settings dialog containing account actions,
-`ログアウト`, and a browser-local `デフォルト文字サイズ` selector. The
-selector uses the projection's existing 60–220% range in 10% steps, defaults to
-100% when missing or invalid, and stores no scripture or account data. Selecting
-logout ends the Church session and returns to `/login`. The dialog closes on
+`ログアウト`, and a `デフォルト設定` link. That link opens the dedicated
+settings screen, which contains the browser-local scripture font-size selector.
+The selector uses the projection's existing 60–220% range in 10% steps, defaults
+to 100% when missing or invalid, and stores no scripture or account data.
+Selecting logout ends the Church session and returns to `/login`. The dialog closes on
 Escape or an outside click without moving the search layout. A successful `Open` validates
 the range, keeps the search screen in place, and opens the
 canonical `/scripture/audience` URL directly in an ordinary Chrome tab named

@@ -889,6 +889,38 @@ dialog.admin-church-user-dialog::backdrop {
   border-color: var(--accent);
 }
 
+.default-settings-form select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.55rem;
+  background: var(--surface-control);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.default-settings-form select:hover {
+  border-color: #696969;
+  background: var(--surface-control-hover);
+}
+
+.default-settings-form select:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.default-settings-form .default-settings-help,
+.default-settings-form .default-settings-saved {
+  margin: 0.75rem 0 0;
+  font-size: 0.875rem;
+}
+
+.default-settings-form .default-settings-saved {
+  color: var(--accent-hover);
+}
+
 .password-input {
   position: relative;
 }
