@@ -25,17 +25,8 @@ describe("ScriptureSettingsMenu", () => {
     signOut.mockResolvedValue(undefined);
   });
 
-  function renderSettings(
-    defaultFontScale = 1,
-    onDefaultFontScaleChange = vi.fn(),
-  ) {
-    render(
-      <ScriptureSettingsMenu
-        defaultFontScale={defaultFontScale}
-        onDefaultFontScaleChange={onDefaultFontScaleChange}
-      />,
-    );
-    return onDefaultFontScaleChange;
+  function renderSettings() {
+    render(<ScriptureSettingsMenu />);
   }
 
   it("opens from the settings icon and closes outside or with Escape", async () => {
@@ -54,6 +45,9 @@ describe("ScriptureSettingsMenu", () => {
       screen.queryByRole("link", { name: "スライド" }),
     ).not.toBeInTheDocument();
     expect(
+      screen.getByRole("link", { name: "デフォルト設定" }),
+    ).toHaveAttribute("href", "/settings");
+    expect(
       screen.getByRole("link", { name: "メールアドレスを変更" }),
     ).toHaveAttribute("href", "/account/change-email");
     expect(
@@ -70,20 +64,17 @@ describe("ScriptureSettingsMenu", () => {
     expect(settings).toHaveFocus();
   });
 
-  it("shows and changes the scripture projection default font size", async () => {
-    const onChange = renderSettings(1.3);
+  it("links to the dedicated default settings screen without an inline input", async () => {
+    renderSettings();
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: "設定" }));
-    const select = screen.getByRole("combobox", {
-      name: "デフォルト文字サイズ",
-    });
-    expect(select).toHaveValue("1.3");
-    expect(screen.getByRole("option", { name: "60%" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "220%" })).toBeInTheDocument();
-
-    await user.selectOptions(select, "1.6");
-    expect(onChange).toHaveBeenCalledWith(1.6);
+    expect(
+      screen.getByRole("link", { name: "デフォルト設定" }),
+    ).toHaveAttribute("href", "/settings");
+    expect(
+      screen.queryByRole("combobox", { name: "デフォルト文字サイズ" }),
+    ).not.toBeInTheDocument();
   });
 
   it("signs out once and replaces the current route with login", async () => {

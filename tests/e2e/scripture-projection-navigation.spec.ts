@@ -15,9 +15,29 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   });
   await expect(displayedFontScale).toHaveText("100%");
   await page.getByRole("button", { name: "設定" }).click();
+  await expect(
+    page.getByRole("combobox", { name: "デフォルト文字サイズ" }),
+  ).toHaveCount(0);
+  await page.getByRole("link", { name: "デフォルト設定" }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await expect(
+    page.getByRole("heading", { name: "デフォルト設定" }),
+  ).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.setViewportSize({ height: 844, width: 390 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ height: 720, width: 1280 });
   await page
-    .getByRole("combobox", { name: "デフォルト文字サイズ" })
+    .getByRole("combobox", {
+      name: "聖書投影のデフォルト文字サイズ",
+    })
     .selectOption("1.4");
+  await expect(page.getByRole("status")).toContainText("保存しました");
+  await page.getByRole("link", { name: "聖書検索へ戻る" }).click();
   await expect(displayedFontScale).toHaveText("140%");
   await page.reload();
   await expect(displayedFontScale).toHaveText("140%");

@@ -3,18 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LogoutButton } from "./logout-button";
-import {
-  SCRIPTURE_FONT_SCALE_OPTIONS,
-  scriptureFontScalePercentage,
-} from "./scripture-font-scale";
 
-export function ScriptureSettingsMenu({
-  defaultFontScale,
-  onDefaultFontScaleChange,
-}: {
-  defaultFontScale: number;
-  onDefaultFontScaleChange: (scale: number) => void;
-}) {
+export function ScriptureSettingsMenu() {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -51,22 +41,9 @@ export function ScriptureSettingsMenu({
           id="scripture-settings-menu"
           role="dialog"
         >
-          <label className="scripture-settings-font-scale">
-            <span>デフォルト文字サイズ</span>
-            <select
-              aria-label="デフォルト文字サイズ"
-              onChange={(event) =>
-                onDefaultFontScaleChange(Number(event.target.value))
-              }
-              value={defaultFontScale}
-            >
-              {SCRIPTURE_FONT_SCALE_OPTIONS.map((scale) => (
-                <option key={scale} value={scale}>
-                  {scriptureFontScalePercentage(scale)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Link className="scripture-settings-logout" href="/settings">
+            デフォルト設定
+          </Link>
           <Link
             className="scripture-settings-logout"
             href="/account/change-email"
