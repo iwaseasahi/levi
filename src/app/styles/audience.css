@@ -22,7 +22,8 @@
 
 .audience-book-name {
   z-index: 1;
-  width: 100%;
+  justify-self: start;
+  width: calc(100% - max(0px, 5vw - 10px));
   margin: 0;
   color: #ff0;
   font-size: 26px;
@@ -46,7 +47,7 @@
   position: relative;
   display: grid;
   width: 100%;
-  gap: clamp(12px, 3vh, 40px);
+  gap: 1em;
 }
 
 .audience-book-word {
