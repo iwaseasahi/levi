@@ -92,14 +92,15 @@
 - [x] `pnpm check`
 - [x] `git diff --check`
 - [x] Final diff review for scope, secrets, migrations, rollback and unsafe HTML
+- [x] PR #487 exact-head protected CI — Quality、Database、E2E、Security passed
 
 ## Handoff or blockers
 
 - Completed: implementation、migration、documentation、canonical/integration/security/backup verification。
-- Remaining: PR #487のexact-head protected CIとhuman review。
+- Remaining: PR #487のhuman review。
 - Blocker: なし。
-- Resume with: review PR #487 and confirm protected CI at its exact head。
+- Resume with: review PR #487。
 
 ## Result
 
-実装とlocal verificationは完了し、PR #487へhandoffした。production rolloutは行っていない。
+実装、local verification、PR #487のexact-head protected CIは完了した。production rolloutは行っていない。
