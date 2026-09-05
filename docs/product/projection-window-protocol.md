@@ -29,11 +29,13 @@ surface without discarding the current location or font scale. Navigation
 remains active while blank, and unblank displays the latest location.
 
 The scripture audience reserves only its rendered heading row, then uses the
-remaining viewport as the measured body region. Japanese and English lines use a
-compact fixed gap instead of font-relative paragraph margins. The 100% body base
-is 80px; the selected 60–220% scale is applied first, then the iterative fit
-scale reduces it only when needed so the heading and complete body remain inside
-the viewport without scrolling or clipping. Slide layout remains separate.
+remaining viewport as the measured body region. The right-aligned heading ends
+approximately 5% from the viewport's right edge. Japanese and English lines use
+a one-em grid gap without outer paragraph margins, preserving the legacy visual
+separation while retaining the expanded body region. The 100% body base is 80px;
+the selected 60–220% scale is applied first, then the iterative fit scale reduces
+it only when needed so the heading and complete body remain inside the viewport
+without scrolling or clipping. Slide layout remains separate.
 
 The direct channel uses schema `levi.direct-audience`, version `2`. Every strict
 envelope includes content kind (`scripture` or `slide`) and a random connection

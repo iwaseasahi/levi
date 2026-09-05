@@ -112,18 +112,25 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     const heading = document.querySelector<HTMLElement>(".audience-book-name")!;
     const content = document.querySelector<HTMLElement>(".audience-content")!;
     const verse = document.querySelector<HTMLElement>(".audience-verse")!;
+    const lines = document.querySelectorAll<HTMLElement>(".audience-book-word");
+    const screenBox = screen.getBoundingClientRect();
     const headingBox = heading.getBoundingClientRect();
     const contentBox = content.getBoundingClientRect();
+    const japaneseBox = lines[0]!.getBoundingClientRect();
+    const englishBox = lines[1]!.getBoundingClientRect();
+    const bodyFontSize = Number.parseFloat(getComputedStyle(content).fontSize);
     return {
+      bodyFontSize,
       contentHeightRatio: contentBox.height / screen.clientHeight,
       contentInsideScreen:
         contentBox.left >= 0 &&
         contentBox.right <= screen.clientWidth + 1 &&
         contentBox.bottom <= screen.clientHeight + 1,
       contentStartsAfterHeading: contentBox.top >= headingBox.bottom,
-      paragraphsHaveNoMargin: Array.from(
-        document.querySelectorAll<HTMLElement>(".audience-book-word"),
-      ).every((line) => {
+      headingRightInsetRatio:
+        (screenBox.right - headingBox.right) / screen.clientWidth,
+      languageGapRatio: (englishBox.top - japaneseBox.bottom) / bodyFontSize,
+      paragraphsHaveNoMargin: Array.from(lines).every((line) => {
         const style = getComputedStyle(line);
         return style.marginTop === "0px" && style.marginBottom === "0px";
       }),
@@ -133,13 +140,20 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     };
   });
   expect(expandedLayout).toEqual({
+    bodyFontSize: expect.any(Number),
     contentHeightRatio: expect.any(Number),
     contentInsideScreen: true,
     contentStartsAfterHeading: true,
+    headingRightInsetRatio: expect.any(Number),
+    languageGapRatio: expect.any(Number),
     paragraphsHaveNoMargin: true,
     verseFitsContent: true,
   });
   expect(expandedLayout.contentHeightRatio).toBeGreaterThan(0.85);
+  expect(expandedLayout.headingRightInsetRatio).toBeGreaterThan(0.045);
+  expect(expandedLayout.headingRightInsetRatio).toBeLessThan(0.065);
+  expect(expandedLayout.languageGapRatio).toBeGreaterThan(0.99);
+  expect(expandedLayout.languageGapRatio).toBeLessThan(1.01);
   await expect(audience.getByRole("button", { name: "次へ" })).toHaveCount(0);
 
   const larger = page.getByRole("button", { name: "文字を大きく" });
