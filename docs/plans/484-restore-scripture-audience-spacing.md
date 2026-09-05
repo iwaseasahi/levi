@@ -45,7 +45,7 @@ legacy right inset for the scripture heading.
 2. [x] Extend E2E layout assertions for the language gap, heading inset, and
        continued fit at desktop and compact viewports.
 3. [x] Update the projection layout contract and run the canonical checks.
-4. [ ] Open a PR, verify required CI on the exact head, merge, and close #484.
+4. [x] Open a PR and verify required CI on the implementation head.
 
 ## Progress
 
@@ -57,6 +57,8 @@ legacy right inset for the scripture heading.
 - 2026-09-05 22:51 JST — Canonical and focused checks passed: unit 498,
   component 118, integration 137, E2E 35, build, configuration, security, and
   whitespace checks.
+- 2026-09-05 22:55 JST — Opened PR #485; Quality, Database, E2E, and Security
+  passed on implementation commit `2fd0511`.
 
 ## Decisions
 
@@ -93,11 +95,16 @@ legacy right inset for the scripture heading.
 
 ## Handoff or blockers
 
-- Completed: implementation, contract, regression coverage, and local checks.
-- Remaining: commit, PR, required CI, merge, and Issue closure.
+- Completed: implementation, contract, regression coverage, local checks, PR
+  #485, and required CI on the implementation commit.
+- Remaining: merge PR #485 and confirm automatic Issue closure.
 - Blocker: none.
-- Resume with: review and commit the scoped diff, then open the PR.
+- Resume with: merge PR #485 after CI passes on this record-only commit.
 
 ## Result
 
-Pending.
+The scripture audience now uses a one-em language gap and positions the
+right-aligned heading at the legacy 5% viewport inset without reducing the
+expanded measured body region. Local canonical, integration, E2E, security,
+build, and whitespace checks passed, as did all required CI jobs on the
+implementation commit. No migration or follow-up Issue is required.
