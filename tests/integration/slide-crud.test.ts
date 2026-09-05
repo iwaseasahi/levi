@@ -21,6 +21,37 @@ afterEach(() =>
 afterAll(() => prisma.$disconnect());
 
 describe("scoped Slide persistence", () => {
+  it("persists selected-range sizes and clears stale formatting after an old-writer update", async () => {
+    const owner = await scope();
+    const document = {
+      version: 1 as const,
+      nodes: [
+        { type: "text" as const, text: "Normal ", size: "normal" as const },
+        { type: "text" as const, text: "large", size: "large" as const },
+      ],
+    };
+    const created = await service.create(owner, {
+      title: "Rich synthetic",
+      document,
+    });
+    expect(created).toMatchObject({ body: "Normal large", document });
+
+    await prisma.$executeRaw`
+      UPDATE slides SET body = 'Old writer synthetic', revision = revision + 1
+      WHERE id = ${created.id}::uuid`;
+    const stored = await prisma.slide.findUniqueOrThrow({
+      where: { id: created.id },
+    });
+    expect(stored.textDocument).toBeNull();
+    expect(await service.get(owner, created.id)).toMatchObject({
+      body: "Old writer synthetic",
+      document: {
+        version: 1,
+        nodes: [{ type: "text", text: "Old writer synthetic", size: "normal" }],
+      },
+    });
+  });
+
   it("normalizes create/read/update, increments only revision and physically deletes", async () => {
     const owner = await scope();
     const created = await service.create(owner, {
@@ -138,6 +169,15 @@ describe("scoped Slide persistence", () => {
         body: "invalid\rbody",
       }),
     ).rejects.toThrow();
+    await expect(
+      slideRepository.update(owner, row.id, 1, {
+        ...input,
+        document: {
+          version: 1,
+          nodes: [{ type: "text", text: "Different", size: "normal" }],
+        },
+      }),
+    ).rejects.toThrow("does not match body");
     expect(await service.get(owner, row.id)).toEqual(row);
     await prisma.slide.update({
       where: { id: row.id },

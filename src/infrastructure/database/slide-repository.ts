@@ -5,6 +5,13 @@ import type {
   SlideImageMediaType,
 } from "@/domain/slides/image";
 import { SlideError, type SlideRecord } from "@/domain/slides/commands";
+import {
+  flattenSlideTextDocument,
+  parseSlideTextDocument,
+  slideTextDocument,
+  slideTextDocumentFromPlainText,
+  type SlideTextDocument,
+} from "@/domain/slides/text-document";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "./client";
 import { lockFolder } from "./saved-content-locks";
@@ -14,6 +21,7 @@ const slideRecordSelect = {
   id: true,
   title: true,
   body: true,
+  textDocument: true,
   contentType: true,
   revision: true,
   createdAt: true,
@@ -45,7 +53,7 @@ function record(row: SlideRow): SlideRecord {
     updatedAt: row.updatedAt.toISOString(),
   };
   if (row.contentType === "IMAGE") {
-    if (!row.image || row.body !== null)
+    if (!row.image || row.body !== null || row.textDocument !== null)
       throw new Error("Invalid persisted image Slide");
     return {
       ...common,
@@ -56,7 +64,23 @@ function record(row: SlideRow): SlideRecord {
   }
   if (row.body === null || row.image)
     throw new Error("Invalid persisted text Slide");
-  return { ...common, body: row.body };
+  const document =
+    row.textDocument === null
+      ? slideTextDocumentFromPlainText(row.body)
+      : parseSlideTextDocument(row.textDocument);
+  if (flattenSlideTextDocument(document) !== row.body)
+    throw new Error("Invalid persisted Slide text document");
+  return { ...common, body: row.body, document };
+}
+
+function persistedDocument(input: {
+  body: string;
+  document?: SlideTextDocument;
+}) {
+  const document = slideTextDocument(input.document, input.body);
+  if (flattenSlideTextDocument(document) !== input.body)
+    throw new Error("Slide text document does not match body");
+  return document;
 }
 
 async function lockChurch(
@@ -116,11 +140,13 @@ function mutate<T>(
 
 export const slideRepository: SlideRepository = {
   async create(scope, input) {
+    const document = persistedDocument(input);
     return record(
       await prisma.slide.create({
         data: {
           title: input.title,
           body: input.body,
+          textDocument: document as Prisma.InputJsonValue,
           contentType: "TEXT",
           churchId: scope.churchId,
         },
@@ -191,6 +217,7 @@ export const slideRepository: SlideRepository = {
   },
   update(scope, id, expectedRevision, input) {
     return mutate(scope, id, expectedRevision, async (transaction) => {
+      const document = persistedDocument(input);
       if (expectedRevision === 2_147_483_647)
         throw new SlideError("SLIDE_CONFLICT");
       await transaction.slideImage.deleteMany({
@@ -202,6 +229,7 @@ export const slideRepository: SlideRepository = {
           data: {
             title: input.title,
             body: input.body,
+            textDocument: document as Prisma.InputJsonValue,
             contentType: "TEXT",
             revision: { increment: 1 },
           },
@@ -227,6 +255,7 @@ export const slideRepository: SlideRepository = {
           data: {
             title: input.title,
             body: null,
+            textDocument: Prisma.DbNull,
             contentType: "IMAGE",
             revision: { increment: 1 },
             image: {

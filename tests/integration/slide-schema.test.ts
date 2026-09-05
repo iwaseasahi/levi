@@ -101,6 +101,7 @@ describe("Slide database contract", () => {
       "created_at",
       "updated_at",
       "content_type",
+      "text_document",
     ]);
     const constraints = await prisma.$queryRaw<
       Array<{ conname: string; confdeltype: string }>
@@ -113,6 +114,7 @@ describe("Slide database contract", () => {
         "slides_content_valid",
         "slides_revision_positive",
         "slides_church_id_fkey",
+        "slides_text_document_valid",
       ]),
     );
     expect(constraints.map((row) => row.conname)).not.toContain(
