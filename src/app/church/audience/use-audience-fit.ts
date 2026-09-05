@@ -19,21 +19,17 @@ export function useAudienceFit({
   useLayoutEffect(() => {
     const screen = screenRef.current;
     const verse = verseRef.current;
-    if (!screen || !verse) return;
+    const content = verse?.parentElement;
+    if (!screen || !verse || !content) return;
     const activeScreen = screen;
     const activeVerse = verse;
+    const activeContent = content;
     let animationFrame = 0;
     let cancelled = false;
 
     function fitVerse() {
-      const headingHeight =
-        activeScreen.querySelector<HTMLElement>(".audience-book-name")
-          ?.offsetHeight ?? 26;
-      const availableHeight = Math.max(
-        1,
-        activeScreen.clientHeight - Math.max(26, headingHeight) * 2,
-      );
-      const availableWidth = Math.max(1, activeScreen.clientWidth);
+      const availableHeight = Math.max(1, activeContent.clientHeight);
+      const availableWidth = Math.max(1, activeContent.clientWidth);
       const scale = findAudienceFitScale((candidateScale) => {
         activeScreen.style.setProperty(
           "--audience-fit-scale",
@@ -59,6 +55,7 @@ export function useAudienceFit({
         ? null
         : new ResizeObserver(scheduleFit);
     resizeObserver?.observe(activeScreen);
+    resizeObserver?.observe(activeContent);
     void document.fonts?.ready.then(() => {
       if (!cancelled) scheduleFit();
     });

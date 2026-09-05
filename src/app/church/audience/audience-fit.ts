@@ -1,5 +1,5 @@
 const FIT_STEP = 0.95;
-const MINIMUM_TARGET_SCALE = 0.2;
+const MINIMUM_TARGET_SCALE = 0.1;
 
 export function findAudienceFitScale(
   fitsAtScale: (candidateScale: number) => boolean,

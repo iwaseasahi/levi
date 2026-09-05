@@ -26,7 +26,7 @@ describe("audience fit scale", () => {
     expect(measuredScales.at(-1)).toBe(scale);
   });
 
-  it("retains the existing lower fitting bound for extreme content", () => {
-    expect(findAudienceFitScale(() => false)).toBeCloseTo(0.1937, 3);
+  it("retains a finite lower fitting bound for extreme content", () => {
+    expect(findAudienceFitScale(() => false)).toBeCloseTo(0.0994, 3);
   });
 });

@@ -28,6 +28,13 @@ and book boundaries. Blank hides all audience scripture on the existing black
 surface without discarding the current location or font scale. Navigation
 remains active while blank, and unblank displays the latest location.
 
+The scripture audience reserves only its rendered heading row, then uses the
+remaining viewport as the measured body region. Japanese and English lines use a
+compact fixed gap instead of font-relative paragraph margins. The 100% body base
+is 80px; the selected 60–220% scale is applied first, then the iterative fit
+scale reduces it only when needed so the heading and complete body remain inside
+the viewport without scrolling or clipping. Slide layout remains separate.
+
 The direct channel uses schema `levi.direct-audience`, version `2`. Every strict
 envelope includes content kind (`scripture` or `slide`) and a random connection
 generation. Open places only that nonce in `#levi=<uuid>`, retaining canonical

@@ -107,6 +107,39 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     verseColor: "rgb(255, 255, 0)",
     verseStyle: "italic",
   });
+  const expandedLayout = await audience.evaluate(() => {
+    const screen = document.querySelector<HTMLElement>(".audience-screen")!;
+    const heading = document.querySelector<HTMLElement>(".audience-book-name")!;
+    const content = document.querySelector<HTMLElement>(".audience-content")!;
+    const verse = document.querySelector<HTMLElement>(".audience-verse")!;
+    const headingBox = heading.getBoundingClientRect();
+    const contentBox = content.getBoundingClientRect();
+    return {
+      contentHeightRatio: contentBox.height / screen.clientHeight,
+      contentInsideScreen:
+        contentBox.left >= 0 &&
+        contentBox.right <= screen.clientWidth + 1 &&
+        contentBox.bottom <= screen.clientHeight + 1,
+      contentStartsAfterHeading: contentBox.top >= headingBox.bottom,
+      paragraphsHaveNoMargin: Array.from(
+        document.querySelectorAll<HTMLElement>(".audience-book-word"),
+      ).every((line) => {
+        const style = getComputedStyle(line);
+        return style.marginTop === "0px" && style.marginBottom === "0px";
+      }),
+      verseFitsContent:
+        verse.scrollHeight <= content.clientHeight + 1 &&
+        verse.scrollWidth <= content.clientWidth + 1,
+    };
+  });
+  expect(expandedLayout).toEqual({
+    contentHeightRatio: expect.any(Number),
+    contentInsideScreen: true,
+    contentStartsAfterHeading: true,
+    paragraphsHaveNoMargin: true,
+    verseFitsContent: true,
+  });
+  expect(expandedLayout.contentHeightRatio).toBeGreaterThan(0.85);
   await expect(audience.getByRole("button", { name: "次へ" })).toHaveCount(0);
 
   const larger = page.getByRole("button", { name: "文字を大きく" });
@@ -163,6 +196,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     .evaluate((element) =>
       Number.parseFloat(getComputedStyle(element).fontSize),
     );
+  expect(initialFontSize).toBeGreaterThan(64);
   await larger.click();
   await expect(displayedFontScale).toHaveText("110%");
   await expect
@@ -288,9 +322,15 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     )
     .toBeLessThan(1);
   const fittedVerse = await audience.locator(".audience-verse").boundingBox();
+  const fittedContent = await audience
+    .locator(".audience-content")
+    .boundingBox();
   expect(fittedVerse).not.toBeNull();
-  expect(fittedVerse!.y).toBeGreaterThanOrEqual(0);
-  expect(fittedVerse!.y + fittedVerse!.height).toBeLessThanOrEqual(720);
+  expect(fittedContent).not.toBeNull();
+  expect(fittedVerse!.y).toBeGreaterThanOrEqual(fittedContent!.y);
+  expect(fittedVerse!.y + fittedVerse!.height).toBeLessThanOrEqual(
+    fittedContent!.y + fittedContent!.height + 1,
+  );
 
   await audience.setViewportSize({ height: 360, width: 640 });
   await expect
@@ -299,13 +339,15 @@ test("projects bilingual scripture and navigates across chapter and book boundar
         const heading = screen.querySelector<HTMLElement>(
           ".audience-book-name",
         );
+        const content = screen.querySelector<HTMLElement>(".audience-content");
         const verse = screen.querySelector<HTMLElement>(".audience-verse");
-        if (!heading || !verse) return false;
-        const availableHeight =
-          screen.clientHeight - Math.max(26, heading.offsetHeight) * 2;
+        if (!heading || !content || !verse) return false;
+        const headingBox = heading.getBoundingClientRect();
+        const contentBox = content.getBoundingClientRect();
         return (
-          verse.scrollHeight <= availableHeight + 1 &&
-          verse.scrollWidth <= screen.clientWidth + 1 &&
+          contentBox.top >= headingBox.bottom &&
+          verse.scrollHeight <= content.clientHeight + 1 &&
+          verse.scrollWidth <= content.clientWidth + 1 &&
           screen.scrollHeight <= screen.clientHeight + 1
         );
       }),
