@@ -102,6 +102,8 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await expect(next).toBeEnabled();
   await expect(toggleBlank).toBeEnabled();
   await expect(displayedFontScale).toHaveText("140%");
+  for (let step = 0; step < 4; step += 1) await smaller.click();
+  await expect(displayedFontScale).toHaveText("100%");
 
   await toggleBlank.click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
@@ -142,7 +144,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
       Number.parseFloat(getComputedStyle(element).fontSize),
     );
   await larger.click();
-  await expect(displayedFontScale).toHaveText("150%");
+  await expect(displayedFontScale).toHaveText("110%");
   await expect
     .poll(() =>
       audience
@@ -153,7 +155,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     )
     .toBeGreaterThan(initialFontSize);
   await smaller.click();
-  await expect(displayedFontScale).toHaveText("140%");
+  await expect(displayedFontScale).toHaveText("100%");
   await expect
     .poll(() =>
       audience
@@ -247,9 +249,6 @@ test("projects bilingual scripture and navigates across chapter and book boundar
       name: "新改訳聖書第3版 創世記 2:2",
     }),
   ).toBeVisible();
-
-  for (let step = 0; step < 4; step += 1) await smaller.click();
-  await expect(displayedFontScale).toHaveText("100%");
 
   const overflowStyle = await audience.addStyleTag({
     content: ".audience-book-word { font-size: 4em !important; }",

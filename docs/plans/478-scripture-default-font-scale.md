@@ -69,11 +69,19 @@ audience uses. Slide projection remains unchanged.
   existing scripture scenario to preserve the suite topology.
 - 2026-09-05 21:16 JST — Full E2E passed: 35 tests. The scenario verifies 100%
   fallback, selecting and retaining 140% across reload, opening at 140%, and
-  acknowledged 150%/140% control updates.
+  acknowledged font control updates.
 - 2026-09-05 21:17 JST — `pnpm check` passed, including formatting, lint,
   typecheck, 498 unit tests, 115 component tests, configuration safety checks,
   and the production build. `git diff --check` passed and the final diff was
   reviewed for scope, storage data, slide isolation, and generated noise.
+- 2026-09-05 21:21 JST — Remote Quality, Database, and Security passed. Remote
+  E2E showed that rendered pixel size need not grow from 140% because automatic
+  fitting can compensate at that size. Retained the saved/open 140% assertion,
+  then returned the active audience to the established 100% baseline before the
+  existing pixel-growth and small-viewport fit checks.
+- 2026-09-05 21:23 JST — The adjusted full E2E passed locally: 35 tests. This
+  preserves the original fit test semantics while still verifying the saved
+  default and acknowledged percentage behavior before the reset.
 
 ## Decisions
 
@@ -111,9 +119,9 @@ audience uses. Slide projection remains unchanged.
 ## Handoff or blockers
 
 - Completed: implementation, tests, documentation, and local verification.
-- Remaining: commit, pull request, and required CI review.
+- Remaining: push the E2E assertion correction, pass required CI, and merge.
 - Blocker: none.
-- Resume with: commit the reviewed patch and open the pull request.
+- Resume with: commit and push the reviewed E2E assertion correction.
 
 ## Result
 
