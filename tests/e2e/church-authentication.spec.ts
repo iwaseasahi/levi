@@ -51,7 +51,7 @@ test.describe("Church session lifecycle", () => {
     await expect(settings).toHaveAttribute("aria-expanded", "false");
     await settings.click();
     await expect(settings).toHaveAttribute("aria-expanded", "true");
-    await page.getByRole("menuitem", { name: "ログアウト" }).click();
+    await page.getByRole("button", { name: "ログアウト" }).click();
     await expect(page).toHaveURL(/\/login$/);
     await page.goto("/scripture");
     await expect(page).toHaveURL(/\/login$/);

@@ -306,7 +306,7 @@ describe("ScriptureSearch", () => {
     );
     renderSearch(fetcher);
 
-    const loadingStatus = screen.getByRole("status");
+    const loadingStatus = screen.getByText("検索候補を読み込んでいます。");
     expect(loadingStatus).toHaveTextContent("検索候補を読み込んでいます。");
     expect(loadingStatus).toHaveClass("sr-only");
     expect(screen.getByRole("button", { name: "Open" })).toBeDisabled();
@@ -379,7 +379,13 @@ describe("ScriptureSearch", () => {
   });
 
   it("controls font size and previous or next scripture after the audience is ready", async () => {
-    renderSearch(successfulFetcher());
+    render(
+      <ScriptureSearch
+        defaultFontScale={1.3}
+        fetcher={successfulFetcher()}
+        savedContentFetcher={savedContentFetcher}
+      />,
+    );
     const user = userEvent.setup();
     await chooseRange(user);
 
@@ -397,6 +403,9 @@ describe("ScriptureSearch", () => {
     expect(previous).toBeDisabled();
     expect(next).toBeDisabled();
     expect(toggleBlank).toBeDisabled();
+    expect(
+      screen.getByRole("status", { name: "現在の文字サイズ" }),
+    ).toHaveTextContent("130%");
 
     await user.click(screen.getByRole("button", { name: "Open" }));
     act(() =>
@@ -409,8 +418,34 @@ describe("ScriptureSearch", () => {
       ),
     );
     await waitFor(() => expect(larger).toBeEnabled());
+    expect(
+      screen.getByRole("status", { name: "現在の文字サイズ" }),
+    ).toHaveTextContent("100%");
 
     await user.click(larger);
+    const ready = readyMessage();
+    act(() =>
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: {
+            ...Object.fromEntries(
+              Object.entries(ready).filter(([key]) => key !== "challenge"),
+            ),
+            type: "ACK",
+            sequence: 2,
+            presentation: {
+              ...ready.presentation,
+              fontScale: 1.1,
+            },
+          },
+          origin: window.location.origin,
+          source: audienceTarget,
+        }),
+      ),
+    );
+    expect(
+      screen.getByRole("status", { name: "現在の文字サイズ" }),
+    ).toHaveTextContent("110%");
     await user.click(smaller);
     await user.click(previous);
     await user.click(next);

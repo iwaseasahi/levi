@@ -1,5 +1,4 @@
-import { ScriptureSearch } from "@/app/church/scripture-search";
-import { ScriptureSettingsMenu } from "@/app/church/scripture-settings-menu";
+import { ScriptureWorkspace } from "@/app/church/scripture-workspace";
 import { requireChurchPageAccess } from "@/app/church/require-church-page-access";
 import { scriptureSelectionFromQuery } from "@/app/church/scripture-search-link";
 
@@ -10,11 +9,10 @@ export default async function ScripturePage({
   const initialSelection = scriptureSelectionFromQuery(await searchParams);
   return (
     <main className="ginmaku-search-page">
-      <ScriptureSearch
+      <ScriptureWorkspace
         key={JSON.stringify(initialSelection)}
         initialSelection={initialSelection}
       />
-      <ScriptureSettingsMenu />
     </main>
   );
 }

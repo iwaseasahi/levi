@@ -35,9 +35,12 @@ range inputs share a dark toolbar, `Open` is the primary action, and `Reset`
 and `空白⇔表示` are visually distinct secondary actions. Hover, keyboard focus,
 loading, and disabled states remain visibly distinguishable. The screen has no
 Church header, explanatory copy, or result-preview region. A fixed settings icon
-in the bottom-right opens a minimal menu containing `ログアウト`; selecting it
-ends the Church session and returns to `/login`. The menu closes on Escape or an
-outside click without moving the search layout. A successful `Open` validates
+in the bottom-right opens a compact settings dialog containing account actions,
+`ログアウト`, and a browser-local `デフォルト文字サイズ` selector. The
+selector uses the projection's existing 60–220% range in 10% steps, defaults to
+100% when missing or invalid, and stores no scripture or account data. Selecting
+logout ends the Church session and returns to `/login`. The dialog closes on
+Escape or an outside click without moving the search layout. A successful `Open` validates
 the range, keeps the search screen in place, and opens the
 canonical `/scripture/audience` URL directly in an ordinary Chrome tab named
 `projector`. Repeated opens reuse that named tab when it remains open. The URL
@@ -51,7 +54,11 @@ The fourth table column retains Ginmaku's `文字 大／小` and `スクロー�
 includes Ginmaku's `空白⇔表示` control.
 They remain disabled until the directly opened audience sends an authenticated
 same-origin readiness message. Text controls adjust the audience font
-immediately. Scroll up/down selects the previous/next canonical scripture item,
+immediately. The panel shows the acknowledged active font percentage while an
+audience is connected and otherwise shows the saved default percentage. A newly
+opened scripture audience starts at that saved default; changing the setting
+does not modify an already open audience. Scroll up/down selects the
+previous/next canonical scripture item,
 matching Ginmaku terminology and behavior rather than moving a viewport offset.
 Blank hides the audience scripture on the black surface while retaining the
 latest location for display when toggled again. Closing the audience disables

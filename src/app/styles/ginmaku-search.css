@@ -52,7 +52,8 @@
 }
 
 .scripture-settings-trigger:focus-visible,
-.scripture-settings-logout:focus-visible {
+.scripture-settings-logout:focus-visible,
+.scripture-settings-font-scale select:focus-visible {
   outline: 2px solid #d2a568;
   outline-offset: 2px;
 }
@@ -64,6 +65,25 @@
   border-radius: 10px;
   background: #111;
   box-shadow: 0 14px 32px rgb(0 0 0 / 55%);
+}
+
+.scripture-settings-font-scale {
+  display: grid;
+  gap: 5px;
+  padding: 7px 10px 9px;
+  border-bottom: 1px solid #373737;
+  color: #f2f2f2;
+  font-weight: 700;
+}
+
+.scripture-settings-font-scale select {
+  min-height: 32px;
+  padding: 4px 7px;
+  border: 1px solid #4b4b4b;
+  border-radius: 6px;
+  background: #1b1b1b;
+  color: #fff;
+  font: inherit;
 }
 
 .scripture-settings-logout {
@@ -231,8 +251,16 @@
 }
 
 .projection-control-group > span {
+  display: grid;
+  gap: 2px;
   color: #bdbdbd;
   font-weight: 650;
+}
+
+.projection-font-scale {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
 }
 
 .projection-control-buttons {

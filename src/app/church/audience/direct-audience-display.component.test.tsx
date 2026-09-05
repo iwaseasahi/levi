@@ -4,6 +4,7 @@ import axe from "axe-core";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DirectAudienceDisplay } from "./direct-audience-display";
+import { SCRIPTURE_FONT_SCALE_STORAGE_KEY } from "../scripture-font-scale";
 
 const selection = {
   book: "GEN",
@@ -32,6 +33,7 @@ function item(verse: number, book = "GEN", chapter = 1) {
 }
 
 afterEach(() => {
+  window.localStorage.clear();
   window.history.replaceState(null, "", "/");
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
@@ -94,6 +96,22 @@ describe("DirectAudienceDisplay", () => {
       rules: { "color-contrast": { enabled: false } },
     });
     expect(results.violations).toEqual([]);
+  });
+
+  it("starts a scripture audience at the saved default font size", async () => {
+    window.localStorage.setItem(SCRIPTURE_FONT_SCALE_STORAGE_KEY, "1.4");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json({ items: [item(1)] }))),
+    );
+    const { container } = render(
+      <DirectAudienceDisplay selection={selection} />,
+    );
+
+    await screen.findByText("架空の日本語 1:1");
+    expect(container.querySelector(".audience-screen")).toHaveStyle({
+      "--audience-scale": "1.4",
+    });
   });
 
   it("serializes navigation and accepts chapter and book boundary items", async () => {

@@ -483,7 +483,7 @@ test.describe("operator church provisioning", () => {
     ).toBeVisible();
 
     await page.getByRole("button", { name: "設定" }).click();
-    await page.getByRole("menuitem", { name: "メールアドレスを変更" }).click();
+    await page.getByRole("link", { name: "メールアドレスを変更" }).click();
     await expect(
       page.getByRole("heading", { name: "メールアドレスを変更" }),
     ).toBeVisible();
@@ -524,7 +524,7 @@ test.describe("operator church provisioning", () => {
 
     await page.goto("/scripture");
     await page.getByRole("button", { name: "設定" }).click();
-    await page.getByRole("menuitem", { name: "ログアウト" }).click();
+    await page.getByRole("button", { name: "ログアウト" }).click();
     await expect(page).toHaveURL(/\/login$/);
     await page.getByLabel("メールアドレス").fill(E2E_CREATED_EMAIL);
     await page.getByLabel("パスワード", { exact: true }).fill(selectedPassword);

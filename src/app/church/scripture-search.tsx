@@ -14,14 +14,17 @@ import {
 } from "./scripture-search-view";
 import { useDirectAudienceController } from "./use-direct-audience-controller";
 import { useScriptureCatalog } from "./use-scripture-catalog";
+import { DEFAULT_SCRIPTURE_FONT_SCALE } from "./scripture-font-scale";
 
 export function ScriptureSearch({
   fetcher = fetch,
   savedContentFetcher = fetcher,
+  defaultFontScale = DEFAULT_SCRIPTURE_FONT_SCALE,
   initialSelection,
 }: {
   fetcher?: typeof fetch;
   savedContentFetcher?: typeof fetch;
+  defaultFontScale?: number;
   initialSelection?: ScriptureSelection;
 }) {
   const catalog = useScriptureCatalog(fetcher, initialSelection);
@@ -114,6 +117,7 @@ export function ScriptureSearch({
           }}
           onSubmit={submit}
           selection={catalog.selection}
+          fontScale={audience.state?.presentation.fontScale ?? defaultFontScale}
         >
           <ScriptureSearchFeedback
             books={catalog.books}

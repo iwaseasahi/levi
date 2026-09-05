@@ -17,6 +17,7 @@ export function useProjectionAudience({
   ready,
   authorized,
   isAuthorized,
+  initialFontScale = 1,
   keyboardNavigation = true,
   navigate,
   invalidate,
@@ -26,11 +27,12 @@ export function useProjectionAudience({
   ready: boolean;
   authorized: boolean;
   isAuthorized: () => boolean;
+  initialFontScale?: number;
   keyboardNavigation?: boolean;
   navigate: (command: ProjectionAction) => void;
   invalidate: () => void;
 }) {
-  const [fontScale, setFontScale] = useState(1);
+  const [fontScale, setFontScale] = useState(initialFontScale);
   const [blank, setBlank] = useState(false);
   const peer = useRef<{
     opener: Window | null;

@@ -25,28 +25,41 @@ describe("ScriptureSettingsMenu", () => {
     signOut.mockResolvedValue(undefined);
   });
 
+  function renderSettings(
+    defaultFontScale = 1,
+    onDefaultFontScaleChange = vi.fn(),
+  ) {
+    render(
+      <ScriptureSettingsMenu
+        defaultFontScale={defaultFontScale}
+        onDefaultFontScaleChange={onDefaultFontScaleChange}
+      />,
+    );
+    return onDefaultFontScaleChange;
+  }
+
   it("opens from the settings icon and closes outside or with Escape", async () => {
-    render(<ScriptureSettingsMenu />);
+    renderSettings();
     const user = userEvent.setup();
     const settings = screen.getByRole("button", { name: "設定" });
 
     expect(settings).toHaveAttribute("aria-expanded", "false");
     expect(
-      screen.queryByRole("menuitem", { name: "ログアウト" }),
+      screen.queryByRole("button", { name: "ログアウト" }),
     ).not.toBeInTheDocument();
 
     await user.click(settings);
     expect(settings).toHaveAttribute("aria-expanded", "true");
     expect(
-      screen.queryByRole("menuitem", { name: "スライド" }),
+      screen.queryByRole("link", { name: "スライド" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("menuitem", { name: "メールアドレスを変更" }),
+      screen.getByRole("link", { name: "メールアドレスを変更" }),
     ).toHaveAttribute("href", "/account/change-email");
     expect(
-      screen.getByRole("menuitem", { name: "パスワードを変更" }),
+      screen.getByRole("link", { name: "パスワードを変更" }),
     ).toHaveAttribute("href", "/account/change-password");
-    expect(screen.getByRole("menuitem", { name: "ログアウト" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "ログアウト" })).toBeVisible();
 
     await user.click(document.body);
     expect(settings).toHaveAttribute("aria-expanded", "false");
@@ -57,6 +70,22 @@ describe("ScriptureSettingsMenu", () => {
     expect(settings).toHaveFocus();
   });
 
+  it("shows and changes the scripture projection default font size", async () => {
+    const onChange = renderSettings(1.3);
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "設定" }));
+    const select = screen.getByRole("combobox", {
+      name: "デフォルト文字サイズ",
+    });
+    expect(select).toHaveValue("1.3");
+    expect(screen.getByRole("option", { name: "60%" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "220%" })).toBeInTheDocument();
+
+    await user.selectOptions(select, "1.6");
+    expect(onChange).toHaveBeenCalledWith(1.6);
+  });
+
   it("signs out once and replaces the current route with login", async () => {
     let completeSignOut!: () => void;
     signOut.mockImplementationOnce(
@@ -65,12 +94,12 @@ describe("ScriptureSettingsMenu", () => {
           completeSignOut = resolve;
         }),
     );
-    render(<ScriptureSettingsMenu />);
+    renderSettings();
     const user = userEvent.setup();
 
     await user.click(screen.getByRole("button", { name: "設定" }));
-    await user.click(screen.getByRole("menuitem", { name: "ログアウト" }));
-    const pending = screen.getByRole("menuitem", { name: "ログアウト中…" });
+    await user.click(screen.getByRole("button", { name: "ログアウト" }));
+    const pending = screen.getByRole("button", { name: "ログアウト中…" });
     expect(pending).toBeDisabled();
     expect(signOut).toHaveBeenCalledTimes(1);
 
