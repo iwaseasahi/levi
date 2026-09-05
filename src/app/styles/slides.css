@@ -151,6 +151,52 @@
   white-space: pre;
   overflow-wrap: normal;
 }
+.slide-field-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.slide-rich-editor {
+  margin-bottom: 1rem;
+}
+.slide-size-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.slide-size-toolbar [role="status"] {
+  margin-left: auto;
+}
+.slide-rich-editor-frame {
+  border: 2px solid var(--border);
+}
+.slide-rich-editor-frame > div,
+.slide-rich-editor-frame .tiptap {
+  width: 100%;
+  height: 100%;
+}
+.slide-rich-editor-frame .tiptap {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4%;
+  color: inherit;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: normal;
+  white-space: pre;
+  overflow: auto;
+}
+.slide-rich-editor-frame .tiptap p {
+  margin: 0;
+  min-width: 1ch;
+}
+.slide-editor-help {
+  margin-top: 0.5rem;
+}
 .slide-list-header {
   display: flex;
   align-items: center;

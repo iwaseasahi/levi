@@ -46,7 +46,12 @@ export function SlideAudience({
             blank={blank}
           />
         ) : (
-          <SlideText text={state.text} fontScale={fontScale} blank={blank} />
+          <SlideText
+            text={state.text}
+            document={state.document}
+            fontScale={fontScale}
+            blank={blank}
+          />
         )
       ) : (
         <p role="alert">{slideAudienceMessages[state.status]}</p>

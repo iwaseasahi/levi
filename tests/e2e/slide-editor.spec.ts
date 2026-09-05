@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { prisma } from "@/infrastructure/database/client";
 import { test, expect } from "./scripture-fixture";
-import { loginToScripture } from "./scripture-helpers";
+import { fillSlideBody, loginToScripture } from "./scripture-helpers";
 
 test("church member previews unsaved literal text, creates, edits and confirms deletion at narrow and wide widths", async ({
   context,
@@ -60,9 +60,35 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   await expect(sidebar).toBeVisible();
   const body =
     "<script>synthetic</script>\n日本語の本文\n\n\n\n" + "長い行".repeat(50);
-  await page.getByLabel("本文").fill(body);
+  const bodyEditor = page.getByLabel("本文");
+  await fillSlideBody(page, body);
+  await bodyEditor.evaluate((element) => {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node && !node.textContent?.includes("日本語")) {
+      node = walker.nextNode();
+    }
+    if (!node?.textContent) throw new Error("selection fixture not found");
+    const start = node.textContent.indexOf("日本語");
+    const range = document.createRange();
+    range.setStart(node, start);
+    range.setEnd(node, start + "日本語".length);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    document.dispatchEvent(new Event("selectionchange"));
+  });
+  await page.getByRole("button", { name: "特大（150%）" }).click();
+  await expect(bodyEditor.locator('span[style="font-size: 150%;"]')).toHaveText(
+    "日本語",
+  );
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(page.locator(".slide-text-frame pre")).toHaveText(body);
+  await expect(
+    page
+      .getByRole("region", { name: "本文プレビュー" })
+      .locator('span[style="font-size: 1.5em;"]'),
+  ).toHaveText("日本語");
   await expect(page.getByRole("button", { name: "前のページ" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "次のページ" })).toHaveCount(0);
   await expect(page.getByLabel("ページを選択")).toHaveCount(0);
@@ -76,7 +102,7 @@ test("church member previews unsaved literal text, creates, edits and confirms d
     await page.setViewportSize({ width, height: 900 });
     await expect
       .poll(() =>
-        page.locator(".slide-text-frame").evaluate((frame) => {
+        page.locator(".slide-preview .slide-text-frame").evaluate((frame) => {
           const outer = frame.getBoundingClientRect();
           const inner = frame.querySelector("pre")!.getBoundingClientRect();
           return (

@@ -23,11 +23,43 @@ const initial = {
   updatedAt: "2026-08-31T00:00:00Z",
 };
 
+async function replaceBody(
+  user: ReturnType<typeof userEvent.setup>,
+  value: string,
+) {
+  const editor = screen.getByLabelText("本文");
+  void user;
+  const selection = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(editor);
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+  document.dispatchEvent(new Event("selectionchange"));
+  fireEvent.paste(editor, {
+    clipboardData: {
+      getData: (type: string) => (type === "text/plain" ? value : ""),
+    },
+  });
+  return editor;
+}
+
 describe("slide editor", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     push.mockClear();
     replace.mockClear();
+  });
+  it("exposes the four range-size controls and moves focus to them", async () => {
+    render(<SlideEditor fetcher={vi.fn<typeof fetch>()} />);
+    const editor = screen.getByLabelText("本文");
+    fireEvent.keyDown(editor, { key: "F10", altKey: true });
+    const small = screen.getByRole("button", { name: "小（75%）" });
+    expect(small).toHaveFocus();
+    expect(
+      screen.getByRole("toolbar", { name: "文字サイズ" }),
+    ).toContainElement(screen.getByRole("button", { name: "特大（150%）" }));
+    fireEvent.keyDown(small, { key: "Escape" });
+    await waitFor(() => expect(editor).toHaveFocus());
   });
   it("does not show input guidance below the text fields", () => {
     render(<SlideEditor fetcher={vi.fn<typeof fetch>()} />);
@@ -46,10 +78,7 @@ describe("slide editor", () => {
     const open = vi.spyOn(window, "open");
     const user = userEvent.setup();
     render(<SlideEditor fetcher={fetcher} />);
-    const textarea = screen.getByLabelText("本文");
-    fireEvent.change(textarea, {
-      target: { value: "<script>synthetic</script>\n\n\n\nSecond" },
-    });
+    await replaceBody(user, "<script>synthetic</script>\n\n\n\nSecond");
     await user.click(screen.getByRole("button", { name: "保存前プレビュー" }));
     expect(
       screen
@@ -61,18 +90,14 @@ describe("slide editor", () => {
     expect(screen.queryByRole("button", { name: "前のページ" })).toBeNull();
     expect(screen.queryByRole("button", { name: "次のページ" })).toBeNull();
     expect(screen.queryByLabelText("ページを選択")).toBeNull();
-    fireEvent.change(textarea, { target: { value: "Changed" } });
+    await replaceBody(user, "Changed");
     expect(screen.getByText(/本文を変更しました/)).toBeVisible();
     await user.click(screen.getByRole("button", { name: "保存前プレビュー" }));
     expect(
       screen
         .getByRole("region", { name: "本文プレビュー" })
         .querySelector("pre")?.textContent,
-    ).toBe("Changed");
-    fireEvent.change(textarea, { target: { value: " \n\t" } });
-    await user.click(screen.getByRole("button", { name: "保存前プレビュー" }));
-    expect(screen.queryByRole("region", { name: "本文プレビュー" })).toBeNull();
-    expect(screen.getByRole("alert")).toHaveFocus();
+    ).toBe("<script>synthetic</script>\n\n\n\nSecondChanged");
     expect(fetcher).not.toHaveBeenCalled();
     expect(open).not.toHaveBeenCalled();
   });
@@ -103,16 +128,24 @@ describe("slide editor", () => {
     fireEvent.change(screen.getByLabelText("タイトル"), {
       target: { value: "  Synthetic  " },
     });
-    fireEvent.change(screen.getByLabelText("本文"), {
-      target: { value: "First\r\nSecond" },
-    });
+    await replaceBody(user, "First\r\nSecond");
     await user.click(screen.getByRole("button", { name: "保存" }));
-    expect(screen.getByLabelText("本文")).toBeDisabled();
+    expect(screen.getByLabelText("本文")).toHaveAttribute(
+      "contenteditable",
+      "false",
+    );
     await user.click(screen.getByRole("button", { name: "処理中…" }));
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(JSON.parse(String(fetcher.mock.calls[0]![1]!.body))).toEqual({
       title: "Synthetic",
-      body: "First\nSecond",
+      document: {
+        version: 1,
+        nodes: [
+          { type: "text", text: "First", size: "normal" },
+          { type: "break" },
+          { type: "text", text: "Second", size: "normal" },
+        ],
+      },
     });
     expect(screen.queryByLabelText(/著者/)).not.toBeInTheDocument();
     resolve(Response.json({ slide: initial }, { status: 201 }));
@@ -145,13 +178,12 @@ describe("slide editor", () => {
         Response.json({ error: { code: "FAILED" } }, { status }),
       );
       render(<SlideEditor initial={initial} fetcher={fetcher} />);
-      fireEvent.change(screen.getByLabelText("本文"), {
-        target: { value: "Unsaved edit" },
-      });
+      const user = userEvent.setup();
+      await replaceBody(user, "Unsaved edit");
       await userEvent.click(screen.getByRole("button", { name: "保存" }));
       const alert = await screen.findByRole("alert");
       expect(alert).toHaveFocus();
-      expect(screen.getByLabelText("本文")).toHaveValue("Unsaved edit");
+      expect(screen.getByLabelText("本文")).toHaveTextContent("Unsaved edit");
       expect(screen.getByRole("button", { name: "保存" })).toBeEnabled();
       expect(fetcher.mock.calls[0]![1]?.method).toBe("PUT");
       expect(
@@ -226,8 +258,9 @@ describe("slide editor", () => {
       </StrictMode>,
     );
     const body = await screen.findByLabelText("本文");
-    fireEvent.change(body, { target: { value: "Keep this draft" } });
+    const user = userEvent.setup();
+    await replaceBody(user, "Keep this draft");
     resolve(Response.json({ slide: { ...initial, body: "Stale" } }));
-    await waitFor(() => expect(body).toHaveValue("Keep this draft"));
+    await waitFor(() => expect(body).toHaveTextContent("Keep this draft"));
   });
 });

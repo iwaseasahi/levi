@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SlideInputError } from "./slide";
+import type { SlideTextDocument } from "./text-document";
 
 const querySchema = z
   .object({
@@ -35,6 +36,7 @@ export type SlideAudienceState =
       status: "ready";
       contentType?: "text";
       text: string;
+      document?: SlideTextDocument;
       revision: number;
     }
   | {

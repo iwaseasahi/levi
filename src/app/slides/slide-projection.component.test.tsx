@@ -59,9 +59,8 @@ describe("Slide audience and controller", () => {
     render(<SlideAudience id={id} fetcher={fetcher} />);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.getByRole("main")).toBeEmptyDOMElement();
-    expect(
-      (await screen.findByText(/<script>synthetic<\/script>/)).textContent,
-    ).toBe(slide.body);
+    const literal = await screen.findByText(/<script>synthetic<\/script>/);
+    expect(literal.closest("pre")?.textContent).toBe(slide.body);
     expect(screen.queryByText(slide.title)).toBeNull();
     expect(document.querySelector("script")).toBeNull();
     expect(new URL(location.href).searchParams.has("page")).toBe(false);

@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { prisma } from "@/infrastructure/database/client";
 import { test, expect } from "./scripture-fixture";
-import { loginToScripture } from "./scripture-helpers";
+import { fillSlideBody, loginToScripture } from "./scripture-helpers";
 
 test("Slide lifecycle keeps drafts private while saved content is listed, projected, edited and deleted", async ({
   context,
@@ -14,7 +14,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await expect(page.getByText("スライドはまだありません。")).toBeVisible();
   await page.getByRole("link", { name: "スライドを作成" }).click();
   const original = "礼拝 %_\\ ABC\n日本語の二行目\n\n\n\n二番目\n\n\n\n三番目";
-  await page.getByLabel("本文").fill(original);
+  await fillSlideBody(page, original);
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
     page.getByRole("region", { name: "本文プレビュー" }).locator("pre"),
@@ -71,7 +71,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   const editor = await context.newPage();
   await editor.goto(`${detail}/edit`);
   const draft = "未保存の日本語\n第二行\n\n\n\n更新後の二番目";
-  await editor.getByLabel("本文").fill(draft);
+  await fillSlideBody(editor, draft);
   await editor.getByLabel("本文").press("ArrowUp");
   await editor.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
@@ -180,7 +180,7 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   await other.getByRole("button", { name: "保存", exact: true }).click();
   await expect(other.getByText(/保存済み · リビジョン/)).toHaveCount(0);
   await page.getByLabel("タイトル").fill("Retained unsaved conflict");
-  await page.getByLabel("本文").fill("Retained unsaved body");
+  await fillSlideBody(page, "Retained unsaved body");
   pageErrorGuard.allowConsoleError(
     "Failed to load resource: the server responded with a status of 409 (Conflict)",
   );
@@ -191,7 +191,7 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   await expect(page.getByLabel("タイトル")).toHaveValue(
     "Retained unsaved conflict",
   );
-  await expect(page.getByLabel("本文")).toHaveValue("Retained unsaved body");
+  await expect(page.getByLabel("本文")).toHaveText("Retained unsaved body");
   expect(
     await prisma.slide.findUnique({ where: { id: slide.id } }),
   ).toMatchObject({
