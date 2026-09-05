@@ -49,16 +49,30 @@ describe("slide editor", () => {
     push.mockClear();
     replace.mockClear();
   });
-  it("exposes the four range-size controls and moves focus to them", async () => {
+  it("exposes a conventional rich-text toolbar and moves focus to it", async () => {
     render(<SlideEditor fetcher={vi.fn<typeof fetch>()} />);
     const editor = screen.getByLabelText("本文");
     fireEvent.keyDown(editor, { key: "F10", altKey: true });
-    const small = screen.getByRole("button", { name: "小（75%）" });
-    expect(small).toHaveFocus();
+    const sizeSelect = screen.getByRole("combobox", { name: "文字サイズ" });
+    expect(sizeSelect).toHaveFocus();
     expect(
-      screen.getByRole("toolbar", { name: "文字サイズ" }),
-    ).toContainElement(screen.getByRole("button", { name: "特大（150%）" }));
-    fireEvent.keyDown(small, { key: "Escape" });
+      screen.getByRole("toolbar", { name: "本文の書式" }),
+    ).toContainElement(screen.getByRole("combobox", { name: "文字サイズ" }));
+    expect(screen.getByRole("option", { name: "60%" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "220%" })).toBeVisible();
+    expect(screen.getAllByRole("option")).toHaveLength(17);
+    expect(screen.getByRole("group", { name: "文字装飾" })).toContainElement(
+      screen.getByRole("button", { name: "太字" }),
+    );
+    expect(screen.getByRole("button", { name: "斜体" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "下線" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "中央揃え" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "箇条書き" })).toBeEnabled();
+    expect(editor.querySelector("p")).toHaveAttribute(
+      "data-placeholder",
+      "ここにスライド本文を入力",
+    );
+    fireEvent.keyDown(sizeSelect, { key: "Escape" });
     await waitFor(() => expect(editor).toHaveFocus());
   });
   it("does not show input guidance below the text fields", () => {
@@ -83,7 +97,7 @@ describe("slide editor", () => {
     expect(
       screen
         .getByRole("region", { name: "本文プレビュー" })
-        .querySelector("pre")?.textContent,
+        .querySelector(".slide-rich-content")?.textContent,
     ).toBe("<script>synthetic</script>\n\n\n\nSecond");
     expect(screen.queryByText("保存・投影は行いません。")).toBeNull();
     expect(document.querySelector("script")).toBeNull();
@@ -96,7 +110,7 @@ describe("slide editor", () => {
     expect(
       screen
         .getByRole("region", { name: "本文プレビュー" })
-        .querySelector("pre")?.textContent,
+        .querySelector(".slide-rich-content")?.textContent,
     ).toBe("<script>synthetic</script>\n\n\n\nSecondChanged");
     expect(fetcher).not.toHaveBeenCalled();
     expect(open).not.toHaveBeenCalled();
@@ -139,11 +153,17 @@ describe("slide editor", () => {
     expect(JSON.parse(String(fetcher.mock.calls[0]![1]!.body))).toEqual({
       title: "Synthetic",
       document: {
-        version: 1,
-        nodes: [
-          { type: "text", text: "First", size: "normal" },
-          { type: "break" },
-          { type: "text", text: "Second", size: "normal" },
+        version: 2,
+        blocks: [
+          {
+            type: "paragraph",
+            alignment: "left",
+            content: [
+              { type: "text", text: "First", size: 100, marks: [] },
+              { type: "break" },
+              { type: "text", text: "Second", size: 100, marks: [] },
+            ],
+          },
         ],
       },
     });

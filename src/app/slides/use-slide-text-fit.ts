@@ -17,7 +17,7 @@ export function useSlideTextFit(
     const box = frame.current;
     const container = content.current;
     if (!box || !container) return;
-    const text = container.querySelector<HTMLElement>(".tiptap p") ?? container;
+    const text = container.querySelector<HTMLElement>(".tiptap") ?? container;
     let disposed = false;
     const fit = () => {
       if (disposed || !box.clientWidth || !box.clientHeight) return;

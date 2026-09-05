@@ -60,7 +60,7 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   await expect(sidebar).toBeVisible();
   const body =
     "<script>synthetic</script>\n日本語の本文\n\n\n\n" + "長い行".repeat(50);
-  const bodyEditor = page.getByLabel("本文");
+  const bodyEditor = page.getByRole("textbox", { name: "本文" });
   await fillSlideBody(page, body);
   await bodyEditor.evaluate((element) => {
     const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
@@ -78,12 +78,12 @@ test("church member previews unsaved literal text, creates, edits and confirms d
     selection?.addRange(range);
     document.dispatchEvent(new Event("selectionchange"));
   });
-  await page.getByRole("button", { name: "特大（150%）" }).click();
+  await page.getByLabel("文字サイズ").selectOption("150");
   await expect(bodyEditor.locator('span[style="font-size: 150%;"]')).toHaveText(
     "日本語",
   );
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
-  await expect(page.locator(".slide-text-frame pre")).toHaveText(body);
+  await expect(page.locator(".slide-rich-content")).toHaveText(body);
   await expect(
     page
       .getByRole("region", { name: "本文プレビュー" })
@@ -104,7 +104,9 @@ test("church member previews unsaved literal text, creates, edits and confirms d
       .poll(() =>
         page.locator(".slide-preview .slide-text-frame").evaluate((frame) => {
           const outer = frame.getBoundingClientRect();
-          const inner = frame.querySelector("pre")!.getBoundingClientRect();
+          const inner = frame
+            .querySelector(".slide-rich-content")!
+            .getBoundingClientRect();
           return (
             inner.left >= outer.left &&
             inner.right <= outer.right &&

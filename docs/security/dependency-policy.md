@@ -32,10 +32,13 @@ major/version contract.
 Tiptap and its ProseMirror packages are exact-pinned at 3.31.3 and are MIT
 licensed. They provide selection-aware editing, history, IME/browser handling,
 and a constrained schema that the platform APIs do not provide. Levi enables
-only text, one paragraph, hard breaks, text style, and font size, and converts
-the result to its own validated document rather than storing editor JSON or
-HTML. Dependabot updates require the normal audit, license, component, and
-browser checks.
+only paragraphs, flat bullet lists, three alignments, bold, italic, underline,
+hard breaks, a visual placeholder, text style, and
+60–220% font sizes in 10% steps. The required extensions are exact-pinned and
+the result is converted to Levi's own validated versioned document rather than
+storing raw editor JSON or HTML.
+Dependabot updates require the normal audit, license, component, and browser
+checks.
 
 `pnpm security:licenses` produces a minimized report containing dependency name,
 version, and declared license. Any new license expression fails until this file

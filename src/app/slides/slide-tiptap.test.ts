@@ -25,11 +25,17 @@ describe("Slide Tiptap adapter", () => {
       .setFontSize("150%")
       .run();
     expect(tiptapJsonToSlideDocument(editor.getJSON())).toEqual({
-      version: 1,
-      nodes: [
-        { type: "text", text: "A", size: "normal" },
-        { type: "text", text: "BC", size: "xlarge" },
-        { type: "text", text: "D", size: "normal" },
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [
+            { type: "text", text: "A", size: 100, marks: [] },
+            { type: "text", text: "BC", size: 150, marks: [] },
+            { type: "text", text: "D", size: 100, marks: [] },
+          ],
+        },
       ],
     });
     editor.destroy();
@@ -48,7 +54,138 @@ describe("Slide Tiptap adapter", () => {
     });
     expect(
       tiptapJsonToSlideDocument(slideDocumentToTiptapJson(document)),
+    ).toEqual({
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [
+            { type: "break" },
+            { type: "text", text: "Small", size: 75, marks: [] },
+            { type: "break" },
+            { type: "break" },
+            { type: "text", text: "Large", size: 125, marks: [] },
+            { type: "break" },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("round-trips rich marks, alignment and bullet lists", () => {
+    const document = parseSlideTextDocument({
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "center",
+          content: [
+            {
+              type: "text",
+              text: "Lead",
+              size: 130,
+              marks: ["bold", "italic", "underline"],
+            },
+          ],
+        },
+        {
+          type: "bulletList",
+          items: [
+            {
+              alignment: "left",
+              content: [{ type: "text", text: "First", size: 100, marks: [] }],
+            },
+            {
+              alignment: "right",
+              content: [
+                {
+                  type: "text",
+                  text: "Second",
+                  size: 80,
+                  marks: ["bold"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(
+      tiptapJsonToSlideDocument(slideDocumentToTiptapJson(document)),
     ).toEqual(document);
+  });
+
+  it("applies every supported rich-text command through Tiptap", () => {
+    const editor = new Editor({
+      extensions: slideTiptapExtensions,
+      content: {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              { type: "text", text: "A" },
+              { type: "hardBreak" },
+              { type: "text", text: "A2" },
+            ],
+          },
+          { type: "paragraph", content: [{ type: "text", text: "B" }] },
+        ],
+      },
+    });
+    expect(
+      editor
+        .chain()
+        .setTextSelection({ from: 1, to: 5 })
+        .toggleBold()
+        .toggleItalic()
+        .toggleUnderline()
+        .setFontSize("120%")
+        .setTextAlign("center")
+        .run(),
+    ).toBe(true);
+    expect(
+      editor
+        .chain()
+        .setTextSelection({ from: 7, to: 8 })
+        .toggleBulletList()
+        .run(),
+    ).toBe(true);
+    expect(tiptapJsonToSlideDocument(editor.getJSON())).toEqual({
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "center",
+          content: [
+            {
+              type: "text",
+              text: "A",
+              size: 120,
+              marks: ["bold", "italic", "underline"],
+            },
+            { type: "break" },
+            {
+              type: "text",
+              text: "A2",
+              size: 120,
+              marks: ["bold", "italic", "underline"],
+            },
+          ],
+        },
+        {
+          type: "bulletList",
+          items: [
+            {
+              alignment: "left",
+              content: [{ type: "text", text: "B", size: 100, marks: [] }],
+            },
+          ],
+        },
+      ],
+    });
+    editor.destroy();
   });
 
   it.each([

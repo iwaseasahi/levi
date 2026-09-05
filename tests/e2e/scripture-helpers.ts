@@ -30,7 +30,7 @@ export async function loginToScripture(
 }
 
 export async function fillSlideBody(page: Page, value: string) {
-  const editor = page.getByLabel("本文");
+  const editor = page.getByRole("textbox", { name: "本文" });
   await editor.focus();
   await editor.press("ControlOrMeta+A");
   await editor.evaluate((element, text) => {

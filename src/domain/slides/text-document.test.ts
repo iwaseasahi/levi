@@ -7,7 +7,7 @@ import {
   slideTextDocumentNodeLimit,
 } from "./text-document";
 
-describe("SlideTextDocumentV1", () => {
+describe("SlideTextDocument", () => {
   it("round-trips leading, trailing and repeated LF exactly", () => {
     const body = "\n一行目\n\nSecond\n";
     const document = slideTextDocumentFromPlainText(body);
@@ -61,7 +61,7 @@ describe("SlideTextDocumentV1", () => {
     expect(() => parseSlideTextDocument(value)).toThrow(SlideInputError);
   });
 
-  it("allows four selected-range size tokens and rejects overlong text", () => {
+  it("keeps the four legacy V1 size tokens and rejects overlong text", () => {
     const document = parseSlideTextDocument({
       version: 1,
       nodes: [
@@ -78,5 +78,115 @@ describe("SlideTextDocumentV1", () => {
         nodes: [{ type: "text", text: "A".repeat(100_001), size: "normal" }],
       }),
     ).toThrow(SlideInputError);
+  });
+
+  it("validates and normalizes the version 2 rich-text structure", () => {
+    expect(
+      parseSlideTextDocument({
+        version: 2,
+        blocks: [
+          {
+            type: "paragraph",
+            alignment: "center",
+            content: [
+              {
+                type: "text",
+                text: "A",
+                size: 130,
+                marks: ["underline", "bold", "bold"],
+              },
+              {
+                type: "text",
+                text: "B",
+                size: 130,
+                marks: ["bold", "underline"],
+              },
+            ],
+          },
+          {
+            type: "bulletList",
+            items: [
+              {
+                alignment: "left",
+                content: [
+                  {
+                    type: "text",
+                    text: "Item",
+                    size: 100,
+                    marks: ["italic"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    ).toEqual({
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "center",
+          content: [
+            {
+              type: "text",
+              text: "AB",
+              size: 130,
+              marks: ["bold", "underline"],
+            },
+          ],
+        },
+        {
+          type: "bulletList",
+          items: [
+            {
+              alignment: "left",
+              content: [
+                {
+                  type: "text",
+                  text: "Item",
+                  size: 100,
+                  marks: ["italic"],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it.each([
+    { version: 2, blocks: [] },
+    {
+      version: 2,
+      blocks: [{ type: "heading", level: 1, alignment: "left", content: [] }],
+    },
+    {
+      version: 2,
+      blocks: [{ type: "paragraph", alignment: "justify", content: [] }],
+    },
+    {
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [{ type: "text", text: "A", size: 100, marks: ["link"] }],
+        },
+      ],
+    },
+    {
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [{ type: "text", text: "A", size: 65, marks: [] }],
+        },
+      ],
+    },
+  ])("rejects unsupported version 2 structure %#", (value) => {
+    expect(() => parseSlideTextDocument(value)).toThrow(SlideInputError);
   });
 });

@@ -21,6 +21,54 @@ afterEach(() =>
 afterAll(() => prisma.$disconnect());
 
 describe("scoped Slide persistence", () => {
+  it("persists the supported rich-text blocks and marks as version 2 JSON", async () => {
+    const owner = await scope();
+    const document = {
+      version: 2 as const,
+      blocks: [
+        {
+          type: "paragraph" as const,
+          alignment: "center" as const,
+          content: [
+            {
+              type: "text" as const,
+              text: "Welcome",
+              size: 130,
+              marks: ["bold" as const, "underline" as const],
+            },
+          ],
+        },
+        {
+          type: "bulletList" as const,
+          items: [
+            {
+              alignment: "left" as const,
+              content: [
+                {
+                  type: "text" as const,
+                  text: "First",
+                  size: 100,
+                  marks: ["italic" as const],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const created = await service.create(owner, {
+      title: "Rich document",
+      document,
+    });
+    expect(created).toMatchObject({
+      body: "Welcome\nFirst",
+      document,
+    });
+    expect(
+      await prisma.slide.findUniqueOrThrow({ where: { id: created.id } }),
+    ).toMatchObject({ textDocument: document });
+  });
+
   it("persists selected-range sizes and clears stale formatting after an old-writer update", async () => {
     const owner = await scope();
     const document = {

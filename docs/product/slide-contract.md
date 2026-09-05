@@ -54,13 +54,22 @@ foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
 POST `/api/church/slides` accepts legacy `{title, body}` or `{title, document}`.
-The version-1 document contains only sized text runs and LF break nodes; the
-server derives and returns compatibility `body`. GET/PUT/DELETE use
+Version 1 contains sized text runs and LF break nodes. Version 2 adds
+paragraphs, flat bullet lists, left/center/right alignment, bold, italic,
+underline, and relative font sizes from 60–220% in 10% steps. The server
+accepts only this allowlist and derives compatibility `body`; raw HTML and raw
+Tiptap JSON are not persistence contracts. GET/PUT/DELETE use
 `/api/church/slides/[id]`; PUT accepts `{input: {title, document},
 expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
 return `{slide}` without `churchId`; delete has no response body. Mutation Origin
 must exactly match the configured canonical origin. CRUD detail routes reject
 query parameters; list cursor parameters belong to the collection read contract.
+
+The text editor uses a conventional toolbar attached to a visibly bounded 16:9
+editing panel. Font size uses a select control; inline marks, alignment, bullet
+list, undo, and redo use compact icon buttons with accessible names. The panel
+remains distinguishable from the black page background and shows an input
+placeholder when empty. Heading styles are not offered.
 
 Issue #470 adds multipart create/update for image Slides. The form contains
 exactly `title` and `image`, plus `expectedRevision` for update. Accept one
@@ -90,10 +99,11 @@ active Levi behavior. Empty or ASCII-whitespace-only bodies remain invalid, and
 HTML-like input remains literal text rather than executable markup.
 
 Issue #479 adds WYSIWYG range sizing on this single surface. The author may use
-only 小 75%, 標準 100%, 大 125%, or 特大 150%. Preview, detail, and audience
-render those relative sizes with the same fit calculation. Paste retains plain
-text and LF only. Existing plain-body rows render as all 標準. The projection
-controller's 60–220% adjustment remains transient and multiplies authored sizes.
+60–220% in 10% steps. Preview, detail, and audience render those relative sizes
+with the same fit calculation. Paste retains plain text and LF only. Existing
+plain-body rows render as all 100%; legacy 75% and 125% runs remain readable.
+The projection controller's 60–220% adjustment remains transient and multiplies
+authored sizes.
 
 Preview is an explicit local operation over unsaved body; it neither writes a
 Slide nor opens/changes the audience. Title errors do not prevent a valid

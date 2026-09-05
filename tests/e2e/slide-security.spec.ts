@@ -140,7 +140,9 @@ for (const denied of ["revoked", "suspended"] as const) {
     const opened = context.waitForEvent("page");
     await controller.getByRole("button", { name: "Open" }).click();
     const audience = await opened;
-    await expect(audience.locator("pre")).toHaveText(slide.body!);
+    await expect(audience.locator(".slide-rich-content")).toHaveText(
+      slide.body!,
+    );
     pageErrorGuard.allowConsoleError(
       denied === "revoked"
         ? "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
@@ -162,13 +164,13 @@ for (const denied of ["revoked", "suspended"] as const) {
     await expect(audience.getByRole("main").getByRole("alert")).toContainText(
       "利用できません",
     );
-    await expect(audience.locator("pre")).toHaveCount(0);
+    await expect(audience.locator(".slide-rich-content")).toHaveCount(0);
     await audience.keyboard.press("ArrowDown");
     await audience.reload();
     await expect(audience.getByRole("main").getByRole("alert")).toContainText(
       "利用できません",
     );
-    await expect(audience.locator("pre")).toHaveCount(0);
+    await expect(audience.locator(".slide-rich-content")).toHaveCount(0);
     await expect(audience.getByRole("textbox")).toHaveCount(0);
     await expect(audience.getByRole("navigation")).toHaveCount(0);
   });

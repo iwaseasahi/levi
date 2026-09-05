@@ -1,12 +1,64 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, type CSSProperties } from "react";
 import {
   slideTextDocument,
   slideTextSizeScale,
+  type SlideRichTextNode,
   type SlideTextDocument,
+  type SlideTextNode,
 } from "@/domain/slides/text-document";
 import { useSlideTextFit } from "./use-slide-text-fit";
+
+function RichInline({
+  nodes,
+}: {
+  nodes: readonly (SlideRichTextNode | SlideTextNode)[];
+}) {
+  return nodes.map((node, index) => {
+    if (node.type === "break") return <span key={index}>{"\n"}</span>;
+    const marks = "marks" in node ? node.marks : [];
+    const style: CSSProperties = {
+      fontSize: `${slideTextSizeScale(node.size)}em`,
+      fontWeight: marks.includes("bold") ? 700 : undefined,
+      fontStyle: marks.includes("italic") ? "italic" : undefined,
+      textDecoration: marks.includes("underline") ? "underline" : undefined,
+    };
+    return (
+      <span key={index} style={style}>
+        {node.text}
+      </span>
+    );
+  });
+}
+
+function renderDocument(document: SlideTextDocument) {
+  if (document.version === 1) {
+    return (
+      <p>
+        <RichInline nodes={document.nodes} />
+      </p>
+    );
+  }
+  return document.blocks.map((block, index) => {
+    if (block.type === "bulletList") {
+      return (
+        <ul key={index}>
+          {block.items.map((item, itemIndex) => (
+            <li key={itemIndex} style={{ textAlign: item.alignment }}>
+              <RichInline nodes={item.content} />
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return (
+      <p key={index} style={{ textAlign: block.alignment }}>
+        <RichInline nodes={block.content} />
+      </p>
+    );
+  });
+}
 
 /** Shared body-only 16:9 surface for preview and the slide audience. */
 export function SlideText({
@@ -25,28 +77,17 @@ export function SlideText({
     [document, text],
   );
   const frame = useRef<HTMLDivElement>(null);
-  const content = useRef<HTMLPreElement>(null);
+  const content = useRef<HTMLDivElement>(null);
   useSlideTextFit(frame, content, richText, fontScale);
   return (
     <div className="slide-text-frame" ref={frame}>
-      <pre
-        className="audience-shadow"
+      <div
+        className="slide-rich-content audience-shadow"
         ref={content}
         style={{ visibility: blank ? "hidden" : "visible" }}
       >
-        {richText.nodes.map((node, index) =>
-          node.type === "break" ? (
-            <span key={index}>{"\n"}</span>
-          ) : (
-            <span
-              key={index}
-              style={{ fontSize: `${slideTextSizeScale(node.size)}em` }}
-            >
-              {node.text}
-            </span>
-          ),
-        )}
-      </pre>
+        {renderDocument(richText)}
+      </div>
     </div>
   );
 }
