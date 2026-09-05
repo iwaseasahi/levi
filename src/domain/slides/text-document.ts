@@ -3,8 +3,7 @@ import { slideBodyLimit, SlideInputError } from "./boundary";
 
 export const slideTextDocumentNodeLimit = 10_000;
 export const slideTextPercentages = [
-  60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210,
-  220,
+  50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
 ] as const;
 const allowedSlideTextPercentages = new Set<number>(slideTextPercentages);
 export const slideTextMarks = ["bold", "italic", "underline"] as const;

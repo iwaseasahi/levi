@@ -88,9 +88,9 @@ describe("Slide input", () => {
               type: "paragraph",
               alignment: "left",
               content: [
-                { type: "text", text: "Big", size: 220, marks: [] },
+                { type: "text", text: "Big", size: 200, marks: [] },
                 { type: "break" },
-                { type: "text", text: "Small", size: 60, marks: [] },
+                { type: "text", text: "Small", size: 50, marks: [] },
               ],
             },
           ],
@@ -106,9 +106,9 @@ describe("Slide input", () => {
             type: "paragraph",
             alignment: "left",
             content: [
-              { type: "text", text: "Big", size: 220, marks: [] },
+              { type: "text", text: "Big", size: 200, marks: [] },
               { type: "break" },
-              { type: "text", text: "Small", size: 60, marks: [] },
+              { type: "text", text: "Small", size: 50, marks: [] },
             ],
           },
         ],

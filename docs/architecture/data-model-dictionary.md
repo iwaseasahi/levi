@@ -398,7 +398,7 @@ and an image Slide to have a null `body`. Application writes create exactly one
 | `church_id`     | `uuid`         | no   | Church FK with physical cascade                                                       |
 | `title`         | `varchar(200)` | no   | normalized nonblank single-line title                                                 |
 | `body`          | `text`         | yes  | flattened text for `TEXT`; null for `IMAGE`                                           |
-| `text_document` | `jsonb`        | yes  | validated Slide text document V2; size is 60–220% in 10% steps; null means plain text |
+| `text_document` | `jsonb`        | yes  | validated Slide text document V2; size is 50–200% in 10% steps; null means plain text |
 | `content_type`  | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`                                                     |
 | `revision`      | `integer`      | no   | positive optimistic concurrency token                                                 |
 | timestamps      | `timestamptz`  | no   | creation/update                                                                       |

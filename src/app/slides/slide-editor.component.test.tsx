@@ -58,9 +58,9 @@ describe("slide editor", () => {
     expect(
       screen.getByRole("toolbar", { name: "本文の書式" }),
     ).toContainElement(screen.getByRole("combobox", { name: "文字サイズ" }));
-    expect(screen.getByRole("option", { name: "60%" })).toBeVisible();
-    expect(screen.getByRole("option", { name: "220%" })).toBeVisible();
-    expect(screen.getAllByRole("option")).toHaveLength(17);
+    expect(screen.getByRole("option", { name: "50%" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "200%" })).toBeVisible();
+    expect(screen.getAllByRole("option")).toHaveLength(16);
     expect(screen.getByRole("group", { name: "文字装飾" })).toContainElement(
       screen.getByRole("button", { name: "太字" }),
     );

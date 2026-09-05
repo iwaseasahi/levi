@@ -34,7 +34,7 @@ licensed. They provide selection-aware editing, history, IME/browser handling,
 and a constrained schema that the platform APIs do not provide. Levi enables
 only paragraphs, flat bullet lists, three alignments, bold, italic, underline,
 hard breaks, a visual placeholder, text style, and
-60–220% font sizes in 10% steps. The required extensions are exact-pinned and
+50–200% font sizes in 10% steps. The required extensions are exact-pinned and
 the result is converted to Levi's own validated versioned document rather than
 storing raw editor JSON or HTML.
 Dependabot updates require the normal audit, license, component, and browser

@@ -66,6 +66,26 @@ describe("SlideTextDocument", () => {
     { version: 1, nodes: [{ type: "text", text: "\ud800", size: "normal" }] },
     { version: 1, nodes: [{ type: "break" }] },
     {
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [{ type: "text", text: "A", size: 40, marks: [] }],
+        },
+      ],
+    },
+    {
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [{ type: "text", text: "A", size: 210, marks: [] }],
+        },
+      ],
+    },
+    {
       version: 1,
       nodes: Array.from({ length: slideTextDocumentNodeLimit + 1 }, () => ({
         type: "break",
@@ -75,7 +95,7 @@ describe("SlideTextDocument", () => {
     expect(() => parseSlideTextDocument(value)).toThrow(SlideInputError);
   });
 
-  it("allows 60–220% in 10% steps and rejects overlong text", () => {
+  it("allows 50–200% in 10% steps and rejects overlong text", () => {
     const document = parseSlideTextDocument({
       version: 2,
       blocks: [
@@ -83,9 +103,9 @@ describe("SlideTextDocument", () => {
           type: "paragraph",
           alignment: "left",
           content: [
-            { type: "text", text: "最小", size: 60, marks: [] },
+            { type: "text", text: "最小", size: 50, marks: [] },
             { type: "text", text: "標準", size: 100, marks: [] },
-            { type: "text", text: "最大", size: 220, marks: [] },
+            { type: "text", text: "最大", size: 200, marks: [] },
           ],
         },
       ],

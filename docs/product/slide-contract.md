@@ -56,7 +56,7 @@ concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
 POST `/api/church/slides` accepts `{title, body}` or `{title, document}`. The
 document contract is version 2 and contains paragraphs, flat bullet lists,
 left/center/right alignment, bold, italic, underline, and relative font sizes
-from 60–220% in 10% steps. The server
+from 50–200% in 10% steps. The server
 accepts only this allowlist and derives compatibility `body`; raw HTML and raw
 Tiptap JSON are not persistence contracts. GET/PUT/DELETE use
 `/api/church/slides/[id]`; PUT accepts `{input: {title, document},
@@ -99,7 +99,7 @@ active Levi behavior. Empty or ASCII-whitespace-only bodies remain invalid, and
 HTML-like input remains literal text rather than executable markup.
 
 Issue #479 adds WYSIWYG range sizing on this single surface. The author may use
-60–220% in 10% steps. Preview, detail, and audience render those relative sizes
+50–200% in 10% steps. Preview, detail, and audience render those relative sizes
 with the same fit calculation. Paste retains plain text and LF only. Existing
 plain-body rows render as all 100%. The unreleased version 1 document format is
 not accepted. The projection controller's 60–220% adjustment remains transient

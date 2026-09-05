@@ -46,6 +46,7 @@
 11. [x] Product ownerの2026-09-06追加確認に従い、文字サイズselectの表示切れを直し、60〜220%を10%刻みで選択・保存できるようにする。
 12. [x] Product ownerの試用結果に従い、見出しUI・Tiptap extension・V2 nodeを削除する。
 13. [x] Product ownerの確認に従い、未リリースのV1 document互換をdomain/API/DBから削除する。
+14. [x] Product ownerの追加確認に従い、保存する文字サイズ範囲を50〜200%の10%刻みに変更する。
 
 ## Progress
 
@@ -57,6 +58,7 @@
 - 2026-09-06 00:55 JST — 文字サイズselectの幅を固定して表示切れを防ぎ、選択可能な範囲を60〜220%の10%刻みへ拡張。V1の75/125%は読取互換として保持する。
 - 2026-09-06 01:00 JST — Product ownerが見出し機能を不要と判断。段落style select、Heading extension、V2 heading nodeとread rendererを削除した。
 - 2026-09-06 01:10 JST — Product ownerがV1は本番未リリースと確認。V1 parser/adapter/rendererと75/125%互換を削除し、plain `body`からV2を構築する境界だけを維持した。
+- 2026-09-06 01:35 JST — Product ownerが保存する文字サイズ範囲を50〜200%の10%刻みに変更するよう確認した。投影時の一時的な全体倍率60〜220%は別責務として維持する。
 
 ## Decisions
 
@@ -82,7 +84,7 @@
 
 ## Verification
 
-- [x] `pnpm test:unit` — 528 passed
+- [x] `pnpm test:unit` — 530 passed
 - [x] `pnpm test:component` — 120 passed
 - [x] `pnpm db:check`
 - [x] `pnpm test:integration` — 140 passed

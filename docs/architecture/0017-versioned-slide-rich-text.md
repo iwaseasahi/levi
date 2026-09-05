@@ -22,7 +22,7 @@ also know only the plain `body` field.
 
 Use exact-pinned Tiptap 3.31.3 with a constrained ProseMirror schema. Authorable
 blocks are paragraphs and flat bullet lists. Authorable inline marks are bold,
-italic, underline, and a 60–220% font size selected in 10% steps. Paragraphs
+italic, underline, and a 50–200% font size selected in 10% steps. Paragraphs
 and list items support left, center, or right alignment. Paste and drop accept
 plain text and LF only; unsupported nodes,
 marks, attributes, sizes, files, nested lists, and rich HTML are rejected or
