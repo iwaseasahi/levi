@@ -12,12 +12,14 @@ import type {
 } from "@/domain/scripture/search";
 import type { DirectAudienceCommand } from "@/domain/projection/direct-audience-control";
 import type { ScriptureSelection } from "./scripture-search-selection";
+import { scriptureFontScalePercentage } from "./scripture-font-scale";
 
 type SearchFieldsProps = {
   audienceReady: boolean;
   books: ScriptureCatalogBook[];
   catalogError: string;
   children?: ReactNode;
+  fontScale: number;
   loading: boolean;
   onBookChange: (book: string) => void;
   onChapterChange: (chapter: string) => void;
@@ -35,6 +37,7 @@ export function ScriptureSearchFields({
   books,
   catalogError,
   children,
+  fontScale,
   loading,
   onBookChange,
   onChapterChange,
@@ -96,7 +99,15 @@ export function ScriptureSearchFields({
           >
             <p className="projection-control-title">投影操作</p>
             <div className="projection-control-group">
-              <span>文字サイズ</span>
+              <span>
+                文字サイズ
+                <output
+                  aria-label="現在の文字サイズ"
+                  className="projection-font-scale"
+                >
+                  {scriptureFontScalePercentage(fontScale)}
+                </output>
+              </span>
               <div className="projection-control-buttons">
                 <button
                   aria-label="文字を大きく"

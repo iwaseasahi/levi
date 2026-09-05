@@ -3,8 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LogoutButton } from "./logout-button";
+import {
+  SCRIPTURE_FONT_SCALE_OPTIONS,
+  scriptureFontScalePercentage,
+} from "./scripture-font-scale";
 
-export function ScriptureSettingsMenu() {
+export function ScriptureSettingsMenu({
+  defaultFontScale,
+  onDefaultFontScaleChange,
+}: {
+  defaultFontScale: number;
+  onDefaultFontScaleChange: (scale: number) => void;
+}) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -36,31 +46,46 @@ export function ScriptureSettingsMenu() {
       {open ? (
         <div
           aria-label="設定メニュー"
+          aria-modal="false"
           className="scripture-settings-menu"
           id="scripture-settings-menu"
-          role="menu"
+          role="dialog"
         >
+          <label className="scripture-settings-font-scale">
+            <span>デフォルト文字サイズ</span>
+            <select
+              aria-label="デフォルト文字サイズ"
+              onChange={(event) =>
+                onDefaultFontScaleChange(Number(event.target.value))
+              }
+              value={defaultFontScale}
+            >
+              {SCRIPTURE_FONT_SCALE_OPTIONS.map((scale) => (
+                <option key={scale} value={scale}>
+                  {scriptureFontScalePercentage(scale)}
+                </option>
+              ))}
+            </select>
+          </label>
           <Link
             className="scripture-settings-logout"
             href="/account/change-email"
-            role="menuitem"
           >
             メールアドレスを変更
           </Link>
           <Link
             className="scripture-settings-logout"
             href="/account/change-password"
-            role="menuitem"
           >
             パスワードを変更
           </Link>
-          <LogoutButton className="scripture-settings-logout" role="menuitem" />
+          <LogoutButton className="scripture-settings-logout" />
         </div>
       ) : null}
       <button
         aria-controls="scripture-settings-menu"
         aria-expanded={open}
-        aria-haspopup="menu"
+        aria-haspopup="dialog"
         aria-label="設定"
         className="scripture-settings-trigger"
         ref={triggerRef}

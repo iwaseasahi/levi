@@ -170,9 +170,7 @@ test("validates the Ginmaku search form and projects each language mode", async 
   expect(1280 - (settingsBox!.x + settingsBox!.width)).toBe(12);
   expect(720 - (settingsBox!.y + settingsBox!.height)).toBe(12);
   await settings.click();
-  await expect(
-    page.getByRole("menuitem", { name: "ログアウト" }),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
   expect(
     (await new AxeBuilder({ page }).include(".scripture-settings").analyze())
       .violations,

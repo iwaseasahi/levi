@@ -5,6 +5,7 @@ import type { ScriptureSearchItem } from "@/domain/scripture/search";
 import type { ProjectionAction } from "@/domain/projection/transport";
 import { useProjectionAudience } from "@/app/projection/use-projection-audience";
 import type { AudienceDirection, AudienceStatus } from "./use-audience-data";
+import { readScriptureFontScale } from "../scripture-font-scale";
 
 export function useAudienceControls({
   current,
@@ -19,6 +20,7 @@ export function useAudienceControls({
   status: AudienceStatus;
   invalidate: () => void;
 }) {
+  const initialFontScale = useMemo(() => readScriptureFontScale(), []);
   const content = useMemo(
     () => ({ location: current?.location ?? null }),
     [current],
@@ -36,6 +38,7 @@ export function useAudienceControls({
     ready: status === "ready" && !!current,
     authorized: isAuthorized(),
     isAuthorized,
+    initialFontScale,
     navigate: navigateCommand,
     invalidate,
   });

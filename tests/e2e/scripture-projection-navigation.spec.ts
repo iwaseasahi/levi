@@ -10,6 +10,17 @@ test("projects bilingual scripture and navigates across chapter and book boundar
 }) => {
   test.setTimeout(60_000);
   await loginToScripture(context, page, scriptureAccount);
+  const displayedFontScale = page.getByRole("status", {
+    name: "現在の文字サイズ",
+  });
+  await expect(displayedFontScale).toHaveText("100%");
+  await page.getByRole("button", { name: "設定" }).click();
+  await page
+    .getByRole("combobox", { name: "デフォルト文字サイズ" })
+    .selectOption("1.4");
+  await expect(displayedFontScale).toHaveText("140%");
+  await page.reload();
+  await expect(displayedFontScale).toHaveText("140%");
   const audience = await openGenesisAudience(context, page, {
     endVerse: "",
     expectedEndVerse: "3",
@@ -90,6 +101,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await expect(previous).toBeEnabled();
   await expect(next).toBeEnabled();
   await expect(toggleBlank).toBeEnabled();
+  await expect(displayedFontScale).toHaveText("140%");
 
   await toggleBlank.click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
@@ -130,6 +142,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
       Number.parseFloat(getComputedStyle(element).fontSize),
     );
   await larger.click();
+  await expect(displayedFontScale).toHaveText("150%");
   await expect
     .poll(() =>
       audience
@@ -140,6 +153,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     )
     .toBeGreaterThan(initialFontSize);
   await smaller.click();
+  await expect(displayedFontScale).toHaveText("140%");
   await expect
     .poll(() =>
       audience
@@ -233,6 +247,9 @@ test("projects bilingual scripture and navigates across chapter and book boundar
       name: "新改訳聖書第3版 創世記 2:2",
     }),
   ).toBeVisible();
+
+  for (let step = 0; step < 4; step += 1) await smaller.click();
+  await expect(displayedFontScale).toHaveText("100%");
 
   const overflowStyle = await audience.addStyleTag({
     content: ".audience-book-word { font-size: 4em !important; }",

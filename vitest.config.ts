@@ -24,6 +24,7 @@ export default defineConfig({
         "src/app/church/client-api.ts",
         "src/app/church/scripture-search-selection.ts",
         "src/app/church/scripture-search-link.ts",
+        "src/app/church/scripture-font-scale.ts",
         "src/config/**/*.ts",
         "src/domain/**/*.ts",
         "src/infrastructure/auth/admin-basic-auth.ts",
