@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { SlideImageMetadata } from "./image";
 import { parseSlideInput, parseSlideTitle, SlideInputError } from "./slide";
+import type { SlideTextDocument } from "./text-document";
 
 type SlideRecordBase = {
   id: string;
@@ -12,6 +13,7 @@ type SlideRecordBase = {
 
 export type TextSlideRecord = SlideRecordBase & {
   body: string;
+  document?: SlideTextDocument;
   contentType?: "text";
   image?: never;
 };

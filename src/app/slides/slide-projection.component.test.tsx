@@ -44,9 +44,60 @@ describe("Slide audience and controller", () => {
     vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(960);
     vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(540);
     const { container } = render(<SlideText text="日本語の本文" />);
-    const text = container.querySelector("pre");
+    const text = container.querySelector(".slide-rich-content");
     expect(text).toHaveClass("audience-shadow");
     expect(text).toHaveStyle({ fontSize: "129.6px" });
+  });
+
+  it("renders the version 2 rich-text allowlist without HTML injection", () => {
+    render(
+      <SlideText
+        text={"Lead\nItem"}
+        document={{
+          version: 2,
+          blocks: [
+            {
+              type: "paragraph",
+              alignment: "center",
+              content: [
+                {
+                  type: "text",
+                  text: "Lead",
+                  size: 120,
+                  marks: ["bold", "italic", "underline"],
+                },
+              ],
+            },
+            {
+              type: "bulletList",
+              items: [
+                {
+                  alignment: "right",
+                  content: [
+                    {
+                      type: "text",
+                      text: "Item",
+                      size: 100,
+                      marks: [],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }}
+      />,
+    );
+    const lead = screen.getByText("Lead").closest("p")!;
+    expect(lead).toHaveStyle({ textAlign: "center" });
+    expect(lead.innerHTML).toContain("font-size: 1.2em");
+    expect(lead.innerHTML).toContain("font-weight: 700");
+    expect(lead.innerHTML).toContain("font-style: italic");
+    expect(lead.innerHTML).toContain("text-decoration: underline");
+    const item = screen.getByRole("listitem");
+    expect(screen.getByRole("list")).toContainElement(item);
+    expect(item).toHaveTextContent("Item");
+    expect(document.querySelector("script")).toBeNull();
   });
 
   it("renders the complete literal body and clears on visibility/revision checks", async () => {
@@ -59,9 +110,10 @@ describe("Slide audience and controller", () => {
     render(<SlideAudience id={id} fetcher={fetcher} />);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.getByRole("main")).toBeEmptyDOMElement();
-    expect(
-      (await screen.findByText(/<script>synthetic<\/script>/)).textContent,
-    ).toBe(slide.body);
+    const literal = await screen.findByText(/<script>synthetic<\/script>/);
+    expect(literal.closest(".slide-rich-content")?.textContent).toBe(
+      slide.body,
+    );
     expect(screen.queryByText(slide.title)).toBeNull();
     expect(document.querySelector("script")).toBeNull();
     expect(new URL(location.href).searchParams.has("page")).toBe(false);
@@ -73,7 +125,7 @@ describe("Slide audience and controller", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "更新されました",
     );
-    expect(document.querySelector("pre")).toBeNull();
+    expect(document.querySelector(".slide-rich-content")).toBeNull();
     expect(
       fetcher.mock.calls.every(([, init]) => init?.cache === "no-store"),
     ).toBe(true);
@@ -88,13 +140,13 @@ describe("Slide audience and controller", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
-    expect(document.querySelector("pre")).not.toBeNull();
+    expect(document.querySelector(".slide-rich-content")).not.toBeNull();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(30_000);
     });
     expect(screen.getByRole("alert")).toHaveTextContent("利用できません");
     fireEvent.keyDown(window, { key: "ArrowDown" });
-    expect(document.querySelector("pre")).toBeNull();
+    expect(document.querySelector(".slide-rich-content")).toBeNull();
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
   it("shows initial read errors without protected text", async () => {

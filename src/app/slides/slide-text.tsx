@@ -1,56 +1,82 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useMemo, useRef, type CSSProperties } from "react";
+import {
+  slideTextDocument,
+  slideTextSizeScale,
+  type SlideRichTextNode,
+  type SlideTextDocument,
+} from "@/domain/slides/text-document";
+import { useSlideTextFit } from "./use-slide-text-fit";
+
+function RichInline({ nodes }: { nodes: readonly SlideRichTextNode[] }) {
+  return nodes.map((node, index) => {
+    if (node.type === "break") return <span key={index}>{"\n"}</span>;
+    const style: CSSProperties = {
+      fontSize: `${slideTextSizeScale(node.size)}em`,
+      fontWeight: node.marks.includes("bold") ? 700 : undefined,
+      fontStyle: node.marks.includes("italic") ? "italic" : undefined,
+      textDecoration: node.marks.includes("underline")
+        ? "underline"
+        : undefined,
+    };
+    return (
+      <span key={index} style={style}>
+        {node.text}
+      </span>
+    );
+  });
+}
+
+function renderDocument(document: SlideTextDocument) {
+  return document.blocks.map((block, index) => {
+    if (block.type === "bulletList") {
+      return (
+        <ul key={index}>
+          {block.items.map((item, itemIndex) => (
+            <li key={itemIndex} style={{ textAlign: item.alignment }}>
+              <RichInline nodes={item.content} />
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    return (
+      <p key={index} style={{ textAlign: block.alignment }}>
+        <RichInline nodes={block.content} />
+      </p>
+    );
+  });
+}
 
 /** Shared body-only 16:9 surface for preview and the slide audience. */
 export function SlideText({
   text,
+  document,
   fontScale = 1,
   blank = false,
 }: {
   text: string;
+  document?: SlideTextDocument | undefined;
   fontScale?: number;
   blank?: boolean;
 }) {
+  const richText = useMemo(
+    () => slideTextDocument(document, text),
+    [document, text],
+  );
   const frame = useRef<HTMLDivElement>(null);
-  const content = useRef<HTMLPreElement>(null);
-  useLayoutEffect(() => {
-    const box = frame.current;
-    const pre = content.current;
-    if (!box || !pre) return;
-    let disposed = false;
-    const fit = () => {
-      if (disposed || !box.clientWidth || !box.clientHeight) return;
-      const desired = box.clientHeight * 0.12 * fontScale;
-      pre.style.fontSize = `${desired}px`;
-      const scale = Math.min(
-        1,
-        (box.clientWidth * 0.92) / Math.max(1, pre.scrollWidth),
-        (box.clientHeight * 0.92) / Math.max(1, pre.scrollHeight),
-      );
-      pre.style.fontSize = `${desired * scale}px`;
-    };
-    fit();
-    const observer =
-      typeof ResizeObserver === "undefined" ? null : new ResizeObserver(fit);
-    observer?.observe(box);
-    window.addEventListener("resize", fit);
-    void document.fonts?.ready.then(fit);
-    return () => {
-      disposed = true;
-      observer?.disconnect();
-      window.removeEventListener("resize", fit);
-    };
-  }, [text, fontScale]);
+  const content = useRef<HTMLDivElement>(null);
+  useSlideTextFit(frame, content, richText, fontScale);
   return (
     <div className="slide-text-frame" ref={frame}>
-      <pre
-        className="audience-shadow"
+      <div
+        className="slide-rich-content audience-shadow"
         ref={content}
         style={{ visibility: blank ? "hidden" : "visible" }}
       >
-        {text}
-      </pre>
+        {renderDocument(richText)}
+      </div>
     </div>
   );
 }

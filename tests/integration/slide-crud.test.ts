@@ -21,6 +21,114 @@ afterEach(() =>
 afterAll(() => prisma.$disconnect());
 
 describe("scoped Slide persistence", () => {
+  it("persists the supported rich-text blocks and marks as version 2 JSON", async () => {
+    const owner = await scope();
+    const document = {
+      version: 2 as const,
+      blocks: [
+        {
+          type: "paragraph" as const,
+          alignment: "center" as const,
+          content: [
+            {
+              type: "text" as const,
+              text: "Welcome",
+              size: 130,
+              marks: ["bold" as const, "underline" as const],
+            },
+          ],
+        },
+        {
+          type: "bulletList" as const,
+          items: [
+            {
+              alignment: "left" as const,
+              content: [
+                {
+                  type: "text" as const,
+                  text: "First",
+                  size: 100,
+                  marks: ["italic" as const],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const created = await service.create(owner, {
+      title: "Rich document",
+      document,
+    });
+    expect(created).toMatchObject({
+      body: "Welcome\nFirst",
+      document,
+    });
+    expect(
+      await prisma.slide.findUniqueOrThrow({ where: { id: created.id } }),
+    ).toMatchObject({ textDocument: document });
+  });
+
+  it("persists selected-range sizes and clears stale formatting after an old-writer update", async () => {
+    const owner = await scope();
+    const document = {
+      version: 2 as const,
+      blocks: [
+        {
+          type: "paragraph" as const,
+          alignment: "left" as const,
+          content: [
+            {
+              type: "text" as const,
+              text: "Normal ",
+              size: 100,
+              marks: [],
+            },
+            {
+              type: "text" as const,
+              text: "large",
+              size: 150,
+              marks: [],
+            },
+          ],
+        },
+      ],
+    };
+    const created = await service.create(owner, {
+      title: "Rich synthetic",
+      document,
+    });
+    expect(created).toMatchObject({ body: "Normal large", document });
+
+    await prisma.$executeRaw`
+      UPDATE slides SET body = 'Old writer synthetic', revision = revision + 1
+      WHERE id = ${created.id}::uuid`;
+    const stored = await prisma.slide.findUniqueOrThrow({
+      where: { id: created.id },
+    });
+    expect(stored.textDocument).toBeNull();
+    expect(await service.get(owner, created.id)).toMatchObject({
+      body: "Old writer synthetic",
+      document: {
+        version: 2,
+        blocks: [
+          {
+            type: "paragraph",
+            alignment: "left",
+            content: [
+              {
+                type: "text",
+                text: "Old writer synthetic",
+                size: 100,
+                marks: [],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
   it("normalizes create/read/update, increments only revision and physically deletes", async () => {
     const owner = await scope();
     const created = await service.create(owner, {
@@ -138,6 +246,23 @@ describe("scoped Slide persistence", () => {
         body: "invalid\rbody",
       }),
     ).rejects.toThrow();
+    await expect(
+      slideRepository.update(owner, row.id, 1, {
+        ...input,
+        document: {
+          version: 2,
+          blocks: [
+            {
+              type: "paragraph",
+              alignment: "left",
+              content: [
+                { type: "text", text: "Different", size: 100, marks: [] },
+              ],
+            },
+          ],
+        },
+      }),
+    ).rejects.toThrow("does not match body");
     expect(await service.get(owner, row.id)).toEqual(row);
     await prisma.slide.update({
       where: { id: row.id },

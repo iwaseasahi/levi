@@ -101,6 +101,7 @@ describe("Slide database contract", () => {
       "created_at",
       "updated_at",
       "content_type",
+      "text_document",
     ]);
     const constraints = await prisma.$queryRaw<
       Array<{ conname: string; confdeltype: string }>
@@ -113,6 +114,7 @@ describe("Slide database contract", () => {
         "slides_content_valid",
         "slides_revision_positive",
         "slides_church_id_fkey",
+        "slides_text_document_valid",
       ]),
     );
     expect(constraints.map((row) => row.conname)).not.toContain(
@@ -177,6 +179,22 @@ describe("Slide database contract", () => {
       "slide_images_total_ck",
       "slides_image_total_ck",
     ]);
+  });
+
+  it("rejects the unreleased version 1 Slide text document at the database boundary", async () => {
+    const owner = await church();
+    await expect(
+      prisma.slide.create({
+        data: {
+          ...fields,
+          churchId: owner.id,
+          textDocument: {
+            version: 1,
+            nodes: [{ type: "text", text: "Synthetic", size: "normal" }],
+          },
+        },
+      }),
+    ).rejects.toThrow();
   });
 
   it("rejects a Slide whose selected content type and image child disagree", async () => {

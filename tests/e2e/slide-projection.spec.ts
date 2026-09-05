@@ -26,9 +26,9 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
-  await expect(audience.locator("pre")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
   expect(
-    await audience.locator("pre").evaluate((element) => {
+    await audience.locator(".slide-rich-content").evaluate((element) => {
       const style = getComputedStyle(element);
       return {
         color: style.color,
@@ -76,7 +76,9 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
       .poll(() =>
         audience.locator(".slide-text-frame").evaluate((frame) => {
           const outer = frame.getBoundingClientRect();
-          const inner = frame.querySelector("pre")!.getBoundingClientRect();
+          const inner = frame
+            .querySelector(".slide-rich-content")!
+            .getBoundingClientRect();
           return (
             inner.left >= outer.left &&
             inner.right <= outer.right &&
@@ -102,9 +104,9 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
-  await expect(audience.locator("pre")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
   await audience.reload();
-  await expect(audience.locator("pre")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
   await expect(controller.getByRole("status")).toContainText("100%");
 
   await prisma.slide.update({
@@ -118,14 +120,14 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await expect(audience.getByRole("main").getByRole("alert")).toContainText(
     "更新されました",
   );
-  await expect(audience.locator("pre")).toHaveCount(0);
+  await expect(audience.locator(".slide-rich-content")).toHaveCount(0);
   await page.reload();
   await controller.getByRole("button", { name: "Open" }).click();
-  await expect(audience.locator("pre")).toHaveText(updatedBody);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(updatedBody);
   await expect
     .poll(() =>
       audience
-        .locator("pre")
+        .locator(".slide-rich-content")
         .evaluate((element) => getComputedStyle(element).fontSize),
     )
     .toBe("129.6px");
@@ -142,7 +144,7 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   ).toBeVisible();
   await page.goto(`/slides/${slide.id}`);
   await controller.getByRole("button", { name: "Open" }).click();
-  await expect(audience.locator("pre")).toHaveText(updatedBody);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(updatedBody);
   expect(context.pages()).toHaveLength(2);
   pageErrorGuard.allowConsoleError(
     "Failed to load resource: the server responded with a status of 404 (Not Found)",
@@ -155,7 +157,7 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await expect(audience.getByRole("main").getByRole("alert")).toContainText(
     "利用できません",
   );
-  await expect(audience.locator("pre")).toHaveCount(0);
+  await expect(audience.locator(".slide-rich-content")).toHaveCount(0);
 });
 
 test("invalid Slide coordinates recover through Open and a closed audience can reopen", async ({
@@ -176,7 +178,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   let audience = await opened;
-  await expect(audience.locator("pre")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
   const valid = new URL(audience.url());
   for (const value of ["-1", "2", "invalid"]) {
     const invalid = new URL(valid);
@@ -185,10 +187,12 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
     await expect(audience.getByRole("main").getByRole("alert")).toContainText(
       "スライドを表示できません",
     );
-    await expect(audience.locator("pre")).toHaveCount(0);
+    await expect(audience.locator(".slide-rich-content")).toHaveCount(0);
     await expect(audience.getByRole("navigation")).toHaveCount(0);
     await controller.getByRole("button", { name: "Open" }).click();
-    await expect(audience.locator("pre")).toHaveText(slide.body!);
+    await expect(audience.locator(".slide-rich-content")).toHaveText(
+      slide.body!,
+    );
   }
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
@@ -200,7 +204,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   const reopened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   audience = await reopened;
-  await expect(audience.locator("pre")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
   ).toBeEnabled();

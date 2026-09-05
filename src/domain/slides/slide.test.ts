@@ -15,7 +15,7 @@ describe("Slide input", () => {
         title: " \r\n題名\t",
         body: " \r\n本文\r次\n ",
       }),
-    ).toEqual({ title: "題名", body: " \n本文\n次\n " });
+    ).toMatchObject({ title: "題名", body: " \n本文\n次\n " });
     expect(normalizeSlideEol("A\r\nB\rC\nD")).toBe("A\nB\nC\nD");
     expect(
       parseSlideInput({ ...input, title: "\u3000題\u3000", body: "\u00a0" }),
@@ -27,7 +27,17 @@ describe("Slide input", () => {
       title: "😀".repeat(200),
       body: "😀".repeat(100_000),
     };
-    expect(parseSlideInput(value)).toEqual(value);
+    expect(parseSlideInput(value)).toMatchObject(value);
+    expect(parseSlideInput(value).document).toEqual({
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [{ type: "text", text: value.body, size: 100, marks: [] }],
+        },
+      ],
+    });
     expect(parseSlideBody("A".repeat(100_000))).toHaveLength(100_000);
   });
 
@@ -65,6 +75,45 @@ describe("Slide input", () => {
     );
     expect(() => parseSlideBody(42)).toThrow(SlideInputError);
     expect(() => parseSlideBody(" \r\n\t")).toThrow(SlideInputError);
+  });
+
+  it("accepts a strict rich document and derives the compatibility body", () => {
+    expect(
+      parseSlideInput({
+        title: "Rich",
+        document: {
+          version: 2,
+          blocks: [
+            {
+              type: "paragraph",
+              alignment: "left",
+              content: [
+                { type: "text", text: "Big", size: 220, marks: [] },
+                { type: "break" },
+                { type: "text", text: "Small", size: 60, marks: [] },
+              ],
+            },
+          ],
+        },
+      }),
+    ).toEqual({
+      title: "Rich",
+      body: "Big\nSmall",
+      document: {
+        version: 2,
+        blocks: [
+          {
+            type: "paragraph",
+            alignment: "left",
+            content: [
+              { type: "text", text: "Big", size: 220, marks: [] },
+              { type: "break" },
+              { type: "text", text: "Small", size: 60, marks: [] },
+            ],
+          },
+        ],
+      },
+    });
   });
 });
 

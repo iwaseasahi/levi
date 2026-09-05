@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { prisma } from "@/infrastructure/database/client";
 import { test, expect } from "./scripture-fixture";
-import { loginToScripture } from "./scripture-helpers";
+import { fillSlideBody, loginToScripture } from "./scripture-helpers";
 
 test("Slide lifecycle keeps drafts private while saved content is listed, projected, edited and deleted", async ({
   context,
@@ -14,10 +14,12 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await expect(page.getByText("スライドはまだありません。")).toBeVisible();
   await page.getByRole("link", { name: "スライドを作成" }).click();
   const original = "礼拝 %_\\ ABC\n日本語の二行目\n\n\n\n二番目\n\n\n\n三番目";
-  await page.getByLabel("本文").fill(original);
+  await fillSlideBody(page, original);
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
-    page.getByRole("region", { name: "本文プレビュー" }).locator("pre"),
+    page
+      .getByRole("region", { name: "本文プレビュー" })
+      .locator(".slide-rich-content"),
   ).toHaveText(original);
   expect(context.pages()).toHaveLength(1);
   expect(
@@ -42,7 +44,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
-  await expect(audience.locator("pre")).toHaveText(original);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(original);
   await expect(controller.getByRole("status")).toContainText("投影中 · 100%");
   await expect(
     controller.getByRole("button", { name: "前のページへ投影" }),
@@ -59,7 +61,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
-  await expect(audience.locator("pre")).toHaveText(original);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(original);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(
     (await new AxeBuilder({ page: audience }).analyze()).violations,
@@ -71,13 +73,15 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   const editor = await context.newPage();
   await editor.goto(`${detail}/edit`);
   const draft = "未保存の日本語\n第二行\n\n\n\n更新後の二番目";
-  await editor.getByLabel("本文").fill(draft);
-  await editor.getByLabel("本文").press("ArrowUp");
+  await fillSlideBody(editor, draft);
+  await editor.getByRole("textbox", { name: "本文" }).press("ArrowUp");
   await editor.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
-    editor.getByRole("region", { name: "本文プレビュー" }).locator("pre"),
+    editor
+      .getByRole("region", { name: "本文プレビュー" })
+      .locator(".slide-rich-content"),
   ).toHaveText(draft);
-  await expect(audience.locator("pre")).toHaveText(original);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(original);
   expect(
     (
       await prisma.slide.findFirstOrThrow({
@@ -99,7 +103,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await expect(audience.getByRole("main").getByRole("alert")).toContainText(
     "更新されました",
   );
-  await expect(audience.locator("pre")).toHaveCount(0);
+  await expect(audience.locator(".slide-rich-content")).toHaveCount(0);
   await controller
     .getByRole("button", { name: "最新の内容を読み込む" })
     .click();
@@ -107,7 +111,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
     page.getByRole("heading", { name: "Synthetic edited lifecycle" }),
   ).toBeVisible();
   await controller.getByRole("button", { name: "Open" }).click();
-  await expect(audience.locator("pre")).toHaveText(draft);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(draft);
   await expect(controller.getByRole("status")).toContainText("投影中 · 100%");
   await editor.getByRole("link", { name: "編集", exact: true }).click();
   editor.once("dialog", (dialog) => dialog.dismiss());
@@ -131,7 +135,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await expect(audience.getByRole("main").getByRole("alert")).toContainText(
     "利用できません",
   );
-  await expect(audience.locator("pre")).toHaveCount(0);
+  await expect(audience.locator(".slide-rich-content")).toHaveCount(0);
   expect(
     await prisma.slide.count({
       where: { churchId: scriptureAccount.churchId },
@@ -180,7 +184,7 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   await other.getByRole("button", { name: "保存", exact: true }).click();
   await expect(other.getByText(/保存済み · リビジョン/)).toHaveCount(0);
   await page.getByLabel("タイトル").fill("Retained unsaved conflict");
-  await page.getByLabel("本文").fill("Retained unsaved body");
+  await fillSlideBody(page, "Retained unsaved body");
   pageErrorGuard.allowConsoleError(
     "Failed to load resource: the server responded with a status of 409 (Conflict)",
   );
@@ -191,7 +195,9 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
   await expect(page.getByLabel("タイトル")).toHaveValue(
     "Retained unsaved conflict",
   );
-  await expect(page.getByLabel("本文")).toHaveValue("Retained unsaved body");
+  await expect(page.getByRole("textbox", { name: "本文" })).toHaveText(
+    "Retained unsaved body",
+  );
   expect(
     await prisma.slide.findUnique({ where: { id: slide.id } }),
   ).toMatchObject({
