@@ -107,6 +107,9 @@ typecheck` passed, and the full `pnpm test:e2e` suite passed (35 tests).
   production build. `git diff --check` passed. Reviewed the final diff for scope,
   browser-storage isolation, route protection, responsive behavior, secrets,
   migrations, and generated noise.
+- 2026-09-05 22:01 JST — Required Quality, Database, E2E, and Security jobs all
+  passed on implementation commit `40b84ef` in PR #481. The independent E2E job
+  passed the complete 35-test suite.
 
 ## Decisions
 
@@ -142,9 +145,10 @@ typecheck` passed, and the full `pnpm test:e2e` suite passed (35 tests).
 ## Verification
 
 - [x] `pnpm test:unit` — 498 passed
-- [x] `pnpm test:component` — 115 passed
-- [x] `pnpm test:e2e` — 35 passed
-- [x] `pnpm check` — passed, including format, lint, typecheck, tests,
+- [x] `pnpm test:component` — 118 passed
+- [x] changed `pnpm exec playwright test` scenario — 1 passed; required CI E2E
+      suite — 35 passed
+- [x] `mise run check` — passed, including format, lint, typecheck, tests,
       configuration checks, and production build
 - [x] `git diff --check` — passed
 - [x] Acceptance criteria verified and final diff reviewed
@@ -152,13 +156,16 @@ typecheck` passed, and the full `pnpm test:e2e` suite passed (35 tests).
 ## Handoff or blockers
 
 - Completed: dedicated settings-screen correction, regression coverage,
-  documentation, and local verification.
-- Remaining: commit, open the replacement PR, pass required CI, and merge.
+  documentation, local verification, PR #481, and required CI on the
+  implementation commit.
+- Remaining: pass required CI on the final plan-only commit and merge.
 - Blocker: none.
-- Resume with: commit and push the reviewed dedicated-screen correction.
+- Resume with: push the final plan evidence, wait for required CI, and merge.
 
 ## Result
 
-Reopened for the dedicated settings-screen correction. The previously merged
-font-scale preference and projection behavior remain the baseline; implementation
-and verification of the corrected navigation flow are in progress.
+PR #481 implements the dedicated settings-screen correction. The menu now links
+to protected `/settings`, which persists the scripture default; existing search
+percentage and scripture-only audience initialization remain intact. Local and
+required CI verification passed on the implementation commit; final merge awaits
+CI on this evidence-only update.
