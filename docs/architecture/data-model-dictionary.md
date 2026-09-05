@@ -392,15 +392,16 @@ default. A database CHECK requires a text Slide to have a valid nonblank `body`
 and an image Slide to have a null `body`. Application writes create exactly one
 `slide_images` child for every image Slide.
 
-| `slides` column | Type           | Null | Contract                                     |
-| --------------- | -------------- | ---- | -------------------------------------------- |
-| `id`            | `uuid`         | no   | PK; server generated                         |
-| `church_id`     | `uuid`         | no   | Church FK with physical cascade              |
-| `title`         | `varchar(200)` | no   | normalized nonblank single-line title        |
-| `body`          | `text`         | yes  | valid text only for `TEXT`; null for `IMAGE` |
-| `content_type`  | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`            |
-| `revision`      | `integer`      | no   | positive optimistic concurrency token        |
-| timestamps      | `timestamptz`  | no   | creation/update                              |
+| `slides` column | Type           | Null | Contract                                                |
+| --------------- | -------------- | ---- | ------------------------------------------------------- |
+| `id`            | `uuid`         | no   | PK; server generated                                    |
+| `church_id`     | `uuid`         | no   | Church FK with physical cascade                         |
+| `title`         | `varchar(200)` | no   | normalized nonblank single-line title                   |
+| `body`          | `text`         | yes  | flattened text for `TEXT`; null for `IMAGE`             |
+| `text_document` | `jsonb`        | yes  | validated `SlideTextDocumentV1`; null means normal text |
+| `content_type`  | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`                       |
+| `revision`      | `integer`      | no   | positive optimistic concurrency token                   |
+| timestamps      | `timestamptz`  | no   | creation/update                                         |
 
 | `slide_images` column | Type          | Null | Contract                                   |
 | --------------------- | ------------- | ---- | ------------------------------------------ |
@@ -419,6 +420,11 @@ supports that ownership shape and `slide_images_church_id_idx` supports per-chur
 quota sums. The deferred `slides_image_total_ck` and `slide_images_total_ck`
 constraint triggers require one child for `IMAGE` and none for `TEXT` at commit.
 Church row locking serializes quota-changing writes.
+
+`text_document` permits only the application-owned versioned shape described by
+ADR 0017. Application reads also require its flattened text to equal `body`.
+The rollback trigger clears the document when an older writer changes only
+`body`; image Slides always have a null document.
 
 ## Ownership and deletion matrix
 

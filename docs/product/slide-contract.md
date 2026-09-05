@@ -53,8 +53,10 @@ Create/update errors retain the user's input. Invalid input is 400, missing or
 foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
-POST `/api/church/slides` accepts `{title, body}`. GET/PUT/DELETE use
-`/api/church/slides/[id]`; PUT accepts `{input: {title, body},
+POST `/api/church/slides` accepts legacy `{title, body}` or `{title, document}`.
+The version-1 document contains only sized text runs and LF break nodes; the
+server derives and returns compatibility `body`. GET/PUT/DELETE use
+`/api/church/slides/[id]`; PUT accepts `{input: {title, document},
 expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
 return `{slide}` without `churchId`; delete has no response body. Mutation Origin
 must exactly match the configured canonical origin. CRUD detail routes reject
@@ -86,6 +88,12 @@ four or more consecutive LFs do not delimit pages. The pinned legacy section abo
 continues to record Ginmaku's former split behavior as historical evidence, not as
 active Levi behavior. Empty or ASCII-whitespace-only bodies remain invalid, and
 HTML-like input remains literal text rather than executable markup.
+
+Issue #479 adds WYSIWYG range sizing on this single surface. The author may use
+only 小 75%, 標準 100%, 大 125%, or 特大 150%. Preview, detail, and audience
+render those relative sizes with the same fit calculation. Paste retains plain
+text and LF only. Existing plain-body rows render as all 標準. The projection
+controller's 60–220% adjustment remains transient and multiplies authored sizes.
 
 Preview is an explicit local operation over unsaved body; it neither writes a
 Slide nor opens/changes the audience. Title errors do not prevent a valid
