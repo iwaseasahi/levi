@@ -2,28 +2,20 @@ import { z } from "zod";
 import { slideBodyLimit, SlideInputError } from "./boundary";
 
 export const slideTextDocumentNodeLimit = 10_000;
-export const slideTextSizes = ["small", "normal", "large", "xlarge"] as const;
 export const slideTextPercentages = [
   60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210,
   220,
 ] as const;
-const compatibleSlideTextPercentages = new Set<number>([
-  ...slideTextPercentages,
-  75,
-  125,
-]);
+const allowedSlideTextPercentages = new Set<number>(slideTextPercentages);
 export const slideTextMarks = ["bold", "italic", "underline"] as const;
 export const slideTextAlignments = ["left", "center", "right"] as const;
 
-export type SlideTextSize = (typeof slideTextSizes)[number];
 export type SlideTextPercentage = (typeof slideTextPercentages)[number];
 export type SlideTextMark = (typeof slideTextMarks)[number];
 export type SlideTextAlignment = (typeof slideTextAlignments)[number];
 
-export function slideTextSizeScale(size: SlideTextSize | number) {
-  return typeof size === "number"
-    ? size / 100
-    : { small: 0.75, normal: 1, large: 1.25, xlarge: 1.5 }[size];
+export function slideTextSizeScale(size: number) {
+  return size / 100;
 }
 
 const textValueSchema = z
@@ -32,22 +24,7 @@ const textValueSchema = z
   .refine((value) => value.isWellFormed() && !value.includes("\0"))
   .refine((value) => !value.includes("\r") && !value.includes("\n"));
 
-const v1TextNodeSchema = z
-  .object({
-    type: z.literal("text"),
-    text: textValueSchema,
-    size: z.enum(slideTextSizes),
-  })
-  .strict();
 const breakNodeSchema = z.object({ type: z.literal("break") }).strict();
-const v1DocumentSchema = z
-  .object({
-    version: z.literal(1),
-    nodes: z
-      .array(z.discriminatedUnion("type", [v1TextNodeSchema, breakNodeSchema]))
-      .max(slideTextDocumentNodeLimit),
-  })
-  .strict();
 
 const v2TextNodeSchema = z
   .object({
@@ -56,7 +33,7 @@ const v2TextNodeSchema = z
     size: z
       .number()
       .int()
-      .refine((value) => compatibleSlideTextPercentages.has(value)),
+      .refine((value) => allowedSlideTextPercentages.has(value)),
     marks: z.array(z.enum(slideTextMarks)).max(slideTextMarks.length),
   })
   .strict();
@@ -100,15 +77,8 @@ const v2DocumentSchema = z
       .max(slideTextDocumentNodeLimit),
   })
   .strict();
-const documentSchema = z.discriminatedUnion("version", [
-  v1DocumentSchema,
-  v2DocumentSchema,
-]);
-
-export type SlideTextDocumentV1 = z.infer<typeof v1DocumentSchema>;
 export type SlideTextDocumentV2 = z.infer<typeof v2DocumentSchema>;
-export type SlideTextDocument = z.infer<typeof documentSchema>;
-export type SlideTextNode = SlideTextDocumentV1["nodes"][number];
+export type SlideTextDocument = SlideTextDocumentV2;
 export type SlideRichTextNode = z.infer<typeof inlineNodeSchema>;
 export type SlideTextBlock = SlideTextDocumentV2["blocks"][number];
 
@@ -123,11 +93,6 @@ function flattenInline(nodes: readonly SlideRichTextNode[]) {
 }
 
 export function flattenSlideTextDocument(document: SlideTextDocument) {
-  if (document.version === 1) {
-    return document.nodes
-      .map((node) => (node.type === "break" ? "\n" : node.text))
-      .join("");
-  }
   return document.blocks
     .flatMap((block) =>
       block.type === "bulletList"
@@ -135,23 +100,6 @@ export function flattenSlideTextDocument(document: SlideTextDocument) {
         : [flattenInline(block.content)],
     )
     .join("\n");
-}
-
-function normalizeV1(document: SlideTextDocumentV1): SlideTextDocumentV1 {
-  const nodes: SlideTextNode[] = [];
-  for (const node of document.nodes) {
-    const previous = nodes.at(-1);
-    if (
-      node.type === "text" &&
-      previous?.type === "text" &&
-      previous.size === node.size
-    ) {
-      previous.text += node.text;
-    } else {
-      nodes.push({ ...node });
-    }
-  }
-  return { version: 1, nodes };
 }
 
 function normalizeInline(nodes: readonly SlideRichTextNode[]) {
@@ -176,7 +124,7 @@ function normalizeInline(nodes: readonly SlideRichTextNode[]) {
   return normalized;
 }
 
-function normalizeV2(document: SlideTextDocumentV2): SlideTextDocumentV2 {
+function normalizeV2(document: SlideTextDocument): SlideTextDocument {
   const blocks = document.blocks.map((block) =>
     block.type === "bulletList"
       ? {
@@ -204,8 +152,7 @@ function normalizeV2(document: SlideTextDocumentV2): SlideTextDocumentV2 {
 export function normalizeSlideTextDocument(
   document: SlideTextDocument,
 ): SlideTextDocument {
-  const normalized =
-    document.version === 1 ? normalizeV1(document) : normalizeV2(document);
+  const normalized = normalizeV2(document);
   const body = flattenSlideTextDocument(normalized);
   if (
     body.replace(/^[ \t\n]+|[ \t\n]+$/g, "").length === 0 ||
@@ -217,20 +164,21 @@ export function normalizeSlideTextDocument(
 }
 
 export function parseSlideTextDocument(value: unknown): SlideTextDocument {
-  const result = documentSchema.safeParse(value);
+  const result = v2DocumentSchema.safeParse(value);
   if (!result.success) invalid();
   return normalizeSlideTextDocument(result.data);
 }
 
 export function slideTextDocumentFromPlainText(body: string) {
-  const nodes: SlideTextNode[] = [];
+  const content: SlideRichTextNode[] = [];
   for (const [index, part] of body.split("\n").entries()) {
-    if (index > 0) nodes.push({ type: "break" });
-    if (part) nodes.push({ type: "text", text: part, size: "normal" });
+    if (index > 0) content.push({ type: "break" });
+    if (part) content.push({ type: "text", text: part, size: 100, marks: [] });
   }
-  const document = parseSlideTextDocument({ version: 1, nodes });
-  if (document.version !== 1) invalid();
-  return document;
+  return parseSlideTextDocument({
+    version: 2,
+    blocks: [{ type: "paragraph", alignment: "left", content }],
+  });
 }
 
 export function slideTextDocument(

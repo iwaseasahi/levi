@@ -53,10 +53,10 @@ Create/update errors retain the user's input. Invalid input is 400, missing or
 foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
-POST `/api/church/slides` accepts legacy `{title, body}` or `{title, document}`.
-Version 1 contains sized text runs and LF break nodes. Version 2 adds
-paragraphs, flat bullet lists, left/center/right alignment, bold, italic,
-underline, and relative font sizes from 60–220% in 10% steps. The server
+POST `/api/church/slides` accepts `{title, body}` or `{title, document}`. The
+document contract is version 2 and contains paragraphs, flat bullet lists,
+left/center/right alignment, bold, italic, underline, and relative font sizes
+from 60–220% in 10% steps. The server
 accepts only this allowlist and derives compatibility `body`; raw HTML and raw
 Tiptap JSON are not persistence contracts. GET/PUT/DELETE use
 `/api/church/slides/[id]`; PUT accepts `{input: {title, document},
@@ -101,9 +101,9 @@ HTML-like input remains literal text rather than executable markup.
 Issue #479 adds WYSIWYG range sizing on this single surface. The author may use
 60–220% in 10% steps. Preview, detail, and audience render those relative sizes
 with the same fit calculation. Paste retains plain text and LF only. Existing
-plain-body rows render as all 100%; legacy 75% and 125% runs remain readable.
-The projection controller's 60–220% adjustment remains transient and multiplies
-authored sizes.
+plain-body rows render as all 100%. The unreleased version 1 document format is
+not accepted. The projection controller's 60–220% adjustment remains transient
+and multiplies authored sizes.
 
 Preview is an explicit local operation over unsaved body; it neither writes a
 Slide nor opens/changes the audience. Title errors do not prevent a valid

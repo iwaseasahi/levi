@@ -26,15 +26,14 @@ italic, underline, and a 60–220% font size selected in 10% steps. Paragraphs
 and list items support left, center, or right alignment. Paste and drop accept
 plain text and LF only; unsupported nodes,
 marks, attributes, sizes, files, nested lists, and rich HTML are rejected or
-discarded. Version 2 can retain legacy version-1 75% and 125% values during a
-lazy upgrade, but the editor does not offer those values for new formatting.
+discarded.
 
-Persist application-owned JSON in nullable `slides.text_document`. Version 1
-contains sized text runs and break nodes. Version 2 contains the constrained
-blocks, alignments, text marks, and sized runs above. `body` remains the derived
+Persist application-owned version 2 JSON in nullable `slides.text_document`.
+It contains the constrained blocks, alignments, text marks, and sized runs
+above. `body` remains the derived
 flattened plain text for compatibility and search/list behavior. Reads require
-both forms to agree. Existing version-1 and null documents remain readable; the
-editor emits version 2 on the next rich-text write.
+both forms to agree. Existing null documents are reconstructed from plain
+`body`; the unreleased version 1 document experiment is rejected and removed.
 
 Rendering maps only the versioned allowlist to React paragraphs, lists, and
 styled text spans; neither stored HTML nor raw Tiptap JSON reaches

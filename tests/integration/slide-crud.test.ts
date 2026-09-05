@@ -72,10 +72,26 @@ describe("scoped Slide persistence", () => {
   it("persists selected-range sizes and clears stale formatting after an old-writer update", async () => {
     const owner = await scope();
     const document = {
-      version: 1 as const,
-      nodes: [
-        { type: "text" as const, text: "Normal ", size: "normal" as const },
-        { type: "text" as const, text: "large", size: "large" as const },
+      version: 2 as const,
+      blocks: [
+        {
+          type: "paragraph" as const,
+          alignment: "left" as const,
+          content: [
+            {
+              type: "text" as const,
+              text: "Normal ",
+              size: 100,
+              marks: [],
+            },
+            {
+              type: "text" as const,
+              text: "large",
+              size: 150,
+              marks: [],
+            },
+          ],
+        },
       ],
     };
     const created = await service.create(owner, {
@@ -94,8 +110,21 @@ describe("scoped Slide persistence", () => {
     expect(await service.get(owner, created.id)).toMatchObject({
       body: "Old writer synthetic",
       document: {
-        version: 1,
-        nodes: [{ type: "text", text: "Old writer synthetic", size: "normal" }],
+        version: 2,
+        blocks: [
+          {
+            type: "paragraph",
+            alignment: "left",
+            content: [
+              {
+                type: "text",
+                text: "Old writer synthetic",
+                size: 100,
+                marks: [],
+              },
+            ],
+          },
+        ],
       },
     });
   });
@@ -221,8 +250,16 @@ describe("scoped Slide persistence", () => {
       slideRepository.update(owner, row.id, 1, {
         ...input,
         document: {
-          version: 1,
-          nodes: [{ type: "text", text: "Different", size: "normal" }],
+          version: 2,
+          blocks: [
+            {
+              type: "paragraph",
+              alignment: "left",
+              content: [
+                { type: "text", text: "Different", size: 100, marks: [] },
+              ],
+            },
+          ],
         },
       }),
     ).rejects.toThrow("does not match body");

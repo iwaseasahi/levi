@@ -24,7 +24,6 @@ import {
   type SlideTextDocument,
   type SlideTextDocumentV2,
   type SlideTextMark,
-  type SlideTextSize,
 } from "@/domain/slides/text-document";
 
 export const slideTextSizeOptions = [
@@ -35,11 +34,9 @@ export const slideTextSizeOptions = [
   })),
 ];
 
-const cssToSize = new Map([
-  ...slideTextSizeOptions.map(({ size, css }) => [css, size] as const),
-  ["75%", 75] as const,
-  ["125%", 125] as const,
-]);
+const cssToSize = new Map(
+  slideTextSizeOptions.map(({ size, css }) => [css, size]),
+);
 const SingleSurfaceDocument = Document.extend({
   content: "(paragraph | bulletList)+",
 });
@@ -77,11 +74,7 @@ function invalid(): never {
   throw new SlideInputError();
 }
 
-function inlineToTiptap(
-  node:
-    | SlideRichTextNode
-    | { type: "text"; text: string; size: SlideTextSize; marks: [] },
-): JSONContent {
+function inlineToTiptap(node: SlideRichTextNode): JSONContent {
   if (node.type === "break") return { type: "hardBreak" };
   const marks: NonNullable<JSONContent["marks"]> = node.marks.map((type) => ({
     type,
@@ -95,22 +88,6 @@ function inlineToTiptap(
 export function slideDocumentToTiptapJson(
   document: SlideTextDocument,
 ): JSONContent {
-  if (document.version === 1) {
-    return {
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          attrs: { textAlign: "left" },
-          content: document.nodes.map((node) =>
-            node.type === "break"
-              ? { type: "hardBreak" }
-              : inlineToTiptap({ ...node, marks: [] }),
-          ),
-        },
-      ],
-    };
-  }
   return {
     type: "doc",
     content: document.blocks.map((block) => {

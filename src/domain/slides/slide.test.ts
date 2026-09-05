@@ -29,8 +29,14 @@ describe("Slide input", () => {
     };
     expect(parseSlideInput(value)).toMatchObject(value);
     expect(parseSlideInput(value).document).toEqual({
-      version: 1,
-      nodes: [{ type: "text", text: value.body, size: "normal" }],
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [{ type: "text", text: value.body, size: 100, marks: [] }],
+        },
+      ],
     });
     expect(parseSlideBody("A".repeat(100_000))).toHaveLength(100_000);
   });
@@ -76,11 +82,17 @@ describe("Slide input", () => {
       parseSlideInput({
         title: "Rich",
         document: {
-          version: 1,
-          nodes: [
-            { type: "text", text: "Big", size: "xlarge" },
-            { type: "break" },
-            { type: "text", text: "Small", size: "small" },
+          version: 2,
+          blocks: [
+            {
+              type: "paragraph",
+              alignment: "left",
+              content: [
+                { type: "text", text: "Big", size: 220, marks: [] },
+                { type: "break" },
+                { type: "text", text: "Small", size: 60, marks: [] },
+              ],
+            },
           ],
         },
       }),
@@ -88,11 +100,17 @@ describe("Slide input", () => {
       title: "Rich",
       body: "Big\nSmall",
       document: {
-        version: 1,
-        nodes: [
-          { type: "text", text: "Big", size: "xlarge" },
-          { type: "break" },
-          { type: "text", text: "Small", size: "small" },
+        version: 2,
+        blocks: [
+          {
+            type: "paragraph",
+            alignment: "left",
+            content: [
+              { type: "text", text: "Big", size: 220, marks: [] },
+              { type: "break" },
+              { type: "text", text: "Small", size: 60, marks: [] },
+            ],
+          },
         ],
       },
     });

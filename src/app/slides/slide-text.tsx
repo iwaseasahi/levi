@@ -6,23 +6,19 @@ import {
   slideTextSizeScale,
   type SlideRichTextNode,
   type SlideTextDocument,
-  type SlideTextNode,
 } from "@/domain/slides/text-document";
 import { useSlideTextFit } from "./use-slide-text-fit";
 
-function RichInline({
-  nodes,
-}: {
-  nodes: readonly (SlideRichTextNode | SlideTextNode)[];
-}) {
+function RichInline({ nodes }: { nodes: readonly SlideRichTextNode[] }) {
   return nodes.map((node, index) => {
     if (node.type === "break") return <span key={index}>{"\n"}</span>;
-    const marks = "marks" in node ? node.marks : [];
     const style: CSSProperties = {
       fontSize: `${slideTextSizeScale(node.size)}em`,
-      fontWeight: marks.includes("bold") ? 700 : undefined,
-      fontStyle: marks.includes("italic") ? "italic" : undefined,
-      textDecoration: marks.includes("underline") ? "underline" : undefined,
+      fontWeight: node.marks.includes("bold") ? 700 : undefined,
+      fontStyle: node.marks.includes("italic") ? "italic" : undefined,
+      textDecoration: node.marks.includes("underline")
+        ? "underline"
+        : undefined,
     };
     return (
       <span key={index} style={style}>
@@ -33,13 +29,6 @@ function RichInline({
 }
 
 function renderDocument(document: SlideTextDocument) {
-  if (document.version === 1) {
-    return (
-      <p>
-        <RichInline nodes={document.nodes} />
-      </p>
-    );
-  }
   return document.blocks.map((block, index) => {
     if (block.type === "bulletList") {
       return (

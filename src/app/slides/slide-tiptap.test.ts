@@ -42,14 +42,20 @@ describe("Slide Tiptap adapter", () => {
   });
   it("round-trips application-owned runs and exact hard breaks", () => {
     const document = parseSlideTextDocument({
-      version: 1,
-      nodes: [
-        { type: "break" },
-        { type: "text", text: "Small", size: "small" },
-        { type: "break" },
-        { type: "break" },
-        { type: "text", text: "Large", size: "large" },
-        { type: "break" },
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [
+            { type: "break" },
+            { type: "text", text: "Small", size: 60, marks: [] },
+            { type: "break" },
+            { type: "break" },
+            { type: "text", text: "Large", size: 220, marks: [] },
+            { type: "break" },
+          ],
+        },
       ],
     });
     expect(
@@ -62,10 +68,10 @@ describe("Slide Tiptap adapter", () => {
           alignment: "left",
           content: [
             { type: "break" },
-            { type: "text", text: "Small", size: 75, marks: [] },
+            { type: "text", text: "Small", size: 60, marks: [] },
             { type: "break" },
             { type: "break" },
-            { type: "text", text: "Large", size: 125, marks: [] },
+            { type: "text", text: "Large", size: 220, marks: [] },
             { type: "break" },
           ],
         },

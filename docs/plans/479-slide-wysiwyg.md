@@ -19,7 +19,7 @@
 
 ## Constraints
 
-- application-owned `SlideTextDocumentV1/V2`をcanonicalにし、Tiptap JSONやraw HTMLをAPI/DB契約にしない。
+- application-owned `SlideTextDocumentV2`をcanonicalにし、Tiptap JSONやraw HTMLをAPI/DB契約にしない。
 - existing `body`はdocumentから導出する互換値として保持し、既存rowはnormal sizeとしてlazy-upgradeする。
 - tenant、revision、origin、physical deletion、projection fail-closed、image quotaの境界を維持する。
 - schema/APIはexclusive scope。Issue #478の別worktreeには触れない。
@@ -45,6 +45,7 @@
 10. [x] V2のdomain/component/integration/E2Eとcanonical checksを実行し、PR/Issue evidenceを更新する。
 11. [x] Product ownerの2026-09-06追加確認に従い、文字サイズselectの表示切れを直し、60〜220%を10%刻みで選択・保存できるようにする。
 12. [x] Product ownerの試用結果に従い、見出しUI・Tiptap extension・V2 nodeを削除する。
+13. [x] Product ownerの確認に従い、未リリースのV1 document互換をdomain/API/DBから削除する。
 
 ## Progress
 
@@ -55,6 +56,7 @@
 - 2026-09-06 00:40 JST — Product ownerの画面確認を反映し、大型ボタン列を一般的な一体型toolbar（段落/size select、compact icon controls）へ変更。編集面へ常時境界、16:9 label、empty placeholder、hover/focus stateを追加し、Chromeで1,092×614pxの編集面と73.68pxの基準文字サイズを確認。
 - 2026-09-06 00:55 JST — 文字サイズselectの幅を固定して表示切れを防ぎ、選択可能な範囲を60〜220%の10%刻みへ拡張。V1の75/125%は読取互換として保持する。
 - 2026-09-06 01:00 JST — Product ownerが見出し機能を不要と判断。段落style select、Heading extension、V2 heading nodeとread rendererを削除した。
+- 2026-09-06 01:10 JST — Product ownerがV1は本番未リリースと確認。V1 parser/adapter/rendererと75/125%互換を削除し、plain `body`からV2を構築する境界だけを維持した。
 
 ## Decisions
 
@@ -66,6 +68,8 @@
   - Reason: library upgradeとuntrusted HTMLをdurable data contractから分離する。
 - 2026-09-06 — V1を維持し、rich block/markをV2として追加する。
   - Reason: 既存保存データを移行せず読める状態を維持し、raw Tiptap JSONではなく製品が許可した書式だけを永続化する。
+- 2026-09-06 — 本番未リリースのV1 document互換を削除し、保存形式をV2だけにする。
+  - Reason: Product ownerがV1互換は不要と確認したため。既存plain `body`からV2を構築する境界は維持する。
 
 ## Risks and mitigations
 
@@ -81,10 +85,10 @@
 - [x] `pnpm test:unit` — 528 passed
 - [x] `pnpm test:component` — 120 passed
 - [x] `pnpm db:check`
-- [x] `pnpm test:integration` — 139 passed
+- [x] `pnpm test:integration` — 140 passed
 - [x] `pnpm test:e2e` — 35 passed
 - [x] `pnpm security:check` — audit and 356 license records passed
-- [x] `pnpm backup:rehearse` — `slides_reconciled=true`, RTO 5 seconds
+- [x] `pnpm backup:rehearse` — `slides_reconciled=true`, RTO 4 seconds
 - [x] `pnpm check`
 - [x] `git diff --check`
 - [x] Final diff review for scope, secrets, migrations, rollback and unsafe HTML

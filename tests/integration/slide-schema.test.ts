@@ -181,6 +181,22 @@ describe("Slide database contract", () => {
     ]);
   });
 
+  it("rejects the unreleased version 1 Slide text document at the database boundary", async () => {
+    const owner = await church();
+    await expect(
+      prisma.slide.create({
+        data: {
+          ...fields,
+          churchId: owner.id,
+          textDocument: {
+            version: 1,
+            nodes: [{ type: "text", text: "Synthetic", size: "normal" }],
+          },
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
   it("rejects a Slide whose selected content type and image child disagree", async () => {
     const owner = await church();
     await expect(

@@ -12,30 +12,44 @@ describe("SlideTextDocument", () => {
     const body = "\n一行目\n\nSecond\n";
     const document = slideTextDocumentFromPlainText(body);
     expect(flattenSlideTextDocument(document)).toBe(body);
-    expect(document.nodes).toContainEqual({
-      type: "text",
-      text: "一行目",
-      size: "normal",
+    expect(document.blocks[0]).toMatchObject({
+      type: "paragraph",
+      alignment: "left",
+      content: expect.arrayContaining([
+        { type: "text", text: "一行目", size: 100, marks: [] },
+      ]),
     });
   });
 
   it("normalizes adjacent runs of the same size without crossing breaks", () => {
     expect(
       parseSlideTextDocument({
-        version: 1,
-        nodes: [
-          { type: "text", text: "A", size: "large" },
-          { type: "text", text: "B", size: "large" },
-          { type: "break" },
-          { type: "text", text: "C", size: "large" },
+        version: 2,
+        blocks: [
+          {
+            type: "paragraph",
+            alignment: "left",
+            content: [
+              { type: "text", text: "A", size: 130, marks: [] },
+              { type: "text", text: "B", size: 130, marks: [] },
+              { type: "break" },
+              { type: "text", text: "C", size: 130, marks: [] },
+            ],
+          },
         ],
       }),
     ).toEqual({
-      version: 1,
-      nodes: [
-        { type: "text", text: "AB", size: "large" },
-        { type: "break" },
-        { type: "text", text: "C", size: "large" },
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [
+            { type: "text", text: "AB", size: 130, marks: [] },
+            { type: "break" },
+            { type: "text", text: "C", size: 130, marks: [] },
+          ],
+        },
       ],
     });
   });
@@ -43,7 +57,7 @@ describe("SlideTextDocument", () => {
   it.each([
     null,
     {},
-    { version: 2, nodes: [] },
+    { version: 1, nodes: [] },
     { version: 1, nodes: [], extra: true },
     { version: 1, nodes: [{ type: "break", extra: true }] },
     { version: 1, nodes: [{ type: "text", text: "A", size: "huge" }] },
@@ -61,21 +75,39 @@ describe("SlideTextDocument", () => {
     expect(() => parseSlideTextDocument(value)).toThrow(SlideInputError);
   });
 
-  it("keeps the four legacy V1 size tokens and rejects overlong text", () => {
+  it("allows 60–220% in 10% steps and rejects overlong text", () => {
     const document = parseSlideTextDocument({
-      version: 1,
-      nodes: [
-        { type: "text", text: "小", size: "small" },
-        { type: "text", text: "標準", size: "normal" },
-        { type: "text", text: "大", size: "large" },
-        { type: "text", text: "特大", size: "xlarge" },
+      version: 2,
+      blocks: [
+        {
+          type: "paragraph",
+          alignment: "left",
+          content: [
+            { type: "text", text: "最小", size: 60, marks: [] },
+            { type: "text", text: "標準", size: 100, marks: [] },
+            { type: "text", text: "最大", size: 220, marks: [] },
+          ],
+        },
       ],
     });
-    expect(flattenSlideTextDocument(document)).toBe("小標準大特大");
+    expect(flattenSlideTextDocument(document)).toBe("最小標準最大");
     expect(() =>
       parseSlideTextDocument({
-        version: 1,
-        nodes: [{ type: "text", text: "A".repeat(100_001), size: "normal" }],
+        version: 2,
+        blocks: [
+          {
+            type: "paragraph",
+            alignment: "left",
+            content: [
+              {
+                type: "text",
+                text: "A".repeat(100_001),
+                size: 100,
+                marks: [],
+              },
+            ],
+          },
+        ],
       }),
     ).toThrow(SlideInputError);
   });

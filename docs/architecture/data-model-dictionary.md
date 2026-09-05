@@ -392,16 +392,16 @@ default. A database CHECK requires a text Slide to have a valid nonblank `body`
 and an image Slide to have a null `body`. Application writes create exactly one
 `slide_images` child for every image Slide.
 
-| `slides` column | Type           | Null | Contract                                                                                                                       |
-| --------------- | -------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `id`            | `uuid`         | no   | PK; server generated                                                                                                           |
-| `church_id`     | `uuid`         | no   | Church FK with physical cascade                                                                                                |
-| `title`         | `varchar(200)` | no   | normalized nonblank single-line title                                                                                          |
-| `body`          | `text`         | yes  | flattened text for `TEXT`; null for `IMAGE`                                                                                    |
-| `text_document` | `jsonb`        | yes  | validated Slide text document V1/V2; V2 size is 60–220% in 10% steps, with legacy 75/125% compatibility; null means plain text |
-| `content_type`  | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`                                                                                              |
-| `revision`      | `integer`      | no   | positive optimistic concurrency token                                                                                          |
-| timestamps      | `timestamptz`  | no   | creation/update                                                                                                                |
+| `slides` column | Type           | Null | Contract                                                                              |
+| --------------- | -------------- | ---- | ------------------------------------------------------------------------------------- |
+| `id`            | `uuid`         | no   | PK; server generated                                                                  |
+| `church_id`     | `uuid`         | no   | Church FK with physical cascade                                                       |
+| `title`         | `varchar(200)` | no   | normalized nonblank single-line title                                                 |
+| `body`          | `text`         | yes  | flattened text for `TEXT`; null for `IMAGE`                                           |
+| `text_document` | `jsonb`        | yes  | validated Slide text document V2; size is 60–220% in 10% steps; null means plain text |
+| `content_type`  | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`                                                     |
+| `revision`      | `integer`      | no   | positive optimistic concurrency token                                                 |
+| timestamps      | `timestamptz`  | no   | creation/update                                                                       |
 
 | `slide_images` column | Type          | Null | Contract                                   |
 | --------------------- | ------------- | ---- | ------------------------------------------ |
