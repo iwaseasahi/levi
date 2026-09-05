@@ -40,7 +40,7 @@
 5. [x] allowlist read rendererと共有fitをdetail/audienceへ統合しprojection回帰を通す。
 6. [x] ADR/product/data/security/testing docsを実装と同期する。
 7. [x] narrow tests、integration/E2E、canonical checks、diff/security reviewを完了する。
-8. [ ] focused commits、PR、exact-head CI、Issue handoffを完了する。
+8. [x] focused commits、PR、Issue handoffを完了する。exact-head CIはPR #487で実行する。
 
 ## Progress
 
@@ -82,10 +82,10 @@
 ## Handoff or blockers
 
 - Completed: implementation、migration、documentation、canonical/integration/security/backup verification。
-- Remaining: commit、PR、exact-head CI handoff。
+- Remaining: PR #487のexact-head protected CIとhuman review。
 - Blocker: full local E2Eの既存flaky assertionは#486。#479対象E2Eは成功。
-- Resume with: commit the reviewed diff and open the Issue-linked PR。
+- Resume with: review PR #487 and confirm protected CI at its exact head。
 
 ## Result
 
-実装とlocal verificationは完了。PR/CI handoffを残す。
+実装とlocal verificationは完了し、PR #487へhandoffした。production rolloutは行っていない。
