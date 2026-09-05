@@ -102,8 +102,8 @@ Issue #479 adds WYSIWYG range sizing on this single surface. The author may use
 50–200% in 10% steps. Preview, detail, and audience render those relative sizes
 with the same fit calculation. Paste retains plain text and LF only. Existing
 plain-body rows render as all 100%. The unreleased version 1 document format is
-not accepted. The projection controller's 60–220% adjustment remains transient
-and multiplies authored sizes.
+not accepted. The Slide projection controller does not provide a separate font
+size adjustment; authored sizes are projected as saved, subject only to fit.
 
 Preview is an explicit local operation over unsaved body; it neither writes a
 Slide nor opens/changes the audience. Title errors do not prevent a valid
@@ -150,14 +150,15 @@ feedback, and authenticated reads. Slide routes are `/slides`, `/slides/new`,
 only an opaque Slide ID, never content.
 APIs are church-scoped under `/api/church/slides`.
 
-The audience displays the complete saved body as one surface and owns font and
-blank state. The controller displays acknowledged state and provides Open, font
-size and blank controls. It has no previous/next buttons, page count or page
-selection. Scripture retains its own coordinate navigation.
+The audience displays the complete saved body as one surface and owns blank
+state. The controller displays acknowledged state and provides Open and blank
+controls. It has no font-size, previous/next, page-count, or page-selection
+controls. Scripture retains its own coordinate navigation and font controls.
 
-Shared presentation state is limited to connection generation, readiness,
-sequence, font scale, blank and authorization lifecycle. Slide ID and revision
-stay in the slide domain. Scripture canonical
+Shared presentation state retains font scale for Scripture, but Slide neither
+exposes nor applies that field. Connection generation, readiness, sequence,
+blank and authorization lifecycle remain shared. Slide ID and revision stay in
+the slide domain. Scripture canonical
 coordinates/navigation stay in scripture. Do not introduce a generic persisted
 presentation/JSON model or share church content through localStorage.
 

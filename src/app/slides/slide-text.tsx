@@ -53,12 +53,10 @@ function renderDocument(document: SlideTextDocument) {
 export function SlideText({
   text,
   document,
-  fontScale = 1,
   blank = false,
 }: {
   text: string;
   document?: SlideTextDocument | undefined;
-  fontScale?: number;
   blank?: boolean;
 }) {
   const richText = useMemo(
@@ -67,7 +65,7 @@ export function SlideText({
   );
   const frame = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
-  useSlideTextFit(frame, content, richText, fontScale);
+  useSlideTextFit(frame, content, richText);
   return (
     <div className="slide-text-frame" ref={frame}>
       <div

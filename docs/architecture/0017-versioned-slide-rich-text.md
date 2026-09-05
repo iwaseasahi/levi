@@ -38,8 +38,8 @@ both forms to agree. Existing null documents are reconstructed from plain
 Rendering maps only the versioned allowlist to React paragraphs, lists, and
 styled text spans; neither stored HTML nor raw Tiptap JSON reaches
 `dangerouslySetInnerHTML`. Preview and audience share the same fit-to-frame
-calculation. The controller's existing 60–220% scale remains a transient
-multiplier over the authored relative sizes.
+calculation. Slide projection has no transient font multiplier; authored run
+sizes are its only text-size control.
 
 The migration is expand-first. A rollback writer that changes `body` without
 changing `text_document` triggers the database to clear the stale document, so

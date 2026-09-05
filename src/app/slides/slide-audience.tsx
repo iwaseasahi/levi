@@ -21,7 +21,7 @@ export function SlideAudience({
 }) {
   const { state, isAuthorized, invalidate } = useSlideAudienceData(id, fetcher);
   const content = useMemo(() => slideProjectionState(id, state), [id, state]);
-  const { fontScale, blank } = useProjectionAudience({
+  const { blank } = useProjectionAudience({
     kind: "slide",
     content,
     ready: state.status === "ready",
@@ -49,7 +49,6 @@ export function SlideAudience({
           <SlideText
             text={state.text}
             document={state.document}
-            fontScale={fontScale}
             blank={blank}
           />
         )

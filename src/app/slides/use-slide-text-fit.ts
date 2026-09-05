@@ -11,7 +11,6 @@ export function useSlideTextFit(
   frame: RefObject<HTMLElement | null>,
   content: RefObject<HTMLElement | null>,
   dependency: unknown,
-  fontScale = 1,
 ) {
   useLayoutEffect(() => {
     const box = frame.current;
@@ -21,7 +20,7 @@ export function useSlideTextFit(
     let disposed = false;
     const fit = () => {
       if (disposed || !box.clientWidth || !box.clientHeight) return;
-      const desired = box.clientHeight * 0.12 * fontScale;
+      const desired = box.clientHeight * 0.12;
       setFontSize(text, desired);
       const scale = Math.min(
         1,
@@ -41,5 +40,5 @@ export function useSlideTextFit(
       observer?.disconnect();
       window.removeEventListener("resize", fit);
     };
-  }, [frame, content, dependency, fontScale]);
+  }, [frame, content, dependency]);
 }

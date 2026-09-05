@@ -45,7 +45,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
   await expect(audience.locator(".slide-rich-content")).toHaveText(original);
-  await expect(controller.getByRole("status")).toContainText("投影中 · 100%");
+  await expect(controller.getByRole("status")).toHaveText("投影中");
   await expect(
     controller.getByRole("button", { name: "前のページへ投影" }),
   ).toHaveCount(0);
@@ -53,7 +53,12 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
     controller.getByRole("button", { name: "次のページへ投影" }),
   ).toHaveCount(0);
   await expect(controller.getByLabel("投影ページ")).toHaveCount(0);
-  await controller.getByRole("button", { name: "文字を大きく" }).click();
+  await expect(
+    controller.getByRole("button", { name: "文字を大きく" }),
+  ).toHaveCount(0);
+  await expect(
+    controller.getByRole("button", { name: "文字を小さく" }),
+  ).toHaveCount(0);
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
@@ -112,7 +117,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   ).toBeVisible();
   await controller.getByRole("button", { name: "Open" }).click();
   await expect(audience.locator(".slide-rich-content")).toHaveText(draft);
-  await expect(controller.getByRole("status")).toContainText("投影中 · 100%");
+  await expect(controller.getByRole("status")).toHaveText("投影中");
   await editor.getByRole("link", { name: "編集", exact: true }).click();
   editor.once("dialog", (dialog) => dialog.dismiss());
   await editor.getByRole("button", { name: "スライドを削除" }).click();

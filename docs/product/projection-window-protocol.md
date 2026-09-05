@@ -96,8 +96,8 @@ screens and Open again.
 - A new Open of identical coordinates changes the fragment; the audience clears
   its old authorization state and reloads to establish the new generation.
   Scripture font scale resets to the validated browser-local default (100% when
-  missing or invalid), Slide font scale resets to 100%, and blank resets. Late
-  old-document loads are discarded.
+  missing or invalid); Slide does not expose or apply font-scale actions. Blank
+  resets. Late old-document loads are discarded.
 - The audience checks `/api/church/session` every 30 seconds and whenever it
   becomes visible. Any denied or failed check irreversibly clears text until the
   page is reloaded through an eligible session. Later direct control messages

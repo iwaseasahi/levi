@@ -191,7 +191,9 @@ describe("Slide audience and controller", () => {
       },
       target,
     );
-    expect(screen.getByRole("button", { name: "文字を大きく" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+    ).toBeEnabled();
 
     act(() => vi.advanceTimersByTime(6_000));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -231,13 +233,17 @@ describe("Slide audience and controller", () => {
       },
       target,
     );
-    expect(screen.getByRole("button", { name: "文字を大きく" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+    ).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
     Object.assign(target, { closed: true });
     act(() => vi.advanceTimersByTime(1_000));
 
-    expect(screen.getByRole("button", { name: "文字を大きく" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+    ).toBeDisabled();
     expect(
       screen.queryByText("投映画面を閉じました。再度Openしてください。"),
     ).not.toBeInTheDocument();
@@ -248,7 +254,7 @@ describe("Slide audience and controller", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
-  it("shows single-page font/blank controls and disables an unexpected saved revision", async () => {
+  it("shows the single-page blank control and disables an unexpected saved revision", async () => {
     const postMessage = vi.fn();
     const target = { postMessage, closed: false } as unknown as Window;
     vi.spyOn(window, "open").mockReturnValue(target);
@@ -256,12 +262,8 @@ describe("Slide audience and controller", () => {
     render(<SlideController slide={slide} />);
     expect(screen.queryByRole("heading", { name: "投影" })).toBeNull();
     expect(screen.getByRole("region", { name: "投影操作" })).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "文字を大きく" }),
-    ).toHaveTextContent("文字 +");
-    expect(
-      screen.getByRole("button", { name: "文字を小さく" }),
-    ).toHaveTextContent("文字 -");
+    expect(screen.queryByRole("button", { name: "文字を大きく" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "文字を小さく" })).toBeNull();
     expect(
       screen.getByRole("button", { name: "空白と表示を切り替え" }),
     ).toHaveTextContent("空白⇔表示");
@@ -297,13 +299,15 @@ describe("Slide audience and controller", () => {
     expect(
       screen.queryByRole("button", { name: "前のページへ投影" }),
     ).toBeNull();
-    expect(screen.getByRole("status")).toHaveTextContent("投影中 · 100%");
+    expect(screen.getByRole("status")).toHaveTextContent(/^投影中$/);
     postMessage.mockClear();
     fireEvent.keyDown(window, { key: "ArrowDown" });
     expect(postMessage).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: "文字を大きく" }));
+    await user.click(
+      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+    );
     expect(postMessage.mock.calls.at(-1)![0].command).toEqual({
-      action: "font-larger",
+      action: "toggle-blank",
     });
     const ack = Object.fromEntries(
       Object.entries(ready).filter(([key]) => key !== "challenge"),
@@ -317,8 +321,7 @@ describe("Slide audience and controller", () => {
       },
       target,
     );
-    expect(screen.getByRole("status")).toHaveTextContent("空白投影 · 220%");
-    expect(screen.getByRole("button", { name: "文字を大きく" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent(/^空白投影$/);
     send(
       {
         ...ack,
@@ -331,7 +334,7 @@ describe("Slide audience and controller", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("更新されました");
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "文字を小さく" }),
+        screen.getByRole("button", { name: "空白と表示を切り替え" }),
       ).toBeDisabled(),
     );
   });

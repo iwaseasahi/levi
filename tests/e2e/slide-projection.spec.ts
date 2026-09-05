@@ -95,8 +95,12 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
       path: testInfo.outputPath(`slide-audience-${width}.png`),
     });
   }
-  await controller.getByRole("button", { name: "文字を大きく" }).click();
-  await expect(controller.getByRole("status")).toContainText("110%");
+  await expect(
+    controller.getByRole("button", { name: "文字を大きく" }),
+  ).toHaveCount(0);
+  await expect(
+    controller.getByRole("button", { name: "文字を小さく" }),
+  ).toHaveCount(0);
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
@@ -107,7 +111,7 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
   await audience.reload();
   await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
-  await expect(controller.getByRole("status")).toContainText("100%");
+  await expect(controller.getByRole("status")).toHaveText("投影中");
 
   await prisma.slide.update({
     where: { id: slide.id },
@@ -195,17 +199,17 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
     );
   }
   await expect(
-    controller.getByRole("button", { name: "文字を大きく" }),
+    controller.getByRole("button", { name: "空白と表示を切り替え" }),
   ).toBeEnabled();
   await audience.close();
   await expect(
-    controller.getByRole("button", { name: "文字を大きく" }),
+    controller.getByRole("button", { name: "空白と表示を切り替え" }),
   ).toBeDisabled();
   const reopened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   audience = await reopened;
   await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
   await expect(
-    controller.getByRole("button", { name: "文字を大きく" }),
+    controller.getByRole("button", { name: "空白と表示を切り替え" }),
   ).toBeEnabled();
 });
