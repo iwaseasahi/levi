@@ -34,7 +34,7 @@
 ## Plan
 
 1. [x] Tiptap最小packageをexact pinし、document adapter、IME/LF/selection/font-sizeのPoC testsを通す。
-2. [x] `SlideTextDocumentV1`のstrict parser/normalizer/flatteningとrecord/API型を実装する。
+2. [x] Slide text documentのstrict parser/normalizer/flatteningとrecord/API型を実装する。
 3. [x] forward migration、Prisma mapping、repositoryのatomic document/body保存とrollback compatibilityを実装する。
 4. [x] 16:9 WYSIWYG editor、accessible toolbar、plain paste、preview stale/error statesを実装する。
 5. [x] allowlist read rendererと共有fitをdetail/audienceへ統合しprojection回帰を通す。
@@ -45,7 +45,7 @@
 10. [x] rich-text documentのdomain/component/integration/E2Eとcanonical checksを実行し、PR/Issue evidenceを更新する。
 11. [x] Product ownerの2026-09-06追加確認に従い、文字サイズselectの表示切れを直し、60〜220%を10%刻みで選択・保存できるようにする。
 12. [x] Product ownerの試用結果に従い、見出しUI・Tiptap extension・heading nodeを削除する。
-13. [x] Product ownerの確認に従い、未リリースのV1 document互換をdomain/API/DBから削除する。
+13. [x] Product ownerの確認に従い、未リリースの先行document互換をdomain/API/DBから削除する。
 14. [x] Product ownerの追加確認に従い、保存する文字サイズ範囲を50〜200%の10%刻みに変更する。
 15. [x] Product ownerの確認に従い、Slide投影コントローラーの一時的な「文字＋」「文字－」機能を削除する。
 16. [x] Product ownerの正式採用判断に従い、製品・コード上の名称をversion付き名称から`SlideTextDocument`へ統一する。
@@ -64,6 +64,8 @@
 - 2026-09-06 08:50 JST — Product ownerが保存済み書式と重複するSlide投影時の「文字＋」「文字－」機能を不要と判断。Scriptureの既存font controlsは対象外として維持する。
 - 2026-09-06 09:10 JST — Product ownerが現行document形式を正式採用。JSONの`version`はschema discriminatorとして維持し、コードと製品文書の名称を`SlideTextDocument`へ統一した。
 - 2026-09-06 11:10 JST — version付き型alias・schema/helper名・製品上のV2表記を削除。unit 530件、component 120件、typecheck、`git diff --check`が成功した。
+- 2026-09-06 11:40 JST — PR全体を再レビュー。toolbarをeditor lifecycleから分離し、selectionだけの変更ではtext fitを再計算しないよう責務を分け、到達不能な旧size表示を削除した。migration統合は既存の適用履歴を使うrehearsalが失敗したため取り消した。
+- 2026-09-06 11:55 JST — Tiptap公式の`useEditorState`でtoolbar更新を購読し、document versionとfont-sizeの変換を型付き境界へ集約。integration 140件、security、backup rehearsalが成功。E2Eは対象flowを含む34件が成功し、既知の#486だけが再現した。
 
 ## Decisions
 
@@ -77,6 +79,9 @@
   - Reason: Product ownerが先行形式の互換は不要と確認したため。既存plain `body`から現行documentを構築する境界は維持する。
 - 2026-09-06 — 正式名称を`SlideTextDocument`とし、version付き型名を使わない。
   - Reason: 現行形式が正式採用されたため。JSONの`version`は将来のschema migrationに必要な内部識別子として維持する。
+- 2026-09-06 — 既に適用・検証されたmigration履歴は統合しない。
+  - Reason: 統合案では既存の開発・rehearsal DBに記録されたmigration checksumと不一致になり、`pnpm test:integration`のbackup移行rehearsalが失敗したため。
+  - Alternatives: 3段階を正式schema追加の1本へ統合する案は、適用済み環境との互換性を壊すため取り消した。
 
 ## Risks and mitigations
 

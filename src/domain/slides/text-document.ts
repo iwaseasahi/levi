@@ -2,6 +2,7 @@ import { z } from "zod";
 import { slideBodyLimit, SlideInputError } from "./boundary";
 
 export const slideTextDocumentNodeLimit = 10_000;
+export const slideTextDocumentVersion = 2;
 export const slideTextPercentages = [
   50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200,
 ] as const;
@@ -12,6 +13,12 @@ export const slideTextAlignments = ["left", "center", "right"] as const;
 export type SlideTextPercentage = (typeof slideTextPercentages)[number];
 export type SlideTextMark = (typeof slideTextMarks)[number];
 export type SlideTextAlignment = (typeof slideTextAlignments)[number];
+
+const slideTextPercentageSchema = z
+  .number()
+  .int()
+  .refine((value) => allowedSlideTextPercentages.has(value))
+  .transform((value) => value as SlideTextPercentage);
 
 export function slideTextSizeScale(size: number) {
   return size / 100;
@@ -29,10 +36,7 @@ const textNodeSchema = z
   .object({
     type: z.literal("text"),
     text: textValueSchema,
-    size: z
-      .number()
-      .int()
-      .refine((value) => allowedSlideTextPercentages.has(value)),
+    size: slideTextPercentageSchema,
     marks: z.array(z.enum(slideTextMarks)).max(slideTextMarks.length),
   })
   .strict();
@@ -64,7 +68,7 @@ const bulletListBlockSchema = z
   .strict();
 const documentSchema = z
   .object({
-    version: z.literal(2),
+    version: z.literal(slideTextDocumentVersion),
     blocks: z
       .array(
         z.discriminatedUnion("type", [
@@ -144,7 +148,7 @@ function normalizeDocument(document: SlideTextDocument): SlideTextDocument {
     0,
   );
   if (nodeCount > slideTextDocumentNodeLimit) invalid();
-  return { version: 2, blocks };
+  return { version: slideTextDocumentVersion, blocks };
 }
 
 export function normalizeSlideTextDocument(
@@ -174,7 +178,7 @@ export function slideTextDocumentFromPlainText(body: string) {
     if (part) content.push({ type: "text", text: part, size: 100, marks: [] });
   }
   return parseSlideTextDocument({
-    version: 2,
+    version: slideTextDocumentVersion,
     blocks: [{ type: "paragraph", alignment: "left", content }],
   });
 }

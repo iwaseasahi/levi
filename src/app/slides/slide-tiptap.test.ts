@@ -3,6 +3,7 @@ import { Editor } from "@tiptap/core";
 import { SlideInputError } from "@/domain/slides/slide";
 import { parseSlideTextDocument } from "@/domain/slides/text-document";
 import {
+  selectedSlideTextSize,
   slideDocumentToTiptapJson,
   slideTiptapExtensions,
   tiptapJsonToSlideDocument,
@@ -38,6 +39,9 @@ describe("Slide Tiptap adapter", () => {
         },
       ],
     });
+    expect(selectedSlideTextSize(editor)).toBe(150);
+    editor.commands.setTextSelection({ from: 1, to: 5 });
+    expect(selectedSlideTextSize(editor)).toBe("mixed");
     editor.destroy();
   });
   it("round-trips application-owned runs and exact hard breaks", () => {

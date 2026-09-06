@@ -1,4 +1,4 @@
-import type { JSONContent } from "@tiptap/core";
+import type { Editor, JSONContent } from "@tiptap/core";
 import Bold from "@tiptap/extension-bold";
 import BulletList from "@tiptap/extension-bullet-list";
 import Document from "@tiptap/extension-document";
@@ -16,26 +16,56 @@ import { SlideInputError } from "@/domain/slides/slide";
 import {
   parseSlideTextDocument,
   slideTextAlignments,
+  slideTextDocumentVersion,
   slideTextMarks,
   slideTextPercentages,
-  slideTextSizeScale,
   type SlideRichTextNode,
   type SlideTextAlignment,
   type SlideTextDocument,
   type SlideTextMark,
+  type SlideTextPercentage,
 } from "@/domain/slides/text-document";
 
-export const slideTextSizeOptions = [
-  ...slideTextPercentages.map((percent) => ({
-    size: percent,
-    percent,
-    css: percent === 100 ? null : `${percent}%`,
-  })),
-];
+export function slideTextPercentageToCss(size: SlideTextPercentage) {
+  return size === 100 ? null : `${size}%`;
+}
 
 const cssToSize = new Map(
-  slideTextSizeOptions.map(({ size, css }) => [css, size]),
+  slideTextPercentages.map((size) => [slideTextPercentageToCss(size), size]),
 );
+
+export function tiptapFontSizeToSlideTextPercentage(value: unknown) {
+  if (value !== undefined && value !== null && typeof value !== "string")
+    return undefined;
+  return cssToSize.get(value ?? null);
+}
+
+export type SlideSelectionSize = SlideTextPercentage | "mixed";
+
+export function selectedSlideTextSize(editor: Editor): SlideSelectionSize {
+  const { from, to, empty } = editor.state.selection;
+  const sizes = new Set<SlideSelectionSize>();
+  const addSize = (fontSize: unknown) => {
+    sizes.add(tiptapFontSizeToSlideTextPercentage(fontSize) ?? "mixed");
+  };
+  if (empty) {
+    const marks =
+      editor.state.storedMarks ?? editor.state.selection.$from.marks();
+    addSize(
+      marks.find((mark) => mark.type.name === "textStyle")?.attrs.fontSize,
+    );
+  } else {
+    editor.state.doc.nodesBetween(from, to, (node) => {
+      if (node.isText) {
+        addSize(
+          node.marks.find((mark) => mark.type.name === "textStyle")?.attrs
+            .fontSize,
+        );
+      }
+    });
+  }
+  return sizes.size === 1 ? [...sizes][0]! : "mixed";
+}
 const SingleSurfaceDocument = Document.extend({
   content: "(paragraph | bulletList)+",
 });
@@ -78,8 +108,7 @@ function inlineToTiptap(node: SlideRichTextNode): JSONContent {
   const marks: NonNullable<JSONContent["marks"]> = node.marks.map((type) => ({
     type,
   }));
-  const percent = Math.round(slideTextSizeScale(node.size) * 100);
-  const fontSize = percent === 100 ? null : `${percent}%`;
+  const fontSize = slideTextPercentageToCss(node.size);
   if (fontSize) marks.push({ type: "textStyle", attrs: { fontSize } });
   return { type: "text", text: node.text, ...(marks.length ? { marks } : {}) };
 }
@@ -115,7 +144,7 @@ export function slideDocumentToTiptapJson(
 }
 
 function textAttributes(node: JSONContent) {
-  let size = 100;
+  let size: SlideTextPercentage = 100;
   const marks: SlideTextMark[] = [];
   const seen = new Set<string>();
   for (const mark of node.marks ?? []) {
@@ -220,5 +249,5 @@ export function tiptapJsonToSlideDocument(value: JSONContent) {
       }),
     };
   });
-  return parseSlideTextDocument({ version: 2, blocks });
+  return parseSlideTextDocument({ version: slideTextDocumentVersion, blocks });
 }
