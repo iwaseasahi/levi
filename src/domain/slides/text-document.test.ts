@@ -132,7 +132,7 @@ describe("SlideTextDocument", () => {
     ).toThrow(SlideInputError);
   });
 
-  it("validates and normalizes the version 2 rich-text structure", () => {
+  it("validates and normalizes the supported rich-text structure", () => {
     expect(
       parseSlideTextDocument({
         version: 2,
@@ -238,7 +238,7 @@ describe("SlideTextDocument", () => {
         },
       ],
     },
-  ])("rejects unsupported version 2 structure %#", (value) => {
+  ])("rejects unsupported rich-text structure %#", (value) => {
     expect(() => parseSlideTextDocument(value)).toThrow(SlideInputError);
   });
 });

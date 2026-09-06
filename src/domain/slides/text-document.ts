@@ -25,7 +25,7 @@ const textValueSchema = z
 
 const breakNodeSchema = z.object({ type: z.literal("break") }).strict();
 
-const v2TextNodeSchema = z
+const textNodeSchema = z
   .object({
     type: z.literal("text"),
     text: textValueSchema,
@@ -37,7 +37,7 @@ const v2TextNodeSchema = z
   })
   .strict();
 const inlineNodeSchema = z.discriminatedUnion("type", [
-  v2TextNodeSchema,
+  textNodeSchema,
   breakNodeSchema,
 ]);
 const inlineContentSchema = z
@@ -62,7 +62,7 @@ const bulletListBlockSchema = z
     items: z.array(listItemSchema).min(1).max(slideTextDocumentNodeLimit),
   })
   .strict();
-const v2DocumentSchema = z
+const documentSchema = z
   .object({
     version: z.literal(2),
     blocks: z
@@ -76,10 +76,9 @@ const v2DocumentSchema = z
       .max(slideTextDocumentNodeLimit),
   })
   .strict();
-export type SlideTextDocumentV2 = z.infer<typeof v2DocumentSchema>;
-export type SlideTextDocument = SlideTextDocumentV2;
+export type SlideTextDocument = z.infer<typeof documentSchema>;
 export type SlideRichTextNode = z.infer<typeof inlineNodeSchema>;
-export type SlideTextBlock = SlideTextDocumentV2["blocks"][number];
+export type SlideTextBlock = SlideTextDocument["blocks"][number];
 
 function invalid(): never {
   throw new SlideInputError();
@@ -123,7 +122,7 @@ function normalizeInline(nodes: readonly SlideRichTextNode[]) {
   return normalized;
 }
 
-function normalizeV2(document: SlideTextDocument): SlideTextDocument {
+function normalizeDocument(document: SlideTextDocument): SlideTextDocument {
   const blocks = document.blocks.map((block) =>
     block.type === "bulletList"
       ? {
@@ -151,7 +150,7 @@ function normalizeV2(document: SlideTextDocument): SlideTextDocument {
 export function normalizeSlideTextDocument(
   document: SlideTextDocument,
 ): SlideTextDocument {
-  const normalized = normalizeV2(document);
+  const normalized = normalizeDocument(document);
   const body = flattenSlideTextDocument(normalized);
   if (
     body.replace(/^[ \t\n]+|[ \t\n]+$/g, "").length === 0 ||
@@ -163,7 +162,7 @@ export function normalizeSlideTextDocument(
 }
 
 export function parseSlideTextDocument(value: unknown): SlideTextDocument {
-  const result = v2DocumentSchema.safeParse(value);
+  const result = documentSchema.safeParse(value);
   if (!result.success) invalid();
   return normalizeSlideTextDocument(result.data);
 }

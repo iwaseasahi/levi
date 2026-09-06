@@ -22,7 +22,6 @@ import {
   type SlideRichTextNode,
   type SlideTextAlignment,
   type SlideTextDocument,
-  type SlideTextDocumentV2,
   type SlideTextMark,
 } from "@/domain/slides/text-document";
 
@@ -187,7 +186,7 @@ export function tiptapJsonToSlideDocument(value: JSONContent) {
   ) {
     invalid();
   }
-  const blocks: SlideTextDocumentV2["blocks"] = value.content.map((node) => {
+  const blocks: SlideTextDocument["blocks"] = value.content.map((node) => {
     if (node.type === "paragraph") {
       return {
         type: "paragraph",

@@ -28,12 +28,14 @@ plain text and LF only; unsupported nodes,
 marks, attributes, sizes, files, nested lists, and rich HTML are rejected or
 discarded.
 
-Persist application-owned version 2 JSON in nullable `slides.text_document`.
+Persist the application-owned Slide text document JSON in nullable
+`slides.text_document`. Its internal `version` field is a schema discriminator,
+not part of the product-facing document name.
 It contains the constrained blocks, alignments, text marks, and sized runs
 above. `body` remains the derived
 flattened plain text for compatibility and search/list behavior. Reads require
 both forms to agree. Existing null documents are reconstructed from plain
-`body`; the unreleased version 1 document experiment is rejected and removed.
+`body`; the unreleased earlier document experiment is rejected and removed.
 
 Rendering maps only the versioned allowlist to React paragraphs, lists, and
 styled text spans; neither stored HTML nor raw Tiptap JSON reaches

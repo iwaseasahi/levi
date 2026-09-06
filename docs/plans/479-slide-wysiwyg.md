@@ -19,7 +19,7 @@
 
 ## Constraints
 
-- application-owned `SlideTextDocumentV2`をcanonicalにし、Tiptap JSONやraw HTMLをAPI/DB契約にしない。
+- application-owned `SlideTextDocument`をcanonicalにし、Tiptap JSONやraw HTMLをAPI/DB契約にしない。
 - existing `body`はdocumentから導出する互換値として保持し、既存rowはnormal sizeとしてlazy-upgradeする。
 - tenant、revision、origin、physical deletion、projection fail-closed、image quotaの境界を維持する。
 - schema/APIはexclusive scope。Issue #478の別worktreeには触れない。
@@ -41,26 +41,29 @@
 6. [x] ADR/product/data/security/testing docsを実装と同期する。
 7. [x] narrow tests、integration/E2E、canonical checks、diff/security reviewを完了する。
 8. [x] focused commits、PR、Issue handoffを完了する。exact-head CIはPR #487で実行する。
-9. [x] Product ownerの2026-09-06 clarificationに従い、V2 block/mark contractとTiptapのrich-text toolbarを実装する。
-10. [x] V2のdomain/component/integration/E2Eとcanonical checksを実行し、PR/Issue evidenceを更新する。
+9. [x] Product ownerの2026-09-06 clarificationに従い、rich-text block/mark contractとTiptapのtoolbarを実装する。
+10. [x] rich-text documentのdomain/component/integration/E2Eとcanonical checksを実行し、PR/Issue evidenceを更新する。
 11. [x] Product ownerの2026-09-06追加確認に従い、文字サイズselectの表示切れを直し、60〜220%を10%刻みで選択・保存できるようにする。
-12. [x] Product ownerの試用結果に従い、見出しUI・Tiptap extension・V2 nodeを削除する。
+12. [x] Product ownerの試用結果に従い、見出しUI・Tiptap extension・heading nodeを削除する。
 13. [x] Product ownerの確認に従い、未リリースのV1 document互換をdomain/API/DBから削除する。
 14. [x] Product ownerの追加確認に従い、保存する文字サイズ範囲を50〜200%の10%刻みに変更する。
 15. [x] Product ownerの確認に従い、Slide投影コントローラーの一時的な「文字＋」「文字－」機能を削除する。
+16. [x] Product ownerの正式採用判断に従い、製品・コード上の名称をversion付き名称から`SlideTextDocument`へ統一する。
 
 ## Progress
 
 - 2026-09-05 23:25 JST — `origin/main`から専用worktree/branchを作成し、writer leaseを取得。Issue、governance、ADR 0015/0016、slide contract、security、testing、Next.js 16.3.3のClient Component/lazy-loading docsと現行Slide実装を確認。
 - 2026-09-05 23:55 JST — Tiptap 3.31.3、versioned document、expand-first migration、16:9 editor、allowlist renderer、preview/audience integration、ADR 0017を実装。canonical check、138 integration tests、backup rehearsal、security check、buildが成功。
 - 2026-09-05 23:55 JST — full E2Eは#479対象を含む34/35が成功。equal-timestamp fixtureとrandom UUID tie-breakの既存flaky assertionだけが失敗し、follow-up #486へ分離。
-- 2026-09-06 00:30 JST — Product ownerがrich-text scope（文字サイズ、太字、斜体、下線、文字揃え、見出し、箇条書き）を確定。既存V1を読みつつV2を保存するdomain/DB contract、Tiptap extensions/toolbar、allowlist rendererを実装し、typecheckとnarrow unit testsが成功。
+- 2026-09-06 00:30 JST — Product ownerがrich-text scope（文字サイズ、太字、斜体、下線、文字揃え、見出し、箇条書き）を確定。versioned domain/DB contract、Tiptap extensions/toolbar、allowlist rendererを実装し、typecheckとnarrow unit testsが成功。
 - 2026-09-06 00:40 JST — Product ownerの画面確認を反映し、大型ボタン列を一般的な一体型toolbar（段落/size select、compact icon controls）へ変更。編集面へ常時境界、16:9 label、empty placeholder、hover/focus stateを追加し、Chromeで1,092×614pxの編集面と73.68pxの基準文字サイズを確認。
 - 2026-09-06 00:55 JST — 文字サイズselectの幅を固定して表示切れを防ぎ、選択可能な範囲を60〜220%の10%刻みへ拡張。V1の75/125%は読取互換として保持する。
-- 2026-09-06 01:00 JST — Product ownerが見出し機能を不要と判断。段落style select、Heading extension、V2 heading nodeとread rendererを削除した。
-- 2026-09-06 01:10 JST — Product ownerがV1は本番未リリースと確認。V1 parser/adapter/rendererと75/125%互換を削除し、plain `body`からV2を構築する境界だけを維持した。
+- 2026-09-06 01:00 JST — Product ownerが見出し機能を不要と判断。段落style select、Heading extension、heading nodeとread rendererを削除した。
+- 2026-09-06 01:10 JST — Product ownerが先行document形式は本番未リリースと確認。そのparser/adapter/rendererと75/125%互換を削除し、plain `body`から現行documentを構築する境界だけを維持した。
 - 2026-09-06 01:35 JST — Product ownerが保存する文字サイズ範囲を50〜200%の10%刻みに変更するよう確認した。投影時の一時的な全体倍率60〜220%は別責務として維持する。
 - 2026-09-06 08:50 JST — Product ownerが保存済み書式と重複するSlide投影時の「文字＋」「文字－」機能を不要と判断。Scriptureの既存font controlsは対象外として維持する。
+- 2026-09-06 09:10 JST — Product ownerが現行document形式を正式採用。JSONの`version`はschema discriminatorとして維持し、コードと製品文書の名称を`SlideTextDocument`へ統一した。
+- 2026-09-06 11:10 JST — version付き型alias・schema/helper名・製品上のV2表記を削除。unit 530件、component 120件、typecheck、`git diff --check`が成功した。
 
 ## Decisions
 
@@ -70,10 +73,10 @@
   - ADR: 新規ADRで確定する。
 - 2026-09-05 — 保存形式はTiptap JSONではなくversioned run/break documentとする。
   - Reason: library upgradeとuntrusted HTMLをdurable data contractから分離する。
-- 2026-09-06 — V1を維持し、rich block/markをV2として追加する。
-  - Reason: 既存保存データを移行せず読める状態を維持し、raw Tiptap JSONではなく製品が許可した書式だけを永続化する。
-- 2026-09-06 — 本番未リリースのV1 document互換を削除し、保存形式をV2だけにする。
-  - Reason: Product ownerがV1互換は不要と確認したため。既存plain `body`からV2を構築する境界は維持する。
+- 2026-09-06 — 本番未リリースの先行document互換を削除し、現行形式だけを保存する。
+  - Reason: Product ownerが先行形式の互換は不要と確認したため。既存plain `body`から現行documentを構築する境界は維持する。
+- 2026-09-06 — 正式名称を`SlideTextDocument`とし、version付き型名を使わない。
+  - Reason: 現行形式が正式採用されたため。JSONの`version`は将来のschema migrationに必要な内部識別子として維持する。
 
 ## Risks and mitigations
 

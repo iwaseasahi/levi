@@ -21,7 +21,7 @@ afterEach(() =>
 afterAll(() => prisma.$disconnect());
 
 describe("scoped Slide persistence", () => {
-  it("persists the supported rich-text blocks and marks as version 2 JSON", async () => {
+  it("persists the supported rich-text blocks and marks as application JSON", async () => {
     const owner = await scope();
     const document = {
       version: 2 as const,

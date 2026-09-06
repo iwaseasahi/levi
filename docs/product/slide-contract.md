@@ -54,7 +54,8 @@ foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
 POST `/api/church/slides` accepts `{title, body}` or `{title, document}`. The
-document contract is version 2 and contains paragraphs, flat bullet lists,
+document contract is the application-owned Slide text document and contains
+paragraphs, flat bullet lists,
 left/center/right alignment, bold, italic, underline, and relative font sizes
 from 50–200% in 10% steps. The server
 accepts only this allowlist and derives compatibility `body`; raw HTML and raw

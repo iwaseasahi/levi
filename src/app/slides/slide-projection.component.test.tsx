@@ -49,7 +49,7 @@ describe("Slide audience and controller", () => {
     expect(text).toHaveStyle({ fontSize: "129.6px" });
   });
 
-  it("renders the version 2 rich-text allowlist without HTML injection", () => {
+  it("renders the rich-text allowlist without HTML injection", () => {
     render(
       <SlideText
         text={"Lead\nItem"}
