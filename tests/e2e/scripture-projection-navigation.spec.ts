@@ -92,6 +92,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
       color: line.color,
       fontFamily: screen.fontFamily,
       headingColor: heading.color,
+      headingFontSize: heading.fontSize,
       textShadow: line.textShadow,
       verseColor: verseNumber.color,
       verseStyle: verseNumber.fontStyle,
@@ -102,6 +103,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     color: "rgb(255, 255, 255)",
     fontFamily: "Helvetica, Arial, sans-serif",
     headingColor: "rgb(255, 255, 0)",
+    headingFontSize: "32px",
     textShadow:
       "rgb(0, 0, 255) -1px -1px 0px, rgb(0, 0, 255) 1px -1px 0px, rgb(0, 0, 255) -1px 1px 0px, rgb(0, 0, 255) 1px 1px 0px",
     verseColor: "rgb(255, 255, 0)",
@@ -154,6 +156,33 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   expect(expandedLayout.headingRightInsetRatio).toBeLessThan(0.065);
   expect(expandedLayout.languageGapRatio).toBeGreaterThan(0.99);
   expect(expandedLayout.languageGapRatio).toBeLessThan(1.01);
+  await audience.setViewportSize({ height: 1080, width: 1920 });
+  const fullHdLayout = await audience.evaluate(() => {
+    const screen = document.querySelector<HTMLElement>(".audience-screen")!;
+    const heading = document.querySelector<HTMLElement>(".audience-book-name")!;
+    const content = document.querySelector<HTMLElement>(".audience-content")!;
+    const screenBox = screen.getBoundingClientRect();
+    const headingBox = heading.getBoundingClientRect();
+    const contentBox = content.getBoundingClientRect();
+    return {
+      headingFontSize: getComputedStyle(heading).fontSize,
+      headingInsideScreen:
+        headingBox.top >= screenBox.top &&
+        headingBox.right <= screenBox.right &&
+        headingBox.bottom <= screenBox.bottom,
+      contentStartsAfterHeading: contentBox.top >= headingBox.bottom,
+      screenHasNoOverflow:
+        screen.scrollHeight <= screen.clientHeight + 1 &&
+        screen.scrollWidth <= screen.clientWidth + 1,
+    };
+  });
+  expect(fullHdLayout).toEqual({
+    headingFontSize: "32px",
+    headingInsideScreen: true,
+    contentStartsAfterHeading: true,
+    screenHasNoOverflow: true,
+  });
+  await audience.setViewportSize({ height: 720, width: 1280 });
   await expect(audience.getByRole("button", { name: "次へ" })).toHaveCount(0);
 
   const larger = page.getByRole("button", { name: "文字を大きく" });
