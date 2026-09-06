@@ -233,21 +233,35 @@ test("validates the Ginmaku search form and projects each language mode", async 
   const chapterCatalogGate = new Promise<void>((resolve) => {
     releaseChapterCatalog = resolve;
   });
+  const requestedChapters: string[] = [];
   await page.route(
-    (url) => url.pathname === "/api/scripture/catalog",
+    (url) =>
+      url.pathname === "/api/scripture/catalog" &&
+      url.searchParams.has("chapter"),
     async (route) => {
+      requestedChapters.push(
+        new URL(route.request().url()).searchParams.get("chapter")!,
+      );
       await chapterCatalogGate;
       await route.continue();
     },
-    { times: 1 },
+    { times: 3 },
   );
-  await page.getByLabel("章").fill("１");
-  await expect(page.getByLabel("章")).toHaveValue("1");
+  const chapterInput = page.getByLabel("章");
+  await chapterInput.pressSequentially("１００");
+  await expect(chapterInput).toHaveValue("100");
+  await expect(chapterInput).toBeFocused();
+  await expect.poll(() => requestedChapters).toEqual(["1", "10", "100"]);
   await expect(loadingCatalog).toHaveClass(/sr-only/);
   expect(await captureCatalogLayout()).toEqual(beforeChapterInput);
   releaseChapterCatalog();
   await expect(loadingCatalog).toHaveCount(0);
+  await expect(chapterInput).toHaveValue("100");
+  await expect(chapterInput).toBeFocused();
   expect(await captureCatalogLayout()).toEqual(beforeChapterInput);
+
+  await chapterInput.fill("１");
+  await expect(chapterInput).toHaveValue("1");
 
   await openButton.click();
   const missingStartVerse = page.locator(".search-feedback").getByRole("alert");

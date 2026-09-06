@@ -54,7 +54,7 @@ export function ScriptureSearchFields({
     <form className="scripture-search-form" onSubmit={onSubmit}>
       <fieldset
         className="ginmaku-search-fields"
-        disabled={pending || Boolean(catalogError)}
+        disabled={Boolean(catalogError)}
       >
         <legend className="sr-only">御言葉の検索条件</legend>
         <div className="scripture-search-layout">
@@ -155,7 +155,7 @@ export function ScriptureSearchFields({
                 <label>
                   <input
                     aria-label="章"
-                    disabled={!selection.book || loading}
+                    disabled={!selection.book}
                     inputMode="numeric"
                     onChange={(event) => onChapterChange(event.target.value)}
                     pattern="[0-9]*"
