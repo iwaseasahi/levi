@@ -2,9 +2,12 @@
 
 import { SlideText } from "./slide-text";
 import { SlideImage } from "./slide-image";
+import type { SlideTextDocument } from "@/domain/slides/text-document";
 
 export function SlidePreview(
-  props: { text: string } | { imageSrc: string; title: string },
+  props:
+    | { text: string; document?: SlideTextDocument | undefined }
+    | { imageSrc: string; title: string },
 ) {
   return (
     <section
@@ -14,7 +17,7 @@ export function SlidePreview(
       {"imageSrc" in props ? (
         <SlideImage src={props.imageSrc} title={props.title} />
       ) : (
-        <SlideText text={props.text} />
+        <SlideText text={props.text} document={props.document} />
       )}
     </section>
   );

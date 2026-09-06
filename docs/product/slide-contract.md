@@ -53,12 +53,24 @@ Create/update errors retain the user's input. Invalid input is 400, missing or
 foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
-POST `/api/church/slides` accepts `{title, body}`. GET/PUT/DELETE use
-`/api/church/slides/[id]`; PUT accepts `{input: {title, body},
+POST `/api/church/slides` accepts `{title, body}` or `{title, document}`. The
+document contract is the application-owned Slide text document and contains
+paragraphs, flat bullet lists,
+left/center/right alignment, bold, italic, underline, and relative font sizes
+from 50–200% in 10% steps. The server
+accepts only this allowlist and derives compatibility `body`; raw HTML and raw
+Tiptap JSON are not persistence contracts. GET/PUT/DELETE use
+`/api/church/slides/[id]`; PUT accepts `{input: {title, document},
 expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
 return `{slide}` without `churchId`; delete has no response body. Mutation Origin
 must exactly match the configured canonical origin. CRUD detail routes reject
 query parameters; list cursor parameters belong to the collection read contract.
+
+The text editor uses a conventional toolbar attached to a visibly bounded 16:9
+editing panel. Font size uses a select control; inline marks, alignment, bullet
+list, undo, and redo use compact icon buttons with accessible names. The panel
+remains distinguishable from the black page background and shows an input
+placeholder when empty. Heading styles are not offered.
 
 Issue #470 adds multipart create/update for image Slides. The form contains
 exactly `title` and `image`, plus `expectedRevision` for update. Accept one
@@ -86,6 +98,13 @@ four or more consecutive LFs do not delimit pages. The pinned legacy section abo
 continues to record Ginmaku's former split behavior as historical evidence, not as
 active Levi behavior. Empty or ASCII-whitespace-only bodies remain invalid, and
 HTML-like input remains literal text rather than executable markup.
+
+Issue #479 adds WYSIWYG range sizing on this single surface. The author may use
+50–200% in 10% steps. Preview, detail, and audience render those relative sizes
+with the same fit calculation. Paste retains plain text and LF only. Existing
+plain-body rows render as all 100%. The unreleased version 1 document format is
+not accepted. The Slide projection controller does not provide a separate font
+size adjustment; authored sizes are projected as saved, subject only to fit.
 
 Preview is an explicit local operation over unsaved body; it neither writes a
 Slide nor opens/changes the audience. Title errors do not prevent a valid
@@ -132,14 +151,15 @@ feedback, and authenticated reads. Slide routes are `/slides`, `/slides/new`,
 only an opaque Slide ID, never content.
 APIs are church-scoped under `/api/church/slides`.
 
-The audience displays the complete saved body as one surface and owns font and
-blank state. The controller displays acknowledged state and provides Open, font
-size and blank controls. It has no previous/next buttons, page count or page
-selection. Scripture retains its own coordinate navigation.
+The audience displays the complete saved body as one surface and owns blank
+state. The controller displays acknowledged state and provides Open and blank
+controls. It has no font-size, previous/next, page-count, or page-selection
+controls. Scripture retains its own coordinate navigation and font controls.
 
-Shared presentation state is limited to connection generation, readiness,
-sequence, font scale, blank and authorization lifecycle. Slide ID and revision
-stay in the slide domain. Scripture canonical
+Shared presentation state retains font scale for Scripture, but Slide neither
+exposes nor applies that field. Connection generation, readiness, sequence,
+blank and authorization lifecycle remain shared. Slide ID and revision stay in
+the slide domain. Scripture canonical
 coordinates/navigation stay in scripture. Do not introduce a generic persisted
 presentation/JSON model or share church content through localStorage.
 

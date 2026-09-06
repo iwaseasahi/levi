@@ -29,6 +29,28 @@ export async function loginToScripture(
   await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
 }
 
+export async function fillSlideBody(page: Page, value: string) {
+  const editor = page.getByRole("textbox", { name: "本文" });
+  await editor.focus();
+  await editor.press("ControlOrMeta+A");
+  await editor.evaluate((element, text) => {
+    const transfer = new DataTransfer();
+    transfer.setData("text/plain", text);
+    element.dispatchEvent(
+      new ClipboardEvent("paste", {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: transfer,
+      }),
+    );
+  }, value);
+  await expect
+    .poll(() =>
+      editor.evaluate((element) => (element as HTMLElement).innerText),
+    )
+    .toBe(value);
+}
+
 export async function expectScriptureCatalog(page: Page) {
   await expect(
     page.getByRole("radio", { name: "創世記/Genesis" }),

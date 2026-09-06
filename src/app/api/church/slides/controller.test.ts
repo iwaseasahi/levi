@@ -6,6 +6,7 @@ import type {
 import type { SlideRepository } from "@/application/slides/manage-slides";
 import { SlideError } from "@/domain/slides/commands";
 import { createSlideHandlers } from "./controller";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 
 const origin = "https://levi.example.test";
 const url = `${origin}/api/church/slides`;
@@ -77,6 +78,7 @@ describe("Slide HTTP boundary and scoped service", () => {
     expect(repository.create).toHaveBeenCalledWith(scope, {
       ...input,
       body: "Synthetic\nbody",
+      document: slideTextDocumentFromPlainText("Synthetic\nbody"),
     });
     await expect(created.json()).resolves.toEqual({ slide: record });
     expect((await handlers.read(new Request(url), id)).status).toBe(200);
@@ -86,7 +88,10 @@ describe("Slide HTTP boundary and scoped service", () => {
       id,
     );
     expect(updated.status).toBe(200);
-    expect(repository.update).toHaveBeenCalledWith(scope, id, 1, input);
+    expect(repository.update).toHaveBeenCalledWith(scope, id, 1, {
+      ...input,
+      document: slideTextDocumentFromPlainText(input.body),
+    });
     const deleted = await handlers.delete(
       request("DELETE", { expectedRevision: 2 }),
       id,
@@ -254,6 +259,7 @@ describe("Slide HTTP boundary and scoped service", () => {
     expect(repository.create).toHaveBeenCalledWith(scope, {
       ...input,
       body: "😀日本語",
+      document: slideTextDocumentFromPlainText("😀日本語"),
     });
   });
 

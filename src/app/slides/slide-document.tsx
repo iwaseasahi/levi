@@ -79,7 +79,10 @@ export function SlideDocument({
           title={slide.title}
         />
       ) : (
-        <SlidePreview text={parseSlideBody(slide.body)} />
+        <SlidePreview
+          text={parseSlideBody(slide.body)}
+          document={slide.document}
+        />
       )}
     </>
   );

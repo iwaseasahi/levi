@@ -28,11 +28,13 @@ describe("saved Slide audience lifetime", () => {
     await session.start();
     await session.start();
     expect(load).toHaveBeenCalledTimes(1);
-    expect(publish).toHaveBeenLastCalledWith({
-      status: "ready",
-      text: "First\n\n\n\nSecond\n\n\n\nThird",
-      revision: 1,
-    });
+    expect(publish).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        status: "ready",
+        text: "First\n\n\n\nSecond\n\n\n\nThird",
+        revision: 1,
+      }),
+    );
     await expect(session.verify()).resolves.toBe(true);
     expect(load).toHaveBeenCalledTimes(2);
     session.dispose();

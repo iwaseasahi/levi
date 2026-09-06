@@ -1,6 +1,7 @@
 import type { SlideRecord } from "@/domain/slides/commands";
 import type { SlideAudienceState } from "@/domain/slides/projection";
 import { parseSlideBody } from "@/domain/slides/slide";
+import { slideTextDocument } from "@/domain/slides/text-document";
 
 /** One document lifetime. A failed/disposed session cannot regain protected text. */
 export function createSlideAudienceSession({
@@ -48,6 +49,7 @@ export function createSlideAudienceSession({
           : {
               status: "ready",
               text: parseSlideBody(slide.body),
+              document: slideTextDocument(slide.document, slide.body),
               revision: slide.revision,
             };
       publish(state);

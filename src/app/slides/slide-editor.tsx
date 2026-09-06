@@ -1,18 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import { parseJsonResponse } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
 import type { SlideRecord } from "@/domain/slides/commands";
 import { slideImageUploadLimit } from "@/domain/slides/image";
+import { parseSlideInput, parseSlideTitle } from "@/domain/slides/slide";
 import {
-  parseSlideBody,
-  parseSlideInput,
-  parseSlideTitle,
-} from "@/domain/slides/slide";
+  slideTextDocument,
+  type SlideTextDocument,
+} from "@/domain/slides/text-document";
 import { SlideError, slideErrorMessage } from "./slide-error";
 import { SlidePreview } from "./slide-preview";
+import { SlideRichTextEditor } from "./slide-rich-text-editor";
 
 type ContentType = "text" | "image";
 
@@ -30,8 +37,12 @@ export function SlideEditor({
   const [contentType, setContentType] =
     useState<ContentType>(initialContentType);
   const [title, setTitle] = useState(initial?.title ?? "");
-  const [body, setBody] = useState(
-    initial?.contentType === "image" ? "" : (initial?.body ?? ""),
+  const [document, setDocument] = useState<SlideTextDocument | null>(
+    initial?.contentType === "image"
+      ? null
+      : initial
+        ? slideTextDocument(initial.document, initial.body)
+        : null,
   );
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -39,7 +50,8 @@ export function SlideEditor({
   const [busy, setBusy] = useState(false);
   const [previewVersion, setPreviewVersion] = useState(0);
   const [previewType, setPreviewType] = useState<ContentType | null>(null);
-  const [previewText, setPreviewText] = useState<string | null>(null);
+  const [previewDocument, setPreviewDocument] =
+    useState<SlideTextDocument | null>(null);
   const pending = useRef(false);
   const mounted = useRef(true);
   const deleteButton = useRef<HTMLButtonElement>(null);
@@ -101,7 +113,8 @@ export function SlideEditor({
           body: JSON.stringify({ expectedRevision: initial!.revision }),
         };
       } else if (contentType === "text") {
-        const input = parseSlideInput({ title, body });
+        const input = parseSlideInput({ title, document });
+        const requestInput = { title: input.title, document: input.document };
         request = {
           method: initial ? "PUT" : "POST",
           headers: {
@@ -109,7 +122,9 @@ export function SlideEditor({
             Accept: "application/json",
           },
           body: JSON.stringify(
-            initial ? { input, expectedRevision: initial.revision } : input,
+            initial
+              ? { input: requestInput, expectedRevision: initial.revision }
+              : requestInput,
           ),
         };
       } else {
@@ -183,10 +198,15 @@ export function SlideEditor({
   function showPreview() {
     try {
       if (contentType === "text") {
-        setPreviewText(parseSlideBody(body));
+        if (!document) throw new Error("INVALID_SLIDE_INPUT");
+        const input = parseSlideInput({
+          title: title || "プレビュー",
+          document,
+        });
+        setPreviewDocument(input.document ?? null);
       } else {
         if (!currentImageUrl) throw new Error("INVALID_SLIDE_IMAGE");
-        setPreviewText(null);
+        setPreviewDocument(null);
       }
       setPreviewType(contentType);
       setPreviewVersion((value) => value + 1);
@@ -200,6 +220,10 @@ export function SlideEditor({
       );
     }
   }
+
+  const updateDocument = useCallback((value: SlideTextDocument | null) => {
+    setDocument(value);
+  }, []);
 
   return (
     <>
@@ -245,13 +269,11 @@ export function SlideEditor({
           />
           {contentType === "text" ? (
             <>
-              <label htmlFor="slide-body">本文</label>
-              <textarea
-                id="slide-body"
-                rows={12}
-                value={body}
-                onChange={(event) => setBody(event.target.value)}
-                required
+              <span className="slide-field-label">本文</span>
+              <SlideRichTextEditor
+                initial={document ?? undefined}
+                disabled={busy}
+                onChange={updateDocument}
               />
             </>
           ) : (
@@ -311,17 +333,22 @@ export function SlideEditor({
           {previewType !== contentType && (
             <p>スライドの種類を変更しました。プレビューを更新してください。</p>
           )}
-          {previewType === "text" && previewText !== body && (
-            <p>本文を変更しました。プレビューを更新してください。</p>
-          )}
+          {previewType === "text" &&
+            JSON.stringify(previewDocument) !== JSON.stringify(document) && (
+              <p>本文を変更しました。プレビューを更新してください。</p>
+            )}
           {previewType === "image" && currentImageUrl ? (
             <SlidePreview
               key={previewVersion}
               imageSrc={currentImageUrl}
               title={title || "スライド画像"}
             />
-          ) : previewText !== null ? (
-            <SlidePreview key={previewVersion} text={previewText} />
+          ) : previewDocument !== null ? (
+            <SlidePreview
+              key={previewVersion}
+              text=""
+              document={previewDocument}
+            />
           ) : null}
         </>
       )}
