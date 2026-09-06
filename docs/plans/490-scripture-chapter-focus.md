@@ -66,6 +66,8 @@ catalog response.
   121 component, lint, typecheck, configuration checks, and production build),
   `pnpm test:integration` (140 tests), `pnpm security:check` (no high/critical
   vulnerability; 356 approved license records), and `git diff --check`.
+- 2026-09-06 17:47 JST — Required Quality, Database, E2E, and Security jobs all
+  passed on implementation commit `59e13a6` in PR #491.
 
 ## Decisions
 
@@ -95,14 +97,16 @@ catalog response.
 - [x] `pnpm test:integration` — 140 passed
 - [x] `pnpm security:check` — passed
 - [x] `git diff --check` — passed
-- [ ] Acceptance criteria verified on exact-head required CI
+- [x] Acceptance criteria verified by required CI on implementation commit
+      `59e13a6`
 - [x] Final diff reviewed for scope, secrets, migrations, and unsafe defaults
 
 ## Handoff or blockers
 
 - Completed: implementation, regression coverage, local verification, and
   self-review.
-- Remaining: commit, pull request, and exact-head required CI.
+- Remaining: commit this final evidence-only plan update and confirm required CI
+  remains successful on the resulting head.
 - Blocker: none.
 - Resume with: commit the reviewed patch and open the Issue-linked pull request.
 
@@ -110,4 +114,5 @@ catalog response.
 
 The chapter editor remains enabled while catalog candidates load. Component and
 latest-Chromium coverage prove continuous three-digit input, focus retention,
-and rejection of stale catalog responses. Exact-head CI remains pending.
+and rejection of stale catalog responses. Required CI passed on the reviewed
+implementation commit; the final evidence-only plan update needs exact-head CI.
