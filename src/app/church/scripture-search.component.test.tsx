@@ -281,6 +281,84 @@ describe("ScriptureSearch", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps focus while typing a multi-digit chapter and uses the latest catalog", async () => {
+    const pendingChapterCatalogs: Array<{
+      chapter: string;
+      resolve: (response: Response) => void;
+    }> = [];
+    const fetcher = vi.fn<typeof fetch>((input) => {
+      const url = new URL(String(input), "https://levi.example");
+      if (url.pathname.endsWith("/saved-content"))
+        return response({ folders: [], orderIds: [] });
+      const book = url.searchParams.get("book");
+      const chapter = url.searchParams.get("chapter");
+      if (!book) return response({ books, chapters: [], verses: [] });
+      if (!chapter)
+        return response({ books, chapters: [1, 10, 100, 150], verses: [] });
+      return new Promise<Response>((resolve) => {
+        pendingChapterCatalogs.push({ chapter, resolve });
+      });
+    });
+    renderSearch(fetcher);
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("radio", {
+        name: "架空ヨハネ/Synthetic John",
+      }),
+    );
+
+    const chapter = screen.getByLabelText("章");
+    await waitFor(() => expect(chapter).toBeEnabled());
+    await user.type(chapter, "100");
+
+    expect(chapter).toHaveValue("100");
+    expect(chapter).toHaveFocus();
+    expect(pendingChapterCatalogs.map((request) => request.chapter)).toEqual([
+      "1",
+      "10",
+      "100",
+    ]);
+    expect(screen.getByText("検索候補を読み込んでいます。")).toHaveClass(
+      "sr-only",
+    );
+
+    await act(async () => {
+      pendingChapterCatalogs
+        .find((request) => request.chapter === "100")!
+        .resolve(
+          Response.json({
+            books,
+            chapters: [1, 10, 100, 150],
+            verses: [1, 2],
+          }),
+        );
+    });
+    await waitFor(() => expect(screen.getByLabelText("開始節")).toBeEnabled());
+
+    await act(async () => {
+      for (const request of pendingChapterCatalogs.filter(
+        ({ chapter }) => chapter !== "100",
+      )) {
+        request.resolve(
+          Response.json({
+            books,
+            chapters: [1, 10, 100, 150],
+            verses: [99],
+          }),
+        );
+      }
+    });
+    await user.type(screen.getByLabelText("開始節"), "1");
+    await user.click(screen.getByRole("button", { name: "Open" }));
+
+    expect(window.open).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "/scripture/audience?book=JHN&chapter=100&endVerse=2&language=both&startVerse=1#levi=",
+      ),
+      "projector",
+    );
+  });
+
   it("supports keyboard navigation and has no detectable accessibility violations", async () => {
     const { container } = renderSearch(successfulFetcher());
     const book = await screen.findByRole("radio", {
