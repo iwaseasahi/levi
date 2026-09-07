@@ -174,3 +174,52 @@ GitHub Issue #280:
 This is an operational baseline, not an SLA. Record the first real Sunday-use
 CPU, memory, disk, latency, and error measurements separately because synthetic
 or idle measurements do not represent projection traffic.
+
+## First real Sunday-use baseline
+
+The first real Sunday use occurred on 2026-09-06 JST. The retrospective query
+covered the complete local day. Caddy records were present from 00:01 through
+23:59 JST, and successful health records were present from 00:00 through 23:59
+JST, so the observation window was not truncated by log retention.
+
+Anonymous half-hour request counts identified the main traffic envelope as
+08:30–16:00 JST, with concentrated activity from 08:30–13:00 and
+14:30–16:00. This is an observed traffic window, not a record of user identity
+or church attendance. The before, traffic-envelope, and after measurements
+were:
+
+| Window (JST) | Non-readiness requests | Host CPU maximum | Memory maximum | Root disk | Half-hour p95 maximum | HTTP 5xx |
+| ------------ | ---------------------: | ---------------: | -------------: | --------: | --------------------: | -------: |
+| 00:00–08:30  |                    251 |            1.68% |            22% |        6% |              169.9 ms |        0 |
+| 08:30–16:00  |                  1,526 |            2.32% |            23% |        6% |              193.4 ms |        0 |
+| 16:00–24:00  |                    218 |            1.65% |            22% |        6% |               92.6 ms |        0 |
+
+Across the full day, Caddy recorded 1,995 non-readiness requests: 1,503 2xx,
+343 3xx, 149 4xx, and zero 5xx. End-to-end proxy duration for those requests
+was p50 30.0 ms, p95 117.3 ms, and maximum 1,061.7 ms. Host CPU averaged 1.52%
+across the retained ten-minute samples. Capacity stayed far below the ADR 0005
+75% memory reconsideration signal and the active 80% disk, 90% memory, and five
+5xx-in-five-minutes alert thresholds.
+
+The health journal contained 1,224 successful samples and no error-priority
+health event during the day. Every successful sample includes public readiness,
+PostgreSQL readiness, encrypted weekly-backup freshness, isolated-restore-proof
+freshness, disk, memory, and rolling five-minute 5xx checks. The post-use check
+also found public readiness and PostgreSQL ready, backup health passing, all
+three production timers active, and zero failed systemd units.
+
+The proxy and PostgreSQL containers still had their pre-use start times and zero
+restarts. The application container was replaced after this observation window,
+so its current restart counter cannot directly prove whether an application
+restart occurred during Sunday use. No readiness error, HTTP 5xx, or
+server-observed projection failure was present, but durable per-service
+container lifecycle history is tracked by follow-up Issue #492 rather than
+being inferred from current state. The operator also confirmed that no
+client-visible projection interruption, rendering problem, or control failure
+occurred during the measured use.
+
+Only aggregate counts, percentages, durations, and health states were retained.
+The collection did not output or store IP addresses, credentials, church or user
+identifiers, request paths, headers, raw logs, or Bible text. This single-day
+baseline is capacity evidence for the current two-church single-VPS scope, not
+an SLA or a forecast for materially higher traffic.
