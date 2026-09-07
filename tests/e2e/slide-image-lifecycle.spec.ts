@@ -82,7 +82,11 @@ test("an image Slide is previewed, saved, projected with contain sizing, and bla
     where: { churchId: scriptureAccount.churchId },
     include: { image: true },
   });
-  expect(stored).toMatchObject({ body: null, contentType: "IMAGE" });
+  expect(stored).toMatchObject({
+    textDocument: null,
+    contentType: "IMAGE",
+  });
+  expect(stored).not.toHaveProperty("body");
   expect(stored.image).toMatchObject({
     mediaType: "image/png",
     width: 1,

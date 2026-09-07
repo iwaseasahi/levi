@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 import { expect, test } from "./scripture-fixture";
 import { loginToScripture, selectGenesis } from "./scripture-helpers";
 
@@ -9,14 +10,15 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   scriptureAccount,
   pageErrorGuard,
 }, testInfo) => {
+  const slideBody =
+    "<script>synthetic</script>\n日本語の本文\n\n\n\n" +
+    "長い行".repeat(50) +
+    "\n\n\n\nFinal";
   const slide = await prisma.slide.create({
     data: {
       churchId: scriptureAccount.churchId,
       title: "Synthetic projection title",
-      body:
-        "<script>synthetic</script>\n日本語の本文\n\n\n\n" +
-        "長い行".repeat(50) +
-        "\n\n\n\nFinal",
+      ...storedSlideText(slideBody),
     },
   });
   const updatedBody = Array(4).fill("テストスライド").join("\n");
@@ -26,7 +28,7 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
-  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   expect(
     await audience.locator(".slide-rich-content").evaluate((element) => {
       const style = getComputedStyle(element);
@@ -108,14 +110,17 @@ test("saved slides project the complete body, acknowledge controls, reauthorize 
   await controller
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
-  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   await audience.reload();
-  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   await expect(controller.getByRole("status")).toHaveText("投影中");
 
   await prisma.slide.update({
     where: { id: slide.id },
-    data: { body: updatedBody, revision: { increment: 1 } },
+    data: {
+      ...storedSlideText(updatedBody),
+      revision: { increment: 1 },
+    },
   });
   await audience.bringToFront();
   await audience.evaluate(() =>
@@ -169,11 +174,12 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   page,
   scriptureAccount,
 }) => {
+  const slideBody = "First\n\n\n\nSecond";
   const slide = await prisma.slide.create({
     data: {
       churchId: scriptureAccount.churchId,
       title: "Synthetic coordinate recovery",
-      body: "First\n\n\n\nSecond",
+      ...storedSlideText(slideBody),
     },
   });
   await loginToScripture(context, page, scriptureAccount);
@@ -182,7 +188,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   const opened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   let audience = await opened;
-  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   const valid = new URL(audience.url());
   for (const value of ["-1", "2", "invalid"]) {
     const invalid = new URL(valid);
@@ -194,9 +200,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
     await expect(audience.locator(".slide-rich-content")).toHaveCount(0);
     await expect(audience.getByRole("navigation")).toHaveCount(0);
     await controller.getByRole("button", { name: "Open" }).click();
-    await expect(audience.locator(".slide-rich-content")).toHaveText(
-      slide.body!,
-    );
+    await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   }
   await expect(
     controller.getByRole("button", { name: "空白と表示を切り替え" }),
@@ -208,7 +212,7 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
   const reopened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   audience = await reopened;
-  await expect(audience.locator(".slide-rich-content")).toHaveText(slide.body!);
+  await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   await expect(
     controller.getByRole("button", { name: "空白と表示を切り替え" }),
   ).toBeEnabled();

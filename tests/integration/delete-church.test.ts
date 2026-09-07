@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { deleteChurch } from "@/infrastructure/auth/church-deletion";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 import {
   clearSyntheticBibleFixture,
   createSyntheticBibleFixture,
@@ -77,14 +78,14 @@ describe("administrator church deletion", () => {
       data: {
         churchId: targetChurch.id,
         title: "Target slide",
-        body: "Synthetic target",
+        ...storedSlideText("Synthetic target"),
       },
     });
     const preservedSlide = await prisma.slide.create({
       data: {
         churchId: preservedChurch.id,
         title: "Preserved slide",
-        body: "Synthetic preserved",
+        ...storedSlideText("Synthetic preserved"),
       },
     });
     const passwordHash = await hashPassword("test-only-password");
@@ -218,7 +219,9 @@ describe("administrator church deletion", () => {
     ).resolves.toBeNull();
     await expect(
       prisma.slide.findUnique({ where: { id: preservedSlide.id } }),
-    ).resolves.toMatchObject({ body: "Synthetic preserved" });
+    ).resolves.toMatchObject({
+      textDocument: storedSlideText("Synthetic preserved").textDocument,
+    });
     await expect(prisma.bibleVerse.count()).resolves.toBe(sharedBibleCount);
     await expect(prisma.adminUser.count()).resolves.toBe(adminCount);
   });

@@ -9,7 +9,6 @@ import {
   flattenSlideTextDocument,
   parseSlideTextDocument,
   slideTextDocument,
-  slideTextDocumentFromPlainText,
   type SlideTextDocument,
 } from "@/domain/slides/text-document";
 import { Prisma } from "@/generated/prisma/client";
@@ -20,7 +19,6 @@ import { writeBookmarkOrder } from "./saved-content-ordering";
 const slideRecordSelect = {
   id: true,
   title: true,
-  body: true,
   textDocument: true,
   contentType: true,
   revision: true,
@@ -53,7 +51,7 @@ function record(row: SlideRow): SlideRecord {
     updatedAt: row.updatedAt.toISOString(),
   };
   if (row.contentType === "IMAGE") {
-    if (!row.image || row.body !== null || row.textDocument !== null)
+    if (!row.image || row.textDocument !== null)
       throw new Error("Invalid persisted image Slide");
     return {
       ...common,
@@ -62,15 +60,10 @@ function record(row: SlideRow): SlideRecord {
       image: { ...row.image, mediaType: storedMediaType(row.image.mediaType) },
     };
   }
-  if (row.body === null || row.image)
+  if (row.image || row.textDocument === null)
     throw new Error("Invalid persisted text Slide");
-  const document =
-    row.textDocument === null
-      ? slideTextDocumentFromPlainText(row.body)
-      : parseSlideTextDocument(row.textDocument);
-  if (flattenSlideTextDocument(document) !== row.body)
-    throw new Error("Invalid persisted Slide text document");
-  return { ...common, body: row.body, document };
+  const document = parseSlideTextDocument(row.textDocument);
+  return { ...common, body: flattenSlideTextDocument(document), document };
 }
 
 function persistedDocument(input: {
@@ -145,7 +138,6 @@ export const slideRepository: SlideRepository = {
       await prisma.slide.create({
         data: {
           title: input.title,
-          body: input.body,
           textDocument: document as Prisma.InputJsonValue,
           contentType: "TEXT",
           churchId: scope.churchId,
@@ -167,7 +159,6 @@ export const slideRepository: SlideRepository = {
         await transaction.slide.create({
           data: {
             title: input.title,
-            body: null,
             contentType: "IMAGE",
             churchId: scope.churchId,
             image: { create: imageData(input) },
@@ -228,7 +219,6 @@ export const slideRepository: SlideRepository = {
           where: { id, churchId: scope.churchId, revision: expectedRevision },
           data: {
             title: input.title,
-            body: input.body,
             textDocument: document as Prisma.InputJsonValue,
             contentType: "TEXT",
             revision: { increment: 1 },
@@ -254,7 +244,6 @@ export const slideRepository: SlideRepository = {
           where: { id, churchId: scope.churchId, revision: expectedRevision },
           data: {
             title: input.title,
-            body: null,
             textDocument: Prisma.DbNull,
             contentType: "IMAGE",
             revision: { increment: 1 },

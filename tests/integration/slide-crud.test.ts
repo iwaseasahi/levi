@@ -69,7 +69,7 @@ describe("scoped Slide persistence", () => {
     ).toMatchObject({ textDocument: document });
   });
 
-  it("persists selected-range sizes and clears stale formatting after an old-writer update", async () => {
+  it("persists selected-range sizes and derives plain text without a body column", async () => {
     const owner = await scope();
     const document = {
       version: 2 as const,
@@ -100,32 +100,14 @@ describe("scoped Slide persistence", () => {
     });
     expect(created).toMatchObject({ body: "Normal large", document });
 
-    await prisma.$executeRaw`
-      UPDATE slides SET body = 'Old writer synthetic', revision = revision + 1
-      WHERE id = ${created.id}::uuid`;
     const stored = await prisma.slide.findUniqueOrThrow({
       where: { id: created.id },
     });
-    expect(stored.textDocument).toBeNull();
+    expect(stored).not.toHaveProperty("body");
+    expect(stored.textDocument).toEqual(document);
     expect(await service.get(owner, created.id)).toMatchObject({
-      body: "Old writer synthetic",
-      document: {
-        version: 2,
-        blocks: [
-          {
-            type: "paragraph",
-            alignment: "left",
-            content: [
-              {
-                type: "text",
-                text: "Old writer synthetic",
-                size: 100,
-                marks: [],
-              },
-            ],
-          },
-        ],
-      },
+      body: "Normal large",
+      document,
     });
   });
 

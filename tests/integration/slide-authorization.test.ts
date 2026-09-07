@@ -6,6 +6,7 @@ import { createSlideListHandler } from "@/app/api/church/slides/list/controller"
 import { getChurchAccess } from "@/infrastructure/auth/church-session";
 import { getAdminSessionAccess } from "@/infrastructure/auth/admin-session";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 import { slideRepository } from "@/infrastructure/database/slide-repository";
 import { slideListRepository } from "@/infrastructure/database/slide-list-repository";
 
@@ -96,7 +97,11 @@ describe("real session authorization across Slide endpoints", () => {
         await getChurchAccess(new Headers({ cookie: member.cookie })),
       ).toMatchObject({ status: "authorized" });
       const slide = await prisma.slide.create({
-        data: { ...input, churchId: member.churchId! },
+        data: {
+          title: input.title,
+          ...storedSlideText(input.body),
+          churchId: member.churchId!,
+        },
       });
       if (state === "suspended")
         await prisma.church.update({

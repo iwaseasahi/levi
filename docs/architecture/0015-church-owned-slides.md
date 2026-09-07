@@ -45,6 +45,11 @@ a measured projection blocker must stop the affected implementation child.
 
 ## Slide aggregate and physical contract
 
+The table below records the initial plain-text storage contract. ADR 0017 and
+Issue #499 supersede its `body` storage after the rich-text migration: current
+text Slides require `text_document`, and plain `body` is derived only at API
+boundaries.
+
 Use a dedicated Prisma `Slide` mapped to `slides`, with no generic payload table,
 page table, creator identity FK, deletion marker, history table or history trigger.
 Pages are deterministically derived from body. Normalization and limits are in

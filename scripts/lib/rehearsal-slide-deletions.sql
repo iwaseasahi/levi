@@ -10,9 +10,9 @@ DELETE FROM slides WHERE id = '00000000-0000-4000-8000-000000389012'
 DELETE FROM churches WHERE id = '00000000-0000-4000-8000-000000389001';
 DO $$ BEGIN
  IF (SELECT count(*) FROM slides) <> 2
-  OR NOT EXISTS (SELECT 1 FROM slides WHERE id = '00000000-0000-4000-8000-000000389013'
+ OR NOT EXISTS (SELECT 1 FROM slides WHERE id = '00000000-0000-4000-8000-000000389013'
    AND church_id = '00000000-0000-4000-8000-000000389002' AND revision = 3
-   AND body = E'日本語\n\n\n\nSecond')
+   AND text_document = '{"version":2,"blocks":[{"type":"paragraph","alignment":"left","content":[{"type":"text","text":"日本語","size":100,"marks":[]},{"type":"break"},{"type":"break"},{"type":"break"},{"type":"break"},{"type":"text","text":"Second","size":100,"marks":[]}]}]}'::jsonb)
   OR NOT EXISTS (
    SELECT 1 FROM slide_images
    WHERE slide_id = '00000000-0000-4000-8000-000000389014'

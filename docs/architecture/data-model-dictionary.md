@@ -388,17 +388,16 @@ Search/import reconciliation must reject gaps in the inclusive range.
 ### `slides` and `slide_images`
 
 `slides` is the church-owned aggregate root. `content_type` is `TEXT` by
-default. A database CHECK requires a text Slide to have a valid nonblank `body`
-and an image Slide to have a null `body`. Application writes create exactly one
-`slide_images` child for every image Slide.
+default. A database CHECK requires a text Slide to have a versioned
+`text_document` and an image Slide to have a null document. Application writes
+create exactly one `slide_images` child for every image Slide.
 
 | `slides` column | Type           | Null | Contract                                                                           |
 | --------------- | -------------- | ---- | ---------------------------------------------------------------------------------- |
 | `id`            | `uuid`         | no   | PK; server generated                                                               |
 | `church_id`     | `uuid`         | no   | Church FK with physical cascade                                                    |
 | `title`         | `varchar(200)` | no   | normalized nonblank single-line title                                              |
-| `body`          | `text`         | yes  | flattened text for `TEXT`; null for `IMAGE`                                        |
-| `text_document` | `jsonb`        | yes  | validated Slide text document; size is 50–200% in 10% steps; null means plain text |
+| `text_document` | `jsonb`        | yes  | required validated document for `TEXT`; null for `IMAGE`; sizes are 50–200% by 10% |
 | `content_type`  | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`                                                  |
 | `revision`      | `integer`      | no   | positive optimistic concurrency token                                              |
 | timestamps      | `timestamptz`  | no   | creation/update                                                                    |
@@ -422,9 +421,10 @@ constraint triggers require one child for `IMAGE` and none for `TEXT` at commit.
 Church row locking serializes quota-changing writes.
 
 `text_document` permits only the application-owned versioned shape described by
-ADR 0017. Application reads also require its flattened text to equal `body`.
-The rollback trigger clears the document when an older writer changes only
-`body`; image Slides always have a null document.
+ADR 0017. Application reads strictly validate it and derive the plain-text API
+view by flattening it. The migrated `body` column and its old-writer rollback
+trigger were removed after migration completion; image Slides always have a
+null document.
 
 ## Ownership and deletion matrix
 

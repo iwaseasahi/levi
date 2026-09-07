@@ -363,7 +363,6 @@ model Slide {
   id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   churchId     String           @map("church_id") @db.Uuid
   title        String           @db.VarChar(200)
-  body         String?          @db.Text
   textDocument Json?            @map("text_document") @db.JsonB
   contentType  SlideContentType @default(TEXT) @map("content_type")
   revision     Int              @default(1)
