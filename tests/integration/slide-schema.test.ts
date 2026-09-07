@@ -1,9 +1,19 @@
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { afterAll, afterEach, describe, expect, it } from "vitest";
+import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 
 const namespace = "test.slide-schema.";
-const fields = { title: "Synthetic slide", body: "First\n\n\n\nSecond" };
+const fields = {
+  title: "Synthetic slide",
+  ...storedSlideText("First\n\n\n\nSecond"),
+};
+const bodyRemovalMigrationUrl = new URL(
+  "../../prisma/migrations/20260907010000_drop_migrated_slide_body/migration.sql",
+  import.meta.url,
+);
 async function church() {
   return prisma.church.create({
     data: { name: `${namespace}${randomUUID()}` },
@@ -19,7 +29,7 @@ afterEach(async () => {
 afterAll(() => prisma.$disconnect());
 
 describe("Slide database contract", () => {
-  it("persists duplicate titles and code point boundaries", async () => {
+  it("persists duplicate titles and migrated text documents", async () => {
     const owner = await church();
     const first = await prisma.slide.create({
       data: { ...fields, churchId: owner.id },
@@ -34,16 +44,21 @@ describe("Slide database contract", () => {
       data: {
         churchId: owner.id,
         title: "😀".repeat(200),
-        body: "😀".repeat(100_000),
+        ...storedSlideText("😀".repeat(100_000)),
       },
     });
-    expect([...unicode.body!]).toHaveLength(100_000);
+    expect(unicode.textDocument).toEqual(
+      storedSlideText("😀".repeat(100_000)).textDocument,
+    );
     await expect(
       prisma.slide.update({
         where: { id: unicode.id },
-        data: { revision: 2, body: " Updated\n" },
+        data: { revision: 2, ...storedSlideText(" Updated\n") },
       }),
-    ).resolves.toMatchObject({ revision: 2, body: " Updated\n" });
+    ).resolves.toMatchObject({
+      revision: 2,
+      textDocument: storedSlideText(" Updated\n").textDocument,
+    });
   });
 
   it.each([
@@ -54,11 +69,9 @@ describe("Slide database contract", () => {
     { title: "line\rbreak" },
     { title: "tab\tinside" },
     { title: "😀".repeat(201) },
-    { body: "" },
-    { body: " \t\n" },
-    { body: "CR\rLF" },
-    { body: "x".repeat(100_001) },
-    { body: "nul\0" },
+    { textDocument: Prisma.DbNull },
+    { textDocument: { version: 1, nodes: [] } },
+    { textDocument: { version: 2, blocks: "invalid" } },
     { revision: 0 },
     { revision: -1 },
   ])("rejects invalid persisted fields (case %#)", async (invalid) => {
@@ -79,13 +92,13 @@ describe("Slide database contract", () => {
     ).rejects.toThrow();
     const owner = await church();
     await expect(
-      prisma.$executeRaw`INSERT INTO slides(church_id,title,body) VALUES (${owner.id}::uuid,NULL,'body')`,
+      prisma.$executeRaw`INSERT INTO slides(church_id,title,text_document) VALUES (${owner.id}::uuid,NULL,${JSON.stringify(storedSlideText("body").textDocument)}::jsonb)`,
     ).rejects.toThrow();
     await expect(
-      prisma.$executeRaw`INSERT INTO slides(church_id,title,body) VALUES (${owner.id}::uuid,'title',NULL)`,
+      prisma.$executeRaw`INSERT INTO slides(church_id,title,text_document) VALUES (${owner.id}::uuid,'title',NULL)`,
     ).rejects.toThrow();
     await expect(
-      prisma.$executeRaw`INSERT INTO slides(church_id,title,body) VALUES (NULL,'title','body')`,
+      prisma.$executeRaw`INSERT INTO slides(church_id,title,text_document) VALUES (NULL,'title',${JSON.stringify(storedSlideText("body").textDocument)}::jsonb)`,
     ).rejects.toThrow();
   });
 
@@ -96,7 +109,6 @@ describe("Slide database contract", () => {
       "id",
       "church_id",
       "title",
-      "body",
       "revision",
       "created_at",
       "updated_at",
@@ -111,7 +123,6 @@ describe("Slide database contract", () => {
       expect.arrayContaining([
         "slides_pkey",
         "slides_title_valid",
-        "slides_content_valid",
         "slides_revision_positive",
         "slides_church_id_fkey",
         "slides_text_document_valid",
@@ -119,6 +130,9 @@ describe("Slide database contract", () => {
     );
     expect(constraints.map((row) => row.conname)).not.toContain(
       "slides_author_valid",
+    );
+    expect(constraints.map((row) => row.conname)).not.toContain(
+      "slides_content_valid",
     );
     expect(
       constraints.find((row) => row.conname === "slides_church_id_fkey")
@@ -179,6 +193,10 @@ describe("Slide database contract", () => {
       "slide_images_total_ck",
       "slides_image_total_ck",
     ]);
+    const staleDocumentTriggers = await prisma.$queryRaw<
+      Array<{ tgname: string }>
+    >`SELECT tgname FROM pg_trigger WHERE NOT tgisinternal AND tgname='slides_clear_stale_text_document'`;
+    expect(staleDocumentTriggers).toEqual([]);
   });
 
   it("rejects the unreleased version 1 Slide text document at the database boundary", async () => {
@@ -197,6 +215,29 @@ describe("Slide database contract", () => {
     ).rejects.toThrow();
   });
 
+  it("fails the body-removal migration guard before dropping incomplete text", async () => {
+    const owner = await church();
+    const sql = await readFile(bodyRemovalMigrationUrl, "utf8");
+    const guard = sql.match(/DO \$\$[\s\S]*?\$\$;/)?.[0];
+    expect(guard).toBeDefined();
+
+    await expect(
+      prisma.$transaction(async (transaction) => {
+        await transaction.$executeRawUnsafe(
+          'ALTER TABLE "slides" DROP CONSTRAINT "slides_text_document_valid"',
+        );
+        await transaction.$executeRaw`
+          INSERT INTO slides(church_id,title,text_document)
+          VALUES (${owner.id}::uuid,'Incomplete synthetic migration',NULL)`;
+        await transaction.$executeRawUnsafe(guard!);
+      }),
+    ).rejects.toThrow("refusing to drop slides.body");
+
+    await expect(
+      prisma.slide.count({ where: { churchId: owner.id } }),
+    ).resolves.toBe(0);
+  });
+
   it("rejects a Slide whose selected content type and image child disagree", async () => {
     const owner = await church();
     await expect(
@@ -204,7 +245,6 @@ describe("Slide database contract", () => {
         data: {
           churchId: owner.id,
           title: "Missing image child",
-          body: null,
           contentType: "IMAGE",
         },
       }),

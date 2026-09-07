@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 import { test, expect } from "./scripture-fixture";
 import { fillSlideBody, loginToScripture } from "./scripture-helpers";
 
@@ -92,8 +93,8 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
       await prisma.slide.findFirstOrThrow({
         where: { churchId: scriptureAccount.churchId },
       })
-    ).body,
-  ).toBe(original);
+    ).textDocument,
+  ).toEqual(storedSlideText(original).textDocument);
   await editor.getByLabel("タイトル").fill("Synthetic edited lifecycle");
   await editor.getByRole("button", { name: "保存", exact: true }).click();
   await expect(
@@ -158,7 +159,7 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
     data: {
       churchId: scriptureAccount.churchId,
       title: "Synthetic conflict",
-      body: "Original body",
+      ...storedSlideText("Original body"),
     },
   });
   await loginToScripture(context, page, scriptureAccount);
@@ -207,7 +208,7 @@ test("Slide list retries a failed read and concurrent editors retain unsaved inp
     await prisma.slide.findUnique({ where: { id: slide.id } }),
   ).toMatchObject({
     title: "First saved editor",
-    body: "Original body",
+    textDocument: storedSlideText("Original body").textDocument,
     revision: 2,
   });
 });

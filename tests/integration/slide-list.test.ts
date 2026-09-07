@@ -4,6 +4,7 @@ import type { ChurchScope } from "@/application/auth/church-access";
 import { createSlideListService } from "@/application/slides/list-slides";
 import { prisma } from "@/infrastructure/database/client";
 import { slideListRepository } from "@/infrastructure/database/slide-list-repository";
+import { storedSlideText } from "../helpers/slide-document";
 
 const prefix = "test.slide-list.";
 const list = createSlideListService(slideListRepository);
@@ -26,7 +27,7 @@ describe("tenant Slide list", () => {
       data: Array.from({ length: 45 }, (_, index) => ({
         ...owner,
         title: `Synthetic ${index}`,
-        body: `Protected ${index}`,
+        ...storedSlideText(`Protected ${index}`),
         createdAt: date,
       })),
     });
@@ -34,7 +35,7 @@ describe("tenant Slide list", () => {
       data: {
         ...foreign,
         title: "Foreign",
-        body: "Protected",
+        ...storedSlideText("Protected"),
         createdAt: date,
       },
     });
@@ -73,7 +74,7 @@ describe("tenant Slide list", () => {
       data: Array.from({ length: 22 }, (_, index) => ({
         ...owner,
         title: `Synthetic ${index}`,
-        body: "Body",
+        ...storedSlideText("Body"),
         createdAt: date,
         updatedAt: date,
       })),
@@ -82,7 +83,10 @@ describe("tenant Slide list", () => {
     const next = await list(owner, { cursor: first.nextCursor });
     await prisma.slide.update({
       where: { id: next.slides[0]!.id },
-      data: { body: "Changed", revision: { increment: 1 } },
+      data: {
+        ...storedSlideText("Changed"),
+        revision: { increment: 1 },
+      },
     });
     await prisma.slide.delete({ where: { id: next.slides[1]!.id } });
     const refreshed = await list(owner, { cursor: first.nextCursor });
@@ -99,13 +103,16 @@ describe("tenant Slide list", () => {
   it("returns normalized text and image types without protected content", async () => {
     const owner = await scope();
     const textSlide = await prisma.slide.create({
-      data: { ...owner, title: "Text", body: "Protected text" },
+      data: {
+        ...owner,
+        title: "Text",
+        ...storedSlideText("Protected text"),
+      },
     });
     const imageSlide = await prisma.slide.create({
       data: {
         ...owner,
         title: "Image",
-        body: null,
         contentType: "IMAGE",
         image: {
           create: {

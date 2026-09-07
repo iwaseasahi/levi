@@ -30,19 +30,19 @@ route JSON are explicitly not carried over. No legacy edit history is required.
 A Slide belongs to a church, not an individual creator. All members with an
 eligible church session can manage that church's slides.
 
-| Field                    | Replacement rule                                                                                                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`, `churchId`         | Server-owned UUIDs; church from the authenticated actor only.                                                                                                    |
-| `title`                  | Required, trim leading/trailing ASCII space/tab/newline after EOL normalization, 1–200 Unicode code points, single line (no CR/LF/tab).                          |
-| `body`                   | Required plain text, normalize CRLF/CR to LF, preserve other whitespace; 1–100,000 Unicode code points and at least one character other than ASCII space/tab/LF. |
-| `contentType`            | Server-returned `text` or `image`; one Slide has exactly one surface. Existing rows are `text`.                                                                  |
-| `image`                  | For image Slides only: media type, normalized byte size, width, and height; bytes are never embedded in Slide JSON.                                              |
-| `revision`               | Server-owned positive integer, starts at 1 and increments on update; optimistic concurrency token, not edit history.                                             |
-| `createdAt`, `updatedAt` | Server-owned UTC timestamps; creation time immutable.                                                                                                            |
+| Field                    | Replacement rule                                                                                                                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`, `churchId`         | Server-owned UUIDs; church from the authenticated actor only.                                                                                                                              |
+| `title`                  | Required, trim leading/trailing ASCII space/tab/newline after EOL normalization, 1–200 Unicode code points, single line (no CR/LF/tab).                                                    |
+| `body`                   | Derived plain-text API view and accepted compatibility input; normalize CRLF/CR to LF, preserve other whitespace; 1–100,000 Unicode code points and nonblank. It is not a database column. |
+| `contentType`            | Server-returned `text` or `image`; one Slide has exactly one surface. Existing rows are `text`.                                                                                            |
+| `image`                  | For image Slides only: media type, normalized byte size, width, and height; bytes are never embedded in Slide JSON.                                                                        |
+| `revision`               | Server-owned positive integer, starts at 1 and increments on update; optimistic concurrency token, not edit history.                                                                       |
+| `createdAt`, `updatedAt` | Server-owned UTC timestamps; creation time immutable.                                                                                                                                      |
 
 Reject NUL and malformed Unicode; reject unknown request fields. Count code
 points, not UTF-16 units. Reject excessive input without truncation, and bound
-JSON request size to 1 MiB before parsing. Required title/body and explicit limits
+JSON request size to 1 MiB before parsing. Required title/text and explicit limits
 are intentional Levi validation improvements, not observed legacy restrictions.
 Issue #432 removes the former optional author attribution from Levi. Its forward
 migration intentionally discards existing `slides.author` values; production
@@ -53,12 +53,13 @@ Create/update errors retain the user's input. Invalid input is 400, missing or
 foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
-POST `/api/church/slides` accepts `{title, body}` or `{title, document}`. The
-document contract is the application-owned Slide text document and contains
+POST `/api/church/slides` accepts `{title, body}` or `{title, document}`. Both
+paths produce the application-owned Slide text document, which is the sole
+persisted text source and contains
 paragraphs, flat bullet lists,
 left/center/right alignment, bold, italic, underline, and relative font sizes
 from 50–200% in 10% steps. The server
-accepts only this allowlist and derives compatibility `body`; raw HTML and raw
+accepts only this allowlist and derives response `body`; raw HTML and raw
 Tiptap JSON are not persistence contracts. GET/PUT/DELETE use
 `/api/church/slides/[id]`; PUT accepts `{input: {title, document},
 expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
@@ -101,9 +102,10 @@ HTML-like input remains literal text rather than executable markup.
 
 Issue #479 adds WYSIWYG range sizing on this single surface. The author may use
 50–200% in 10% steps. Preview, detail, and audience render those relative sizes
-with the same fit calculation. Paste retains plain text and LF only. Existing
-plain-body rows render as all 100%. The unreleased version 1 document format is
-not accepted. The Slide projection controller does not provide a separate font
+with the same fit calculation. Paste retains plain text and LF only. Migrated
+rows have a versioned document; a missing or invalid document fails
+closed. The unreleased version 1 document format is not accepted. The Slide
+projection controller does not provide a separate font
 size adjustment; authored sizes are projected as saved, subject only to fit.
 
 Preview is an explicit local operation over unsaved body; it neither writes a

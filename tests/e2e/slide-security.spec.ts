@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 import { test, expect } from "./scripture-fixture";
 import { loginToScripture } from "./scripture-helpers";
 
@@ -19,7 +20,7 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
   try {
     const row = await prisma.slide.create({
       data: {
-        ...input,
+        ...storedSlideText(input.body),
         churchId: foreign.id,
         title: "Synthetic foreign title",
       },
@@ -106,11 +107,11 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
       // no-cache/must-revalidate. Protected Slide API payloads above are no-store.
       expect(result?.headers()["cache-control"]).toContain("no-cache");
       const shell = await result!.text();
-      for (const value of [row.title, row.body])
+      for (const value of [row.title, input.body])
         expect(shell).not.toContain(value);
       await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
       await expect(page.getByText(row.title, { exact: true })).toHaveCount(0);
-      await expect(page.getByText(row.body!, { exact: true })).toHaveCount(0);
+      await expect(page.getByText(input.body, { exact: true })).toHaveCount(0);
     }
     expect(await prisma.slide.findUnique({ where: { id: row.id } })).toEqual(
       row,
@@ -127,10 +128,11 @@ for (const denied of ["revoked", "suspended"] as const) {
     scriptureAccount,
     pageErrorGuard,
   }) => {
+    const protectedBody = "Synthetic protected page\n\n\n\nSecond";
     const slide = await prisma.slide.create({
       data: {
-        ...input,
-        body: "Synthetic protected page\n\n\n\nSecond",
+        title: input.title,
+        ...storedSlideText(protectedBody),
         churchId: scriptureAccount.churchId,
       },
     });
@@ -141,7 +143,7 @@ for (const denied of ["revoked", "suspended"] as const) {
     await controller.getByRole("button", { name: "Open" }).click();
     const audience = await opened;
     await expect(audience.locator(".slide-rich-content")).toHaveText(
-      slide.body!,
+      protectedBody,
     );
     pageErrorGuard.allowConsoleError(
       denied === "revoked"

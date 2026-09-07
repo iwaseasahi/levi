@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 import { test, expect } from "./scripture-fixture";
 import { loginToScripture, selectGenesis } from "./scripture-helpers";
 
@@ -15,7 +16,7 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
     id: `48600000-0000-4000-8000-${String(index).padStart(12, "0")}`,
     churchId: scriptureAccount.churchId,
     title: `Synthetic ${String(index).padStart(2, "0")}`,
-    body: "Ordinary body",
+    ...storedSlideText("Ordinary body"),
     createdAt: date,
     updatedAt: date,
   }));
@@ -26,7 +27,6 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
     data: {
       churchId: scriptureAccount.churchId,
       title: longTitle,
-      body: null,
       contentType: "IMAGE",
       createdAt: new Date(date.getTime() + 1000),
       updatedAt: date,
@@ -46,7 +46,10 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
     data: {
       name: `test.e2e.slide-list.${randomUUID()}`,
       slides: {
-        create: { title: "Foreign synthetic", body: "Foreign body" },
+        create: {
+          title: "Foreign synthetic",
+          ...storedSlideText("Foreign body"),
+        },
       },
     },
   });
@@ -173,7 +176,7 @@ test("Slide list deletes a confirmed Slide from the action beside favorite", asy
     data: {
       churchId: scriptureAccount.churchId,
       title,
-      body: "Synthetic body for list deletion",
+      ...storedSlideText("Synthetic body for list deletion"),
     },
   });
   await loginToScripture(context, page, scriptureAccount);
@@ -221,7 +224,7 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
     data: {
       churchId: scriptureAccount.churchId,
       title: "Synthetic favorite slide",
-      body: "Synthetic favorite body",
+      ...storedSlideText("Synthetic favorite body"),
     },
   });
   await loginToScripture(context, page, scriptureAccount);

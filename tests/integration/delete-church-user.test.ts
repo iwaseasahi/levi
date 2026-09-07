@@ -15,6 +15,7 @@ import {
 import { getChurchAccess } from "@/infrastructure/auth/church-session";
 import { auth } from "@/infrastructure/auth/server";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 import {
   createSyntheticBibleFixture,
   clearSyntheticBibleFixture,
@@ -123,7 +124,7 @@ describe("administrator deletion of an individual church user", () => {
         data: {
           churchId: church.id,
           title: "Synthetic retained Slide",
-          body: "Church-owned body",
+          ...storedSlideText("Church-owned body"),
         },
       });
       const folder = await prisma.folder.create({

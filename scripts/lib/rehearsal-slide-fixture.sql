@@ -3,12 +3,15 @@ BEGIN;
 INSERT INTO churches (id, name) VALUES
  ('00000000-0000-4000-8000-000000389001', 'test.restore.deleted-church'),
  ('00000000-0000-4000-8000-000000389002', 'test.restore.preserved-church');
-INSERT INTO slides (id, church_id, title, body, revision) VALUES
- ('00000000-0000-4000-8000-000000389011', '00000000-0000-4000-8000-000000389001', 'Synthetic cascade', 'Synthetic body', 1),
- ('00000000-0000-4000-8000-000000389012', '00000000-0000-4000-8000-000000389002', 'Synthetic deleted slide', 'Synthetic body', 2),
- ('00000000-0000-4000-8000-000000389013', '00000000-0000-4000-8000-000000389002', 'Synthetic preserved slide', E'日本語\n\n\n\nSecond', 3);
-INSERT INTO slides (id, church_id, title, body, content_type, revision) VALUES
- ('00000000-0000-4000-8000-000000389014', '00000000-0000-4000-8000-000000389002', 'Synthetic image slide', NULL, 'IMAGE', 1);
+INSERT INTO slides (id, church_id, title, text_document, revision) VALUES
+ ('00000000-0000-4000-8000-000000389011', '00000000-0000-4000-8000-000000389001', 'Synthetic cascade',
+  '{"version":2,"blocks":[{"type":"paragraph","alignment":"left","content":[{"type":"text","text":"Synthetic body","size":100,"marks":[]}]}]}'::jsonb, 1),
+ ('00000000-0000-4000-8000-000000389012', '00000000-0000-4000-8000-000000389002', 'Synthetic deleted slide',
+  '{"version":2,"blocks":[{"type":"paragraph","alignment":"left","content":[{"type":"text","text":"Synthetic body","size":100,"marks":[]}]}]}'::jsonb, 2),
+ ('00000000-0000-4000-8000-000000389013', '00000000-0000-4000-8000-000000389002', 'Synthetic preserved slide',
+  '{"version":2,"blocks":[{"type":"paragraph","alignment":"left","content":[{"type":"text","text":"日本語","size":100,"marks":[]},{"type":"break"},{"type":"break"},{"type":"break"},{"type":"break"},{"type":"text","text":"Second","size":100,"marks":[]}]}]}'::jsonb, 3);
+INSERT INTO slides (id, church_id, title, content_type, revision) VALUES
+ ('00000000-0000-4000-8000-000000389014', '00000000-0000-4000-8000-000000389002', 'Synthetic image slide', 'IMAGE', 1);
 INSERT INTO slide_images (
   slide_id, church_id, media_type, byte_size, width, height, checksum, data
 ) VALUES (

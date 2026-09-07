@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { SlideRecord } from "@/domain/slides/commands";
 import { prisma } from "@/infrastructure/database/client";
+import { storedSlideText } from "../helpers/slide-document";
 import { test, expect } from "./scripture-fixture";
 import { loginToScripture } from "./scripture-helpers";
 
@@ -50,7 +51,11 @@ test("Slide HTTP routes enforce session, Origin, revision and physical deletion"
   });
   try {
     const row = await prisma.slide.create({
-      data: { ...input, churchId: foreign.id },
+      data: {
+        title: input.title,
+        ...storedSlideText(input.body),
+        churchId: foreign.id,
+      },
     });
     const result = await context.request.get(`/api/church/slides/${row.id}`);
     expect(result.status()).toBe(404);
