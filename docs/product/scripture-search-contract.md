@@ -69,7 +69,9 @@ these controls until another successful `Open`.
 
 The left sidebar follows Ginmaku's folder accordion. Folder headers use the
 dark gradient and disclosure triangle from the legacy screen. The initial or
-current folder starts open.
+current folder starts open. Display order stays in pinned/explicit position
+order; `last_used_at` selects the current folder independently and does not move
+its header.
 Selecting a header opens that folder directly below the header, closes any
 other open folder, and updates its last-used time. Selecting the same header
 again closes it.

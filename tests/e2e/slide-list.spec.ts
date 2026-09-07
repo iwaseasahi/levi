@@ -235,7 +235,7 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   ).toBeVisible();
   await page.getByRole("link", { name: "スライドの一覧", exact: true }).click();
   await expect(page).toHaveURL(/\/slides$/);
-  const sidebar = page.getByRole("complementary", { name: "サイドバー" });
+  const sidebar = page.locator("#bookmark_container");
   await expect(sidebar).toBeVisible();
   const folder = sidebar.getByRole("button", {
     name: "Synthetic sidebar folder",
@@ -265,12 +265,11 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   await sidebar.getByRole("button", { name: "新規フォルダ作成" }).click();
   await page.getByLabel("集会名").fill("Synthetic second folder");
   await page.getByRole("button", { name: "作成", exact: true }).click();
-  await expect(
-    sidebar.getByRole("button", {
-      name: "Synthetic second folder",
-      exact: true,
-    }),
-  ).toHaveAttribute("aria-expanded", "true");
+  const secondFolder = sidebar.getByRole("button", {
+    name: "Synthetic second folder",
+    exact: true,
+  });
+  await expect(secondFolder).toHaveAttribute("aria-expanded", "true");
   await page
     .getByRole("region", { name: "スライド一覧" })
     .getByRole("link", {
@@ -325,15 +324,19 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
     page.getByRole("radio", { name: "日本語 & English" }),
   ).toBeChecked();
   expect(context.pages()).toHaveLength(pagesBefore);
+  await expect(folder).toHaveAttribute("aria-expanded", "true");
+  await expect(secondFolder).toHaveAttribute("aria-expanded", "false");
   await page.getByRole("button", { name: "Reset", exact: true }).click();
   await expect(page.getByLabel("章")).toHaveValue("");
-  await page
-    .getByRole("button", { name: "Synthetic sidebar folder", exact: true })
-    .click();
   await page
     .getByRole("link", { name: "Synthetic favorite slide", exact: true })
     .click();
   await expect(page).toHaveURL(`/slides/${savedSlide.id}`);
+  await expect(folder).toHaveAttribute("aria-expanded", "true");
+  await expect(secondFolder).toHaveAttribute("aria-expanded", "false");
+  await page.reload();
+  await expect(folder).toHaveAttribute("aria-expanded", "true");
+  await expect(secondFolder).toHaveAttribute("aria-expanded", "false");
   await expect(
     page.getByRole("heading", { name: "Synthetic favorite slide" }),
   ).toBeVisible();

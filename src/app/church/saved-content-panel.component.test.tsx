@@ -187,6 +187,50 @@ describe("SavedContentPanel", () => {
     ).toMatchObject({ name: "2026-08-23 第二礼拝" });
   });
 
+  it("opens the most recently selected folder without changing display order", async () => {
+    const folders = [
+      {
+        ...folder(folderId, "最新の作成フォルダー", 0),
+        lastUsedAt: "2026-09-07T01:00:00.000Z",
+      },
+      {
+        ...folder(secondFolderId, "最後に選択したフォルダー", 1),
+        lastUsedAt: "2026-09-07T02:00:00.000Z",
+      },
+      {
+        ...folder(createdFolderId, "同時刻の後続フォルダー", 2),
+        lastUsedAt: "2026-09-07T02:00:00.000Z",
+      },
+    ];
+    const fetcher = vi.fn<typeof fetch>(async (input) => {
+      const url = new URL(String(input), "https://levi.example");
+      const selectedId = url.searchParams.get("folderId");
+      if (!selectedId)
+        return Response.json({
+          folders,
+          orderIds: folders.map(({ id }) => id),
+        });
+      return Response.json({
+        folder: folders.find(({ id }) => id === selectedId),
+        bookmarks: [],
+      });
+    });
+
+    renderPanel(fetcher);
+
+    const displayedFolders = await screen.findAllByRole("button", {
+      name: /フォルダー$/,
+    });
+    expect(displayedFolders.map(({ textContent }) => textContent)).toEqual([
+      "▸最新の作成フォルダー",
+      "▾最後に選択したフォルダー",
+      "▸同時刻の後続フォルダー",
+    ]);
+    expect(displayedFolders[0]).toHaveAttribute("aria-expanded", "false");
+    expect(displayedFolders[1]).toHaveAttribute("aria-expanded", "true");
+    expect(displayedFolders[2]).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("adds the current search and selects it without opening an audience", async () => {
     const onSelectSearch = vi.fn().mockResolvedValue(undefined);
     const fetcher = statefulFetcher();
