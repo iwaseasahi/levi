@@ -18,6 +18,7 @@ const initial = {
   id: "00000000-0000-4000-8000-000000000384",
   title: "Synthetic title",
   body: "First\n\n\n\nSecond",
+  verticalAlignment: "center" as const,
   revision: 2,
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
@@ -67,6 +68,12 @@ describe("slide editor", () => {
     expect(screen.getByRole("button", { name: "斜体" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "下線" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "中央揃え" })).toBeEnabled();
+    expect(
+      screen.getByRole("group", { name: "本文の縦位置" }),
+    ).toContainElement(screen.getByRole("button", { name: "本文を中央揃え" }));
+    expect(
+      screen.getByRole("button", { name: "本文を中央揃え" }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: "箇条書き" })).toBeEnabled();
     expect(editor.querySelector("p")).toHaveAttribute(
       "data-placeholder",
@@ -74,6 +81,34 @@ describe("slide editor", () => {
     );
     fireEvent.keyDown(sizeSelect, { key: "Escape" });
     await waitFor(() => expect(editor).toHaveFocus());
+  });
+  it("keeps editor focus and uses the selected vertical alignment in preview and save", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () =>
+      Response.json({ slide: { ...initial, verticalAlignment: "bottom" } }),
+    );
+    const user = userEvent.setup();
+    render(<SlideEditor initial={initial} fetcher={fetcher} />);
+    const editor = screen.getByLabelText("本文");
+    const top = screen.getByRole("button", { name: "本文を上揃え" });
+    expect(fireEvent.mouseDown(top)).toBe(false);
+    fireEvent.click(top);
+    expect(top).toHaveAttribute("aria-pressed", "true");
+    expect(editor.closest(".slide-rich-editor-content")).toHaveAttribute(
+      "data-vertical-alignment",
+      "top",
+    );
+    await user.click(screen.getByRole("button", { name: "保存前プレビュー" }));
+    expect(
+      screen
+        .getByRole("region", { name: "本文プレビュー" })
+        .querySelector(".slide-rich-content"),
+    ).toHaveAttribute("data-vertical-alignment", "top");
+    fireEvent.click(screen.getByRole("button", { name: "本文を下揃え" }));
+    expect(screen.getByText(/本文を変更しました/)).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "保存" }));
+    expect(JSON.parse(String(fetcher.mock.calls[0]![1]?.body))).toMatchObject({
+      input: { verticalAlignment: "bottom" },
+    });
   });
   it("does not show input guidance below the text fields", () => {
     render(<SlideEditor fetcher={vi.fn<typeof fetch>()} />);
@@ -166,6 +201,7 @@ describe("slide editor", () => {
           },
         ],
       },
+      verticalAlignment: "center",
     });
     expect(screen.queryByLabelText(/著者/)).not.toBeInTheDocument();
     resolve(Response.json({ slide: initial }, { status: 201 }));

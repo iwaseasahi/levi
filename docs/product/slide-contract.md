@@ -36,6 +36,7 @@ eligible church session can manage that church's slides.
 | `title`                  | Required, trim leading/trailing ASCII space/tab/newline after EOL normalization, 1–200 Unicode code points, single line (no CR/LF/tab).                                                    |
 | `body`                   | Derived plain-text API view and accepted compatibility input; normalize CRLF/CR to LF, preserve other whitespace; 1–100,000 Unicode code points and nonblank. It is not a database column. |
 | `contentType`            | Server-returned `text` or `image`; one Slide has exactly one surface. Existing rows are `text`.                                                                                            |
+| `verticalAlignment`      | Text Slide whole-body placement: `top`, `center`, or `bottom`; omitted legacy values normalize to `center`. Not accepted or returned for image Slides.                                     |
 | `image`                  | For image Slides only: media type, normalized byte size, width, and height; bytes are never embedded in Slide JSON.                                                                        |
 | `revision`               | Server-owned positive integer, starts at 1 and increments on update; optimistic concurrency token, not edit history.                                                                       |
 | `createdAt`, `updatedAt` | Server-owned UTC timestamps; creation time immutable.                                                                                                                                      |
@@ -53,7 +54,8 @@ Create/update errors retain the user's input. Invalid input is 400, missing or
 foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
-POST `/api/church/slides` accepts `{title, body}` or `{title, document}`. Both
+POST `/api/church/slides` accepts `{title, body, verticalAlignment?}` or
+`{title, document, verticalAlignment?}`. Both
 paths produce the application-owned Slide text document, which is the sole
 persisted text source and contains
 paragraphs, flat bullet lists,
@@ -61,7 +63,8 @@ left/center/right alignment, bold, italic, underline, and relative font sizes
 from 50–200% in 10% steps. The server
 accepts only this allowlist and derives response `body`; raw HTML and raw
 Tiptap JSON are not persistence contracts. GET/PUT/DELETE use
-`/api/church/slides/[id]`; PUT accepts `{input: {title, document},
+`/api/church/slides/[id]`; PUT accepts
+`{input: {title, document, verticalAlignment?},
 expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
 return `{slide}` without `churchId`; delete has no response body. Mutation Origin
 must exactly match the configured canonical origin. CRUD detail routes reject
@@ -72,6 +75,11 @@ editing panel. Font size uses a select control; inline marks, alignment, bullet
 list, undo, and redo use compact icon buttons with accessible names. The panel
 remains distinguishable from the black page background and shows an input
 placeholder when empty. Heading styles are not offered.
+The toolbar exposes a separate “本文の縦位置” group with pressed-state buttons
+named “本文を上揃え”, “本文を中央揃え”, and “本文を下揃え”, so paragraph
+alignment and whole-body placement are not conflated. Pointer activation keeps
+the editing selection/caret, while the existing Alt+F10 and Escape flow permits
+keyboard movement between the editor and toolbar.
 
 Issue #470 adds multipart create/update for image Slides. The form contains
 exactly `title` and `image`, plus `expectedRevision` for update. Accept one
@@ -107,6 +115,15 @@ rows have a versioned document; a missing or invalid document fails
 closed. The unreleased version 1 document format is not accepted. The Slide
 projection controller does not provide a separate font
 size adjustment; authored sizes are projected as saved, subject only to fit.
+
+Issue #498 positions the complete text body at the safe top, center, or bottom
+edge of the same 16:9 surface. The default is center, including persisted rows
+whose nullable setting predates the feature. Editor, unsaved preview, detail,
+and audience use one normalized value and matching safe insets. Fit still scales
+the complete document uniformly and therefore preserves relative sizes, line
+breaks, lists, and paragraph alignment. Image Slides have no vertical text
+control or setting. Blank hides the body only; unblank restores its saved
+position.
 
 Preview is an explicit local operation over unsaved body; it neither writes a
 Slide nor opens/changes the audience. Title errors do not prevent a valid

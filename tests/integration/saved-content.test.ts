@@ -139,14 +139,20 @@ describe("saved-content database contract", () => {
     const first = await slideRepository.create(scope, {
       title: "First slide",
       body: "First body",
+      verticalAlignment: "center",
     });
     const second = await slideRepository.create(scope, {
       title: "Second slide",
       body: "Second body",
+      verticalAlignment: "center",
     });
     const foreign = await slideRepository.create(
       tenant(fixture.secondChurch.id),
-      { title: "Foreign", body: "Foreign body" },
+      {
+        title: "Foreign",
+        body: "Foreign body",
+        verticalAlignment: "center",
+      },
     );
 
     await expect(

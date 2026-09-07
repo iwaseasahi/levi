@@ -2,6 +2,10 @@
 
 import { useMemo, useRef, type CSSProperties } from "react";
 import {
+  defaultSlideVerticalAlignment,
+  type SlideVerticalAlignment,
+} from "@/domain/slides/slide";
+import {
   slideTextDocument,
   slideTextSizeScale,
   type SlideRichTextNode,
@@ -53,10 +57,12 @@ function renderDocument(document: SlideTextDocument) {
 export function SlideText({
   text,
   document,
+  verticalAlignment = defaultSlideVerticalAlignment,
   blank = false,
 }: {
   text: string;
   document?: SlideTextDocument | undefined;
+  verticalAlignment?: SlideVerticalAlignment | undefined;
   blank?: boolean;
 }) {
   const richText = useMemo(
@@ -70,6 +76,7 @@ export function SlideText({
     <div className="slide-text-frame" ref={frame}>
       <div
         className="slide-rich-content audience-shadow"
+        data-vertical-alignment={verticalAlignment}
         ref={content}
         style={{ visibility: blank ? "hidden" : "visible" }}
       >

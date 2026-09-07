@@ -19,6 +19,7 @@ const slide = {
   revision: 1,
   title: "Private title",
   body: "<script>synthetic</script>\n日本語\n\n\n\nSecond",
+  verticalAlignment: "center" as const,
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
 };
@@ -36,6 +37,22 @@ function send(data: unknown, source: MessageEventSource) {
   );
 }
 describe("Slide audience and controller", () => {
+  it("defaults old text to center and exposes all supported body positions", () => {
+    const { container, rerender } = render(<SlideText text="Positioned" />);
+    expect(container.querySelector(".slide-rich-content")).toHaveAttribute(
+      "data-vertical-alignment",
+      "center",
+    );
+    for (const verticalAlignment of ["top", "bottom"] as const) {
+      rerender(
+        <SlideText text="Positioned" verticalAlignment={verticalAlignment} />,
+      );
+      expect(container.querySelector(".slide-rich-content")).toHaveAttribute(
+        "data-vertical-alignment",
+        verticalAlignment,
+      );
+    }
+  });
   it("uses the scripture projection typography and proportional base size", () => {
     vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1920);
     vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(

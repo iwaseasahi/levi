@@ -16,12 +16,29 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await page.getByRole("link", { name: "スライドを作成" }).click();
   const original = "礼拝 %_\\ ABC\n日本語の二行目\n\n\n\n二番目\n\n\n\n三番目";
   await fillSlideBody(page, original);
+  const editorSurface = page.locator(".slide-rich-editor-content");
+  for (const [name, value] of [
+    ["本文を上揃え", "top"],
+    ["本文を中央揃え", "center"],
+    ["本文を下揃え", "bottom"],
+  ] as const) {
+    await page.getByRole("button", { name }).click();
+    await expect(editorSurface).toHaveAttribute(
+      "data-vertical-alignment",
+      value,
+    );
+  }
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
     page
       .getByRole("region", { name: "本文プレビュー" })
       .locator(".slide-rich-content"),
   ).toHaveText(original);
+  await expect(
+    page
+      .getByRole("region", { name: "本文プレビュー" })
+      .locator(".slide-rich-content"),
+  ).toHaveAttribute("data-vertical-alignment", "bottom");
   expect(context.pages()).toHaveLength(1);
   expect(
     await prisma.slide.count({
@@ -34,6 +51,15 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await expect(
     page.getByRole("heading", { name: "Synthetic lifecycle" }),
   ).toBeVisible();
+  await expect(page.locator(".slide-rich-content")).toHaveAttribute(
+    "data-vertical-alignment",
+    "bottom",
+  );
+  await expect(
+    prisma.slide.findFirstOrThrow({
+      where: { churchId: scriptureAccount.churchId },
+    }),
+  ).resolves.toMatchObject({ verticalAlignment: "BOTTOM" });
   const detail = page.url();
   await page.goto("/slides");
   const results = page.getByRole("region", { name: "スライド一覧" });
@@ -46,6 +72,10 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await controller.getByRole("button", { name: "Open" }).click();
   const audience = await opened;
   await expect(audience.locator(".slide-rich-content")).toHaveText(original);
+  await expect(audience.locator(".slide-rich-content")).toHaveAttribute(
+    "data-vertical-alignment",
+    "bottom",
+  );
   await expect(controller.getByRole("status")).toHaveText("投影中");
   await expect(
     controller.getByRole("button", { name: "前のページへ投影" }),
@@ -68,6 +98,10 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
     .getByRole("button", { name: "空白と表示を切り替え" })
     .click();
   await expect(audience.locator(".slide-rich-content")).toHaveText(original);
+  await expect(audience.locator(".slide-rich-content")).toHaveAttribute(
+    "data-vertical-alignment",
+    "bottom",
+  );
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   expect(
     (await new AxeBuilder({ page: audience }).analyze()).violations,
@@ -80,6 +114,7 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await editor.goto(`${detail}/edit`);
   const draft = "未保存の日本語\n第二行\n\n\n\n更新後の二番目";
   await fillSlideBody(editor, draft);
+  await editor.getByRole("button", { name: "本文を上揃え" }).click();
   await editor.getByRole("textbox", { name: "本文" }).press("ArrowUp");
   await editor.getByRole("button", { name: "保存前プレビュー" }).click();
   await expect(
@@ -118,6 +153,10 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   ).toBeVisible();
   await controller.getByRole("button", { name: "Open" }).click();
   await expect(audience.locator(".slide-rich-content")).toHaveText(draft);
+  await expect(audience.locator(".slide-rich-content")).toHaveAttribute(
+    "data-vertical-alignment",
+    "top",
+  );
   await expect(controller.getByRole("status")).toHaveText("投影中");
   await editor.getByRole("link", { name: "編集", exact: true }).click();
   editor.once("dialog", (dialog) => dialog.dismiss());

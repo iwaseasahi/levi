@@ -79,6 +79,7 @@ describe("Slide HTTP boundary and scoped service", () => {
       ...input,
       body: "Synthetic\nbody",
       document: slideTextDocumentFromPlainText("Synthetic\nbody"),
+      verticalAlignment: "center",
     });
     await expect(created.json()).resolves.toEqual({ slide: record });
     expect((await handlers.read(new Request(url), id)).status).toBe(200);
@@ -91,6 +92,7 @@ describe("Slide HTTP boundary and scoped service", () => {
     expect(repository.update).toHaveBeenCalledWith(scope, id, 1, {
       ...input,
       document: slideTextDocumentFromPlainText(input.body),
+      verticalAlignment: "center",
     });
     const deleted = await handlers.delete(
       request("DELETE", { expectedRevision: 2 }),
@@ -151,6 +153,7 @@ describe("Slide HTTP boundary and scoped service", () => {
     [{ ...input, author: "legacy attribution" }, {}],
     [{ ...input, body: "\ud800" }, {}],
     [{ ...input, body: "bad\0text" }, {}],
+    [{ ...input, verticalAlignment: "baseline" }, {}],
   ] as const)(
     "rejects unsupported, oversized or malformed input (case %#)",
     async (body, headers) => {
@@ -260,6 +263,7 @@ describe("Slide HTTP boundary and scoped service", () => {
       ...input,
       body: "😀日本語",
       document: slideTextDocumentFromPlainText("😀日本語"),
+      verticalAlignment: "center",
     });
   });
 

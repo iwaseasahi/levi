@@ -90,6 +90,9 @@ describe("image Slide UI", () => {
       Response.json({ slide: { ...slide, title: "Renamed", revision: 2 } }),
     );
     render(<SlideEditor initial={slide} fetcher={fetcher} />);
+    expect(
+      screen.queryByRole("group", { name: "本文の縦位置" }),
+    ).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("タイトル"), {
       target: { value: "Renamed" },
     });

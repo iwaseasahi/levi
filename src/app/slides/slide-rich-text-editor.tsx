@@ -10,6 +10,7 @@ import { TextSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { SlideVerticalAlignment } from "@/domain/slides/slide";
 import type { SlideTextDocument } from "@/domain/slides/text-document";
 import { SlideRichTextToolbar } from "./slide-rich-text-toolbar";
 import {
@@ -52,11 +53,15 @@ function plainTextSlice(view: EditorView, value: string): Slice {
 export function SlideRichTextEditor({
   initial,
   disabled,
+  verticalAlignment,
   onChange,
+  onVerticalAlignmentChange,
 }: {
   initial?: SlideTextDocument | undefined;
   disabled: boolean;
+  verticalAlignment: SlideVerticalAlignment;
   onChange(document: SlideTextDocument | null): void;
+  onVerticalAlignmentChange(value: SlideVerticalAlignment): void;
 }) {
   const frame = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
@@ -151,13 +156,16 @@ export function SlideRichTextEditor({
           editor={editor}
           disabled={disabled}
           selectionSize={selectionSize}
+          verticalAlignment={verticalAlignment}
+          onVerticalAlignmentChange={onVerticalAlignmentChange}
           toolbarRef={toolbar}
         />
         <div className="slide-text-frame slide-rich-editor-frame" ref={frame}>
-          <span className="slide-editor-surface-label" aria-hidden="true">
-            16:9 編集エリア
-          </span>
-          <div className="slide-rich-editor-content" ref={content}>
+          <div
+            className="slide-rich-editor-content"
+            data-vertical-alignment={verticalAlignment}
+            ref={content}
+          >
             <EditorContent editor={editor} />
           </div>
         </div>

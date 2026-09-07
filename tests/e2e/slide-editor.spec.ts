@@ -78,8 +78,8 @@ test("church member previews unsaved literal text, creates, edits and confirms d
     selection?.addRange(range);
     document.dispatchEvent(new Event("selectionchange"));
   });
-  await page.getByLabel("文字サイズ").selectOption("150");
-  await expect(bodyEditor.locator('span[style="font-size: 150%;"]')).toHaveText(
+  await page.getByLabel("文字サイズ").selectOption("200");
+  await expect(bodyEditor.locator('span[style="font-size: 200%;"]')).toHaveText(
     "日本語",
   );
   await page.getByRole("button", { name: "保存前プレビュー" }).click();
@@ -87,7 +87,7 @@ test("church member previews unsaved literal text, creates, edits and confirms d
   await expect(
     page
       .getByRole("region", { name: "本文プレビュー" })
-      .locator('span[style="font-size: 1.5em;"]'),
+      .locator('span[style="font-size: 2em;"]'),
   ).toHaveText("日本語");
   await expect(page.getByRole("button", { name: "前のページ" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "次のページ" })).toHaveCount(0);

@@ -63,10 +63,36 @@ describe("scoped Slide persistence", () => {
     expect(created).toMatchObject({
       body: "Welcome\nFirst",
       document,
+      verticalAlignment: "center",
     });
     expect(
       await prisma.slide.findUniqueOrThrow({ where: { id: created.id } }),
-    ).toMatchObject({ textDocument: document });
+    ).toMatchObject({ textDocument: document, verticalAlignment: "CENTER" });
+  });
+
+  it("persists all whole-body alignments and normalizes an unset legacy value", async () => {
+    const owner = await scope();
+    const created = await service.create(owner, {
+      ...input,
+      verticalAlignment: "top",
+    });
+    expect(created).toMatchObject({ verticalAlignment: "top" });
+    await expect(
+      prisma.slide.findUniqueOrThrow({ where: { id: created.id } }),
+    ).resolves.toMatchObject({ verticalAlignment: "TOP" });
+
+    const updated = await service.update(owner, created.id, {
+      expectedRevision: created.revision,
+      input: { ...input, verticalAlignment: "bottom" },
+    });
+    expect(updated).toMatchObject({ verticalAlignment: "bottom" });
+    await prisma.slide.update({
+      where: { id: created.id },
+      data: { verticalAlignment: null },
+    });
+    await expect(service.get(owner, created.id)).resolves.toMatchObject({
+      verticalAlignment: "center",
+    });
   });
 
   it("persists selected-range sizes and derives plain text without a body column", async () => {
@@ -226,11 +252,13 @@ describe("scoped Slide persistence", () => {
       slideRepository.update(owner, row.id, 1, {
         ...input,
         body: "invalid\rbody",
+        verticalAlignment: "center",
       }),
     ).rejects.toThrow();
     await expect(
       slideRepository.update(owner, row.id, 1, {
         ...input,
+        verticalAlignment: "center",
         document: {
           version: 2,
           blocks: [
