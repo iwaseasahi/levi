@@ -26,6 +26,9 @@ const waitForProductionAuthorization = script(
 );
 const healthScript = script("check-production-health.sh");
 const healthMonitor = script("run-production-health-monitor.sh");
+const lifecycleRecorder = script("record-production-container-lifecycle.sh");
+const lifecycleSummary = script("summarize-production-container-lifecycle.sh");
+const lifecycleRehearsal = script("rehearse-production-container-lifecycle.sh");
 const secretCheck = script("check-production-secrets.sh");
 const bibleImport = script("production-bible-import.sh");
 const ghcrCleanup = script("cleanup-ghcr-packages.sh");
@@ -52,6 +55,9 @@ const syntax = spawnSync(
     waitForProductionAuthorization,
     healthScript,
     healthMonitor,
+    lifecycleRecorder,
+    lifecycleSummary,
+    lifecycleRehearsal,
     secretCheck,
     bibleImport,
     ghcrCleanup,

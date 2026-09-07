@@ -1,5 +1,5 @@
 [Unit]
-Description=Check Levi readiness, database, host capacity, backups, and 5xx rate
+Description=Check Levi readiness, database, capacity, backups, 5xx, and container lifecycle
 Requires=docker.service
 After=docker.service
 

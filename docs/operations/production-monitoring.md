@@ -42,6 +42,79 @@ querying church content. The hard alerts remain the 80% per-church quota,
 root-disk, and backup-filesystem thresholds; abnormal growth below those limits
 requires an operations Issue and quota/S3 review under ADR 0016.
 
+## Container lifecycle evidence
+
+Every `levi-health.service` run records one privacy-safe lifecycle sample for
+each fixed production service: `proxy`, `app`, and `postgres`. Collection still
+runs when another health signal fails. Failure to identify or inspect exactly
+one container, malformed prior state, or a restart counter moving backwards
+fails the health service and follows the existing one-incident/one-recovery
+Slack route.
+
+Each journal sample contains only the service name, service-local generation,
+container start time, restart count, event (`initialized`, `steady`, `restart`,
+or `replacement`), coverage-start epoch, and observation epoch. A private
+creation time is retained in the root-owned comparison state to distinguish a
+replacement from an in-place restart. State is mode `600` below the mode `700`
+`/var/lib/levi-monitoring` directory. Neither state nor journal output contains
+a container ID, image name or digest, environment value, IP address,
+credential, request, or application content.
+
+Summarize a retained interval with UTC Unix seconds. For example, on the VPS:
+
+```bash
+start_epoch="$(date --date '2026-09-06 00:00:00 JST' +%s)"
+end_epoch="$(date --date '2026-09-07 00:00:00 JST' +%s)"
+sudo /opt/levi/scripts/summarize-production-container-lifecycle.sh \
+  "$start_epoch" "$end_epoch"
+```
+
+The command emits aggregate per-service sample, replacement, and restart
+counts plus the first and last generation and restart count. It returns `0`
+only when all services have evidence within three minutes of both boundaries,
+no interior sample gap exceeds three minutes, and persisted coverage began no
+later than the requested start. Exit `1` means coverage is insufficient and
+names one of `no_samples`, `coverage_started_after_period`,
+`missing_start_boundary`, `missing_end_boundary`, or `sample_gap`. Exit `2`
+means the arguments or a lifecycle record are invalid. Invalid input is never
+echoed back.
+
+The existing journal limit is the evidence limit: at most 14 days and 200 MB.
+An interval before the first lifecycle sample or outside retained history must
+be reported as insufficient, never as zero restarts. The current Docker state
+also cannot substitute for incomplete history. Counts represent transitions
+observed by the one-minute sampler; more than one lifecycle change between two
+samples cannot be reconstructed and must remain an explicit coverage limit in
+any incident conclusion.
+
+Lifecycle transitions are evidence, not automatic outage claims, because an
+approved deploy intentionally replaces containers:
+
+- correlate every `replacement` with an approved deployment, approved recovery,
+  or documented host maintenance at the same time; otherwise open an incident
+  Issue and investigate immediately;
+- correlate every `restart` with a documented host reboot or approved recovery;
+  otherwise treat it as an unexpected lifecycle event and open an incident
+  Issue, even when readiness and 5xx checks stayed healthy;
+- investigate every insufficient interval by checking the timer/service result,
+  state initialization time, host availability, and journal retention. Do not
+  assert uninterrupted service for that interval;
+- record only aggregate output and approved event references in Issues. Do not
+  attach raw journal, Docker inspection output, state files, or secrets.
+
+Use `pnpm monitoring:lifecycle:rehearse` to start an isolated three-service
+Compose project, record initialized and steady samples, restart the application
+container in place, replace it, verify the aggregate summary, and remove all
+rehearsal containers and state. It does not inspect or mutate production.
+
+Installing these scripts or restarting/enabling the production health unit is
+a production change and requires immediate operator approval under the
+governance policy. Repository merge alone does not activate collection. If an
+approved rollout must be rolled back, restore the previously reviewed health
+unit/script version and verify the timer result; the unused root-only lifecycle
+state may remain in place for later investigation. Deleting that evidence or
+changing journal retention requires separate approval.
+
 ## Slack alert setup
 
 Use a dedicated private Slack channel for Levi production operations. Create a
