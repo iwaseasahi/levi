@@ -155,7 +155,10 @@ A folder and its bookmarks belong to one church. The initial release supports:
 - toggle Ginmaku's date plus meeting-name creation form from the
   `新規フォルダ作成` action and open the newly created folder;
 - pin or unpin a frequently used folder;
-- show pinned folders first and then recently used folders, up to 20 total;
+- show pinned folders first and preserve explicit position within pinned and
+  unpinned groups, up to 20 total; opening a folder does not move it;
+- reopen the most recently selected displayed folder as the current folder,
+  falling back to the first displayed folder when none was selected;
 - update `last used` when a folder or one of its bookmarks is selected;
 - reorder folders deterministically at the data boundary and reorder bookmarks
   within their folder by drag-and-drop, with Alt+ArrowUp/Alt+ArrowDown as the

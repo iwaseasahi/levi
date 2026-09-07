@@ -117,8 +117,11 @@ of this decision.
   and commit. The owner lock serializes concurrent reorders and create/delete
   compaction without relying on last-write-wins behavior.
 - Pinned folders display first by position. Remaining folders display by
-  `last_used_at DESC NULLS LAST`, then position and UUID, capped at 20 total.
-  `last_used_at` changes only on explicit folder selection or bookmark selection.
+  position and UUID, capped at 20 total, so opening a folder never moves it in
+  the menu. Among the displayed folders, the non-null latest `last_used_at`
+  identifies the current folder that opens when the sidebar mounts; equal or
+  absent timestamps retain displayed order. `last_used_at` changes only on
+  explicit folder selection or bookmark selection.
 
 ### Physical features beyond Prisma schema
 

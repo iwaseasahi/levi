@@ -451,19 +451,19 @@ Suspension is not deletion and revokes sessions without deleting content.
 
 ## Representative queries and index rationale
 
-| Use case                    | Required predicate/order                                                               | Supporting index                                                           |
-| --------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Login identity              | `users.email = normalized_email`                                                       | `users_email_uk`                                                           |
-| Validate session            | `sessions.token = token AND expires_at > now()`                                        | `sessions_token_uk`                                                        |
-| Revoke/list User sessions   | `user_id = ?`                                                                          | `sessions_user_expires_idx`                                                |
-| Cleanup sessions            | `expires_at <= cutoff ORDER BY expires_at LIMIT ?`                                     | `sessions_expires_idx`                                                     |
-| Resolve tenant actor        | membership by `user_id`, then Church                                                   | `church_memberships_user_uk`                                               |
-| Search verse range          | translation/book/chapter and verse `BETWEEN`, ordered by verse                         | `bible_verses_location_uk`                                                 |
-| Bilingual location display  | book/chapter/verse and translation `IN (...)`                                          | `bible_verses_navigation_idx`                                              |
-| Next/previous location      | canonical book order plus chapter/verse tuple comparison; fetch requested translations | book canonical UK + navigation index                                       |
-| Folder menu                 | tenant; pinned by position then unpinned by recent use; limit 20                       | pinned and recent Folder indexes                                           |
-| Folder bookmarks            | `church_id = ? AND folder_id = ? ORDER BY position, id`                                | `bookmarks_church_folder_position_idx`                                     |
-| Tenant-safe bookmark lookup | `church_id = ? AND id = ?`, joining Folder and ScriptureBookmark                       | Bookmark PK plus tenant predicate; add `(church_id,id)` if plans show need |
+| Use case                    | Required predicate/order                                                                       | Supporting index                                                           |
+| --------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Login identity              | `users.email = normalized_email`                                                               | `users_email_uk`                                                           |
+| Validate session            | `sessions.token = token AND expires_at > now()`                                                | `sessions_token_uk`                                                        |
+| Revoke/list User sessions   | `user_id = ?`                                                                                  | `sessions_user_expires_idx`                                                |
+| Cleanup sessions            | `expires_at <= cutoff ORDER BY expires_at LIMIT ?`                                             | `sessions_expires_idx`                                                     |
+| Resolve tenant actor        | membership by `user_id`, then Church                                                           | `church_memberships_user_uk`                                               |
+| Search verse range          | translation/book/chapter and verse `BETWEEN`, ordered by verse                                 | `bible_verses_location_uk`                                                 |
+| Bilingual location display  | book/chapter/verse and translation `IN (...)`                                                  | `bible_verses_navigation_idx`                                              |
+| Next/previous location      | canonical book order plus chapter/verse tuple comparison; fetch requested translations         | book canonical UK + navigation index                                       |
+| Folder menu                 | tenant; pinned then unpinned by position; limit 20; latest displayed `last_used_at` is current | pinned and recent Folder indexes                                           |
+| Folder bookmarks            | `church_id = ? AND folder_id = ? ORDER BY position, id`                                        | `bookmarks_church_folder_position_idx`                                     |
+| Tenant-safe bookmark lookup | `church_id = ? AND id = ?`, joining Folder and ScriptureBookmark                               | Bookmark PK plus tenant predicate; add `(church_id,id)` if plans show need |
 
 Do not add speculative indexes before a representative `EXPLAIN` shows benefit.
 Issue #49 captures synthetic query plans and may add `(church_id, id)` when the

@@ -14,6 +14,16 @@ export type SelectedFolder = {
   bookmarks: SavedBookmarkView[];
 };
 
+function currentFolder(folders: FolderSummary[]) {
+  return folders.reduce<FolderSummary | undefined>((current, folder) => {
+    if (!current) return folder;
+    if (!folder.lastUsedAt) return current;
+    if (!current.lastUsedAt || folder.lastUsedAt > current.lastUsedAt)
+      return folder;
+    return current;
+  }, undefined);
+}
+
 export function useSavedContentController({
   currentSearch,
   currentSearchTitle,
@@ -120,7 +130,8 @@ export function useSavedContentController({
     void Promise.resolve().then(() =>
       run(async () => {
         const initialFolders = await fetchFolders();
-        if (initialFolders[0]) await loadFolder(initialFolders[0].id);
+        const initialFolder = currentFolder(initialFolders);
+        if (initialFolder) await loadFolder(initialFolder.id);
       }),
     );
   }, [fetchFolders, loadFolder, run]);

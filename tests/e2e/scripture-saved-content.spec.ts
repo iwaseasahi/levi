@@ -240,8 +240,6 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
     name: "礼拝用",
     exact: true,
   });
-  await expect(renamedFolder).toHaveAttribute("aria-expanded", "false");
-  await renamedFolder.click();
   await expect(renamedFolder).toHaveAttribute("aria-expanded", "true");
 
   const pageCountBeforeBookmark = context.pages().length;
