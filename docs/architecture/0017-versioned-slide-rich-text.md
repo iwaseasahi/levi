@@ -44,6 +44,14 @@ styled text spans; neither stored HTML nor raw Tiptap JSON reaches
 calculation. Slide projection has no transient font multiplier; authored run
 sizes are its only text-size control.
 
+Whole-body vertical alignment is a Slide setting outside the rich-text
+document. `slides.vertical_alignment` is a nullable enum containing only
+`TOP`, `CENTER`, or `BOTTOM`; a missing value is read as `CENTER` for existing
+Slides, and image Slides keep it null. The API exposes the normalized
+`top | center | bottom` value for text Slides. This separation avoids changing
+the document version for a surface-level placement choice and prevents Tiptap
+commands, JSON, HTML, coordinates, or CSS values from becoming its contract.
+
 The original migration was expand-first. The contract migration fails closed
 unless every text Slide already has an eligible document, validates the
 replacement text/image constraint, then removes the rollback trigger and
@@ -61,16 +69,20 @@ reads `text_document`; a body-only writer is no longer compatible.
 - Future blocks or marks require a new document version and an ADR/schema
   compatibility review; arbitrary HTML, links, media, colors, fonts, and
   arbitrary CSS sizes remain out of scope.
+- Whole-body vertical alignment can evolve as a Slide contract without changing
+  authored rich-text blocks or marks; existing nulls remain centered.
 
 ## Verification
 
 Domain tests cover normalization and rejection, adapter tests cover exact-range
 formatting and malicious Tiptap trees, component tests cover editor/preview and
 projection, and integration tests cover document-only persistence, migration
-preconditions, and the text/image constraint.
+preconditions, the text/image constraint, and the strict Slide-level vertical
+alignment enum/default.
 
 ## References
 
 - [Issue #479](https://github.com/iwaseasahi/levi/issues/479)
+- [Issue #498](https://github.com/iwaseasahi/levi/issues/498)
 - [Slide contract](../product/slide-contract.md)
 - [Dependency policy](../security/dependency-policy.md)

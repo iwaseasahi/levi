@@ -7,6 +7,7 @@ const slide: SlideRecord = {
   revision: 1,
   title: "Synthetic",
   body: "First\n\n\n\nSecond\n\n\n\nThird",
+  verticalAlignment: "center",
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
 };
@@ -32,6 +33,7 @@ describe("saved Slide audience lifetime", () => {
       expect.objectContaining({
         status: "ready",
         text: "First\n\n\n\nSecond\n\n\n\nThird",
+        verticalAlignment: "center",
         revision: 1,
       }),
     );
@@ -41,6 +43,15 @@ describe("saved Slide audience lifetime", () => {
     await expect(session.verify()).resolves.toBe(false);
     await session.start();
     expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it("publishes the saved whole-body alignment", async () => {
+    const { session, publish, load } = setup();
+    load.mockResolvedValue({ ...slide, verticalAlignment: "bottom" });
+    await session.start();
+    expect(publish).toHaveBeenLastCalledWith(
+      expect.objectContaining({ verticalAlignment: "bottom" }),
+    );
   });
 
   it("clears on revision change and refuses subsequent checks", async () => {

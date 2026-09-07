@@ -2,11 +2,16 @@
 
 import { SlideText } from "./slide-text";
 import { SlideImage } from "./slide-image";
+import type { SlideVerticalAlignment } from "@/domain/slides/slide";
 import type { SlideTextDocument } from "@/domain/slides/text-document";
 
 export function SlidePreview(
   props:
-    | { text: string; document?: SlideTextDocument | undefined }
+    | {
+        text: string;
+        document?: SlideTextDocument | undefined;
+        verticalAlignment?: SlideVerticalAlignment | undefined;
+      }
     | { imageSrc: string; title: string },
 ) {
   return (
@@ -17,7 +22,11 @@ export function SlidePreview(
       {"imageSrc" in props ? (
         <SlideImage src={props.imageSrc} title={props.title} />
       ) : (
-        <SlideText text={props.text} document={props.document} />
+        <SlideText
+          text={props.text}
+          document={props.document}
+          verticalAlignment={props.verticalAlignment}
+        />
       )}
     </section>
   );

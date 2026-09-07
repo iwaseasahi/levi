@@ -114,6 +114,7 @@ describe("Slide database contract", () => {
       "updated_at",
       "content_type",
       "text_document",
+      "vertical_alignment",
     ]);
     const constraints = await prisma.$queryRaw<
       Array<{ conname: string; confdeltype: string }>
@@ -126,6 +127,7 @@ describe("Slide database contract", () => {
         "slides_revision_positive",
         "slides_church_id_fkey",
         "slides_text_document_valid",
+        "slides_vertical_alignment_valid",
       ]),
     );
     expect(constraints.map((row) => row.conname)).not.toContain(
@@ -150,6 +152,57 @@ describe("Slide database contract", () => {
       indexes.find((row) => row.indexname === "slides_church_updated_id_idx")
         ?.indexdef,
     ).toContain("(church_id, updated_at DESC, id DESC)");
+  });
+
+  it("allows only the three text alignments and rejects the setting on images", async () => {
+    const owner = await church();
+    for (const verticalAlignment of ["TOP", "CENTER", "BOTTOM"] as const) {
+      await expect(
+        prisma.slide.create({
+          data: {
+            ...fields,
+            churchId: owner.id,
+            title: `Aligned ${verticalAlignment}`,
+            verticalAlignment,
+          },
+        }),
+      ).resolves.toMatchObject({ verticalAlignment });
+    }
+    await expect(
+      prisma.$executeRaw`
+        INSERT INTO slides(church_id,title,text_document,vertical_alignment)
+        VALUES (
+          ${owner.id}::uuid,
+          'Invalid alignment',
+          ${JSON.stringify(storedSlideText("body").textDocument)}::jsonb,
+          'BASELINE'
+        )`,
+    ).rejects.toThrow();
+
+    await expect(
+      prisma.$transaction(async (transaction) => {
+        const image = await transaction.slide.create({
+          data: {
+            churchId: owner.id,
+            title: "Invalid image alignment",
+            contentType: "IMAGE",
+            verticalAlignment: "TOP",
+          },
+        });
+        await transaction.slideImage.create({
+          data: {
+            slideId: image.id,
+            churchId: owner.id,
+            mediaType: "image/png",
+            byteSize: 1,
+            width: 1,
+            height: 1,
+            checksum: "0".repeat(64),
+            data: new Uint8Array([0]),
+          },
+        });
+      }),
+    ).rejects.toThrow();
   });
 
   it("installs bounded one-to-one image binary storage", async () => {

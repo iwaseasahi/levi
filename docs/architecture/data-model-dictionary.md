@@ -392,15 +392,16 @@ default. A database CHECK requires a text Slide to have a versioned
 `text_document` and an image Slide to have a null document. Application writes
 create exactly one `slide_images` child for every image Slide.
 
-| `slides` column | Type           | Null | Contract                                                                           |
-| --------------- | -------------- | ---- | ---------------------------------------------------------------------------------- |
-| `id`            | `uuid`         | no   | PK; server generated                                                               |
-| `church_id`     | `uuid`         | no   | Church FK with physical cascade                                                    |
-| `title`         | `varchar(200)` | no   | normalized nonblank single-line title                                              |
-| `text_document` | `jsonb`        | yes  | required validated document for `TEXT`; null for `IMAGE`; sizes are 50–200% by 10% |
-| `content_type`  | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`                                                  |
-| `revision`      | `integer`      | no   | positive optimistic concurrency token                                              |
-| timestamps      | `timestamptz`  | no   | creation/update                                                                    |
+| `slides` column      | Type           | Null | Contract                                                                                            |
+| -------------------- | -------------- | ---- | --------------------------------------------------------------------------------------------------- |
+| `id`                 | `uuid`         | no   | PK; server generated                                                                                |
+| `church_id`          | `uuid`         | no   | Church FK with physical cascade                                                                     |
+| `title`              | `varchar(200)` | no   | normalized nonblank single-line title                                                               |
+| `text_document`      | `jsonb`        | yes  | required validated document for `TEXT`; null for `IMAGE`; sizes are 50–200% by 10%                  |
+| `content_type`       | enum           | no   | `TEXT` or `IMAGE`, default `TEXT`                                                                   |
+| `vertical_alignment` | enum           | yes  | text-only `TOP`, `CENTER`, or `BOTTOM`; legacy null reads as `CENTER`; always null for image Slides |
+| `revision`           | `integer`      | no   | positive optimistic concurrency token                                                               |
+| timestamps           | `timestamptz`  | no   | creation/update                                                                                     |
 
 | `slide_images` column | Type          | Null | Contract                                   |
 | --------------------- | ------------- | ---- | ------------------------------------------ |
@@ -425,6 +426,11 @@ ADR 0017. Application reads strictly validate it and derive the plain-text API
 view by flattening it. The migrated `body` column and its old-writer rollback
 trigger were removed after migration completion; image Slides always have a
 null document.
+`vertical_alignment` is an application-owned Slide setting rather than part of
+`text_document`. The PostgreSQL enum rejects arbitrary values; the named CHECK
+rejects the setting on image Slides. New text writes store a value, while the
+nullable compatibility boundary preserves existing rows and maps null to
+`CENTER` on read.
 
 ## Ownership and deletion matrix
 

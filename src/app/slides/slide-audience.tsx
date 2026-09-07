@@ -49,6 +49,7 @@ export function SlideAudience({
           <SlideText
             text={state.text}
             document={state.document}
+            verticalAlignment={state.verticalAlignment}
             blank={blank}
           />
         )

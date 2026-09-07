@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { SlideImageMetadata } from "./image";
 import { parseSlideInput, parseSlideTitle, SlideInputError } from "./slide";
+import type { SlideVerticalAlignment } from "./slide";
 import type { SlideTextDocument } from "./text-document";
 
 type SlideRecordBase = {
@@ -14,6 +15,7 @@ type SlideRecordBase = {
 export type TextSlideRecord = SlideRecordBase & {
   body: string;
   document?: SlideTextDocument;
+  verticalAlignment: SlideVerticalAlignment;
   contentType?: "text";
   image?: never;
 };

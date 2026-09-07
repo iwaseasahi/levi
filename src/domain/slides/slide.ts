@@ -9,6 +9,10 @@ import { slideBodyLimit, SlideInputError, slideTextLimit } from "./boundary";
 
 export { slideBodyLimit, SlideInputError, slideTextLimit } from "./boundary";
 
+export const slideVerticalAlignments = ["top", "center", "bottom"] as const;
+export type SlideVerticalAlignment = (typeof slideVerticalAlignments)[number];
+export const defaultSlideVerticalAlignment: SlideVerticalAlignment = "center";
+
 export function normalizeSlideEol(value: string) {
   return value.replace(/\r\n?/g, "\n");
 }
@@ -29,10 +33,14 @@ const singleLine = normalizedText
 const bodySchema = normalizedText.refine(
   (value) => trimAscii(value).length > 0 && [...value].length <= slideBodyLimit,
 );
+const verticalAlignmentSchema = z
+  .enum(slideVerticalAlignments)
+  .default(defaultSlideVerticalAlignment);
 const plainInputSchema = z
   .object({
     title: singleLine.refine((value) => value.length > 0),
     body: bodySchema,
+    verticalAlignment: verticalAlignmentSchema,
   })
   .strict();
 
@@ -40,6 +48,7 @@ const documentInputSchema = z
   .object({
     title: singleLine.refine((value) => value.length > 0),
     document: z.unknown(),
+    verticalAlignment: verticalAlignmentSchema,
   })
   .strict();
 
@@ -47,6 +56,7 @@ export type SlideInput = {
   title: string;
   body: string;
   document?: SlideTextDocument;
+  verticalAlignment: SlideVerticalAlignment;
 };
 
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
@@ -70,6 +80,7 @@ export function parseSlideInput(value: unknown): SlideInput {
     title: rich.data.title,
     body: parseSlideBody(flattenSlideTextDocument(document)),
     document,
+    verticalAlignment: rich.data.verticalAlignment,
   };
 }
 
@@ -78,6 +89,12 @@ export function parseSlideTitle(value: unknown): string {
     singleLine.refine((title) => title.length > 0),
     value,
   );
+}
+
+export function parseSlideVerticalAlignment(
+  value: unknown,
+): SlideVerticalAlignment {
+  return parse(z.enum(slideVerticalAlignments), value);
 }
 
 // Preview validates only body; a missing title must not prevent preview.

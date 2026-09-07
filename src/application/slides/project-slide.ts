@@ -50,6 +50,7 @@ export function createSlideAudienceSession({
               status: "ready",
               text: parseSlideBody(slide.body),
               document: slideTextDocument(slide.document, slide.body),
+              verticalAlignment: slide.verticalAlignment,
               revision: slide.revision,
             };
       publish(state);

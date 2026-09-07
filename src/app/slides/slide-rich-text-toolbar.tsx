@@ -7,6 +7,7 @@ import {
   type SlideTextAlignment,
   type SlideTextPercentage,
 } from "@/domain/slides/text-document";
+import type { SlideVerticalAlignment } from "@/domain/slides/slide";
 import {
   slideTextPercentageToCss,
   type SlideSelectionSize,
@@ -49,15 +50,27 @@ const alignmentControls = [
   readonly [SlideTextAlignment, string, string]
 >;
 
+const verticalAlignmentControls = [
+  ["top", "本文を上揃え", "↥"],
+  ["center", "本文を中央揃え", "↕"],
+  ["bottom", "本文を下揃え", "↧"],
+] as const satisfies ReadonlyArray<
+  readonly [SlideVerticalAlignment, string, string]
+>;
+
 export function SlideRichTextToolbar({
   editor,
   disabled,
   selectionSize,
+  verticalAlignment,
+  onVerticalAlignmentChange,
   toolbarRef,
 }: {
   editor: Editor | null;
   disabled: boolean;
   selectionSize: SlideSelectionSize;
+  verticalAlignment: SlideVerticalAlignment;
+  onVerticalAlignmentChange(value: SlideVerticalAlignment): void;
   toolbarRef: RefObject<HTMLDivElement | null>;
 }) {
   const unavailable = disabled || !editor;
@@ -138,6 +151,23 @@ export function SlideRichTextToolbar({
             active={editor?.isActive({ textAlign: alignment })}
             disabled={unavailable}
             onClick={() => setAlignment(alignment)}
+          >
+            <span aria-hidden="true">{icon}</span>
+          </ToolbarButton>
+        ))}
+      </span>
+      <span
+        className="slide-toolbar-group"
+        role="group"
+        aria-label="本文の縦位置"
+      >
+        {verticalAlignmentControls.map(([alignment, label, icon]) => (
+          <ToolbarButton
+            key={alignment}
+            label={label}
+            active={verticalAlignment === alignment}
+            disabled={unavailable}
+            onClick={() => onVerticalAlignmentChange(alignment)}
           >
             <span aria-hidden="true">{icon}</span>
           </ToolbarButton>

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SlideInputError } from "./slide";
+import type { SlideVerticalAlignment } from "./slide";
 import type { SlideTextDocument } from "./text-document";
 
 const querySchema = z
@@ -37,6 +38,7 @@ export type SlideAudienceState =
       contentType?: "text";
       text: string;
       document?: SlideTextDocument;
+      verticalAlignment: SlideVerticalAlignment;
       revision: number;
     }
   | {

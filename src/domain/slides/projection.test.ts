@@ -26,6 +26,7 @@ describe("slide projection coordinates", () => {
     const state = slideProjectionState(id, {
       status: "ready",
       text: "secret synthetic",
+      verticalAlignment: "center",
       revision: 2,
     });
     expect(parseSlideProjectionState(state)).toEqual({

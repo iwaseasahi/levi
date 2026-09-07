@@ -3,6 +3,7 @@ import {
   normalizeSlideEol,
   parseSlideBody,
   parseSlideInput,
+  parseSlideVerticalAlignment,
   SlideInputError,
 } from "./slide";
 
@@ -16,6 +17,7 @@ describe("Slide input", () => {
         body: " \r\n本文\r次\n ",
       }),
     ).toMatchObject({ title: "題名", body: " \n本文\n次\n " });
+    expect(parseSlideInput(input).verticalAlignment).toBe("center");
     expect(normalizeSlideEol("A\r\nB\rC\nD")).toBe("A\nB\nC\nD");
     expect(
       parseSlideInput({ ...input, title: "\u3000題\u3000", body: "\u00a0" }),
@@ -113,8 +115,33 @@ describe("Slide input", () => {
           },
         ],
       },
+      verticalAlignment: "center",
     });
   });
+
+  it.each(["top", "center", "bottom"] as const)(
+    "accepts and preserves the %s whole-body alignment",
+    (verticalAlignment) => {
+      expect(
+        parseSlideInput({ ...input, verticalAlignment }).verticalAlignment,
+      ).toBe(verticalAlignment);
+      expect(parseSlideVerticalAlignment(verticalAlignment)).toBe(
+        verticalAlignment,
+      );
+    },
+  );
+
+  it.each(["start", "end", "TOP", "4px", null, 1])(
+    "rejects unsupported whole-body alignment %#",
+    (verticalAlignment) => {
+      expect(() => parseSlideInput({ ...input, verticalAlignment })).toThrow(
+        SlideInputError,
+      );
+      expect(() => parseSlideVerticalAlignment(verticalAlignment)).toThrow(
+        SlideInputError,
+      );
+    },
+  );
 });
 
 describe("Slide body — single-page replacement contract", () => {

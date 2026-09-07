@@ -82,6 +82,7 @@ export function SlideDocument({
         <SlidePreview
           text={parseSlideBody(slide.body)}
           document={slide.document}
+          verticalAlignment={slide.verticalAlignment}
         />
       )}
     </>

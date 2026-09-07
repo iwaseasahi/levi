@@ -12,7 +12,12 @@ import { parseJsonResponse } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
 import type { SlideRecord } from "@/domain/slides/commands";
 import { slideImageUploadLimit } from "@/domain/slides/image";
-import { parseSlideInput, parseSlideTitle } from "@/domain/slides/slide";
+import {
+  defaultSlideVerticalAlignment,
+  parseSlideInput,
+  parseSlideTitle,
+  type SlideVerticalAlignment,
+} from "@/domain/slides/slide";
 import {
   slideTextDocument,
   type SlideTextDocument,
@@ -44,6 +49,12 @@ export function SlideEditor({
         ? slideTextDocument(initial.document, initial.body)
         : null,
   );
+  const [verticalAlignment, setVerticalAlignment] =
+    useState<SlideVerticalAlignment>(
+      initial?.contentType === "image"
+        ? defaultSlideVerticalAlignment
+        : (initial?.verticalAlignment ?? defaultSlideVerticalAlignment),
+    );
   const [image, setImage] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +63,8 @@ export function SlideEditor({
   const [previewType, setPreviewType] = useState<ContentType | null>(null);
   const [previewDocument, setPreviewDocument] =
     useState<SlideTextDocument | null>(null);
+  const [previewVerticalAlignment, setPreviewVerticalAlignment] =
+    useState<SlideVerticalAlignment>(defaultSlideVerticalAlignment);
   const pending = useRef(false);
   const mounted = useRef(true);
   const deleteButton = useRef<HTMLButtonElement>(null);
@@ -113,8 +126,12 @@ export function SlideEditor({
           body: JSON.stringify({ expectedRevision: initial!.revision }),
         };
       } else if (contentType === "text") {
-        const input = parseSlideInput({ title, document });
-        const requestInput = { title: input.title, document: input.document };
+        const input = parseSlideInput({ title, document, verticalAlignment });
+        const requestInput = {
+          title: input.title,
+          document: input.document,
+          verticalAlignment: input.verticalAlignment,
+        };
         request = {
           method: initial ? "PUT" : "POST",
           headers: {
@@ -202,8 +219,10 @@ export function SlideEditor({
         const input = parseSlideInput({
           title: title || "プレビュー",
           document,
+          verticalAlignment,
         });
         setPreviewDocument(input.document ?? null);
+        setPreviewVerticalAlignment(input.verticalAlignment);
       } else {
         if (!currentImageUrl) throw new Error("INVALID_SLIDE_IMAGE");
         setPreviewDocument(null);
@@ -273,7 +292,9 @@ export function SlideEditor({
               <SlideRichTextEditor
                 initial={document ?? undefined}
                 disabled={busy}
+                verticalAlignment={verticalAlignment}
                 onChange={updateDocument}
+                onVerticalAlignmentChange={setVerticalAlignment}
               />
             </>
           ) : (
@@ -334,7 +355,8 @@ export function SlideEditor({
             <p>スライドの種類を変更しました。プレビューを更新してください。</p>
           )}
           {previewType === "text" &&
-            JSON.stringify(previewDocument) !== JSON.stringify(document) && (
+            (JSON.stringify(previewDocument) !== JSON.stringify(document) ||
+              previewVerticalAlignment !== verticalAlignment) && (
               <p>本文を変更しました。プレビューを更新してください。</p>
             )}
           {previewType === "image" && currentImageUrl ? (
@@ -348,6 +370,7 @@ export function SlideEditor({
               key={previewVersion}
               text=""
               document={previewDocument}
+              verticalAlignment={previewVerticalAlignment}
             />
           ) : null}
         </>

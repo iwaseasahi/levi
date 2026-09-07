@@ -6,6 +6,10 @@ import type {
 } from "@/domain/slides/image";
 import { SlideError, type SlideRecord } from "@/domain/slides/commands";
 import {
+  defaultSlideVerticalAlignment,
+  type SlideVerticalAlignment,
+} from "@/domain/slides/slide";
+import {
   flattenSlideTextDocument,
   parseSlideTextDocument,
   slideTextDocument,
@@ -21,6 +25,7 @@ const slideRecordSelect = {
   title: true,
   textDocument: true,
   contentType: true,
+  verticalAlignment: true,
   revision: true,
   createdAt: true,
   updatedAt: true,
@@ -35,6 +40,33 @@ const slideRecordSelect = {
 } satisfies Prisma.SlideSelect;
 
 type SlideRow = Prisma.SlideGetPayload<{ select: typeof slideRecordSelect }>;
+
+function storedVerticalAlignment(
+  value: SlideVerticalAlignment,
+): "TOP" | "CENTER" | "BOTTOM" {
+  switch (value) {
+    case "top":
+      return "TOP";
+    case "center":
+      return "CENTER";
+    case "bottom":
+      return "BOTTOM";
+  }
+}
+
+function verticalAlignment(
+  value: SlideRow["verticalAlignment"],
+): SlideVerticalAlignment {
+  switch (value) {
+    case "TOP":
+      return "top";
+    case "BOTTOM":
+      return "bottom";
+    case "CENTER":
+    case null:
+      return defaultSlideVerticalAlignment;
+  }
+}
 
 function storedMediaType(value: string): SlideImageMediaType {
   if (value === "image/jpeg" || value === "image/png" || value === "image/webp")
@@ -51,7 +83,11 @@ function record(row: SlideRow): SlideRecord {
     updatedAt: row.updatedAt.toISOString(),
   };
   if (row.contentType === "IMAGE") {
-    if (!row.image || row.textDocument !== null)
+    if (
+      !row.image ||
+      row.textDocument !== null ||
+      row.verticalAlignment !== null
+    )
       throw new Error("Invalid persisted image Slide");
     return {
       ...common,
@@ -63,7 +99,12 @@ function record(row: SlideRow): SlideRecord {
   if (row.image || row.textDocument === null)
     throw new Error("Invalid persisted text Slide");
   const document = parseSlideTextDocument(row.textDocument);
-  return { ...common, body: flattenSlideTextDocument(document), document };
+  return {
+    ...common,
+    body: flattenSlideTextDocument(document),
+    document,
+    verticalAlignment: verticalAlignment(row.verticalAlignment),
+  };
 }
 
 function persistedDocument(input: {
@@ -140,6 +181,7 @@ export const slideRepository: SlideRepository = {
           title: input.title,
           textDocument: document as Prisma.InputJsonValue,
           contentType: "TEXT",
+          verticalAlignment: storedVerticalAlignment(input.verticalAlignment),
           churchId: scope.churchId,
         },
         select: slideRecordSelect,
@@ -221,6 +263,7 @@ export const slideRepository: SlideRepository = {
             title: input.title,
             textDocument: document as Prisma.InputJsonValue,
             contentType: "TEXT",
+            verticalAlignment: storedVerticalAlignment(input.verticalAlignment),
             revision: { increment: 1 },
           },
           select: slideRecordSelect,
@@ -246,6 +289,7 @@ export const slideRepository: SlideRepository = {
             title: input.title,
             textDocument: Prisma.DbNull,
             contentType: "IMAGE",
+            verticalAlignment: null,
             revision: { increment: 1 },
             image: {
               upsert: {
