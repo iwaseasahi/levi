@@ -76,6 +76,12 @@ state, and insufficient history for any requested period retained by journald.
 - 2026-09-07 JST — Verified synthetic and real disposable Compose scenarios for
   initialization, steady state, in-place restart, replacement, malformed state,
   privacy, continuous coverage, and coverage gaps.
+- 2026-09-07 JST — Opened PR #494. Its first exact-head CI passed Quality,
+  Database, and Security but exposed the known nondeterministic Slide ordering
+  assertion tracked by Issue #486, so the failed job was not retried.
+- 2026-09-07 JST — Completed Issue #486 separately in PR #496 with all protected
+  checks passing, then merged current `main` into this branch for a new
+  exact-head verification.
 
 ## Decisions
 
@@ -150,11 +156,13 @@ state, and insufficient history for any requested period retained by journald.
 ## Handoff or blockers
 
 - Completed: Issue intake, isolation, implementation, focused and canonical
-  local verification, and runbook updates.
-- Remaining: final diff review, commit, pull-request delivery, and exact-head CI.
+  local verification, runbook updates, PR #494, and integration of the merged
+  Issue #486 test stabilization.
+- Remaining: new exact-head protected CI, merge, Issue closure, and local `main`
+  synchronization.
 - Blocker: none.
-- Resume with: review the complete diff for security and scope, then deliver the
-  pull request and verify required CI.
+- Resume with: push the current head, mark PR #494 ready after CI starts, and
+  merge only after all four protected checks pass.
 
 ## Result
 
