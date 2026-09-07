@@ -74,6 +74,12 @@ preview, saved detail, and audience after reload and blank recovery.
   141 tests; `pnpm test:e2e` passed 35 Chromium tests; `pnpm security:check` and
   `pnpm backup:rehearse` passed. The final E2E rerun remains pending after
   strengthening the maximum-200% assertion and standardizing editor insets.
+- 2026-09-07 13:00 JST — Exact implementation-head `pnpm test:e2e` passed all
+  35 Chromium scenarios after the 200% and shared-inset changes. Reviewed the
+  complete `main...HEAD` diff separately for authorization, tenant isolation,
+  revision concurrency, fail-closed audience behavior, migration/data loss,
+  input strictness, focus handling, responsive clipping, and unrelated changes;
+  no actionable findings remained.
 
 ## Decisions
 
@@ -112,23 +118,26 @@ preview, saved detail, and audience after reload and blank recovery.
 - [x] `pnpm test`
 - [x] `pnpm db:check`
 - [x] `pnpm test:integration`
-- [ ] `pnpm test:e2e`
+- [x] `pnpm test:e2e`
 - [x] `pnpm security:check`
 - [x] `pnpm backup:rehearse`
 - [x] `pnpm build`
-- [ ] Acceptance criteria — mapped automated evidence in domain, component,
+- [x] Acceptance criteria — mapped automated evidence in domain, component,
       integration, and Chromium suites.
-- [ ] Final diff reviewed for scope, secrets, migration/data-loss risk, auth,
+- [x] Final diff reviewed for scope, secrets, migration/data-loss risk, auth,
       concurrency, error handling, and unsafe defaults.
 
 ## Handoff or blockers
 
-- Completed: intake, isolation, dependency install, writer lease, and design
-  decision.
-- Remaining: implementation, documentation, verification, review, PR, and CI.
+- Completed: implementation, documentation, local verification, separate diff
+  review, branch push, and draft PR #503.
+- Remaining: exact-head protected CI and ready/merge workflow.
 - Blocker: none.
-- Resume with: implement the domain and Prisma contract with focused tests.
+- Resume with: inspect protected checks for PR #503.
 
 ## Result
 
-Pending.
+The branch implements top/center/bottom whole-body alignment as a strict
+Slide-level contract while retaining centered compatibility and image
+exclusion. All local canonical, database, security, backup, and Chromium checks
+pass. PR #503 remains draft until protected exact-head CI completes.
