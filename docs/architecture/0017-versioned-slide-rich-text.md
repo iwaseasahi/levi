@@ -34,9 +34,11 @@ not part of the product-facing document name. It contains the constrained
 blocks, alignments, text marks, and sized runs above. After the product owner
 confirmed development and production data migration on 2026-09-07, the document
 became required for text Slides and the duplicated database `body` column was
-removed. The API may expose a flattened plain-text `body` for compatibility,
-but the application derives it from the validated document. Image Slides have
-no text document. The unreleased earlier document experiment remains rejected.
+removed. Text Slide API, domain, application, and repository contracts expose
+only the validated document; the former flattened `body` compatibility field is
+rejected on input and absent from responses. Image Slides have neither a text
+document nor a null text compatibility field. The unreleased earlier document
+experiment remains rejected.
 
 Rendering maps only the versioned allowlist to React paragraphs, lists, and
 styled text spans; neither stored HTML nor raw Tiptap JSON reaches
@@ -64,8 +66,9 @@ reads `text_document`; a body-only writer is no longer compatible.
   the editor library.
 - Selection formatting, undo/redo, IME, and keyboard behavior use a maintained
   editing engine instead of a bespoke `contenteditable` implementation.
-- There is one persisted source for text content. Plain text needed by existing
-  API and rendering boundaries is deterministically flattened from it.
+- There is one representation of text content across persistence and application
+  contracts. Operations that specifically need plain text flatten the validated
+  document locally and do not save or forward the result.
 - Future blocks or marks require a new document version and an ADR/schema
   compatibility review; arbitrary HTML, links, media, colors, fonts, and
   arbitrary CSS sizes remain out of scope.

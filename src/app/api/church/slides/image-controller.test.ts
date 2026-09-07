@@ -19,7 +19,6 @@ const normalized: NormalizedSlideImage = {
 const record: ImageSlideRecord = {
   id,
   title: "Synthetic image",
-  body: null,
   contentType: "image",
   image: {
     mediaType: "image/png",

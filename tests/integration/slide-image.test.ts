@@ -5,6 +5,7 @@ import { createSlideService } from "@/application/slides/manage-slides";
 import type { NormalizedSlideImage } from "@/domain/slides/image";
 import { prisma } from "@/infrastructure/database/client";
 import { slideRepository } from "@/infrastructure/database/slide-repository";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 
 const prefix = "test.slide-image.";
 async function scope() {
@@ -44,9 +45,9 @@ describe("scoped Slide image persistence", () => {
     expect(created).toMatchObject({
       contentType: "image",
       title: "Image",
-      body: null,
       image: { mediaType: "image/png", byteSize: 3, width: 1, height: 1 },
     });
+    expect(created).not.toHaveProperty("body");
     expect(created).not.toHaveProperty("image.data");
     expect(created).not.toHaveProperty("image.checksum");
     expect(await service.getImage(owner, created.id, 1)).toMatchObject({
@@ -65,11 +66,14 @@ describe("scoped Slide image persistence", () => {
 
     const text = await service.update(owner, created.id, {
       expectedRevision: 2,
-      input: { title: "Text", body: "Now text" },
+      input: {
+        title: "Text",
+        document: slideTextDocumentFromPlainText("Now text"),
+      },
     });
     expect(text).toMatchObject({
       title: "Text",
-      body: "Now text",
+      document: slideTextDocumentFromPlainText("Now text"),
       revision: 3,
     });
     expect(text).not.toHaveProperty("contentType");
@@ -87,7 +91,10 @@ describe("scoped Slide image persistence", () => {
       imageBytesPerChurch: 100,
     });
     const foreign = await service.createImage(other, "Foreign", image([1]));
-    const text = await service.create(owner, { title: "Text", body: "Body" });
+    const text = await service.create(owner, {
+      title: "Text",
+      document: slideTextDocumentFromPlainText("Text content"),
+    });
     for (const [id, revision] of [
       [foreign.id, 1],
       [randomUUID(), 1],

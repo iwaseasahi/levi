@@ -14,7 +14,6 @@ export function useSlideAudienceData(
   const fetcher = useComponentLifetimeValue(providedFetcher);
   const [state, setState] = useState<SlideAudienceState>({
     status: "loading",
-    text: null,
     revision: null,
   });
   const session = useRef<ReturnType<typeof createSlideAudienceSession> | null>(

@@ -36,21 +36,18 @@ export type SlideAudienceState =
   | {
       status: "ready";
       contentType?: "text";
-      text: string;
-      document?: SlideTextDocument;
+      document: SlideTextDocument;
       verticalAlignment: SlideVerticalAlignment;
       revision: number;
     }
   | {
       status: "ready";
       contentType: "image";
-      text: null;
       title: string;
       revision: number;
     }
   | {
       status: Exclude<SlideProjectionState["status"], "ready">;
-      text: null;
       revision: number | null;
     };
 export function slideProjectionState(

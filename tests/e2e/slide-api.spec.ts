@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { SlideRecord } from "@/domain/slides/commands";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 import { prisma } from "@/infrastructure/database/client";
 import { storedSlideText } from "../helpers/slide-document";
 import { test, expect } from "./scripture-fixture";
@@ -12,15 +13,21 @@ test("Slide HTTP routes enforce session, Origin, revision and physical deletion"
 }) => {
   await loginToScripture(context, page, scriptureAccount);
   const headers = { Origin: "http://127.0.0.1:3100" };
+  const text = "First\n\n\n\nSecond";
   const input = {
     title: "Synthetic API slide",
-    body: "First\n\n\n\nSecond",
+    document: slideTextDocumentFromPlainText(text),
   };
   const denied = await context.request.post("/api/church/slides", {
     headers: { Origin: "https://foreign.example" },
     data: input,
   });
   expect(denied.status()).toBe(403);
+  const legacy = await context.request.post("/api/church/slides", {
+    headers,
+    data: { title: input.title, body: text },
+  });
+  expect(legacy.status()).toBe(400);
   const created = await context.request.post("/api/church/slides", {
     headers,
     data: input,
@@ -28,6 +35,7 @@ test("Slide HTTP routes enforce session, Origin, revision and physical deletion"
   expect(created.status()).toBe(201);
   const { slide } = (await created.json()) as { slide: SlideRecord };
   expect(slide).toMatchObject({ ...input, revision: 1 });
+  expect(slide).not.toHaveProperty("body");
   expect(created.headers()["cache-control"]).toBe("no-store");
   const path = `/api/church/slides/${slide.id}`;
   expect((await context.request.get(path)).status()).toBe(200);
@@ -53,7 +61,7 @@ test("Slide HTTP routes enforce session, Origin, revision and physical deletion"
     const row = await prisma.slide.create({
       data: {
         title: input.title,
-        ...storedSlideText(input.body),
+        ...storedSlideText(text),
         churchId: foreign.id,
       },
     });

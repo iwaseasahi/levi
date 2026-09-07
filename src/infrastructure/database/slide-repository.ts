@@ -9,12 +9,7 @@ import {
   defaultSlideVerticalAlignment,
   type SlideVerticalAlignment,
 } from "@/domain/slides/slide";
-import {
-  flattenSlideTextDocument,
-  parseSlideTextDocument,
-  slideTextDocument,
-  type SlideTextDocument,
-} from "@/domain/slides/text-document";
+import { parseSlideTextDocument } from "@/domain/slides/text-document";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "./client";
 import { lockFolder } from "./saved-content-locks";
@@ -92,7 +87,6 @@ function record(row: SlideRow): SlideRecord {
     return {
       ...common,
       contentType: "image",
-      body: null,
       image: { ...row.image, mediaType: storedMediaType(row.image.mediaType) },
     };
   }
@@ -101,20 +95,9 @@ function record(row: SlideRow): SlideRecord {
   const document = parseSlideTextDocument(row.textDocument);
   return {
     ...common,
-    body: flattenSlideTextDocument(document),
     document,
     verticalAlignment: verticalAlignment(row.verticalAlignment),
   };
-}
-
-function persistedDocument(input: {
-  body: string;
-  document?: SlideTextDocument;
-}) {
-  const document = slideTextDocument(input.document, input.body);
-  if (flattenSlideTextDocument(document) !== input.body)
-    throw new Error("Slide text document does not match body");
-  return document;
 }
 
 async function lockChurch(
@@ -174,7 +157,7 @@ function mutate<T>(
 
 export const slideRepository: SlideRepository = {
   async create(scope, input) {
-    const document = persistedDocument(input);
+    const document = parseSlideTextDocument(input.document);
     return record(
       await prisma.slide.create({
         data: {
@@ -250,7 +233,7 @@ export const slideRepository: SlideRepository = {
   },
   update(scope, id, expectedRevision, input) {
     return mutate(scope, id, expectedRevision, async (transaction) => {
-      const document = persistedDocument(input);
+      const document = parseSlideTextDocument(input.document);
       if (expectedRevision === 2_147_483_647)
         throw new SlideError("SLIDE_CONFLICT");
       await transaction.slideImage.deleteMany({

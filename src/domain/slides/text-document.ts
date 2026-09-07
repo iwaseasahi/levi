@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { slideBodyLimit, SlideInputError } from "./boundary";
+import { slideTextContentLimit, SlideInputError } from "./boundary";
 
 export const slideTextDocumentNodeLimit = 10_000;
 export const slideTextDocumentVersion = 2;
@@ -155,10 +155,10 @@ export function normalizeSlideTextDocument(
   document: SlideTextDocument,
 ): SlideTextDocument {
   const normalized = normalizeDocument(document);
-  const body = flattenSlideTextDocument(normalized);
+  const text = flattenSlideTextDocument(normalized);
   if (
-    body.replace(/^[ \t\n]+|[ \t\n]+$/g, "").length === 0 ||
-    [...body].length > slideBodyLimit
+    text.replace(/^[ \t\n]+|[ \t\n]+$/g, "").length === 0 ||
+    [...text].length > slideTextContentLimit
   ) {
     invalid();
   }
@@ -171,9 +171,9 @@ export function parseSlideTextDocument(value: unknown): SlideTextDocument {
   return normalizeSlideTextDocument(result.data);
 }
 
-export function slideTextDocumentFromPlainText(body: string) {
+export function slideTextDocumentFromPlainText(text: string) {
   const content: SlideRichTextNode[] = [];
-  for (const [index, part] of body.split("\n").entries()) {
+  for (const [index, part] of text.split("\n").entries()) {
     if (index > 0) content.push({ type: "break" });
     if (part) content.push({ type: "text", text: part, size: 100, marks: [] });
   }
@@ -181,13 +181,4 @@ export function slideTextDocumentFromPlainText(body: string) {
     version: slideTextDocumentVersion,
     blocks: [{ type: "paragraph", alignment: "left", content }],
   });
-}
-
-export function slideTextDocument(
-  document: SlideTextDocument | undefined,
-  body: string,
-) {
-  return document
-    ? parseSlideTextDocument(document)
-    : slideTextDocumentFromPlainText(body);
 }

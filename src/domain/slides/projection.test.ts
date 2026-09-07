@@ -4,6 +4,7 @@ import {
   parseSlideProjectionState,
   slideProjectionState,
 } from "./projection";
+import { slideTextDocumentFromPlainText } from "./text-document";
 const id = "00000000-0000-4000-8000-000000000387";
 describe("slide projection coordinates", () => {
   it("accepts only an opaque ID", () => {
@@ -25,7 +26,7 @@ describe("slide projection coordinates", () => {
   it("produces fixed single-surface metadata acknowledgements without body", () => {
     const state = slideProjectionState(id, {
       status: "ready",
-      text: "secret synthetic",
+      document: slideTextDocumentFromPlainText("secret synthetic"),
       verticalAlignment: "center",
       revision: 2,
     });
@@ -44,7 +45,6 @@ describe("slide projection coordinates", () => {
       parseSlideProjectionState(
         slideProjectionState(id, {
           status: "stale",
-          text: null,
           revision: 1,
         }),
       ),
