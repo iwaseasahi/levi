@@ -15,6 +15,7 @@ import {
 } from "@/application/saved-content/manage-saved-content";
 import { savedContentRepository } from "@/infrastructure/database/saved-content-repository";
 import { slideRepository } from "@/infrastructure/database/slide-repository";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 import {
   clearSyntheticBibleFixture,
   createSyntheticBibleFixture,
@@ -138,19 +139,19 @@ describe("saved-content database contract", () => {
     );
     const first = await slideRepository.create(scope, {
       title: "First slide",
-      body: "First body",
+      document: slideTextDocumentFromPlainText("First text"),
       verticalAlignment: "center",
     });
     const second = await slideRepository.create(scope, {
       title: "Second slide",
-      body: "Second body",
+      document: slideTextDocumentFromPlainText("Second text"),
       verticalAlignment: "center",
     });
     const foreign = await slideRepository.create(
       tenant(fixture.secondChurch.id),
       {
         title: "Foreign",
-        body: "Foreign body",
+        document: slideTextDocumentFromPlainText("Foreign text"),
         verticalAlignment: "center",
       },
     );

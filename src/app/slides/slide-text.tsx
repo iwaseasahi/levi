@@ -6,7 +6,7 @@ import {
   type SlideVerticalAlignment,
 } from "@/domain/slides/slide";
 import {
-  slideTextDocument,
+  parseSlideTextDocument,
   slideTextSizeScale,
   type SlideRichTextNode,
   type SlideTextDocument,
@@ -53,22 +53,17 @@ function renderDocument(document: SlideTextDocument) {
   });
 }
 
-/** Shared body-only 16:9 surface for preview and the slide audience. */
+/** Shared document-only 16:9 surface for preview and the slide audience. */
 export function SlideText({
-  text,
   document,
   verticalAlignment = defaultSlideVerticalAlignment,
   blank = false,
 }: {
-  text: string;
-  document?: SlideTextDocument | undefined;
+  document: SlideTextDocument;
   verticalAlignment?: SlideVerticalAlignment | undefined;
   blank?: boolean;
 }) {
-  const richText = useMemo(
-    () => slideTextDocument(document, text),
-    [document, text],
-  );
+  const richText = useMemo(() => parseSlideTextDocument(document), [document]);
   const frame = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   useSlideTextFit(frame, content, richText);

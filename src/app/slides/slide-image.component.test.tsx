@@ -27,7 +27,6 @@ const id = "00000000-0000-4000-8000-000000000470";
 const slide: ImageSlideRecord = {
   id,
   title: "投影画像",
-  body: null,
   contentType: "image",
   image: {
     mediaType: "image/png",

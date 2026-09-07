@@ -11,14 +11,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SlideAudience } from "./slide-audience";
 import { SlideController } from "./slide-controller";
 import { SlideText } from "./slide-text";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 
 const id = "00000000-0000-4000-8000-000000000387";
 const generation = "00000000-0000-4000-8000-000000000388";
+const slideText = "<script>synthetic</script>\n日本語\n\n\n\nSecond";
 const slide = {
   id,
   revision: 1,
   title: "Private title",
-  body: "<script>synthetic</script>\n日本語\n\n\n\nSecond",
+  document: slideTextDocumentFromPlainText(slideText),
   verticalAlignment: "center" as const,
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
@@ -38,14 +40,15 @@ function send(data: unknown, source: MessageEventSource) {
 }
 describe("Slide audience and controller", () => {
   it("defaults old text to center and exposes all supported body positions", () => {
-    const { container, rerender } = render(<SlideText text="Positioned" />);
+    const document = slideTextDocumentFromPlainText("Positioned");
+    const { container, rerender } = render(<SlideText document={document} />);
     expect(container.querySelector(".slide-rich-content")).toHaveAttribute(
       "data-vertical-alignment",
       "center",
     );
     for (const verticalAlignment of ["top", "bottom"] as const) {
       rerender(
-        <SlideText text="Positioned" verticalAlignment={verticalAlignment} />,
+        <SlideText document={document} verticalAlignment={verticalAlignment} />,
       );
       expect(container.querySelector(".slide-rich-content")).toHaveAttribute(
         "data-vertical-alignment",
@@ -60,7 +63,9 @@ describe("Slide audience and controller", () => {
     );
     vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(960);
     vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockReturnValue(540);
-    const { container } = render(<SlideText text="日本語の本文" />);
+    const { container } = render(
+      <SlideText document={slideTextDocumentFromPlainText("日本語の本文")} />,
+    );
     const text = container.querySelector(".slide-rich-content");
     expect(text).toHaveClass("audience-shadow");
     expect(text).toHaveStyle({ fontSize: "129.6px" });
@@ -69,7 +74,6 @@ describe("Slide audience and controller", () => {
   it("renders the rich-text allowlist without HTML injection", () => {
     render(
       <SlideText
-        text={"Lead\nItem"}
         document={{
           version: 2,
           blocks: [
@@ -117,7 +121,7 @@ describe("Slide audience and controller", () => {
     expect(document.querySelector("script")).toBeNull();
   });
 
-  it("renders the complete literal body and clears on visibility/revision checks", async () => {
+  it("renders the complete literal document and clears on visibility/revision checks", async () => {
     window.history.replaceState(null, "", `/slides/audience?id=${id}`);
     const fetcher = vi
       .fn<typeof fetch>()
@@ -128,9 +132,7 @@ describe("Slide audience and controller", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.getByRole("main")).toBeEmptyDOMElement();
     const literal = await screen.findByText(/<script>synthetic<\/script>/);
-    expect(literal.closest(".slide-rich-content")?.textContent).toBe(
-      slide.body,
-    );
+    expect(literal.closest(".slide-rich-content")?.textContent).toBe(slideText);
     expect(screen.queryByText(slide.title)).toBeNull();
     expect(document.querySelector("script")).toBeNull();
     expect(new URL(location.href).searchParams.has("page")).toBe(false);

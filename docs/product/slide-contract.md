@@ -30,16 +30,16 @@ route JSON are explicitly not carried over. No legacy edit history is required.
 A Slide belongs to a church, not an individual creator. All members with an
 eligible church session can manage that church's slides.
 
-| Field                    | Replacement rule                                                                                                                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `id`, `churchId`         | Server-owned UUIDs; church from the authenticated actor only.                                                                                                                              |
-| `title`                  | Required, trim leading/trailing ASCII space/tab/newline after EOL normalization, 1–200 Unicode code points, single line (no CR/LF/tab).                                                    |
-| `body`                   | Derived plain-text API view and accepted compatibility input; normalize CRLF/CR to LF, preserve other whitespace; 1–100,000 Unicode code points and nonblank. It is not a database column. |
-| `contentType`            | Server-returned `text` or `image`; one Slide has exactly one surface. Existing rows are `text`.                                                                                            |
-| `verticalAlignment`      | Text Slide whole-body placement: `top`, `center`, or `bottom`; omitted legacy values normalize to `center`. Not accepted or returned for image Slides.                                     |
-| `image`                  | For image Slides only: media type, normalized byte size, width, and height; bytes are never embedded in Slide JSON.                                                                        |
-| `revision`               | Server-owned positive integer, starts at 1 and increments on update; optimistic concurrency token, not edit history.                                                                       |
-| `createdAt`, `updatedAt` | Server-owned UTC timestamps; creation time immutable.                                                                                                                                      |
+| Field                    | Replacement rule                                                                                                                                                                          |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`, `churchId`         | Server-owned UUIDs; church from the authenticated actor only.                                                                                                                             |
+| `title`                  | Required, trim leading/trailing ASCII space/tab/newline after EOL normalization, 1–200 Unicode code points, single line (no CR/LF/tab).                                                   |
+| `document`               | Required for text Slides. Strict application-owned version 2 document; flattened content must be nonblank and at most 100,000 Unicode code points. Raw Tiptap JSON and HTML are rejected. |
+| `contentType`            | Server-returned `text` or `image`; one Slide has exactly one surface. Existing rows are `text`.                                                                                           |
+| `verticalAlignment`      | Text Slide whole-body placement: `top`, `center`, or `bottom`; omitted legacy values normalize to `center`. Not accepted or returned for image Slides.                                    |
+| `image`                  | For image Slides only: media type, normalized byte size, width, and height; bytes are never embedded in Slide JSON.                                                                       |
+| `revision`               | Server-owned positive integer, starts at 1 and increments on update; optimistic concurrency token, not edit history.                                                                      |
+| `createdAt`, `updatedAt` | Server-owned UTC timestamps; creation time immutable.                                                                                                                                     |
 
 Reject NUL and malformed Unicode; reject unknown request fields. Count code
 points, not UTF-16 units. Reject excessive input without truncation, and bound
@@ -54,19 +54,20 @@ Create/update errors retain the user's input. Invalid input is 400, missing or
 foreign-tenant IDs have the same 404 response, and stale revision is 409. Update
 and delete require the expected revision; they cannot silently overwrite a
 concurrent edit. Success is 201 for create, 200 for read/update, 204 for delete.
-POST `/api/church/slides` accepts `{title, body, verticalAlignment?}` or
-`{title, document, verticalAlignment?}`. Both
-paths produce the application-owned Slide text document, which is the sole
-persisted text source and contains
+POST `/api/church/slides` accepts only
+`{title, document, verticalAlignment?}` for text Slides. The former
+`{title, body}` compatibility input and any unknown field are rejected. The
+application-owned Slide text document is the sole text representation and contains
 paragraphs, flat bullet lists,
 left/center/right alignment, bold, italic, underline, and relative font sizes
 from 50–200% in 10% steps. The server
-accepts only this allowlist and derives response `body`; raw HTML and raw
-Tiptap JSON are not persistence contracts. GET/PUT/DELETE use
+accepts only this allowlist; raw HTML and raw Tiptap JSON are not persistence
+contracts. GET/PUT/DELETE use
 `/api/church/slides/[id]`; PUT accepts
 `{input: {title, document, verticalAlignment?},
 expectedRevision}`, and DELETE accepts `{expectedRevision}`. Create/read/update
-return `{slide}` without `churchId`; delete has no response body. Mutation Origin
+return `{slide}` without `churchId` or a flattened `body`; image Slide JSON also
+does not contain `body: null`. Delete has no response body. Mutation Origin
 must exactly match the configured canonical origin. CRUD detail routes reject
 query parameters; list cursor parameters belong to the collection read contract.
 
@@ -99,14 +100,15 @@ Each production church has an explicit byte quota. Reaching it returns 409 and
 does not partially mutate the Slide. The deployment value requires operator
 approval; one GiB is only the checked-in development/test example.
 
-## Single-page body and preview
+## Single-surface document and preview
 
-Issue #424 intentionally simplifies the replacement contract: one Slide body is
-one projected surface. Normalize EOL, then preserve every newline as body content;
+Issue #424 intentionally simplifies the replacement contract: one Slide document
+is one projected surface. Preserve every authored newline as document content;
 four or more consecutive LFs do not delimit pages. The pinned legacy section above
 continues to record Ginmaku's former split behavior as historical evidence, not as
-active Levi behavior. Empty or ASCII-whitespace-only bodies remain invalid, and
-HTML-like input remains literal text rather than executable markup.
+active Levi behavior. Documents whose flattened text is empty or ASCII-whitespace
+only remain invalid, and HTML-like input remains literal text rather than
+executable markup.
 
 Issue #479 adds WYSIWYG range sizing on this single surface. The author may use
 50–200% in 10% steps. Preview, detail, and audience render those relative sizes
@@ -116,19 +118,19 @@ closed. The unreleased version 1 document format is not accepted. The Slide
 projection controller does not provide a separate font
 size adjustment; authored sizes are projected as saved, subject only to fit.
 
-Issue #498 positions the complete text body at the safe top, center, or bottom
+Issue #498 positions the complete text document at the safe top, center, or bottom
 edge of the same 16:9 surface. The default is center, including persisted rows
 whose nullable setting predates the feature. Editor, unsaved preview, detail,
 and audience use one normalized value and matching safe insets. Fit still scales
 the complete document uniformly and therefore preserves relative sizes, line
 breaks, lists, and paragraph alignment. Image Slides have no vertical text
-control or setting. Blank hides the body only; unblank restores its saved
+control or setting. Blank hides the document only; unblank restores its saved
 position.
 
-Preview is an explicit local operation over unsaved body; it neither writes a
+Preview is an explicit local operation over an unsaved document; it neither writes a
 Slide nor opens/changes the audience. Title errors do not prevent a valid
-body preview. Preview and audience preserve line breaks, use the same text-fit
-rules and aspect ratio, and show body only. Slide text uses the Scripture
+document preview. Preview and audience preserve line breaks, use the same text-fit
+rules and aspect ratio, and show document content only. Slide text uses the Scripture
 audience's Helvetica/Arial, normal line height and white text with blue edging.
 Its pre-existing base size remains 12% of the 16:9 surface height. The title stays
 in the controller.
@@ -170,7 +172,7 @@ feedback, and authenticated reads. Slide routes are `/slides`, `/slides/new`,
 only an opaque Slide ID, never content.
 APIs are church-scoped under `/api/church/slides`.
 
-The audience displays the complete saved body as one surface and owns blank
+The audience displays the complete saved document as one surface and owns blank
 state. The controller displays acknowledged state and provides Open and blank
 controls. It has no font-size, previous/next, page-count, or page-selection
 controls. Scripture retains its own coordinate navigation and font controls.
@@ -222,7 +224,7 @@ unsaved preview, saving/disabled, success, conflict, failure with preserved inpu
 Delete: explicit confirmation naming the synthetic/current title, cancel restores
 focus, failure retains context, success returns to the list. Never claim undo.
 Controller: not open, blocked, connecting, ready, blank,
-disconnected, deleted, stale revision and denied session. Audience: only body,
+disconnected, deleted, stale revision and denied session. Audience: only document content,
 blank or generic unavailable/recovery feedback, never tenant/account metadata.
 
 Use semantic labels, visible focus, status/error

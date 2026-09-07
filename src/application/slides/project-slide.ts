@@ -1,7 +1,6 @@
 import type { SlideRecord } from "@/domain/slides/commands";
 import type { SlideAudienceState } from "@/domain/slides/projection";
-import { parseSlideBody } from "@/domain/slides/slide";
-import { slideTextDocument } from "@/domain/slides/text-document";
+import { parseSlideTextDocument } from "@/domain/slides/text-document";
 
 /** One document lifetime. A failed/disposed session cannot regain protected text. */
 export function createSlideAudienceSession({
@@ -18,13 +17,12 @@ export function createSlideAudienceSession({
   let started = false;
   let state: SlideAudienceState = {
     status: "loading",
-    text: null,
     revision: null,
   };
   function fail(status: "stale" | "unavailable" = "unavailable") {
     if (disposed || failed) return;
     failed = true;
-    state = { status, text: null, revision: state.revision };
+    state = { status, revision: state.revision };
     publish(state);
   }
   async function start() {
@@ -42,14 +40,12 @@ export function createSlideAudienceSession({
           ? {
               status: "ready",
               contentType: "image",
-              text: null,
               title: slide.title,
               revision: slide.revision,
             }
           : {
               status: "ready",
-              text: parseSlideBody(slide.body),
-              document: slideTextDocument(slide.document, slide.body),
+              document: parseSlideTextDocument(slide.document),
               verticalAlignment: slide.verticalAlignment,
               revision: slide.revision,
             };
@@ -84,7 +80,7 @@ export function createSlideAudienceSession({
     isAuthorized: () => !disposed && !failed,
     dispose: () => {
       disposed = true;
-      state = { status: "unavailable", text: null, revision: null };
+      state = { status: "unavailable", revision: null };
     },
   };
 }

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StrictMode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 import { SlideEditor } from "./slide-editor";
 import { SlideDocument } from "./slide-document";
 
@@ -17,7 +18,7 @@ vi.mock("next/navigation", () => ({
 const initial = {
   id: "00000000-0000-4000-8000-000000000384",
   title: "Synthetic title",
-  body: "First\n\n\n\nSecond",
+  document: slideTextDocumentFromPlainText("First\n\n\n\nSecond"),
   verticalAlignment: "center" as const,
   revision: 2,
   createdAt: "2026-08-31T00:00:00Z",
@@ -316,7 +317,14 @@ describe("slide editor", () => {
     const body = await screen.findByLabelText("本文");
     const user = userEvent.setup();
     await replaceBody(user, "Keep this draft");
-    resolve(Response.json({ slide: { ...initial, body: "Stale" } }));
+    resolve(
+      Response.json({
+        slide: {
+          ...initial,
+          document: slideTextDocumentFromPlainText("Stale"),
+        },
+      }),
+    );
     await waitFor(() => expect(body).toHaveTextContent("Keep this draft"));
   });
 });

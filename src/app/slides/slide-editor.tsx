@@ -19,7 +19,7 @@ import {
   type SlideVerticalAlignment,
 } from "@/domain/slides/slide";
 import {
-  slideTextDocument,
+  parseSlideTextDocument,
   type SlideTextDocument,
 } from "@/domain/slides/text-document";
 import { SlideError, slideErrorMessage } from "./slide-error";
@@ -46,7 +46,7 @@ export function SlideEditor({
     initial?.contentType === "image"
       ? null
       : initial
-        ? slideTextDocument(initial.document, initial.body)
+        ? parseSlideTextDocument(initial.document)
         : null,
   );
   const [verticalAlignment, setVerticalAlignment] =
@@ -221,7 +221,7 @@ export function SlideEditor({
           document,
           verticalAlignment,
         });
-        setPreviewDocument(input.document ?? null);
+        setPreviewDocument(input.document);
         setPreviewVerticalAlignment(input.verticalAlignment);
       } else {
         if (!currentImageUrl) throw new Error("INVALID_SLIDE_IMAGE");
@@ -368,7 +368,6 @@ export function SlideEditor({
           ) : previewDocument !== null ? (
             <SlidePreview
               key={previewVersion}
-              text=""
               document={previewDocument}
               verticalAlignment={previewVerticalAlignment}
             />

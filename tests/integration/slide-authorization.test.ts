@@ -9,12 +9,14 @@ import { prisma } from "@/infrastructure/database/client";
 import { storedSlideText } from "../helpers/slide-document";
 import { slideRepository } from "@/infrastructure/database/slide-repository";
 import { slideListRepository } from "@/infrastructure/database/slide-list-repository";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 
 const prefix = "test.slide-authorization.";
 const origin = "https://levi.local.test";
+const protectedText = "Synthetic protected text";
 const input = {
   title: "Synthetic authorization",
-  body: "Synthetic protected body",
+  document: slideTextDocumentFromPlainText(protectedText),
 };
 const handlers = createSlideHandlers({
   getChurchAccess,
@@ -99,7 +101,7 @@ describe("real session authorization across Slide endpoints", () => {
       const slide = await prisma.slide.create({
         data: {
           title: input.title,
-          ...storedSlideText(input.body),
+          ...storedSlideText(protectedText),
           churchId: member.churchId!,
         },
       });

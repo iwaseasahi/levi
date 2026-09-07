@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { requestJson } from "@/app/church/client-api";
 import { useComponentLifetimeValue } from "@/app/church/use-component-lifetime-value";
 import type { SlideRecord } from "@/domain/slides/commands";
-import { parseSlideBody } from "@/domain/slides/slide";
 import { SlideEditor } from "./slide-editor";
 import { SlideError, slideErrorMessage } from "./slide-error";
 import { SlidePreview } from "./slide-preview";
@@ -80,7 +79,6 @@ export function SlideDocument({
         />
       ) : (
         <SlidePreview
-          text={parseSlideBody(slide.body)}
           document={slide.document}
           verticalAlignment={slide.verticalAlignment}
         />

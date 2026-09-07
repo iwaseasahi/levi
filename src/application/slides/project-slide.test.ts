@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import type { SlideRecord } from "@/domain/slides/commands";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 import { createSlideAudienceSession } from "./project-slide";
 
 const slide: SlideRecord = {
   id: "00000000-0000-4000-8000-000000000387",
   revision: 1,
   title: "Synthetic",
-  body: "First\n\n\n\nSecond\n\n\n\nThird",
+  document: slideTextDocumentFromPlainText("First\n\n\n\nSecond\n\n\n\nThird"),
   verticalAlignment: "center",
   createdAt: "2026-08-31T00:00:00Z",
   updatedAt: "2026-08-31T00:00:00Z",
@@ -24,7 +25,7 @@ function setup() {
 }
 
 describe("saved Slide audience lifetime", () => {
-  it("starts once with the complete single-surface body", async () => {
+  it("starts once with the complete single-surface document", async () => {
     const { session, publish, load } = setup();
     await session.start();
     await session.start();
@@ -32,7 +33,7 @@ describe("saved Slide audience lifetime", () => {
     expect(publish).toHaveBeenLastCalledWith(
       expect.objectContaining({
         status: "ready",
-        text: "First\n\n\n\nSecond\n\n\n\nThird",
+        document: slide.document,
         verticalAlignment: "center",
         revision: 1,
       }),
@@ -57,11 +58,14 @@ describe("saved Slide audience lifetime", () => {
   it("clears on revision change and refuses subsequent checks", async () => {
     const { session, publish, load } = setup();
     await session.start();
-    load.mockResolvedValue({ ...slide, revision: 2, body: "New content" });
+    load.mockResolvedValue({
+      ...slide,
+      revision: 2,
+      document: slideTextDocumentFromPlainText("New content"),
+    });
     await expect(session.verify()).resolves.toBe(false);
     expect(publish).toHaveBeenLastCalledWith({
       status: "stale",
-      text: null,
       revision: 1,
     });
     await session.verify();
@@ -77,7 +81,7 @@ describe("saved Slide audience lifetime", () => {
       if (action === "read") await session.start();
       else await session.verify();
       expect(publish).toHaveBeenLastCalledWith(
-        expect.objectContaining({ status: "unavailable", text: null }),
+        expect.objectContaining({ status: "unavailable" }),
       );
       expect(JSON.stringify(publish.mock.calls.at(-1))).not.toContain(
         "restricted",
@@ -125,18 +129,21 @@ describe("saved Slide audience lifetime", () => {
     finish(slide);
     await late;
     expect(publish).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "unavailable", text: null }),
+      expect.objectContaining({ status: "unavailable" }),
     );
     expect(session.isAuthorized()).toBe(false);
   });
 
-  it("fails closed on mismatched identity and invalid saved body", async () => {
-    for (const patch of [{ id: "foreign" }, { body: " " }]) {
+  it("fails closed on mismatched identity and invalid saved document", async () => {
+    for (const patch of [
+      { id: "foreign" },
+      { document: { version: 2, blocks: [] } },
+    ]) {
       const { session, load, publish } = setup();
-      load.mockResolvedValue({ ...slide, ...patch });
+      load.mockResolvedValue({ ...slide, ...patch } as unknown as SlideRecord);
       await session.start();
       expect(publish).toHaveBeenLastCalledWith(
-        expect.objectContaining({ status: "unavailable", text: null }),
+        expect.objectContaining({ status: "unavailable" }),
       );
     }
     const { session, load, publish } = setup();
@@ -144,7 +151,7 @@ describe("saved Slide audience lifetime", () => {
     load.mockResolvedValue({ ...slide, id: "foreign" });
     await session.verify();
     expect(publish).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "unavailable", text: null }),
+      expect.objectContaining({ status: "unavailable" }),
     );
   });
 });

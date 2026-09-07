@@ -9,9 +9,9 @@ import {
 
 describe("SlideTextDocument", () => {
   it("round-trips leading, trailing and repeated LF exactly", () => {
-    const body = "\n一行目\n\nSecond\n";
-    const document = slideTextDocumentFromPlainText(body);
-    expect(flattenSlideTextDocument(document)).toBe(body);
+    const text = "\n一行目\n\nSecond\n";
+    const document = slideTextDocumentFromPlainText(text);
+    expect(flattenSlideTextDocument(document)).toBe(text);
     expect(document.blocks[0]).toMatchObject({
       type: "paragraph",
       alignment: "left",

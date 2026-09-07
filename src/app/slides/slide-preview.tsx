@@ -8,8 +8,7 @@ import type { SlideTextDocument } from "@/domain/slides/text-document";
 export function SlidePreview(
   props:
     | {
-        text: string;
-        document?: SlideTextDocument | undefined;
+        document: SlideTextDocument;
         verticalAlignment?: SlideVerticalAlignment | undefined;
       }
     | { imageSrc: string; title: string },
@@ -23,7 +22,6 @@ export function SlidePreview(
         <SlideImage src={props.imageSrc} title={props.title} />
       ) : (
         <SlideText
-          text={props.text}
           document={props.document}
           verticalAlignment={props.verticalAlignment}
         />

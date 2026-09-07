@@ -422,10 +422,11 @@ constraint triggers require one child for `IMAGE` and none for `TEXT` at commit.
 Church row locking serializes quota-changing writes.
 
 `text_document` permits only the application-owned versioned shape described by
-ADR 0017. Application reads strictly validate it and derive the plain-text API
-view by flattening it. The migrated `body` column and its old-writer rollback
-trigger were removed after migration completion; image Slides always have a
-null document.
+ADR 0017. Application reads strictly validate it and return the document without
+a parallel plain-text field. Plain text is flattened locally only for operations
+that require it. The migrated `body` column and its old-writer rollback trigger
+were removed after migration completion; image Slides always have a null
+document.
 `vertical_alignment` is an application-owned Slide setting rather than part of
 `text_document`. The PostgreSQL enum rejects arbitrary values; the named CHECK
 rejects the setting on image Slides. New text writes store a value, while the

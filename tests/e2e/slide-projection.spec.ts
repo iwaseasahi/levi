@@ -4,7 +4,7 @@ import { storedSlideText } from "../helpers/slide-document";
 import { expect, test } from "./scripture-fixture";
 import { loginToScripture, selectGenesis } from "./scripture-helpers";
 
-test("saved slides project the complete body, acknowledge controls, reauthorize and reuse scripture projector", async ({
+test("saved slides project the complete document, acknowledge controls, reauthorize and reuse scripture projector", async ({
   context,
   page,
   scriptureAccount,

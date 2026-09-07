@@ -5,9 +5,13 @@ import { createSlideService } from "@/application/slides/manage-slides";
 import { createSlideHandlers } from "@/app/api/church/slides/controller";
 import { prisma } from "@/infrastructure/database/client";
 import { slideRepository } from "@/infrastructure/database/slide-repository";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 
 const prefix = "test.slide-crud.";
-const input = { title: "Synthetic", body: "Synthetic body" };
+const input = {
+  title: "Synthetic",
+  document: slideTextDocumentFromPlainText("Synthetic text"),
+};
 const service = createSlideService(slideRepository);
 async function scope() {
   const church = await prisma.church.create({
@@ -61,10 +65,10 @@ describe("scoped Slide persistence", () => {
       document,
     });
     expect(created).toMatchObject({
-      body: "Welcome\nFirst",
       document,
       verticalAlignment: "center",
     });
+    expect(created).not.toHaveProperty("body");
     expect(
       await prisma.slide.findUniqueOrThrow({ where: { id: created.id } }),
     ).toMatchObject({ textDocument: document, verticalAlignment: "CENTER" });
@@ -95,7 +99,7 @@ describe("scoped Slide persistence", () => {
     });
   });
 
-  it("persists selected-range sizes and derives plain text without a body column", async () => {
+  it("persists and returns selected-range sizes without a body field", async () => {
     const owner = await scope();
     const document = {
       version: 2 as const,
@@ -124,7 +128,8 @@ describe("scoped Slide persistence", () => {
       title: "Rich synthetic",
       document,
     });
-    expect(created).toMatchObject({ body: "Normal large", document });
+    expect(created).toMatchObject({ document });
+    expect(created).not.toHaveProperty("body");
 
     const stored = await prisma.slide.findUniqueOrThrow({
       where: { id: created.id },
@@ -132,7 +137,6 @@ describe("scoped Slide persistence", () => {
     expect(stored).not.toHaveProperty("body");
     expect(stored.textDocument).toEqual(document);
     expect(await service.get(owner, created.id)).toMatchObject({
-      body: "Normal large",
       document,
     });
   });
@@ -141,11 +145,11 @@ describe("scoped Slide persistence", () => {
     const owner = await scope();
     const created = await service.create(owner, {
       title: " Synthetic ",
-      body: "A\r\nB",
+      document: slideTextDocumentFromPlainText("A\nB"),
     });
     expect(created).toMatchObject({
       title: "Synthetic",
-      body: "A\nB",
+      document: slideTextDocumentFromPlainText("A\nB"),
       revision: 1,
     });
     expect(created).not.toHaveProperty("churchId");
@@ -251,13 +255,6 @@ describe("scoped Slide persistence", () => {
     await expect(
       slideRepository.update(owner, row.id, 1, {
         ...input,
-        body: "invalid\rbody",
-        verticalAlignment: "center",
-      }),
-    ).rejects.toThrow();
-    await expect(
-      slideRepository.update(owner, row.id, 1, {
-        ...input,
         verticalAlignment: "center",
         document: {
           version: 2,
@@ -266,13 +263,13 @@ describe("scoped Slide persistence", () => {
               type: "paragraph",
               alignment: "left",
               content: [
-                { type: "text", text: "Different", size: 100, marks: [] },
+                { type: "text", text: "invalid\rtext", size: 100, marks: [] },
               ],
             },
           ],
         },
       }),
-    ).rejects.toThrow("does not match body");
+    ).rejects.toThrow();
     expect(await service.get(owner, row.id)).toEqual(row);
     await prisma.slide.update({
       where: { id: row.id },

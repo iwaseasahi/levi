@@ -16,10 +16,11 @@ const scope = {
 } as ChurchScope;
 const input = {
   title: "Synthetic title",
-  body: "Synthetic body",
+  document: slideTextDocumentFromPlainText("Synthetic text"),
 };
 const record = {
   ...input,
+  verticalAlignment: "center" as const,
   id,
   revision: 1,
   createdAt: "2026-08-31T00:00:00.000Z",
@@ -70,15 +71,14 @@ describe("Slide HTTP boundary and scoped service", () => {
     const created = await handlers.create(
       request("POST", {
         title: "  Synthetic title\r\n",
-        body: "Synthetic\r\nbody",
+        document: slideTextDocumentFromPlainText("Synthetic\ntext"),
       }),
     );
     expect(created.status).toBe(201);
     expect(created.headers.get("cache-control")).toBe("no-store");
     expect(repository.create).toHaveBeenCalledWith(scope, {
-      ...input,
-      body: "Synthetic\nbody",
-      document: slideTextDocumentFromPlainText("Synthetic\nbody"),
+      title: input.title,
+      document: slideTextDocumentFromPlainText("Synthetic\ntext"),
       verticalAlignment: "center",
     });
     await expect(created.json()).resolves.toEqual({ slide: record });
@@ -91,7 +91,6 @@ describe("Slide HTTP boundary and scoped service", () => {
     expect(updated.status).toBe(200);
     expect(repository.update).toHaveBeenCalledWith(scope, id, 1, {
       ...input,
-      document: slideTextDocumentFromPlainText(input.body),
       verticalAlignment: "center",
     });
     const deleted = await handlers.delete(
@@ -151,8 +150,26 @@ describe("Slide HTTP boundary and scoped service", () => {
     [{ ...input, id }, {}],
     [{ ...input, revision: 2 }, {}],
     [{ ...input, author: "legacy attribution" }, {}],
-    [{ ...input, body: "\ud800" }, {}],
-    [{ ...input, body: "bad\0text" }, {}],
+    [{ title: input.title, body: "legacy text" }, {}],
+    [{ ...input, body: "legacy text" }, {}],
+    [
+      {
+        ...input,
+        document: {
+          version: 2,
+          blocks: [
+            {
+              type: "paragraph",
+              alignment: "left",
+              content: [
+                { type: "text", text: "bad\0text", size: 100, marks: [] },
+              ],
+            },
+          ],
+        },
+      },
+      {},
+    ],
     [{ ...input, verticalAlignment: "baseline" }, {}],
   ] as const)(
     "rejects unsupported, oversized or malformed input (case %#)",
@@ -255,13 +272,15 @@ describe("Slide HTTP boundary and scoped service", () => {
     expect((await send([new Uint8Array([255])])).status).toBe(400);
     expect(repository.create).not.toHaveBeenCalled();
     const bytes = new TextEncoder().encode(
-      JSON.stringify({ ...input, body: "😀日本語" }),
+      JSON.stringify({
+        ...input,
+        document: slideTextDocumentFromPlainText("😀日本語"),
+      }),
     );
     const chunks = Array.from(bytes, (byte) => new Uint8Array([byte]));
     expect((await send(chunks)).status).toBe(201);
     expect(repository.create).toHaveBeenCalledWith(scope, {
       ...input,
-      body: "😀日本語",
       document: slideTextDocumentFromPlainText("😀日本語"),
       verticalAlignment: "center",
     });

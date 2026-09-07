@@ -13,15 +13,13 @@ type SlideRecordBase = {
 };
 
 export type TextSlideRecord = SlideRecordBase & {
-  body: string;
-  document?: SlideTextDocument;
+  document: SlideTextDocument;
   verticalAlignment: SlideVerticalAlignment;
   contentType?: "text";
   image?: never;
 };
 
 export type ImageSlideRecord = SlideRecordBase & {
-  body: null;
   contentType: "image";
   image: Omit<SlideImageMetadata, "checksum">;
 };

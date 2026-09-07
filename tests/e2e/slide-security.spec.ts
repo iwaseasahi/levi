@@ -1,11 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/infrastructure/database/client";
+import { slideTextDocumentFromPlainText } from "@/domain/slides/text-document";
 import { storedSlideText } from "../helpers/slide-document";
 import { test, expect } from "./scripture-fixture";
 import { loginToScripture } from "./scripture-helpers";
 
 const headers = { Origin: "http://127.0.0.1:3100" };
-const input = { title: "Synthetic audit", body: "Synthetic audit body" };
+const protectedText = "Synthetic audit text";
+const input = {
+  title: "Synthetic audit",
+  document: slideTextDocumentFromPlainText(protectedText),
+};
 
 test("Slide routes reject foreign identity, forged scope and reused cursors without metadata disclosure", async ({
   context,
@@ -20,7 +25,7 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
   try {
     const row = await prisma.slide.create({
       data: {
-        ...storedSlideText(input.body),
+        ...storedSlideText(protectedText),
         churchId: foreign.id,
         title: "Synthetic foreign title",
       },
@@ -107,11 +112,13 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
       // no-cache/must-revalidate. Protected Slide API payloads above are no-store.
       expect(result?.headers()["cache-control"]).toContain("no-cache");
       const shell = await result!.text();
-      for (const value of [row.title, input.body])
+      for (const value of [row.title, protectedText])
         expect(shell).not.toContain(value);
       await expect(page.getByRole("main").getByRole("alert")).toBeVisible();
       await expect(page.getByText(row.title, { exact: true })).toHaveCount(0);
-      await expect(page.getByText(input.body, { exact: true })).toHaveCount(0);
+      await expect(page.getByText(protectedText, { exact: true })).toHaveCount(
+        0,
+      );
     }
     expect(await prisma.slide.findUnique({ where: { id: row.id } })).toEqual(
       row,
