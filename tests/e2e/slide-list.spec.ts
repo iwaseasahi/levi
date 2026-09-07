@@ -11,16 +11,18 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
 }, testInfo) => {
   const date = new Date("2026-08-31T00:00:00Z");
   const longTitle = "長いスライドタイトル".repeat(15);
+  const syntheticSlides = Array.from({ length: 24 }, (_, index) => ({
+    id: `48600000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+    churchId: scriptureAccount.churchId,
+    title: `Synthetic ${String(index).padStart(2, "0")}`,
+    body: "Ordinary body",
+    createdAt: date,
+    updatedAt: date,
+  }));
   await prisma.slide.createMany({
-    data: Array.from({ length: 24 }, (_, index) => ({
-      churchId: scriptureAccount.churchId,
-      title: `Synthetic ${String(index).padStart(2, "0")}`,
-      body: "Ordinary body",
-      createdAt: date,
-      updatedAt: date,
-    })),
+    data: syntheticSlides,
   });
-  await prisma.slide.create({
+  const imageSlide = await prisma.slide.create({
     data: {
       churchId: scriptureAccount.churchId,
       title: longTitle,
@@ -71,12 +73,16 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
     await expect(list.getByRole("link").first()).toHaveAccessibleName(
       `画像 ${longTitle}`,
     );
-    await expect(
-      list.getByRole("link", { name: "テキスト Synthetic 23", exact: true }),
-    ).toBeVisible();
     const first = await list
       .getByRole("link")
       .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+    expect(first).toEqual([
+      `/slides/${imageSlide.id}`,
+      ...syntheticSlides
+        .slice(5)
+        .reverse()
+        .map((slide) => `/slides/${slide.id}`),
+    ]);
     await expect(list.getByText("Foreign synthetic")).toHaveCount(0);
     for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 900 });
@@ -113,6 +119,12 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
     const second = await list
       .getByRole("link")
       .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+    expect(second).toEqual(
+      syntheticSlides
+        .slice(0, 5)
+        .reverse()
+        .map((slide) => `/slides/${slide.id}`),
+    );
     expect(new Set([...first, ...second]).size).toBe(25);
     await expect(page.getByRole("button", { name: "次の20件" })).toBeDisabled();
     await page.getByRole("button", { name: "前の20件" }).click();
