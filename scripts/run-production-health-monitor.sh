@@ -4,6 +4,7 @@ set -uo pipefail
 readonly webhook_url="${LEVI_SLACK_WEBHOOK_URL:-}"
 readonly production_state_root="/var/lib/levi-monitoring"
 readonly production_health_script="/opt/levi/scripts/check-production-health.sh"
+readonly production_lifecycle_script="/opt/levi/scripts/record-production-container-lifecycle.sh"
 
 if [[ "${EUID}" -ne 0 && "${LEVI_ALLOW_NON_ROOT_FOR_REHEARSAL:-false}" != "true" ]]; then
   echo "Production health monitoring must run as root." >&2
@@ -12,11 +13,13 @@ fi
 
 state_root="$production_state_root"
 health_script="$production_health_script"
+lifecycle_script="$production_lifecycle_script"
 if [[ "${LEVI_ALLOW_TEST_OVERRIDES:-false}" == "true" ]]; then
   state_root="${LEVI_MONITORING_STATE_ROOT:-$state_root}"
   health_script="${LEVI_HEALTH_CHECK_SCRIPT:-$health_script}"
+  lifecycle_script="${LEVI_CONTAINER_LIFECYCLE_SCRIPT:-$lifecycle_script}"
 fi
-readonly state_root health_script
+readonly state_root health_script lifecycle_script
 readonly incident_marker="${state_root}/health-failed"
 
 mkdir -p "$state_root"
@@ -42,11 +45,24 @@ notify_slack() {
     "$webhook_url" >/dev/null
 }
 
-health_output="$(mktemp)"
-trap 'rm -f "$health_output"' EXIT HUP INT TERM
+monitor_output="$(mktemp)"
+trap 'rm -f "$monitor_output"' EXIT HUP INT TERM
 
-if "$health_script" >"$health_output" 2>&1; then
-  cat "$health_output"
+health_status=0
+if "$health_script" >"$monitor_output" 2>&1; then
+  health_status=0
+else
+  health_status="$?"
+fi
+lifecycle_status=0
+if "$lifecycle_script" >>"$monitor_output" 2>&1; then
+  lifecycle_status=0
+else
+  lifecycle_status="$?"
+fi
+
+if (( health_status == 0 && lifecycle_status == 0 )); then
+  cat "$monitor_output"
   if [[ -f "$incident_marker" ]]; then
     if notify_slack ":large_green_circle: Levi productionの内部監視が復旧しました。"; then
       rm -f "$incident_marker"
@@ -57,11 +73,9 @@ if "$health_script" >"$health_output" 2>&1; then
     fi
   fi
   exit 0
-else
-  health_status=$?
 fi
 
-cat "$health_output" >&2
+cat "$monitor_output" >&2
 if [[ ! -f "$incident_marker" ]]; then
   if notify_slack ":red_circle: Levi productionの内部監視で異常を検知しました。VPSのsystemd journalを確認してください。"; then
     : >"$incident_marker"
@@ -71,4 +85,7 @@ if [[ ! -f "$incident_marker" ]]; then
     echo "Production health check and Slack incident notification both failed." >&2
   fi
 fi
-exit "$health_status"
+if (( health_status != 0 )); then
+  exit "$health_status"
+fi
+exit "$lifecycle_status"

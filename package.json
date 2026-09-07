@@ -44,6 +44,7 @@
     "backup:config:check": "tsx scripts/check-backup-configuration.ts",
     "deployment:config:check": "tsx scripts/check-deployment-configuration.ts",
     "monitoring:config:check": "tsx scripts/check-monitoring-configuration.ts",
+    "monitoring:lifecycle:rehearse": "bash scripts/rehearse-production-container-lifecycle.sh",
     "production:release:prepare": "bash scripts/prepare-production-release.sh",
     "production:release:deploy": "bash scripts/deploy-production-release.sh",
     "production:deploy:authorized": "bash scripts/run-authorized-production-deploy.sh",
