@@ -238,17 +238,41 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   ).toBeVisible();
   await page.getByRole("link", { name: "スライドの一覧", exact: true }).click();
   await expect(page).toHaveURL(/\/slides$/);
+  await expect(
+    page.getByRole("heading", { name: "スライドの一覧", exact: true }),
+  ).toBeVisible();
   const sidebar = page.locator("#bookmark_container");
   await expect(sidebar).toBeVisible();
+  const savedContent = sidebar.getByRole("region", {
+    name: "フォルダーとお気に入り",
+  });
+  await expect(savedContent).toHaveAttribute("aria-busy", "false");
   const folder = sidebar.getByRole("button", {
     name: "Synthetic sidebar folder",
     exact: true,
   });
   await expect(folder).toHaveAttribute("aria-expanded", "true");
+  await expect(folder).toBeEnabled();
   await folder.click();
   await expect(folder).toHaveAttribute("aria-expanded", "false");
+  const folderId = (await folder.getAttribute("aria-controls"))?.replace(
+    "folder-content-",
+    "",
+  );
+  expect(folderId).toBeTruthy();
+  const folderRead = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return (
+      response.request().method() === "GET" &&
+      url.pathname === "/api/saved-content" &&
+      url.searchParams.get("folderId") === folderId
+    );
+  });
   await folder.click();
+  expect((await folderRead).ok()).toBe(true);
+  await expect(savedContent).toHaveAttribute("aria-busy", "false");
   await expect(folder).toHaveAttribute("aria-expanded", "true");
+  await expect(folder).toBeEnabled();
   await expect(
     sidebar.getByRole("link", { name: "フォルダの一覧", exact: true }),
   ).toHaveAttribute("href", "/folders");
