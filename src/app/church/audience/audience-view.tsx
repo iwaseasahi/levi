@@ -6,13 +6,14 @@ const JSS3_ATTRIBUTION = "聖書 新改訳 ©︎2003 日本聖書刊行会";
 
 function references(item: ScriptureSearchItem) {
   const location = `${item.location.chapter}:${item.location.verse}`;
-  const englishBook = item.location.book.replace(
+  const fallbackEnglishBook = item.location.book.replace(
     /[A-Z]+/g,
     (part) => `${part[0]}${part.slice(1).toLowerCase()}`,
   );
   return {
-    english: item.texts.english ? englishBook : null,
-    fallback: !item.texts.japanese && !item.texts.english ? englishBook : null,
+    english: item.texts.english?.bookName ?? null,
+    fallback:
+      !item.texts.japanese && !item.texts.english ? fallbackEnglishBook : null,
     japanese: item.texts.japanese?.bookName ?? null,
     location,
   };

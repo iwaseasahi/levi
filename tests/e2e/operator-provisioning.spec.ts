@@ -478,9 +478,7 @@ test.describe("operator church provisioning", () => {
     );
     await page.getByRole("link", { name: "聖書検索へ戻る" }).click();
     await expect(page).toHaveURL(/\/scripture$/);
-    await expect(
-      page.getByRole("radio", { name: "創世記/Genesis" }),
-    ).toBeVisible();
+    await expect(page.getByRole("radio", { name: "創世記/GEN" })).toBeVisible();
 
     await page.getByRole("button", { name: "設定" }).click();
     await page.getByRole("link", { name: "メールアドレスを変更" }).click();
@@ -579,9 +577,7 @@ test.describe("operator church provisioning", () => {
     await page.getByLabel("パスワード", { exact: true }).fill(password);
     await page.getByRole("button", { name: "ログイン" }).click();
     await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
-    await expect(
-      page.getByRole("radio", { name: "創世記/Genesis" }),
-    ).toBeVisible();
+    await expect(page.getByRole("radio", { name: "創世記/GEN" })).toBeVisible();
   });
 });
 

@@ -13,14 +13,14 @@ test("recovers the audience after reload, close, and reopen", async ({
   });
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:1",
+      name: "創世記 / GEN 1:1",
     }),
   ).toBeVisible();
 
   await audience.reload();
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:1",
+      name: "創世記 / GEN 1:1",
     }),
   ).toBeVisible();
 

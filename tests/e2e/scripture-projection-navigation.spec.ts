@@ -59,7 +59,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await expect(page.getByRole("heading", { name: "投影操作" })).toHaveCount(0);
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:1",
+      name: "創世記 / GEN 1:1",
     }),
   ).toBeVisible();
   await expect(
@@ -256,13 +256,13 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await toggleBlank.click();
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:2",
+      name: "創世記 / GEN 1:2",
     }),
   ).toBeVisible();
   await previous.click();
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:1",
+      name: "創世記 / GEN 1:1",
     }),
   ).toBeVisible();
 
@@ -271,13 +271,13 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await page.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:2",
+      name: "創世記 / GEN 1:2",
     }),
   ).toBeVisible();
   await page.keyboard.press("ArrowUp");
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:1",
+      name: "創世記 / GEN 1:1",
     }),
   ).toBeVisible();
 
@@ -313,13 +313,13 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await next.click();
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:2",
+      name: "創世記 / GEN 1:2",
     }),
   ).toBeVisible();
   await previous.click();
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:1",
+      name: "創世記 / GEN 1:1",
     }),
   ).toBeVisible();
   expect(
@@ -335,7 +335,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   );
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:2",
+      name: "創世記 / GEN 1:2",
     }),
   ).toBeVisible();
   expect(
@@ -349,7 +349,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   );
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:1",
+      name: "創世記 / GEN 1:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
@@ -360,37 +360,37 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 2:1",
+      name: "創世記 / GEN 2:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowUp");
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 1:3",
+      name: "創世記 / GEN 1:3",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 2:1",
+      name: "創世記 / GEN 2:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 2:2",
+      name: "創世記 / GEN 2:2",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "出エジプト記 / Exo 1:1",
+      name: "出エジプト記 / EX 1:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowUp");
   await expect(
     audience.getByRole("heading", {
-      name: "創世記 / Gen 2:2",
+      name: "創世記 / GEN 2:2",
     }),
   ).toBeVisible();
 

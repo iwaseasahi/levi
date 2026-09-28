@@ -234,7 +234,7 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   await selectGenesis(page, { endVerse: "" });
   await page.getByRole("button", { name: "お気に入りに追加" }).click();
   await expect(
-    page.getByRole("link", { name: "創世記/Genesis 1:1", exact: true }),
+    page.getByRole("link", { name: "創世記/GEN 1:1", exact: true }),
   ).toBeVisible();
   await page.getByRole("link", { name: "スライドの一覧", exact: true }).click();
   await expect(page).toHaveURL(/\/slides$/);
@@ -333,7 +333,7 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   await folder.click();
   const pagesBefore = context.pages().length;
   const bookmark = sidebar.getByRole("link", {
-    name: "創世記/Genesis 1:1",
+    name: "創世記/GEN 1:1",
     exact: true,
   });
   await bookmark.focus();
@@ -341,9 +341,7 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
   await expect(page).toHaveURL(
     /\/scripture\?book=GEN&chapter=1&startVerse=1&language=both$/,
   );
-  await expect(
-    page.getByRole("radio", { name: "創世記/Genesis" }),
-  ).toBeChecked();
+  await expect(page.getByRole("radio", { name: "創世記/GEN" })).toBeChecked();
   await expect(page.getByLabel("章")).toHaveValue("1");
   await expect(page.getByLabel("開始節")).toHaveValue("1");
   await expect(page.getByLabel("終了節（省略可）")).toHaveValue("");
