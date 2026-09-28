@@ -33,7 +33,7 @@ remaining viewport as the measured body region. The current location is a
 larger, left-aligned, single-line heading. Bilingual locations use the compact
 `日本語書巻名 / EnglishAbbrev 章:節` form, for example `創世記 / Gen 1:1`;
 single-language locations omit the unavailable name and separator. The exact
-single-line JSS3 attribution `聖書 新改訳 ©️2003 日本聖書刊行会` is smaller and
+single-line JSS3 attribution `聖書 新改訳 ©︎2003 日本聖書刊行会` is smaller and
 right-aligned. Both labels scale down at compact widths instead of wrapping.
 Japanese and English body lines use a one-em grid gap without outer paragraph
 margins, preserving the legacy visual separation while retaining the expanded

@@ -2,7 +2,7 @@ import type { CSSProperties, RefObject } from "react";
 import type { ScriptureSearchItem } from "@/domain/scripture/search";
 import type { AudienceStatus } from "./use-audience-data";
 
-const JSS3_ATTRIBUTION = "聖書 新改訳 ©️2003 日本聖書刊行会";
+const JSS3_ATTRIBUTION = "聖書 新改訳 ©︎2003 日本聖書刊行会";
 
 function references(item: ScriptureSearchItem) {
   const location = `${item.location.chapter}:${item.location.verse}`;

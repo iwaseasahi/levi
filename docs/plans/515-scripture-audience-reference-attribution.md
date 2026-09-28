@@ -27,7 +27,8 @@ body at supported viewport sizes.
 
 ## Constraints
 
-- Render the exact attribution `聖書 新改訳 ©️2003 日本聖書刊行会`.
+- Render the attribution `聖書 新改訳 ©︎2003 日本聖書刊行会`, using the text
+  presentation selector so the copyright mark inherits the surrounding color.
 - Preserve body content, verse number, Japanese-English order, colors, shadow,
   font controls, measured fitting, navigation, blanking, authorization, and
   fail-closed behavior.
@@ -82,6 +83,9 @@ body at supported viewport sizes.
 - 2026-09-28 JST — Committed the reviewed patch as `7004ec7`, pushed
   `codex/issue-515`, and opened draft PR #518 with the verification evidence and
   follow-up blockers recorded below.
+- 2026-09-28 JST — At the user's request, changed the copyright mark from emoji
+  presentation (`©️`) to text presentation (`©︎`) so it renders in the same
+  yellow as the rest of the attribution.
 
 ## Decisions
 

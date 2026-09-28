@@ -63,7 +63,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     }),
   ).toBeVisible();
   await expect(
-    audience.getByText("聖書 新改訳 ©️2003 日本聖書刊行会"),
+    audience.getByText("聖書 新改訳 ©︎2003 日本聖書刊行会"),
   ).toBeVisible();
 
   const projectedLines = audience.locator(".audience-book-word");

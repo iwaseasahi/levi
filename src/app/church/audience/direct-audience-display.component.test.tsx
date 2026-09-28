@@ -100,7 +100,7 @@ describe("DirectAudienceDisplay", () => {
         name: "創世記 / Gen 1:1",
       }),
     ).toBeVisible();
-    expect(screen.getByText("聖書 新改訳 ©️2003 日本聖書刊行会")).toBeVisible();
+    expect(screen.getByText("聖書 新改訳 ©︎2003 日本聖書刊行会")).toBeVisible();
 
     act(() =>
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown" })),
@@ -139,7 +139,7 @@ describe("DirectAudienceDisplay", () => {
     expect(
       await screen.findByRole("heading", { name: example.expected }),
     ).toBeVisible();
-    expect(screen.getByText("聖書 新改訳 ©️2003 日本聖書刊行会")).toBeVisible();
+    expect(screen.getByText("聖書 新改訳 ©︎2003 日本聖書刊行会")).toBeVisible();
   });
 
   it("starts a scripture audience at the saved default font size", async () => {
@@ -288,7 +288,7 @@ describe("DirectAudienceDisplay", () => {
     expect(screen.getByRole("main", { name: "空白投影" })).toBeVisible();
     expect(screen.queryByText("架空の日本語 1:1")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("聖書 新改訳 ©️2003 日本聖書刊行会"),
+      screen.queryByText("聖書 新改訳 ©︎2003 日本聖書刊行会"),
     ).not.toBeInTheDocument();
     act(() => send("next"));
     await waitFor(() =>
@@ -350,7 +350,7 @@ describe("DirectAudienceDisplay", () => {
     ).toBeVisible();
     expect(screen.queryByText("架空の日本語 1:1")).not.toBeInTheDocument();
     expect(
-      screen.queryByText("聖書 新改訳 ©️2003 日本聖書刊行会"),
+      screen.queryByText("聖書 新改訳 ©︎2003 日本聖書刊行会"),
     ).not.toBeInTheDocument();
   });
 
