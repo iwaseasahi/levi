@@ -97,7 +97,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   );
   await favoriteButton.click();
   const genesisBookmark = page.getByRole("link", {
-    name: "創世記/Genesis 1:1",
+    name: "創世記/GEN 1:1",
     exact: true,
   });
   await expect(genesisBookmark).toBeVisible();
@@ -111,7 +111,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
     ).violations,
   ).toEqual([]);
 
-  await page.getByRole("radio", { name: "出エジプト記/Exodus" }).click();
+  await page.getByRole("radio", { name: "出エジプト記/EX" }).click();
   await page.getByLabel("章").fill("1");
   await expect(page.getByLabel("開始節")).toBeEnabled();
   await page.getByLabel("開始節").fill("1");
@@ -124,11 +124,11 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   await bookmarkRows.nth(1).dragTo(bookmarkRows.nth(0));
   const bookmarks = page.locator(".bookmark-list");
   await expect(bookmarks.getByRole("listitem").first()).toContainText(
-    "出エジプト記/Exodus 1:1-1",
+    "出エジプト記/EX 1:1-1",
   );
   await bookmarks.getByRole("listitem").nth(1).press("Alt+ArrowUp");
   await expect(bookmarks.getByRole("listitem").first()).toContainText(
-    "創世記/Genesis 1:1",
+    "創世記/GEN 1:1",
   );
 
   await createFolderToggle.click();
@@ -246,9 +246,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   await genesisBookmark.click();
   await expect(page).toHaveURL(/\/scripture$/);
   expect(context.pages()).toHaveLength(pageCountBeforeBookmark);
-  await expect(
-    page.getByRole("radio", { name: "創世記/Genesis" }),
-  ).toBeChecked();
+  await expect(page.getByRole("radio", { name: "創世記/GEN" })).toBeChecked();
   await expect(page.getByLabel("章")).toHaveValue("1");
   await expect(page.getByLabel("開始節")).toHaveValue("1");
   await expect(page.getByLabel("終了節（省略可）")).toHaveValue("");
@@ -264,7 +262,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   );
   await expect(
     bookmarkedAudience.getByRole("heading", {
-      name: "創世記 / Gen 1:1",
+      name: "創世記 / GEN 1:1",
     }),
   ).toBeVisible();
   await bookmarkedAudience.close();

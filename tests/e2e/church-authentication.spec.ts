@@ -14,9 +14,7 @@ async function login(page: import("@playwright/test").Page) {
   // Better Auth's scrypt verification can consume most of Playwright's
   // default assertion budget on a two-core CI runner.
   await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
-  await expect(
-    page.getByRole("radio", { name: "創世記/Genesis" }),
-  ).toBeVisible();
+  await expect(page.getByRole("radio", { name: "創世記/GEN" })).toBeVisible();
 }
 
 const expectedUnauthorizedResourceError =
@@ -39,13 +37,11 @@ test.describe("Church session lifecycle", () => {
     await scriptureSearchLink.click();
     await expect(page).toHaveURL(/\/scripture$/);
     await page.reload();
-    await expect(
-      page.getByRole("radio", { name: "創世記/Genesis" }),
-    ).toBeVisible();
+    await expect(page.getByRole("radio", { name: "創世記/GEN" })).toBeVisible();
     const second = await context.newPage();
     await second.goto("/scripture");
     await expect(
-      second.getByRole("radio", { name: "創世記/Genesis" }),
+      second.getByRole("radio", { name: "創世記/GEN" }),
     ).toBeVisible();
     const settings = page.getByRole("button", { name: "設定" });
     await expect(settings).toHaveAttribute("aria-expanded", "false");

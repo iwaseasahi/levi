@@ -27,7 +27,7 @@ function item(
         ? {}
         : {
             english: {
-              bookName: book === "GEN" ? "Genesis" : "Exodus",
+              bookName: book === "GEN" ? "GEN" : "EX",
               text: `Synthetic English ${chapter}:${verse}`,
               translation: "NKJV" as const,
             },
@@ -97,7 +97,7 @@ describe("DirectAudienceDisplay", () => {
     expect(lines[1]).toHaveAttribute("lang", "en");
     expect(
       screen.getByRole("heading", {
-        name: "創世記 / Gen 1:1",
+        name: "創世記 / GEN 1:1",
       }),
     ).toBeVisible();
     expect(screen.getByText("聖書 新改訳 ©︎2003 日本聖書刊行会")).toBeVisible();
@@ -119,7 +119,7 @@ describe("DirectAudienceDisplay", () => {
 
   it.each([
     { expected: "創世記 1:1", language: "ja" as const },
-    { expected: "Gen 1:1", language: "en" as const },
+    { expected: "GEN 1:1", language: "en" as const },
   ])("renders only the $language location when selected", async (example) => {
     vi.stubGlobal(
       "fetch",
@@ -203,7 +203,7 @@ describe("DirectAudienceDisplay", () => {
     expect(await screen.findByText("架空の日本語 1:1")).toBeVisible();
     expect(
       screen.getByRole("heading", {
-        name: "出エジプト記 / Exo 1:1",
+        name: "出エジプト記 / EX 1:1",
       }),
     ).toBeVisible();
   });

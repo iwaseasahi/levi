@@ -149,7 +149,7 @@ test("saved slides project the complete document, acknowledge controls, reauthor
   await selectGenesis(page);
   await page.getByRole("button", { name: "Open", exact: true }).click();
   await expect(
-    audience.getByRole("heading", { name: "創世記 / Gen 1:1" }),
+    audience.getByRole("heading", { name: "創世記 / GEN 1:1" }),
   ).toBeVisible();
   await page.goto(`/slides/${slide.id}`);
   await controller.getByRole("button", { name: "Open" }).click();
