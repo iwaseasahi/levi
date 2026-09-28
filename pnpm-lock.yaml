@@ -76,8 +76,8 @@ importers:
         specifier: 16.3.3
         version: 16.3.3(@babel/core@7.29.7(supports-color@7.2.0))(@playwright/test@1.62.1)(@types/node@24.13.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       nodemailer:
-        specifier: 9.0.6
-        version: 9.0.6
+        specifier: 10.0.10
+        version: 10.0.10
       pg:
         specifier: 8.23.0
         version: 8.23.0
@@ -112,9 +112,6 @@ importers:
       "@types/node":
         specifier: ^24
         version: 24.13.3
-      "@types/nodemailer":
-        specifier: 8.0.1
-        version: 8.0.1
       "@types/pg":
         specifier: 8.23.1
         version: 8.23.1
@@ -2075,12 +2072,6 @@ packages:
     resolution:
       {
         integrity: sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q==,
-      }
-
-  "@types/nodemailer@8.0.1":
-    resolution:
-      {
-        integrity: sha512-PxpaInm8V1JQDd4j0ds5HfvWQk8JupS1C0Picb96QJsrrRDjBH+DlK7L4ZdNSqNULhiZRQHc40nLVShaGxXAMw==,
       }
 
   "@types/pg@8.23.1":
@@ -4656,12 +4647,12 @@ packages:
       }
     engines: { node: ">=18" }
 
-  nodemailer@9.0.6:
+  nodemailer@10.0.10:
     resolution:
       {
-        integrity: sha512-IQUGFdhdGwI9+AWX+FpUt4DLmvFaOjTMEoneTIWX/RXxuy1TdenPwWrvFMSfLkPKl+HQEXWuSAxEMMbPYXtBmg==,
+        integrity: sha512-He9XskOFms62SyAKkLu8CcGcYHAo+BSHSsORI8s4PJH8qZgZY4L4lDfvyN0twvmbpyG+eGrxpyBlskj9d9rJ8A==,
       }
-    engines: { node: ">=6.0.0" }
+    engines: { node: ">=20.0.0" }
 
   object-assign@4.1.1:
     resolution:
@@ -7048,10 +7039,6 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
-  "@types/nodemailer@8.0.1":
-    dependencies:
-      "@types/node": 24.13.3
-
   "@types/pg@8.23.1":
     dependencies:
       "@types/node": 24.13.3
@@ -8765,7 +8752,7 @@ snapshots:
 
   node-releases@2.0.53: {}
 
-  nodemailer@9.0.6: {}
+  nodemailer@10.0.10: {}
 
   object-assign@4.1.1: {}
 
