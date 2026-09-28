@@ -264,7 +264,7 @@ test("creates, reorders, restores, edits, and deletes folders and bookmarks", as
   );
   await expect(
     bookmarkedAudience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:1",
+      name: "創世記 / Gen 1:1",
     }),
   ).toBeVisible();
   await bookmarkedAudience.close();

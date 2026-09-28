@@ -2,12 +2,20 @@ import type { CSSProperties, RefObject } from "react";
 import type { ScriptureSearchItem } from "@/domain/scripture/search";
 import type { AudienceStatus } from "./use-audience-data";
 
-function heading(item: ScriptureSearchItem) {
-  const bookName =
-    item.texts.japanese?.bookName ??
-    item.texts.english?.bookName ??
-    item.location.book;
-  return `新改訳聖書第3版 ${bookName} ${item.location.chapter}:${item.location.verse}`;
+const JSS3_ATTRIBUTION = "聖書 新改訳 ©︎2003 日本聖書刊行会";
+
+function references(item: ScriptureSearchItem) {
+  const location = `${item.location.chapter}:${item.location.verse}`;
+  const englishBook = item.location.book.replace(
+    /[A-Z]+/g,
+    (part) => `${part[0]}${part.slice(1).toLowerCase()}`,
+  );
+  return {
+    english: item.texts.english ? englishBook : null,
+    fallback: !item.texts.japanese && !item.texts.english ? englishBook : null,
+    japanese: item.texts.japanese?.bookName ?? null,
+    location,
+  };
 }
 
 export function AudienceView({
@@ -45,6 +53,7 @@ export function AudienceView({
       ? [{ language: "en" as const, text: current.texts.english.text }]
       : []),
   ];
+  const locationReferences = references(current);
 
   return (
     <main
@@ -60,7 +69,23 @@ export function AudienceView({
     >
       {blank ? null : (
         <>
-          <h1 className="audience-book-name">{heading(current)}</h1>
+          <header className="audience-header">
+            <h1 className="audience-book-name">
+              {locationReferences.japanese ? (
+                <span lang="ja">{locationReferences.japanese}</span>
+              ) : null}
+              {locationReferences.japanese && locationReferences.english
+                ? " / "
+                : null}
+              {locationReferences.english ? (
+                <span lang="en">{locationReferences.english}</span>
+              ) : null}
+              {locationReferences.fallback} {locationReferences.location}
+            </h1>
+            <p className="audience-attribution" lang="ja">
+              {JSS3_ATTRIBUTION}
+            </p>
+          </header>
           <article className="audience-content">
             <div className="audience-verse" ref={verseRef}>
               {translations.map((translation) => (

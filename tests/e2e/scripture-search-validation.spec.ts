@@ -303,6 +303,12 @@ test("validates the Ginmaku search form and projects each language mode", async 
       "In the beginning God created the heavens and the earth.",
     ),
   ).toHaveCount(0);
+  await expect(
+    japaneseAudience.getByRole("heading", { name: "創世記 1:1" }),
+  ).toBeVisible();
+  await expect(
+    japaneseAudience.getByText("聖書 新改訳 ©︎2003 日本聖書刊行会"),
+  ).toBeVisible();
   await japaneseAudience.close();
 
   const englishAudience = await openGenesisAudience(context, page, {
@@ -315,6 +321,12 @@ test("validates the Ginmaku search form and projects each language mode", async 
     englishAudience.getByText(
       "In the beginning God created the heavens and the earth.",
     ),
+  ).toBeVisible();
+  await expect(
+    englishAudience.getByRole("heading", { name: "Gen 1:1" }),
+  ).toBeVisible();
+  await expect(
+    englishAudience.getByText("聖書 新改訳 ©︎2003 日本聖書刊行会"),
   ).toBeVisible();
   await englishAudience.close();
 });
