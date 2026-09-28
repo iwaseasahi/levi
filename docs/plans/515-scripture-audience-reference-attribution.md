@@ -79,6 +79,9 @@ body at supported viewport sizes.
   and 33 other tests; an unrelated Slide sidebar expansion failure is recorded
   in #517. A newly reported high-severity `nodemailer@9.0.6` advisory blocks the
   local Security gate and is recorded in #516.
+- 2026-09-28 JST — Committed the reviewed patch as `7004ec7`, pushed
+  `codex/issue-515`, and opened draft PR #518 with the verification evidence and
+  follow-up blockers recorded below.
 
 ## Decisions
 
@@ -126,14 +129,17 @@ body at supported viewport sizes.
 ## Handoff or blockers
 
 - Completed: intake, implementation, documentation, focused/canonical local
-  verification, database checks, and final diff review.
-- Remaining: commit, PR, required CI, and merge.
+  verification, database checks, final diff review, commit, push, and draft PR
+  #518.
+- Remaining: resolve or disposition #516 and #517, run required exact-head CI,
+  move PR #518 out of draft, obtain human review, and merge.
 - Blocker: local Security gate cannot pass until #516 patches the independently
   vulnerable `nodemailer` dependency; full E2E also exposed #517 outside this
   Issue, while all changed scripture scenarios pass.
-- Resume with: commit the reviewed patch and open a draft PR linked to #515,
-  #516, and #517.
+- Resume with: address #516 first so the required Security gate can pass, then
+  confirm the full E2E result for #517 and re-run required checks on PR #518.
 
 ## Result
 
-Complete after implementation and exact-head verification.
+Implementation is complete in draft PR #518. Merge remains blocked on the
+recorded follow-up gates and exact-head CI.
