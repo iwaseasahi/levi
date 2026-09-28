@@ -14,20 +14,33 @@ const selection = {
   startVerse: 1,
 };
 
-function item(verse: number, book = "GEN", chapter = 1) {
+function item(
+  verse: number,
+  book = "GEN",
+  chapter = 1,
+  language: "ja" | "en" | "both" = "both",
+) {
   return {
     location: { book, chapter, verse },
     texts: {
-      english: {
-        bookName: book === "GEN" ? "Genesis" : "Exodus",
-        text: `Synthetic English ${chapter}:${verse}`,
-        translation: "NKJV" as const,
-      },
-      japanese: {
-        bookName: book === "GEN" ? "創世記" : "出エジプト記",
-        text: `架空の日本語 ${chapter}:${verse}`,
-        translation: "JSS3" as const,
-      },
+      ...(language === "ja"
+        ? {}
+        : {
+            english: {
+              bookName: book === "GEN" ? "Genesis" : "Exodus",
+              text: `Synthetic English ${chapter}:${verse}`,
+              translation: "NKJV" as const,
+            },
+          }),
+      ...(language === "en"
+        ? {}
+        : {
+            japanese: {
+              bookName: book === "GEN" ? "創世記" : "出エジプト記",
+              text: `架空の日本語 ${chapter}:${verse}`,
+              translation: "JSS3" as const,
+            },
+          }),
     },
   };
 }
@@ -82,6 +95,12 @@ describe("DirectAudienceDisplay", () => {
     const lines = container.querySelectorAll(".audience-book-word");
     expect(lines[0]).toHaveAttribute("lang", "ja");
     expect(lines[1]).toHaveAttribute("lang", "en");
+    expect(
+      screen.getByRole("heading", {
+        name: "創世記 / Gen 1:1",
+      }),
+    ).toBeVisible();
+    expect(screen.getByText("聖書 新改訳 ©️2003 日本聖書刊行会")).toBeVisible();
 
     act(() =>
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown" })),
@@ -96,6 +115,31 @@ describe("DirectAudienceDisplay", () => {
       rules: { "color-contrast": { enabled: false } },
     });
     expect(results.violations).toEqual([]);
+  });
+
+  it.each([
+    { expected: "創世記 1:1", language: "ja" as const },
+    { expected: "Gen 1:1", language: "en" as const },
+  ])("renders only the $language location when selected", async (example) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          Response.json({ items: [item(1, "GEN", 1, example.language)] }),
+        ),
+      ),
+    );
+
+    render(
+      <DirectAudienceDisplay
+        selection={{ ...selection, language: example.language }}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: example.expected }),
+    ).toBeVisible();
+    expect(screen.getByText("聖書 新改訳 ©️2003 日本聖書刊行会")).toBeVisible();
   });
 
   it("starts a scripture audience at the saved default font size", async () => {
@@ -159,7 +203,7 @@ describe("DirectAudienceDisplay", () => {
     expect(await screen.findByText("架空の日本語 1:1")).toBeVisible();
     expect(
       screen.getByRole("heading", {
-        name: "新改訳聖書第3版 出エジプト記 1:1",
+        name: "出エジプト記 / Exo 1:1",
       }),
     ).toBeVisible();
   });
@@ -243,6 +287,9 @@ describe("DirectAudienceDisplay", () => {
     act(() => send("toggle-blank"));
     expect(screen.getByRole("main", { name: "空白投影" })).toBeVisible();
     expect(screen.queryByText("架空の日本語 1:1")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("聖書 新改訳 ©️2003 日本聖書刊行会"),
+    ).not.toBeInTheDocument();
     act(() => send("next"));
     await waitFor(() =>
       expect(
@@ -302,6 +349,9 @@ describe("DirectAudienceDisplay", () => {
       ),
     ).toBeVisible();
     expect(screen.queryByText("架空の日本語 1:1")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("聖書 新改訳 ©️2003 日本聖書刊行会"),
+    ).not.toBeInTheDocument();
   });
 
   it("does not restore protected text when navigation finishes after fail-close", async () => {

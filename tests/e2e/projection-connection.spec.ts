@@ -40,7 +40,7 @@ test("a reused projector follows its new controller and rejects the previous con
   await selectGenesis(second, { startVerse: "2", endVerse: "2" });
   await second.getByRole("button", { name: "Open", exact: true }).click();
   await expect(
-    audience.getByRole("heading", { name: "新改訳聖書第3版 創世記 1:2" }),
+    audience.getByRole("heading", { name: "創世記 / Gen 1:2" }),
   ).toBeVisible();
   await expect(
     second.getByRole("button", { name: "次の御言葉へ" }),
@@ -64,14 +64,14 @@ test("a reused projector follows its new controller and rejects the previous con
     );
   }, originalHash.slice(6));
   await expect(
-    audience.getByRole("heading", { name: "新改訳聖書第3版 創世記 1:2" }),
+    audience.getByRole("heading", { name: "創世記 / Gen 1:2" }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "次の御言葉へ" })).toBeDisabled(
     { timeout: 8_000 },
   );
   await second.getByRole("button", { name: "前の御言葉へ" }).click();
   await expect(
-    audience.getByRole("heading", { name: "新改訳聖書第3版 創世記 1:1" }),
+    audience.getByRole("heading", { name: "創世記 / Gen 1:1" }),
   ).toBeVisible();
   await audience.reload();
   await expect(

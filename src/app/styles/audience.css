@@ -20,16 +20,35 @@
   display: none;
 }
 
-.audience-book-name {
+.audience-header {
   z-index: 1;
-  justify-self: start;
-  width: calc(100% - max(0px, 5vw - 10px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  width: 100%;
+  column-gap: clamp(12px, 2vw, 32px);
+}
+
+.audience-book-name,
+.audience-attribution {
   margin: 0;
   color: #ff0;
-  font-size: 32px;
   font-weight: 400;
   letter-spacing: normal;
-  line-height: normal;
+  white-space: nowrap;
+}
+
+.audience-book-name {
+  min-width: 0;
+  font-size: clamp(18px, 3.125vw, 40px);
+  line-height: 1.15;
+  text-align: left;
+}
+
+.audience-attribution {
+  justify-self: end;
+  font-size: clamp(12px, 1.875vw, 24px);
+  line-height: 1.2;
   text-align: right;
 }
 

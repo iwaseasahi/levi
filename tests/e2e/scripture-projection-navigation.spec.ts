@@ -59,8 +59,11 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await expect(page.getByRole("heading", { name: "投影操作" })).toHaveCount(0);
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:1",
+      name: "創世記 / Gen 1:1",
     }),
+  ).toBeVisible();
+  await expect(
+    audience.getByText("聖書 新改訳 ©️2003 日本聖書刊行会"),
   ).toBeVisible();
 
   const projectedLines = audience.locator(".audience-book-word");
@@ -81,6 +84,9 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     const heading = getComputedStyle(
       document.querySelector<HTMLElement>(".audience-book-name")!,
     );
+    const attribution = getComputedStyle(
+      document.querySelector<HTMLElement>(".audience-attribution")!,
+    );
     const verseNumber = getComputedStyle(
       document.querySelector<HTMLElement>(".audience-verse-number")!,
     );
@@ -93,6 +99,12 @@ test("projects bilingual scripture and navigates across chapter and book boundar
       fontFamily: screen.fontFamily,
       headingColor: heading.color,
       headingFontSize: heading.fontSize,
+      headingTextAlign: heading.textAlign,
+      headingWhiteSpace: heading.whiteSpace,
+      attributionColor: attribution.color,
+      attributionFontSize: attribution.fontSize,
+      attributionTextAlign: attribution.textAlign,
+      attributionWhiteSpace: attribution.whiteSpace,
       textShadow: line.textShadow,
       verseColor: verseNumber.color,
       verseStyle: verseNumber.fontStyle,
@@ -103,7 +115,13 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     color: "rgb(255, 255, 255)",
     fontFamily: "Helvetica, Arial, sans-serif",
     headingColor: "rgb(255, 255, 0)",
-    headingFontSize: "32px",
+    headingFontSize: "40px",
+    headingTextAlign: "left",
+    headingWhiteSpace: "nowrap",
+    attributionColor: "rgb(255, 255, 0)",
+    attributionFontSize: "24px",
+    attributionTextAlign: "right",
+    attributionWhiteSpace: "nowrap",
     textShadow:
       "rgb(0, 0, 255) -1px -1px 0px, rgb(0, 0, 255) 1px -1px 0px, rgb(0, 0, 255) -1px 1px 0px, rgb(0, 0, 255) 1px 1px 0px",
     verseColor: "rgb(255, 255, 0)",
@@ -111,12 +129,18 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   });
   const expandedLayout = await audience.evaluate(() => {
     const screen = document.querySelector<HTMLElement>(".audience-screen")!;
+    const header = document.querySelector<HTMLElement>(".audience-header")!;
     const heading = document.querySelector<HTMLElement>(".audience-book-name")!;
+    const attribution = document.querySelector<HTMLElement>(
+      ".audience-attribution",
+    )!;
     const content = document.querySelector<HTMLElement>(".audience-content")!;
     const verse = document.querySelector<HTMLElement>(".audience-verse")!;
     const lines = document.querySelectorAll<HTMLElement>(".audience-book-word");
     const screenBox = screen.getBoundingClientRect();
+    const headerBox = header.getBoundingClientRect();
     const headingBox = heading.getBoundingClientRect();
+    const attributionBox = attribution.getBoundingClientRect();
     const contentBox = content.getBoundingClientRect();
     const japaneseBox = lines[0]!.getBoundingClientRect();
     const englishBox = lines[1]!.getBoundingClientRect();
@@ -128,9 +152,16 @@ test("projects bilingual scripture and navigates across chapter and book boundar
         contentBox.left >= 0 &&
         contentBox.right <= screen.clientWidth + 1 &&
         contentBox.bottom <= screen.clientHeight + 1,
-      contentStartsAfterHeading: contentBox.top >= headingBox.bottom,
-      headingRightInsetRatio:
-        (screenBox.right - headingBox.right) / screen.clientWidth,
+      contentStartsAfterHeader:
+        contentBox.top >= Math.max(headingBox.bottom, attributionBox.bottom),
+      headerInsideScreen:
+        headerBox.left >= screenBox.left &&
+        headerBox.right <= screenBox.right &&
+        headerBox.top >= screenBox.top,
+      headerItemsDoNotOverlap: headingBox.right <= attributionBox.left,
+      headerSides:
+        Math.abs(headingBox.left - headerBox.left) <= 1 &&
+        Math.abs(attributionBox.right - headerBox.right) <= 1,
       languageGapRatio: (englishBox.top - japaneseBox.bottom) / bodyFontSize,
       paragraphsHaveNoMargin: Array.from(lines).every((line) => {
         const style = getComputedStyle(line);
@@ -145,41 +176,56 @@ test("projects bilingual scripture and navigates across chapter and book boundar
     bodyFontSize: expect.any(Number),
     contentHeightRatio: expect.any(Number),
     contentInsideScreen: true,
-    contentStartsAfterHeading: true,
-    headingRightInsetRatio: expect.any(Number),
+    contentStartsAfterHeader: true,
+    headerInsideScreen: true,
+    headerItemsDoNotOverlap: true,
+    headerSides: true,
     languageGapRatio: expect.any(Number),
     paragraphsHaveNoMargin: true,
     verseFitsContent: true,
   });
   expect(expandedLayout.contentHeightRatio).toBeGreaterThan(0.85);
-  expect(expandedLayout.headingRightInsetRatio).toBeGreaterThan(0.045);
-  expect(expandedLayout.headingRightInsetRatio).toBeLessThan(0.065);
   expect(expandedLayout.languageGapRatio).toBeGreaterThan(0.99);
   expect(expandedLayout.languageGapRatio).toBeLessThan(1.01);
   await audience.setViewportSize({ height: 1080, width: 1920 });
   const fullHdLayout = await audience.evaluate(() => {
     const screen = document.querySelector<HTMLElement>(".audience-screen")!;
+    const header = document.querySelector<HTMLElement>(".audience-header")!;
     const heading = document.querySelector<HTMLElement>(".audience-book-name")!;
+    const attribution = document.querySelector<HTMLElement>(
+      ".audience-attribution",
+    )!;
     const content = document.querySelector<HTMLElement>(".audience-content")!;
     const screenBox = screen.getBoundingClientRect();
+    const headerBox = header.getBoundingClientRect();
     const headingBox = heading.getBoundingClientRect();
+    const attributionBox = attribution.getBoundingClientRect();
     const contentBox = content.getBoundingClientRect();
     return {
+      attributionFontSize: getComputedStyle(attribution).fontSize,
       headingFontSize: getComputedStyle(heading).fontSize,
-      headingInsideScreen:
-        headingBox.top >= screenBox.top &&
-        headingBox.right <= screenBox.right &&
-        headingBox.bottom <= screenBox.bottom,
-      contentStartsAfterHeading: contentBox.top >= headingBox.bottom,
+      headerInsideScreen:
+        headerBox.top >= screenBox.top &&
+        headerBox.right <= screenBox.right &&
+        Math.max(headingBox.bottom, attributionBox.bottom) <= screenBox.bottom,
+      headerItemsDoNotOverlap: headingBox.right <= attributionBox.left,
+      headerSides:
+        Math.abs(headingBox.left - headerBox.left) <= 1 &&
+        Math.abs(attributionBox.right - headerBox.right) <= 1,
+      contentStartsAfterHeader:
+        contentBox.top >= Math.max(headingBox.bottom, attributionBox.bottom),
       screenHasNoOverflow:
         screen.scrollHeight <= screen.clientHeight + 1 &&
         screen.scrollWidth <= screen.clientWidth + 1,
     };
   });
   expect(fullHdLayout).toEqual({
-    headingFontSize: "32px",
-    headingInsideScreen: true,
-    contentStartsAfterHeading: true,
+    attributionFontSize: "24px",
+    headingFontSize: "40px",
+    headerInsideScreen: true,
+    headerItemsDoNotOverlap: true,
+    headerSides: true,
+    contentStartsAfterHeader: true,
     screenHasNoOverflow: true,
   });
   await audience.setViewportSize({ height: 720, width: 1280 });
@@ -204,18 +250,19 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await toggleBlank.click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
   await expect(audience.locator(".audience-book-name")).toHaveCount(0);
+  await expect(audience.locator(".audience-attribution")).toHaveCount(0);
   await expect(audience.locator(".audience-book-word")).toHaveCount(0);
   await next.click();
   await toggleBlank.click();
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:2",
+      name: "創世記 / Gen 1:2",
     }),
   ).toBeVisible();
   await previous.click();
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:1",
+      name: "創世記 / Gen 1:1",
     }),
   ).toBeVisible();
 
@@ -224,13 +271,13 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await page.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:2",
+      name: "創世記 / Gen 1:2",
     }),
   ).toBeVisible();
   await page.keyboard.press("ArrowUp");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:1",
+      name: "創世記 / Gen 1:1",
     }),
   ).toBeVisible();
 
@@ -266,13 +313,13 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await next.click();
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:2",
+      name: "創世記 / Gen 1:2",
     }),
   ).toBeVisible();
   await previous.click();
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:1",
+      name: "創世記 / Gen 1:1",
     }),
   ).toBeVisible();
   expect(
@@ -288,7 +335,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   );
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:2",
+      name: "創世記 / Gen 1:2",
     }),
   ).toBeVisible();
   expect(
@@ -302,7 +349,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   );
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:1",
+      name: "創世記 / Gen 1:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
@@ -313,37 +360,37 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 2:1",
+      name: "創世記 / Gen 2:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowUp");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 1:3",
+      name: "創世記 / Gen 1:3",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 2:1",
+      name: "創世記 / Gen 2:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 2:2",
+      name: "創世記 / Gen 2:2",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowDown");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 出エジプト記 1:1",
+      name: "出エジプト記 / Exo 1:1",
     }),
   ).toBeVisible();
   await audience.keyboard.press("ArrowUp");
   await expect(
     audience.getByRole("heading", {
-      name: "新改訳聖書第3版 創世記 2:2",
+      name: "創世記 / Gen 2:2",
     }),
   ).toBeVisible();
 
@@ -379,19 +426,35 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   await expect
     .poll(() =>
       audience.locator(".audience-screen").evaluate((screen) => {
+        const header = screen.querySelector<HTMLElement>(".audience-header");
         const heading = screen.querySelector<HTMLElement>(
           ".audience-book-name",
         );
+        const attribution = screen.querySelector<HTMLElement>(
+          ".audience-attribution",
+        );
         const content = screen.querySelector<HTMLElement>(".audience-content");
         const verse = screen.querySelector<HTMLElement>(".audience-verse");
-        if (!heading || !content || !verse) return false;
+        if (!header || !heading || !attribution || !content || !verse)
+          return false;
+        const headerBox = header.getBoundingClientRect();
         const headingBox = heading.getBoundingClientRect();
+        const attributionBox = attribution.getBoundingClientRect();
         const contentBox = content.getBoundingClientRect();
         return (
-          contentBox.top >= headingBox.bottom &&
+          contentBox.top >=
+            Math.max(headingBox.bottom, attributionBox.bottom) &&
+          Math.abs(headingBox.left - headerBox.left) <= 1 &&
+          Math.abs(attributionBox.right - headerBox.right) <= 1 &&
+          headingBox.right <= attributionBox.left &&
+          heading.scrollWidth <= heading.clientWidth + 1 &&
+          attribution.scrollWidth <= attribution.clientWidth + 1 &&
+          getComputedStyle(heading).whiteSpace === "nowrap" &&
+          getComputedStyle(attribution).whiteSpace === "nowrap" &&
           verse.scrollHeight <= content.clientHeight + 1 &&
           verse.scrollWidth <= content.clientWidth + 1 &&
-          screen.scrollHeight <= screen.clientHeight + 1
+          screen.scrollHeight <= screen.clientHeight + 1 &&
+          screen.scrollWidth <= screen.clientWidth + 1
         );
       }),
     )
