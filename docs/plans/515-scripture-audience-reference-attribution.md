@@ -86,6 +86,9 @@ body at supported viewport sizes.
 - 2026-09-28 JST — At the user's request, changed the copyright mark from emoji
   presentation (`©️`) to text presentation (`©︎`) so it renders in the same
   yellow as the rest of the attribution.
+- 2026-09-28 JST — The user accepted the updated screenshot and requested the
+  merge. Dependency security PR #519 passed all four required checks and merged,
+  closing #516; its repaired `main` was merged into this branch.
 
 ## Decisions
 
@@ -123,8 +126,8 @@ body at supported viewport sizes.
       failure tracked in #517
 - [x] `mise run check` — passed, including 539 unit and 126 component tests
 - [x] `mise exec -- corepack pnpm test:integration` — 141 passed
-- [ ] `mise exec -- corepack pnpm security:check` — blocked by the unrelated
-      `nodemailer@9.0.6` high advisory tracked in #516
+- [x] `mise exec -- corepack pnpm security:check` — passed after the isolated
+      Nodemailer security update in #519
 - [x] `mise exec -- corepack pnpm db:check` — passed
 - [x] `git diff --check`
 - [x] Acceptance criteria verified and final diff reviewed for scope, secrets,
@@ -134,16 +137,14 @@ body at supported viewport sizes.
 
 - Completed: intake, implementation, documentation, focused/canonical local
   verification, database checks, final diff review, commit, push, and draft PR
-  #518.
-- Remaining: resolve or disposition #516 and #517, run required exact-head CI,
-  move PR #518 out of draft, obtain human review, and merge.
-- Blocker: local Security gate cannot pass until #516 patches the independently
-  vulnerable `nodemailer` dependency; full E2E also exposed #517 outside this
-  Issue, while all changed scripture scenarios pass.
-- Resume with: address #516 first so the required Security gate can pass, then
-  confirm the full E2E result for #517 and re-run required checks on PR #518.
+  #518; user acceptance; and prerequisite security PR #519.
+- Remaining: run required exact-head CI, move PR #518 out of draft, and merge.
+- Blocker: none. The earlier unrelated E2E flake remains tracked in #517 and
+  does not replace the required exact-head E2E result.
+- Resume with: push the refreshed branch, wait for all four required checks on
+  PR #518, mark it ready, and merge it.
 
 ## Result
 
-Implementation is complete in draft PR #518. Merge remains blocked on the
-recorded follow-up gates and exact-head CI.
+Implementation and prerequisite remediation are complete in draft PR #518.
+Exact-head CI and merge remain pending.
