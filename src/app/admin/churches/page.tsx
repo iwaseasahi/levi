@@ -5,6 +5,8 @@ import { ChurchList } from "./church-list";
 import { deleteChurchAction } from "./actions";
 import { deleteChurchUserAction } from "./delete-user-action";
 
+import { resendChurchUserInvitationAction } from "./resend-invitation-action";
+
 export default async function ChurchAdministrationPage() {
   await requireAdminPageAccess();
   const churches = await listChurches();
@@ -26,6 +28,7 @@ export default async function ChurchAdministrationPage() {
         churches={churches}
         deleteAction={deleteChurchAction}
         deleteUserAction={deleteChurchUserAction}
+        resendInvitationAction={resendChurchUserInvitationAction}
       />
     </main>
   );

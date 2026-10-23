@@ -6,6 +6,8 @@ import { DeleteChurchButton } from "./delete-church-button";
 import { ChurchUserList } from "./church-user-list";
 import type { DeleteChurchUserState } from "@/application/admin/delete-church-user-controller";
 
+import type { ResendInvitationState } from "@/application/admin/resend-church-user-invitation-controller";
+
 const churchStatusLabels = {
   ACTIVE: "利用中",
   SUSPENDED: "停止中",
@@ -15,8 +17,13 @@ export function ChurchList({
   churches,
   deleteAction,
   deleteUserAction,
+  resendInvitationAction,
 }: {
   churches: ChurchDirectoryEntry[];
+  resendInvitationAction(
+    state: ResendInvitationState,
+    form: FormData,
+  ): Promise<ResendInvitationState>;
   deleteAction: (
     state: DeleteChurchState,
     formData: FormData,
@@ -68,6 +75,8 @@ export function ChurchList({
                 churchName={church.name}
                 users={church.users}
                 deleteAction={deleteUserAction}
+                resendAction={resendInvitationAction}
+                canResendInvitation={church.status === "ACTIVE"}
               />
             </li>
           ))}

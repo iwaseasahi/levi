@@ -12,7 +12,12 @@ const member = {
   name: "利用者A",
   status: "ACTIVE" as const,
 };
-const props = { churchId: "church", churchName: "試験教会", users: [member] };
+const props = {
+  churchId: "church",
+  churchName: "試験教会",
+  users: [member],
+  resendAction: vi.fn(),
+};
 
 beforeAll(() => {
   // jsdom lacks native dialog methods; browser modal/focus behavior is covered by E2E.

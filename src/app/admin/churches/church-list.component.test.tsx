@@ -10,6 +10,7 @@ describe("ChurchList", () => {
     const deleteAction = vi.fn();
     const { container } = render(
       <ChurchList
+        resendInvitationAction={vi.fn()}
         churches={[
           {
             createdAt: new Date("2026-08-27T00:00:00Z"),
@@ -84,6 +85,7 @@ describe("ChurchList", () => {
   it("shows an empty state when no churches are registered", () => {
     render(
       <ChurchList
+        resendInvitationAction={vi.fn()}
         churches={[]}
         deleteAction={vi.fn()}
         deleteUserAction={vi.fn()}
