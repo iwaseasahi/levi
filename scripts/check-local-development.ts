@@ -26,10 +26,10 @@ const e2eOperatorTests = read("tests/e2e/operator-provisioning.spec.ts");
 const compose = read("compose.development.yaml");
 const ci = read(".github/workflows/ci.yml");
 
-assert(read(".node-version").trim() === "24.19.0", ".node-version drifted");
+assert(read(".node-version").trim() === "24.22.1", ".node-version drifted");
 assert(
-  /^node = "24\.19\.0"$/m.test(mise),
-  "mise.toml must pin Node.js 24.19.0",
+  /^node = "24\.22\.1"$/m.test(mise),
+  "mise.toml must pin Node.js 24.22.1",
 );
 assert(
   integrationRunner.includes(
@@ -42,9 +42,22 @@ assert(
   "Integration tests must discard mail without accessing the developer Mailpit or external SMTP",
 );
 assert(
-  packageJson.engines?.node === ">=24.0.0 <25",
-  "package.json must continue to allow only Node.js 24",
+  packageJson.engines?.node === ">=24.22.1 <25",
+  "package.json must require the patched Node.js 24 release or newer within Node.js 24",
 );
+const productionNodeImage =
+  "node:24.22.1-alpine3.23@sha256:0468540aa58203ff9e40c2aab3907c52644ab818af6176b1c70a026137dc92a2";
+for (const dockerfile of [
+  "Dockerfile.production",
+  "Dockerfile.migrate.production",
+]) {
+  const nodeStages = [...read(dockerfile).matchAll(/^FROM (node:\S+) AS /gm)];
+  assert(
+    nodeStages.length === 2 &&
+      nodeStages.every((stage) => stage[1] === productionNodeImage),
+    `${dockerfile} must pin every Node.js stage to the patched production image`,
+  );
+}
 assert(
   packageJson.packageManager === "pnpm@11.19.0",
   "packageManager must pin pnpm 11.19.0",
@@ -56,7 +69,7 @@ assert(
 const pnpmSetupRef = "pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b";
 assert(
   ci.match(new RegExp(pnpmSetupRef, "g"))?.length === 4 &&
-    ci.match(/runtime: node@24\.19\.0/g)?.length === 4 &&
+    ci.match(/runtime: node@24\.22\.1/g)?.length === 4 &&
     ci.match(/cache: true/g)?.length === 4 &&
     ci.match(/install: false/g)?.length === 4 &&
     ci.match(/pnpm install --frozen-lockfile/g)?.length === 4 &&
