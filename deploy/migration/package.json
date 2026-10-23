@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "prisma": "7.10.0"
+    "prisma": "7.10.1"
   }
 }
