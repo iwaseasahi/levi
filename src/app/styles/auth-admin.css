@@ -418,12 +418,15 @@
 
 .admin-church-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.65rem;
   align-items: center;
 }
 
 .admin-church-action-control {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
@@ -542,6 +545,7 @@
 
 .admin-church-delete {
   display: inline-flex;
+  flex-shrink: 0;
 }
 
 .admin-delete-dialog-backdrop {

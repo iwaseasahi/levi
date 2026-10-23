@@ -19,8 +19,8 @@ production actions, administrator invitation changes, or copied reference data.
 2. [x] Add guarded resend and old-token replacement with failure rollback and
        per-user cooldown; test authorization, lifecycle and concurrency.
 3. [x] Add accessible per-row resend feedback, pending state and responsive controls.
-4. [ ] Verify unit/component/integration/E2E and canonical checks; review final
-       diff, record evidence in PR and observe CI.
+4. [x] Verify unit/component/integration/E2E and canonical checks; review final
+       diff and record evidence in PR. Protected CI/merge status is tracked in #538.
 
 ## Decisions
 
@@ -57,10 +57,24 @@ production actions, administrator invitation changes, or copied reference data.
   preserved logs in `.agent-runs/536-concurrent-verification/`, and serialized all
   Next type generation/build and browser validation. This is verification setup
   interference, not acceptable passing evidence.
+- 2026-10-23 JST — An isolated rerun retained the generated-cache navigation
+  problem. Preserved logs and moved that disposable cache outside the checkout
+  to `/tmp/levi-536-next-e2e-cache-1159`. A fresh-cache run passed 34/35 tests;
+  remaining failure identified compressed church deletion controls at tablet
+  width. Prevented action controls from shrinking and let the heading actions
+  wrap. Self-review also caught and corrected an initially mistargeted grid
+  selector before final verification.
 
 ## Verification
 
-Pending implementation and checks. Unit/controller tests cover rejected access,
+Local evidence: `pnpm check` passes (552 unit and 129 component tests),
+`pnpm test:unit:coverage` passes (93.58% lines, 85.33% branches),
+`pnpm test:integration` passes (145 tests), `pnpm db:check` passes,
+`pnpm security:check` passes, `pnpm backup:rehearse` passes and final
+`pnpm test:e2e` passes (35 tests, no retries). Required CI must pass on the
+exact final PR head before merge; #538 records that SHA and the check URLs.
+
+Unit/controller tests cover rejected access,
 invalid IDs, lifecycle errors, cooldown and generic failures. Integration tests
 prove token replacement/expiry/single-use, rollback and concurrent resends.
 Mailpit E2E proves the resent link completes setup and login. Component tests
@@ -79,7 +93,17 @@ cover conditional rendering, scoped IDs, pending state and feedback.
 
 ## Handoff or blockers
 
-- Completed: intake and design.
-- Remaining: implementation, tests, checks and PR.
-- Blocker: none.
-- Resume with: implement the resend boundary.
+- Completed: implementation, regression tests, operator guide and self-review.
+- Remaining: protected CI for the final head, ready/merge and main synchronization.
+- Blocker: none; production release is outside this Issue.
+- Resume with: `gh pr checks 538`.
+
+## Result
+
+PR #538 implements the requested resend flow. Final local E2E passes all 35
+scenarios, including the existing deletion layout checks and the new resend
+setup/login scenario. Initial CI head `6909024` passed Quality/Database/Security
+but failed the same deletion-width assertion (40.375 vs 56.375px). The follow-up
+layout fix keeps both deletion controls at their natural width and wraps heading
+actions; no test assertion, retry, timeout or gate was weakened. Final CI and
+merge evidence are recorded on the PR. No production deploy was performed.
