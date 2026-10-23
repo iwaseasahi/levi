@@ -43,3 +43,15 @@ checks.
 `pnpm security:licenses` produces a minimized report containing dependency name,
 version, and declared license. Any new license expression fails until this file
 and the checker are deliberately updated.
+
+Issue #531 updates Next.js and its matching ESLint config to 16.4.1 (MIT), and
+Sharp to 0.35.5 (Apache-2.0), to resolve published advisories. It also exact-pins
+the already installed transitive packages `fast-uri` 3.1.8 (BSD-3-Clause),
+`source-map-js` 1.2.2 (BSD-3-Clause), `undici` 8.10.2 (MIT), and `vite` 8.2.4
+(MIT) through workspace overrides until upstream ranges resolve patched
+versions. Prisma, PostCSS, jsdom, and Vitest already require these packages;
+the overrides remain within their existing major lines and add no direct
+production dependency or license expression. Registry repository, integrity,
+publication date, runtime compatibility, and available provenance attestations
+were checked before installation. The required production audit and license
+inventory remain unchanged.

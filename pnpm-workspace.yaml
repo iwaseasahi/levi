@@ -12,3 +12,7 @@ injectWorkspacePackages: true
 overrides:
   deepmerge-ts: 8.0.1
   mysql2: 3.22.0
+  fast-uri: 3.1.8
+  source-map-js: 1.2.2
+  undici: 8.10.2
+  vite: 8.2.4

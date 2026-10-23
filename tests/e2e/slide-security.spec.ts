@@ -108,9 +108,13 @@ test("Slide routes reject foreign identity, forged scope and reused cursors with
       `/slides/audience?id=${missing}`,
     ]) {
       const result = await page.goto(path);
-      // The canonical browser suite runs next dev, whose page shell is
-      // no-cache/must-revalidate. Protected Slide API payloads above are no-store.
-      expect(result?.headers()["cache-control"]).toContain("no-cache");
+      // Require the storage prohibition retained by patched Next.js responses.
+      expect(
+        result
+          ?.headers()
+          ["cache-control"]?.split(",")
+          .map((directive) => directive.trim()),
+      ).toContain("no-store");
       const shell = await result!.text();
       for (const value of [row.title, protectedText])
         expect(shell).not.toContain(value);
