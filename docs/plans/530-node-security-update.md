@@ -41,7 +41,8 @@ Node.js releases through the package engine requirement.
        backup rehearsal, and security under Node.js 24.22.1.
 5. [x] Verify pinned container runtime and both production image builds.
 6. [ ] Review the full diff, open a PR, pass exact-head required CI, and merge.
-7. [ ] Prepare a concrete production candidate and request deployment approval.
+7. [ ] Request approval for publishing the exact verified commit as production
+       images and deploying it through the standard release workflow.
 
 ## Decisions
 
@@ -56,6 +57,22 @@ Node.js releases through the package engine requirement.
 - 2026-10-23 JST — Read governance, agent protocol, testing/CI policy, dependency
   policy, ADR 0003, and production deployment runbook. Confirmed upstream
   release and container index; updated all active runtime pins.
+- 2026-10-23 JST — PR #533 passed all four required checks at
+  `bbaad22a7fba35612c173fc198fa758807ee6fc7` and merged as `6a58964`, closing
+  prerequisite #531. Integrated that dependency update and current main.
+- 2026-10-23 JST — The combined Node.js 24.22.1/package graph passed frozen
+  installation, `mise run check`, 141 integration tests, all 35 E2E scenarios,
+  and the unchanged audit/license gate. Both production Dockerfiles built on
+  native ARM64 and production-target Linux/AMD64; both AMD64 images report
+  `v24.22.1`. The existing three moderate findings are tracked in #534.
+- 2026-10-23 JST — Initial PR #532 CI passed Quality/Database but reproduced
+  known sidebar E2E failure #517 and the dependency Security failure. No retries,
+  timeouts, or security controls were changed; final CI must validate the
+  integrated package update on the new head.
+- 2026-10-23 JST — Production metadata names base commit `05c5551`; comparison
+  confirms no application source or migration changes. GHCR publication and
+  production deployment remain approval-bound external actions; all local
+  preparation is complete before requesting that approval.
 
 ## Verification
 
@@ -64,7 +81,7 @@ Node.js releases through the package engine requirement.
 - [x] `pnpm test:unit:coverage`
 - [x] `pnpm test:integration`
 - [x] `pnpm test:e2e`
-- [ ] `pnpm security:check`
+- [x] `pnpm security:check`
 - [x] `pnpm backup:rehearse`
 - [x] Pinned container `node --version` and both Dockerfile builds
 - [x] `git diff --check` and separate full-diff review
@@ -77,12 +94,14 @@ Node.js releases through the package engine requirement.
   tests; backup rehearsal; both production image builds and `v24.22.1` runtime
   checks. The drift guard rejected a temporarily outdated container stage.
 - Remaining: exact-head CI, merge, and concrete release preparation.
-- Blocker: `pnpm security:check` detects existing dependency advisories in the
-  unchanged lockfile; prerequisite Issue #531 tracks the isolated fix.
+- Blocker: none for repository work; prerequisite #531 is merged and the
+  security gate passes locally. Required exact-head CI remains the merge gate.
 - Attempts: initial integration rehearsal failed because the local development
   PostgreSQL service was stopped. Started it with `pnpm db:up:dev`; all 141
   integration tests then passed without test changes. Initial nested commands
   resolved the desktop fallback pnpm; enabling Corepack in the new mise-managed
   Node.js installation resolved the environment, without repository changes.
-- Decision needed: none for repository work; production approval remains pending.
-- Resume with: merge #531, update this branch, and repeat required CI.
+- Decision needed: approval to publish the verified commit as immutable images
+  and deploy to production, after the final required CI and merge.
+- Resume with: inspect final PR #532 checks and merge when green; present the
+  exact merged commit and production impact for approval.
