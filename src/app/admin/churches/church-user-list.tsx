@@ -4,6 +4,9 @@ import { useActionState, useEffect, useId, useRef, useState } from "react";
 import type { DeleteChurchUserState } from "@/application/admin/delete-church-user-controller";
 import type { ChurchDirectoryEntry } from "@/infrastructure/database/church-directory";
 
+import type { ResendInvitationState } from "@/application/admin/resend-church-user-invitation-controller";
+import { ResendInvitationButton } from "./resend-invitation-button";
+
 type ChurchUser = ChurchDirectoryEntry["users"][number];
 const statusLabels = { ACTIVE: "有効", PENDING: "招待中" } as const;
 
@@ -12,10 +15,17 @@ export function ChurchUserList({
   churchName,
   users,
   deleteAction,
+  resendAction,
+  canResendInvitation = true,
 }: {
   churchId: string;
   churchName: string;
   users: ChurchUser[];
+  canResendInvitation?: boolean;
+  resendAction(
+    state: ResendInvitationState,
+    form: FormData,
+  ): Promise<ResendInvitationState>;
   deleteAction(
     state: DeleteChurchUserState,
     formData: FormData,
@@ -80,6 +90,13 @@ export function ChurchUserList({
                     >
                       削除
                     </button>
+                    {user.status === "PENDING" && canResendInvitation ? (
+                      <ResendInvitationButton
+                        churchId={churchId}
+                        user={user}
+                        action={resendAction}
+                      />
+                    ) : null}
                   </dd>
                 </div>
               </dl>

@@ -535,7 +535,9 @@ test.describe("operator church provisioning", () => {
     await expect(page).toHaveURL(/\/scripture$/, { timeout: 20_000 });
   });
 
-  test("invites a second user to an existing church", async ({ page }) => {
+  test("resends a church user invitation and accepts only the replacement link", async ({
+    page,
+  }) => {
     await signInAdmin(page);
     await page.goto("/admin/churches");
     await page
@@ -557,11 +559,54 @@ test.describe("operator church provisioning", () => {
     });
     await expect(success).toContainText(E2E_ADDITIONAL_CHURCH_USER_EMAIL);
 
+    const initialUrl = await findPasswordResetUrl(
+      page,
+      E2E_ADDITIONAL_CHURCH_USER_EMAIL,
+      "church",
+    );
+    await page.goto("/admin/churches");
+    await page.setViewportSize({ width: 375, height: 812 });
+    const resend = page.getByRole("button", {
+      name: `Synthetic Additional User（${E2E_ADDITIONAL_CHURCH_USER_EMAIL}）へ招待メールを再送`,
+    });
+    await expect(resend).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await resend.focus();
+    await page.keyboard.press("Enter");
+    await expect(
+      page
+        .getByRole("status")
+        .filter({ hasText: "招待メールを再送しました。" }),
+    ).toBeVisible();
+    await expect
+      .poll(async () => {
+        const response = await page.request.get(
+          `${mailpitApiUrl}/api/v1/messages`,
+        );
+        const payload = (await response.json()) as {
+          messages: Array<{ To: Array<{ Address: string }> }>;
+        };
+        return payload.messages.filter((message) =>
+          message.To.some(
+            ({ Address }) => Address === E2E_ADDITIONAL_CHURCH_USER_EMAIL,
+          ),
+        ).length;
+      })
+      .toBe(2);
     const resetUrl = await findPasswordResetUrl(
       page,
       E2E_ADDITIONAL_CHURCH_USER_EMAIL,
       "church",
     );
+    expect(resetUrl !== initialUrl).toBe(true);
+    await page.goto(initialUrl);
+    await expect(
+      page.getByRole("alert").filter({ hasText: "再設定リンクが無効です" }),
+    ).toBeVisible();
     await page.goto(resetUrl);
     const password = "additional-user-password";
     await page.getByLabel("新しいパスワード", { exact: true }).fill(password);
@@ -619,7 +664,7 @@ test.describe("church user deletion", () => {
       const churchBox = await churchDelete.boundingBox();
       expect(churchBox).not.toBeNull();
       for (const row of await users.locator("li").all()) {
-        const button = row.getByRole("button");
+        const button = row.getByRole("button", { name: /を削除$/ });
         await expect(button).toHaveText("削除");
         const buttonBox = await button.boundingBox();
         const statusBox = await row.locator(".status-badge").boundingBox();

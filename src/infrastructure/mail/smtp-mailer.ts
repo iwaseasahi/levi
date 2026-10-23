@@ -100,6 +100,9 @@ function createTransport(
   >,
 ) {
   return nodemailer.createTransport({
+    connectionTimeout: 5_000,
+    greetingTimeout: 5_000,
+    socketTimeout: 10_000,
     host: config.host,
     port: config.port,
     secure: config.secure,
