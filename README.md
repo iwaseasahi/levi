@@ -6,7 +6,7 @@ with reproducible validation as the basis for accepting changes.
 
 ## Requirements
 
-- [mise](https://mise.jdx.dev/) (Node.js 24.19.0 is pinned in `mise.toml`)
+- [mise](https://mise.jdx.dev/) (Node.js 24.22.1 is pinned in `mise.toml`)
 - pnpm 11.19.0 (see `package.json`)
 - Docker with Compose (for local PostgreSQL and Mailpit)
 
