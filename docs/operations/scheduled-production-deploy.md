@@ -5,8 +5,8 @@ main has unreleased commits, without per-run human or Environment approval.
 The owner explicitly requires execution while the Mac is stopped/asleep.
 [ADR 0018](../architecture/0018-vps-scheduled-production-release.md) accepts the
 existing VPS systemd timer. **The owner approved the exact App credential, gh
-package, host bundle/entrypoint and timer activation on2026-10-26. App setup is
-complete; protected host installation and activation are still pending.**
+package, host bundle/entrypoint and timer activation on2026-10-26. Installation,
+read-only preflight and timer activation completed that day.**
 
 ## Execution and trust
 
@@ -177,3 +177,31 @@ pinned gh package, trusted bundle/entrypoint and timer activation. The App is
 App registration UI. No permission scope was expanded by that API spelling fix.
 The private key value is never recorded here. The existing operator authenticates
 sudo for installation; no broader passwordless rule or SSH user is added.
+
+## Active installation (2026-10-26)
+
+PR #564 merged as `37acf87963208c1e23c40165a5861b7d35c14ab2`.
+All four protected jobs passed on that merged commit in
+[CI run40282927929](https://github.com/iwaseasahi/levi/actions/runs/40282927929).
+The root-owned bundle's `installed-commit` records that exact SHA; the fixed
+entrypoint reports protocol `2`. The approved `gh=2.45.0-1ubuntu0.3` is installed.
+Root provisioning verified App repository/scope, protected key/config modes and
+existing production credentials without printing their values. Temporary key
+copies on the workstation and operator staging path were removed.
+
+The installer and installed launcher's read-only preflight succeeded before
+enabling the timer. At activation, `systemctl show` reported:
+
+```text
+ActiveEnterTimestamp=Mon 2026-10-26 07:02:42 UTC
+ActiveState=active
+UnitFileState=enabled
+NextElapseUSecRealtime=Tue 2026-10-27 01:00:00 UTC
+LastTriggerUSec=
+```
+
+The first scheduled check is **2026-10-27 at10:00 Asia/Tokyo**. The service was
+`inactive`/`dead`, with no `ExecMainStartTimestamp`; activation did not start a
+release. The existing successful release remained unchanged. Later runs use
+the main commit and successful deployment record observed at execution time,
+with the checks above; these activation facts do not predict a future result.
