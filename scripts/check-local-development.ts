@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import nextConfig from "../next.config";
+import { assertReviewedActionUses } from "./lib/github-action-pins";
 import { planLocalEnvironment } from "./lib/local-environment";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -66,10 +67,9 @@ assert(
   nextConfig.devIndicators === false,
   "Next.js development indicators must remain hidden from Levi screens",
 );
-const pnpmSetupRef = "pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b";
+assertReviewedActionUses(ci, "pnpm/setup", 4);
 assert(
-  ci.match(new RegExp(pnpmSetupRef, "g"))?.length === 4 &&
-    ci.match(/runtime: node@24\.22\.1/g)?.length === 4 &&
+  ci.match(/runtime: node@24\.22\.1/g)?.length === 4 &&
     ci.match(/cache: true/g)?.length === 4 &&
     ci.match(/install: false/g)?.length === 4 &&
     ci.match(/pnpm install --frozen-lockfile/g)?.length === 4 &&
