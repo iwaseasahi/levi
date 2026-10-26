@@ -123,10 +123,11 @@ rechecks the ready state and actual host history under the host transaction lock
 and refuses changed or unknown state. The unattended path stops rather than waiting for Environment
 review and cannot start application outside Tuesday.
 
-The owner requires Mac-independent execution. Proposed ADR 0018 defines a
-VPS-local timer with a dedicated repository-only GitHub App; creating/installing
-its credential and the host bundle/timer requires the exact one-time approval
-recorded in #563. This exception does not authorize a new runner, SSH key,
+The owner requires Mac-independent execution. Accepted ADR 0018 defines a
+VPS-local timer with a dedicated repository-only GitHub App. On2026-10-26 the
+owner explicitly approved that App grant/key placement, gh2.45.0-1ubuntu0.3,
+the reviewed host bundle/entrypoint and timer activation in #563. This is the
+one-time setup approval, not a grant for future unrelated credential changes. This exception does not authorize a new runner, SSH key,
 firewall opening,
 service cost, import, restore, secret/access change or standalone production-data
 operation. Sunday and all other approval boundaries remain unchanged. Activation

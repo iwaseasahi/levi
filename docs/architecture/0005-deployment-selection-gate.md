@@ -54,10 +54,10 @@ Unattended mode stops on approval-required, unknown, changed or failed state;
 manual and scheduled applications share a host transaction lock before
 checkout/state changes, in addition to the application deployment lock. This
 does not grant GitHub a production SSH credential
-or change its network access. The owner subsequently required Mac-independent execution. Proposed
+or change its network access. The owner subsequently required Mac-independent execution. Accepted
 [ADR 0018](0018-vps-scheduled-production-release.md) defines the VPS-local timer
-and repository-only App identity; its exact credential/installation approval
-remains required before activation. It replaces workstation-only initiation
+and repository-only App identity; the owner approved its exact credential/installation
+and timer activation on2026-10-26 in #563. It replaces workstation-only initiation
 for this narrow Tuesday path after approval.
 
 Issue #81 records the product owner's acceptance of no SLA, one application and

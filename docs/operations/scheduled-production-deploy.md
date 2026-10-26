@@ -3,9 +3,10 @@
 Owner decision: Issue #563. Tuesday at **10:00 Asia/Tokyo**, deploy only when
 main has unreleased commits, without per-run human or Environment approval.
 The owner explicitly requires execution while the Mac is stopped/asleep.
-[ADR 0018](../architecture/0018-vps-scheduled-production-release.md) proposes the
-existing VPS systemd timer. **The credential and host installation/activation
-are not yet approved or performed. No timer is enabled by this code PR.**
+[ADR 0018](../architecture/0018-vps-scheduled-production-release.md) accepts the
+existing VPS systemd timer. **The owner approved the exact App credential, gh
+package, host bundle/entrypoint and timer activation on2026-10-26. App setup is
+complete; protected host installation and activation are still pending.**
 
 ## Execution and trust
 
@@ -20,8 +21,8 @@ and implicit Metadata: read. All organization/account permissions, webhooks,
 Contents write, Secrets, Administration and Packages remain disabled. These
 category permissions apply across the repository, not just two workflows.
 Actions write permits dispatch/cancel; Variables write updates deployment state.
-This credential grant and its protected host installation need the owner's
-one-time approval, separately from the already approved scheduled releases.
+The owner approved this credential grant and its protected host installation on
+2026-10-26, separately from the already approved scheduled releases.
 
 The App key is `/etc/levi/release-app.pem`, root:root 0600. Non-secret IDs are in
 `/etc/levi/release-app.json`, also root:root 0600:
@@ -98,7 +99,7 @@ working existing image-pull/backup credentials, `/usr/bin/{git,gh,jq,python3,ope
 network/DNS/TLS and time synchronization. Read-only inspection confirmed systemd 255 and these tools except `gh`. The
 Ubuntu candidate is `gh=2.45.0-1ubuntu0.3`. Adding that package with
 `apt-get install --no-install-recommends gh=2.45.0-1ubuntu0.3` is included in the
-proposed one-time host change; the installer itself fails on a missing dependency
+approved one-time host change; the installer itself fails on a missing dependency
 rather than installing it.
 
 1. An authorized owner creates/installs the App on just this repository and
@@ -165,3 +166,14 @@ runtime cache during an approved credential revocation. No SSH change is needed.
 Synthetic tests fake GitHub/Git/SSH/date and host paths; they do not contact
 production or use real runtime data. The existing Mac entry's `--dry-run` also
 remains available for read-only release selection. It is not the chosen scheduler.
+
+## Approval / provisioning record
+
+Issue #563 records the owner's explicit one-time approval of the App grant/key,
+pinned gh package, trusted bundle/entrypoint and timer activation. The App is
+`levi-tuesday-releases` (App5476038, installation175360432), installed only on
+`iwaseasahi/levi`; webhooks and user OAuth are disabled. Variables is the
+`actions_variables` installation-token permission key, matching GitHub's actual
+App registration UI. No permission scope was expanded by that API spelling fix.
+The private key value is never recorded here. The existing operator authenticates
+sudo for installation; no broader passwordless rule or SSH user is added.

@@ -43,7 +43,7 @@ class AppAuthentication(unittest.TestCase):
             value = auth.request_token(self.config, self.key, self.now)
             request = opener.open.call_args.args[0]
             self.assertEqual(request.full_url, "https://api.github.com/app/installations/456/access_tokens")
-            self.assertEqual(json.loads(request.data), {"repositories": ["levi"], "permissions": auth.PERMISSIONS})
+            self.assertEqual(json.loads(request.data), {"repositories": ["levi"], "permissions": {"actions": "write", "checks": "read", "contents": "read", "actions_variables": "write"}})
             self.assertNotIn("synthetic-token", str(sign.call_args))
             signed = sign.call_args.kwargs["input"].split(b".")[1]
             payload = json.loads(base64.urlsafe_b64decode(signed + b"=" * (-len(signed) % 4)))

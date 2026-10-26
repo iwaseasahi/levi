@@ -12,7 +12,8 @@ import sys
 import time
 import urllib.request
 
-PERMISSIONS = {"actions": "write", "checks": "read", "contents": "read", "variables": "write"}
+# GitHub App installation-token API key; the UI label is Variables.
+PERMISSIONS = {"actions": "write", "checks": "read", "contents": "read", "actions_variables": "write"}
 
 
 def encode(value):

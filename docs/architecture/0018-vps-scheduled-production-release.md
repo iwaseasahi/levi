@@ -1,7 +1,7 @@
 # ADR 0018: Run Tuesday production releases on the existing VPS
 
-- Status: proposed; implementation is reviewable, activation needs the exact
-  GitHub App credential and host-installation approval recorded in Issue #563.
+- Status: accepted; owner approved the exact App credential, pinned gh package,
+  trusted host bundle/entrypoint and timer activation in Issue #563 on2026-10-26.
 - Date: 2026-10-26
 - Decision owners: product owner and operations owner
 - Decision record: Issue #563
@@ -14,7 +14,7 @@ without per-run approval, and explicitly requires execution while the Mac is off
 The existing VPS is already always on. GitHub holds no production SSH key and
 there is no trusted self-hosted runner. PR CI must not gain deployment authority.
 
-## Proposed decision
+## Decision
 
 Install a root-owned deterministic scheduler bundle and a systemd oneshot timer
 on the existing VPS. Use `OnCalendar=Tue *-*-* 10:00:00 Asia/Tokyo`, one-second
@@ -27,7 +27,8 @@ Use a dedicated GitHub App installed on `iwaseasahi/levi` only: Actions write
 (deployment metadata). Metadata read is implicit. No contents write, secrets,
 administration, packages, organization or model-provider permission is needed.
 App permissions are repository-wide within those categories; this is a real
-credential grant, not a workflow-only capability. The owner must approve it.
+credential grant, not a workflow-only capability. The owner approved this exact
+grant and protected key installation on2026-10-26.
 
 Keep the private key root-owned mode 0600 outside the repository. systemd loads
 it as a service credential; a small standard-library Python/OpenSSL wrapper
@@ -64,6 +65,9 @@ reviewed bundle/entrypoint/units separately from timer activation. Verify unit
 syntax, safe preflight and next trigger; never run a production release as a test.
 Disable the timer to stop new automatic runs; preserve in-progress work and
 deployment history. Revoke the App installation/key to remove GitHub access.
+
+The existing operator's authenticated sudo is used for the one-time installation;
+no new broad passwordless sudo rule is added.
 
 No new SSH identity, firewall change, paid service, Sunday authority, import,
 restore, production-data fixture or secret/runtime rotation is authorized here.

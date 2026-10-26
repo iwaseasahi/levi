@@ -26,7 +26,7 @@
 1. [x] Inspect intake, governance, ADR, runbook, canonical checks and safe metadata.
 2. [x] Owner selected Mac-independent always-on execution on 2026-10-26.
        Design uses the existing VPS systemd timer; no additional billed host or
-       inbound SSH exposure. See proposed ADR 0018.
+       inbound SSH exposure. See accepted ADR 0018.
 3. [x] Implement platform-independent release selection/orchestration through the
        existing operator path, plus machine-readable pinned preparation output.
 4. [x] Add unattended guards: Tuesday start, no approval waiting, changed-state
@@ -93,8 +93,8 @@ credential, host file, sudo policy or timer has been installed or enabled.
        baseline with actual host history to prevent cross-machine races/rollback.
 3. [x] Add synthetic positive/negative authorization, credential redaction, timer,
        installer and host transaction coverage; run canonical/protected checks.
-4. [ ] Present the tested exact GitHub App permissions and host installation /
-       activation operation for the owner's one-time credential/access approval.
+4. [x] Owner explicitly approved the exact App permissions/key, gh package,
+       trusted host bundle/entrypoint and timer activation on2026-10-26.
 5. [ ] After approval/provisioning, merge, install without running a live release,
        verify timer next trigger and read-only preflight, then close #563.
 
@@ -130,20 +130,38 @@ must never appear in the agent context or logs. No model runs on the host.
 - Completed: common and VPS-local execution paths, host transaction cutover,
   App token wrapper, installer/units, ADR0018/runbook, synthetic and canonical
   verification. See PR #564 for the exact pushed head and protected CI evidence.
-- Remaining: owner approval of the exact App permission/credential and host
-  installation operation; App provisioning; finalize/merge policy and code;
+- Remaining: existing sudo authentication for protected host setup;
+  finalize/merge policy and code;
   install reviewed bundle/package and enable only the timer; verify safe dry-run
   and next trigger; record completion in #563.
-- Blocker: governance requires explicit approval for creating/installing a
-  production credential and changing production access/host configuration. The
-  owner selected independent execution, but has not approved this exact App/key
-  or the proposed gh/bundle/timer installation.
+- Blocker: one-time approval is now granted and GitHub App setup is complete.
+  The host requires existing operator sudo password authentication, which must
+  be entered by the owner in their terminal, outside Codex.
 - Attempts: reused the existing VPS and root application path; avoided new paid
   infrastructure, SSH identity/firewall changes, self-hosted runner and personal
   tokens. Completed synthetic tests and unit validation without real credentials.
-- Decision needed: approve the exact operations and permissions in ADR0018 and
-  the scheduled-release runbook. This is one-time setup, not per-run approval.
+- Decision needed: none for the approved exact setup. Only existing operator
+  authentication is needed; no password/key/token may be sent in chat.
 - Current branch/head: `codex/issue-563`; exact current head recorded in PR #564.
 - Resume with: verify the checkpoint/PR head and owner approval scope, acquire
   the Issue lease, then provision through the protected channel without exposing
   key/token values. Do not test by starting the production release service.
+
+## 2026-10-26 approved activation progress
+
+- Owner explicitly approved all three concrete setup operations: repository-only
+  App/key, gh2.45.0-1ubuntu0.3 plus reviewed host bundle/entrypoint, and timer-only
+  activation. No repeat permission request is needed for those exact operations.
+- GitHub admin reauthentication completed by the owner. Created App5476038
+  `levi-tuesday-releases`, installation175360432 on `iwaseasahi/levi` only. Actions
+  and Actions variables write; Checks/Contents/Metadata read; OAuth/hooks disabled.
+- Downloaded the App key without displaying contents, protected the temporary
+  file mode0600. The first undownloaded/unused key5034230 was revoked; only the
+  successfully downloaded key5034240 remains. No secret value enters an artifact.
+- Actual UI uses the API identifier `actions_variables`; corrected the wrapper
+  and pinned that external name in the focused regression. No access expansion.
+- Root `sudo -n true` requires the operator's existing password authentication.
+  Ghostty screen control is prohibited by the tool's safety boundary. Prepare an
+  exact one-time setup command for the owner's own terminal; never ask them to
+  send passwords, OTPs, key bytes or tokens in chat. Code/CI work continues.
+- No live deploy, production package/key installation or timer activation yet.
