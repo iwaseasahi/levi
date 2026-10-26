@@ -418,12 +418,15 @@
 
 .admin-church-actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.65rem;
   align-items: center;
 }
 
 .admin-church-action-control {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
@@ -455,7 +458,7 @@
 
 .admin-church-list dl {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(8rem, 1fr);
   gap: 1rem;
   margin: 0;
 }
@@ -542,6 +545,7 @@
 
 .admin-church-delete {
   display: inline-flex;
+  flex-shrink: 0;
 }
 
 .admin-delete-dialog-backdrop {
@@ -604,6 +608,7 @@
 
 .admin-church-user-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem;
 }
@@ -979,4 +984,23 @@ dialog.admin-church-user-dialog::backdrop {
   .provisioning-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.admin-resend-invitation {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-form .admin-resend-invitation .secondary-button {
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  min-height: 2.25rem;
+  height: auto;
+  font-size: 0.82rem;
+}
+
+.admin-resend-invitation p {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }

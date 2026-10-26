@@ -52,11 +52,9 @@ export async function fillSlideBody(page: Page, value: string) {
 }
 
 export async function expectScriptureCatalog(page: Page) {
+  await expect(page.getByRole("radio", { name: "創世記/GEN" })).toBeVisible();
   await expect(
-    page.getByRole("radio", { name: "創世記/Genesis" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("radio", { name: "出エジプト記/Exodus" }),
+    page.getByRole("radio", { name: "出エジプト記/EX" }),
   ).toBeVisible();
 }
 
@@ -73,7 +71,7 @@ export async function selectGenesis(
   } = {},
 ) {
   await page.getByRole("radio", { name: languageLabels[language] }).click();
-  await page.getByRole("radio", { name: "創世記/Genesis" }).click();
+  await page.getByRole("radio", { name: "創世記/GEN" }).click();
   await page.getByLabel("章").fill("1");
   await expect(page.getByLabel("開始節")).toBeEnabled();
   await page.getByLabel("開始節").fill(startVerse);

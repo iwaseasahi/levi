@@ -36,6 +36,11 @@ decision trail. Evidence links are pinned to legacy commit
   protocol and component tests plus the latest-Chromium two-tab E2E verify
   blank, navigation while blank, and display of the latest location after
   unblank.
+- Issue #515 updates PRESENT-001 with the product-owner-specified single-line
+  bilingual location at the upper left and exact JSS3 attribution at the upper
+  right. Component and latest-Chromium E2E evidence cover single-language and
+  bilingual labels, navigation synchronization, typography, compact scaling,
+  blanking, and overflow.
 - Issue #116 extends BOOKMARK-001 with Ginmaku's collapsed folder accordion,
   toggled new-folder form, and same-folder bookmark drag ordering. Component,
   integration, and latest-Chromium E2E evidence verify persisted complete-order

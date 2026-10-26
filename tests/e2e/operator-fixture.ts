@@ -111,7 +111,7 @@ export async function seedScriptureFixture() {
       },
       {
         bookId: E2E_SCRIPTURE_BOOK_ID,
-        name: "Genesis",
+        name: "GEN",
         translationId: english.id,
       },
       {
@@ -121,7 +121,7 @@ export async function seedScriptureFixture() {
       },
       {
         bookId: E2E_NEXT_SCRIPTURE_BOOK_ID,
-        name: "Exodus",
+        name: "EX",
         translationId: english.id,
       },
     ],

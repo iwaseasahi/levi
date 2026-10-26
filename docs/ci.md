@@ -68,3 +68,37 @@ subscription-authenticated Codex client described in
 PRs produced by local agents must still pass all protected checks. A local agent
 review or successful local quality gate is useful evidence but is not a
 substitute for protected CI.
+
+## Dependabot auto-merge
+
+The `Dependabot auto-merge` workflow requests GitHub native squash auto-merge for
+all Dependabot updates, including major versions and GitHub Actions updates.
+Only open, non-draft PRs authored by `dependabot[bot]`, originating in this
+repository and targeting `main` are eligible. Opening, updating, reopening or
+marking a PR ready requests auto-merge for that exact head commit.
+
+The repository setting **Allow auto-merge** must be enabled. The existing `main`
+protection is the merge gate: Quality, Database, E2E and Security must pass, the
+branch must be up to date, and all other protections must permit the merge. A
+successful auto-merge workflow only means the request was accepted; failed or
+missing CI, conflicts and stale branches still block merging. Dependabot or a
+maintainer must resolve those blockers. Ordinary PRs receive no automatic
+request. Existing Dependabot PRs can be enrolled once with:
+
+```sh
+gh pr merge <number> --repo iwaseasahi/levi --auto --squash --match-head-commit <head-sha>
+```
+
+The workflow runs on `pull_request_target` with only `contents: write` and
+`pull-requests: write` for its job, using the built-in `GITHUB_TOKEN`. It never
+checks out a PR, installs dependencies or executes repository code. Do not add
+those operations to this privileged workflow. No approval or protection bypass
+is used, and no production deployment is triggered by this workflow.
+
+To stop automation, disable the `Dependabot auto-merge` workflow and cancel any
+already queued requests with `gh pr merge <number> --disable-auto`. Reverting the
+workflow also prevents future requests. Disabling repository auto-merge affects
+all PRs, including ones manually enrolled by maintainers.
+
+See [GitHub’s Dependabot automation documentation](https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/automate-dependabot-with-actions)
+for the native auto-merge and required-status-check behavior.
