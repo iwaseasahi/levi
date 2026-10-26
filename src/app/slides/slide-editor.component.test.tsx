@@ -288,7 +288,8 @@ describe("slide editor", () => {
       .mockResolvedValueOnce(Response.json({ slide: initial }));
     render(<SlideDocument id={initial.id} fetcher={fetcher} />);
     expect(screen.getByRole("status")).toHaveTextContent("読み込み中");
-    expect(await screen.findByRole("alert")).toHaveFocus();
+    const alert = await screen.findByRole("alert");
+    await waitFor(() => expect(alert).toHaveFocus());
     await userEvent.click(screen.getByRole("button", { name: "再試行" }));
     expect(
       await screen.findByRole("heading", { name: initial.title }),
