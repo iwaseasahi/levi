@@ -1,5 +1,13 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import {
   ProvisioningAuthorizationError,
@@ -9,6 +17,19 @@ import {
 import { provisionChurch } from "@/infrastructure/auth/church-provisioning";
 import { auth } from "@/infrastructure/auth/server";
 import { prisma } from "@/infrastructure/database/client";
+
+const hashSynchronization = vi.hoisted(() => ({ wait: async () => {} }));
+vi.mock("better-auth/crypto", async (importOriginal) => {
+  const original = await importOriginal<typeof import("better-auth/crypto")>();
+  return {
+    ...original,
+    async hashPassword(password: string) {
+      const hash = await original.hashPassword(password);
+      await hashSynchronization.wait();
+      return hash;
+    },
+  };
+});
 
 const namespace = "test.provision";
 
@@ -58,7 +79,10 @@ async function createChurchUser() {
   return userId;
 }
 
-beforeEach(clearProvisioningRecords);
+beforeEach(async () => {
+  hashSynchronization.wait = async () => {};
+  await clearProvisioningRecords();
+});
 afterEach(clearProvisioningRecords);
 
 afterAll(async () => {
@@ -107,6 +131,13 @@ describe("administrator church provisioning", () => {
     "completes concurrent provisioning for distinct churches %s",
     async () => {
       const operatorUserId = await createOperator();
+      const hashesReady = Promise.withResolvers<void>();
+      let hashes = 0;
+      hashSynchronization.wait = () => {
+        hashes += 1;
+        if (hashes === 2) hashesReady.resolve();
+        return hashes <= 2 ? hashesReady.promise : Promise.resolve();
+      };
 
       const results = await Promise.all(
         ["first", "second"].map((key) =>
