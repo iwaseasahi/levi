@@ -58,6 +58,13 @@ updates. Existing open Dependabot PRs also receive an auto-merge request.
   verified existing branch protection. Final CI and live activation evidence will
   be recorded in the linked PR after this commit is published.
 
+- 2026-10-26 JST — Initial exact-head CI passed Quality, Database and E2E but
+  Security detected existing high vulnerabilities in undici and Zod. Kept all
+  gates intact, returned #542 to draft, and isolated prerequisite #543 / #544.
+  The minimal same-major updates passed all four protected checks and merged as
+  `ed9570a8affec3fa8ca5c139ada2d5312d91022c`. Updated this branch by merging
+  current main without rewriting history; resuming exact-head validation.
+
 ## Verification
 
 - [x] Synthetic allowed/denied events and exact CLI arguments: 11/11 tests pass.
