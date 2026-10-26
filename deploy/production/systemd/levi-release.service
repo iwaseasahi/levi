@@ -1,0 +1,21 @@
+[Unit]
+Description=Release CI-verified Levi production commits without a workstation
+Wants=network-online.target
+Requires=docker.service
+After=network-online.target docker.service time-sync.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+LoadCredential=github-app.pem:/etc/levi/release-app.pem
+ExecStart=/usr/local/lib/levi-release/scripts/run-host-scheduled-production-release.sh
+StateDirectory=levi-release
+StateDirectoryMode=0700
+RuntimeDirectory=levi-release
+RuntimeDirectoryMode=0700
+PrivateTmp=true
+ProtectSystem=full
+TimeoutStartSec=infinity
+Restart=no

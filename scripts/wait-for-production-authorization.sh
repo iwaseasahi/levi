@@ -3,6 +3,8 @@
 set -euo pipefail
 
 readonly repository="iwaseasahi/levi"
+readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${script_directory}/lib/production-release-state.sh"
 readonly interval_seconds="${LEVI_AUTHORIZATION_WAIT_INTERVAL_SECONDS:-3}"
 
 if [[ $# -ne 1 || ! "$1" =~ ^[0-9]+$ ]]; then
@@ -23,8 +25,22 @@ done
 readonly run_id="$1"
 readonly authorization_url="https://github.com/${repository}/actions/runs/${run_id}"
 last_waiting_state=""
+attempt=0
+cancel_failed_unattended_wait() {
+  local result=$?
+  if [[ "$result" -ne 0 ]] && is_unattended_deployment; then
+    gh run cancel "$run_id" --repo "$repository" >/dev/null 2>&1 || true
+  fi
+}
+trap cancel_failed_unattended_wait EXIT
 
 while true; do
+  require_unattended_context
+  attempt=$((attempt + 1))
+  if is_unattended_deployment && ((attempt > 1200)); then
+    echo "Unattended authorization timed out." >&2
+    exit 75
+  fi
   run_json="$(gh api "repos/${repository}/actions/runs/${run_id}")"
   status="$(jq -r '.status' <<< "$run_json")"
   conclusion="$(jq -r '.conclusion // ""' <<< "$run_json")"
@@ -43,6 +59,10 @@ while true; do
   pending_json="$(gh api "repos/${repository}/actions/runs/${run_id}/pending_deployments")"
   pending_environments="$(jq -r '[.[].environment.name] | join(", ")' <<< "$pending_json")"
   if [[ -n "$pending_environments" ]]; then
+    if is_unattended_deployment; then
+      echo "Unattended deployment cannot wait for Environment approval." >&2
+      exit 75
+    fi
     waiting_state="approval:${pending_environments}"
     if [[ "$waiting_state" != "$last_waiting_state" ]]; then
       echo "GitHub Actionsで ${pending_environments} Environment の日曜deploy承認を待っています。"

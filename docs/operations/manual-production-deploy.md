@@ -102,7 +102,7 @@ repository ownerが次を設定します。
   - 日曜の追加承認専用であることを説明へ明記
 - repository variable `PRODUCTION_BASE_URL=https://levi-system.com`
 - repository variable `LEVI_PRODUCTION_DEPLOYMENT`
-  - operator scriptがdeploy開始時に`deploying`、成功時に`ready`を自動記録する
+  - host entrypointが共通transaction lock内でdeploy開始時に`deploying`、成功時に`ready`を自動記録する
   - 手入力で更新しない
 
 利用プランで可能なら`production-sunday`のself-reviewを禁止します。GitHubへproduction
@@ -144,7 +144,7 @@ commit tag付き旧versionを削除します。直近7日間の未deploy candida
 ため、このworkflowでは削除しません。
 
 cleanupはrepository variable `LEVI_PRODUCTION_DEPLOYMENT`が`ready`かつ厳密に妥当な場合
-だけ削除します。deploy前にoperator scriptが状態を`deploying`へ変更するため、deploy中や
+だけ削除します。deploy前にhost entrypointがtransaction lock内で状態を`deploying`へ変更するため、deploy中や
 失敗後はfail-closedで何も削除しません。手動確認ではActionsの
 `Cleanup GHCR production images`を`dry_run=true`で実行します。
 
@@ -263,3 +263,11 @@ migrationを作成します。verified data corruptionだけは
 - [Backup, restore, and logical recovery](backup-restore.md)
 - [Production monitoring](production-monitoring.md)
 - [Administration Basic authentication](admin-basic-auth.md)
+
+## Tuesday unattended release
+
+The owner's #563 authorization permits the scheduled Tuesday 10:00 Asia/Tokyo
+path without per-run approval. It preserves the immutable workflows and host
+entrypoint described above. See [the scheduled release runbook](scheduled-production-deploy.md)
+for commit comparison, no-op behavior, concurrency, failure handling and the
+executor prerequisites. Other manual and Sunday procedures remain unchanged.

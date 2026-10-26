@@ -46,6 +46,20 @@ host entrypoint. This keeps TCP 22 restricted to the operator's current `/32`
 while preserving CI, immutable validation, Sunday approval, and host deployment
 history.
 
+Issue #563 adds the owner's narrowly scoped Tuesday 10:00 `Asia/Tokyo` standing
+release authorization. The scheduled operator entry compares main with the last
+successful ready deployment, pins a forward unreleased commit, and reuses the
+same candidate, authorization and host path without per-run human review.
+Unattended mode stops on approval-required, unknown, changed or failed state;
+manual and scheduled applications share a host transaction lock before
+checkout/state changes, in addition to the application deployment lock. This
+does not grant GitHub a production SSH credential
+or change its network access. The owner subsequently required Mac-independent execution. Accepted
+[ADR 0018](0018-vps-scheduled-production-release.md) defines the VPS-local timer
+and repository-only App identity; the owner approved its exact credential/installation
+and timer activation on2026-10-26 in #563. It replaces workstation-only initiation
+for this narrow Tuesday path after approval.
+
 Issue #81 records the product owner's acceptance of no SLA, one application and
 database failure domain, and no cross-region recovery. This ADR approves the
 architecture, not a provider contract, billed resource, production credential,

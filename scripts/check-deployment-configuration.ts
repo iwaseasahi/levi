@@ -488,7 +488,10 @@ esac
 }
 
 const prepareSource = readFileSync(prepareRelease, "utf8");
-assert.match(prepareSource, /\$# -ne 0/);
+assert.match(prepareSource, /--commit/);
+assert.match(prepareSource, /--output/);
+assert.match(prepareSource, /merge-base --is-ancestor/);
+assert.match(prepareSource, /set -o noclobber/);
 assert.match(prepareSource, /git rev-parse origin\/main/);
 assert.match(prepareSource, /wait-for-required-ci\.sh/);
 assert.match(prepareSource, /production:release:deploy/);
@@ -570,13 +573,17 @@ fi
 }
 
 const authorizedSource = readFileSync(authorizedDeploy, "utf8");
-assert.match(authorizedSource, /\.schema_version == 4/);
+assert.match(
+  readFileSync(script("lib/production-authorization.sh"), "utf8"),
+  /\.schema_version == 4/,
+);
 assert.match(authorizedSource, /authorization_run_url/);
 assert.match(authorizedSource, /ssh -o BatchMode=yes/);
 assert.match(authorizedSource, /\$\{1:-\}.*==.*--/);
-assert.match(authorizedSource, /record_deployment_state "deploying"/);
-assert.match(authorizedSource, /record_deployment_state "ready"/);
-assert.match(authorizedSource, /gh variable set LEVI_PRODUCTION_DEPLOYMENT/);
+assert.doesNotMatch(
+  authorizedSource,
+  /gh variable set|record_deployment_state/,
+);
 assert.doesNotMatch(authorizedSource, /issuecomment/);
 
 const releaseArgumentFixture = mkdtempSync(
@@ -677,6 +684,7 @@ exit 70
     fakeSsh,
     `#!/usr/bin/env bash
 set -euo pipefail
+if [[ "$*" == *--protocol-version* ]]; then echo 2; exit 0; fi
 printf '%s\\n' "$*" > "$SSH_CAPTURE"
 `,
   );
@@ -686,6 +694,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
     ...process.env,
     PATH: `${authorizationFixture}:${process.env.PATH ?? ""}`,
     AUTHORIZATION_FIXTURE: record,
+    XDG_STATE_HOME: path.join(authorizationFixture, "operator-state"),
     SSH_CAPTURE: capture,
     VARIABLE_CAPTURE: variableCapture,
   };
@@ -697,9 +706,11 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
   assert.equal(authorized.status, 0, authorized.stderr);
   assert.match(readFileSync(capture, "utf8"), /actions\/runs\/123456/);
   assert.match(readFileSync(capture, "utf8"), /'none'/);
-  const recordedStates = readFileSync(variableCapture, "utf8");
-  assert.match(recordedStates, /"status":"deploying"/);
-  assert.match(recordedStates, /"status":"ready"/);
+  assert.equal(
+    existsSync(variableCapture),
+    false,
+    "Only the host may write deployment metadata",
+  );
 
   const authorizedWithSeparator = spawnSync(
     "bash",
