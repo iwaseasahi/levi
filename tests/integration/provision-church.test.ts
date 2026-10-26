@@ -132,11 +132,13 @@ describe("administrator church provisioning", () => {
     async () => {
       const operatorUserId = await createOperator();
       const hashesReady = Promise.withResolvers<void>();
+      const firstComplete = Promise.withResolvers<void>();
       let hashes = 0;
-      hashSynchronization.wait = () => {
-        hashes += 1;
-        if (hashes === 2) hashesReady.resolve();
-        return hashes <= 2 ? hashesReady.promise : Promise.resolve();
+      hashSynchronization.wait = async () => {
+        const position = ++hashes;
+        if (position === 2) hashesReady.resolve();
+        await hashesReady.promise;
+        if (position === 2) await firstComplete.promise;
       };
 
       const results = await Promise.all(
@@ -145,7 +147,7 @@ describe("administrator church provisioning", () => {
             accountName: `Concurrent ${key}`,
             churchName: `${namespace} concurrent ${key}`,
             email: `${namespace}.concurrent.${key}@example.invalid`,
-          }),
+          }).finally(() => firstComplete.resolve()),
         ),
       );
 
