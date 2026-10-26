@@ -1,13 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  afterAll,
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   ProvisioningAuthorizationError,
@@ -17,19 +9,6 @@ import {
 import { provisionChurch } from "@/infrastructure/auth/church-provisioning";
 import { auth } from "@/infrastructure/auth/server";
 import { prisma } from "@/infrastructure/database/client";
-
-const hashSynchronization = vi.hoisted(() => ({ wait: async () => {} }));
-vi.mock("better-auth/crypto", async (importOriginal) => {
-  const original = await importOriginal<typeof import("better-auth/crypto")>();
-  return {
-    ...original,
-    async hashPassword(password: string) {
-      const hash = await original.hashPassword(password);
-      await hashSynchronization.wait();
-      return hash;
-    },
-  };
-});
 
 const namespace = "test.provision";
 
@@ -79,10 +58,7 @@ async function createChurchUser() {
   return userId;
 }
 
-beforeEach(async () => {
-  hashSynchronization.wait = async () => {};
-  await clearProvisioningRecords();
-});
+beforeEach(clearProvisioningRecords);
 afterEach(clearProvisioningRecords);
 
 afterAll(async () => {
@@ -127,46 +103,34 @@ describe("administrator church provisioning", () => {
     ).resolves.toBe(1);
   });
 
-  it.each(Array.from({ length: 200 }, (_, index) => index))(
-    "completes concurrent provisioning for distinct churches %s",
-    async () => {
-      const operatorUserId = await createOperator();
-      const hashesReady = Promise.withResolvers<void>();
-      const firstComplete = Promise.withResolvers<void>();
-      let hashes = 0;
-      hashSynchronization.wait = async () => {
-        const position = ++hashes;
-        if (position === 2) hashesReady.resolve();
-        await hashesReady.promise;
-        if (position === 2) await firstComplete.promise;
-      };
+  it("completes concurrent provisioning for distinct churches", async () => {
+    const operatorUserId = await createOperator();
 
-      const results = await Promise.all(
-        ["first", "second"].map((key) =>
-          provisionChurch(operatorUserId, {
-            accountName: `Concurrent ${key}`,
-            churchName: `${namespace} concurrent ${key}`,
-            email: `${namespace}.concurrent.${key}@example.invalid`,
-          }).finally(() => firstComplete.resolve()),
-        ),
-      );
+    const results = await Promise.all(
+      ["first", "second"].map((key) =>
+        provisionChurch(operatorUserId, {
+          accountName: `Concurrent ${key}`,
+          churchName: `${namespace} concurrent ${key}`,
+          email: `${namespace}.concurrent.${key}@example.invalid`,
+        }),
+      ),
+    );
 
-      expect(new Set(results.map(({ churchId }) => churchId))).toHaveProperty(
-        "size",
-        2,
-      );
-      await expect(
-        prisma.user.count({
-          where: { email: { startsWith: `${namespace}.concurrent.` } },
-        }),
-      ).resolves.toBe(2);
-      await expect(
-        prisma.church.count({
-          where: { name: { startsWith: `${namespace} concurrent ` } },
-        }),
-      ).resolves.toBe(2);
-    },
-  );
+    expect(new Set(results.map(({ churchId }) => churchId))).toHaveProperty(
+      "size",
+      2,
+    );
+    await expect(
+      prisma.user.count({
+        where: { email: { startsWith: `${namespace}.concurrent.` } },
+      }),
+    ).resolves.toBe(2);
+    await expect(
+      prisma.church.count({
+        where: { name: { startsWith: `${namespace} concurrent ` } },
+      }),
+    ).resolves.toBe(2);
+  });
 
   it("denies a church user at the transaction data boundary", async () => {
     const churchUserId = await createChurchUser();

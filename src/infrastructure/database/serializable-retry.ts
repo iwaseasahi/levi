@@ -1,11 +1,15 @@
-import { Prisma } from "@/generated/prisma/client";
-
 export const SERIALIZABLE_TRANSACTION_MAX_ATTEMPTS = 3;
 
 function isRetryableSerializableConflict(error: unknown) {
   return (
-    (error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2034") ||
+    // Prisma's CJS and ESM entry points have distinct error constructors.
+    // Match the known-error metadata rather than one module's class identity.
+    (error instanceof Error &&
+      error.name === "PrismaClientKnownRequestError" &&
+      "code" in error &&
+      error.code === "P2034" &&
+      "clientVersion" in error &&
+      typeof error.clientVersion === "string") ||
     (error instanceof Error &&
       error.name === "DriverAdapterError" &&
       typeof error.cause === "object" &&
@@ -26,19 +30,6 @@ export async function runWithSerializableRetry<T>(
     try {
       return await operation();
     } catch (error) {
-      console.warn(
-        JSON.stringify({
-          diagnostic: "serializable-conflict",
-          attempt,
-          retryable: isRetryableSerializableConflict(error),
-          isError: error instanceof Error,
-          isPrisma: error instanceof Prisma.PrismaClientKnownRequestError,
-          code:
-            typeof error === "object" && error !== null && "code" in error
-              ? error.code
-              : null,
-        }),
-      );
       if (
         !isRetryableSerializableConflict(error) ||
         attempt === SERIALIZABLE_TRANSACTION_MAX_ATTEMPTS
