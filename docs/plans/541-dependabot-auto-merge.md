@@ -65,6 +65,18 @@ updates. Existing open Dependabot PRs also receive an auto-merge request.
   `ed9570a8affec3fa8ca5c139ada2d5312d91022c`. Updated this branch by merging
   current main without rewriting history; resuming exact-head validation.
 
+- 2026-10-26 JST — The second exact-head run passed Quality, Security and E2E,
+  but concurrent church provisioning failed Database with P2034. Recorded #545
+  and received explicit user direction to continue the separate prerequisite.
+  A genuine Prisma CJS/ESM error-constructor mismatch was reproduced by a failing
+  unit test; the minimal classifier fix passed all four required checks in #546
+  and merged as `138cbdcf7de51d0f436fbf4a15211e28281f1a4c`. All diagnostic
+  logging/stress changes were removed from its final diff. Merged current main
+  into this branch and resumed final exact-head verification.
+- 2026-10-26 JST — Enrolled all seven existing eligible Dependabot PRs (#509,
+  #512, #513, #525, #526, #528, #535) with exact-head squash auto-merge requests;
+  verified every request through the GitHub API. Failed/outdated PRs remain gated.
+
 ## Verification
 
 - [x] Synthetic allowed/denied events and exact CLI arguments: 11/11 tests pass.
@@ -76,7 +88,8 @@ updates. Existing open Dependabot PRs also receive an auto-merge request.
 - [ ] Exact-head Quality / Database / E2E / Security.
 - [x] Repository `allow_auto_merge=true`; verified all four required checks,
       strict mode, administrator enforcement and linear history remain unchanged.
-- [ ] Existing Dependabot PR requests (activate after the implementation merges).
+- [x] All seven existing Dependabot PRs have squash auto-merge requests.
+- [ ] Post-merge live workflow execution for a Dependabot update event.
 
 ## Handoff or blockers
 
