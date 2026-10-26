@@ -4,7 +4,9 @@ set -euo pipefail
 umask 077
 
 readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly repository_root="$(cd "${script_directory}/.." && pwd)"
+readonly repository_root="${LEVI_RELEASE_REPOSITORY:-$(cd "${script_directory}/.." && pwd)}"
+readonly transport="${LEVI_RELEASE_TRANSPORT:-ssh}"
+[[ "$transport" == ssh || ("$transport" == local && "$EUID" -eq 0) ]] || { echo "Invalid release transport." >&2; exit 64; }
 # shellcheck source=lib/production-release-state.sh
 source "${script_directory}/lib/production-release-state.sh"
 
@@ -75,8 +77,10 @@ fi
 git diff --quiet HEAD -- scripts || { echo "Deployment scripts have local changes." >&2; exit 65; }
 git merge-base --is-ancestor HEAD origin/main || { echo "Deployment launcher is not from main." >&2; exit 65; }
 GITHUB_REPOSITORY=iwaseasahi/levi bash "${script_directory}/wait-for-required-ci.sh" "$commit_sha"
-export LEVI_PRODUCTION_SSH_ALIAS=levi-system-production
-ssh -o BatchMode=yes -o ConnectTimeout=10 "$LEVI_PRODUCTION_SSH_ALIAS" true
+if [[ "$transport" == ssh ]]; then
+  export LEVI_PRODUCTION_SSH_ALIAS=levi-system-production
+  ssh -o BatchMode=yes -o ConnectTimeout=10 "$LEVI_PRODUCTION_SSH_ALIAS" true
+fi
 
 temporary_directory="$(mktemp -d "${TMPDIR:-/tmp}/levi-scheduled-release.XXXXXX")"
 snapshot="${temporary_directory}/release"

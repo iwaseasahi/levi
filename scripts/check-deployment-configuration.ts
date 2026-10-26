@@ -573,13 +573,17 @@ fi
 }
 
 const authorizedSource = readFileSync(authorizedDeploy, "utf8");
-assert.match(authorizedSource, /\.schema_version == 4/);
+assert.match(
+  readFileSync(script("lib/production-authorization.sh"), "utf8"),
+  /\.schema_version == 4/,
+);
 assert.match(authorizedSource, /authorization_run_url/);
 assert.match(authorizedSource, /ssh -o BatchMode=yes/);
 assert.match(authorizedSource, /\$\{1:-\}.*==.*--/);
-assert.match(authorizedSource, /record_deployment_state "deploying"/);
-assert.match(authorizedSource, /record_deployment_state "ready"/);
-assert.match(authorizedSource, /gh variable set LEVI_PRODUCTION_DEPLOYMENT/);
+assert.doesNotMatch(
+  authorizedSource,
+  /gh variable set|record_deployment_state/,
+);
 assert.doesNotMatch(authorizedSource, /issuecomment/);
 
 const releaseArgumentFixture = mkdtempSync(
@@ -680,6 +684,7 @@ exit 70
     fakeSsh,
     `#!/usr/bin/env bash
 set -euo pipefail
+if [[ "$*" == *--protocol-version* ]]; then echo 2; exit 0; fi
 printf '%s\\n' "$*" > "$SSH_CAPTURE"
 `,
   );
@@ -701,9 +706,11 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
   assert.equal(authorized.status, 0, authorized.stderr);
   assert.match(readFileSync(capture, "utf8"), /actions\/runs\/123456/);
   assert.match(readFileSync(capture, "utf8"), /'none'/);
-  const recordedStates = readFileSync(variableCapture, "utf8");
-  assert.match(recordedStates, /"status":"deploying"/);
-  assert.match(recordedStates, /"status":"ready"/);
+  assert.equal(
+    existsSync(variableCapture),
+    false,
+    "Only the host may write deployment metadata",
+  );
 
   const authorizedWithSeparator = spawnSync(
     "bash",

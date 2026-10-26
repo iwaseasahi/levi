@@ -39,3 +39,41 @@ require_unattended_context() {
     }
   fi
 }
+
+record_deployment_state() {
+  local status="$1"
+  local recorded_at
+  local state_json
+  recorded_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  state_json="$(jq -cn \
+    --arg status "$status" \
+    --arg commit_sha "$commit_sha" \
+    --arg application_image "$application_image" \
+    --arg migration_image "$migration_image" \
+    --arg authorization_run_url "$authorization_run_url" \
+    --arg recorded_at "$recorded_at" \
+    '{
+      schema_version: 1,
+      status: $status,
+      commit_sha: $commit_sha,
+      application_image: $application_image,
+      migration_image: $migration_image,
+      authorization_run_url: $authorization_run_url,
+      recorded_at: $recorded_at
+    }')"
+  gh variable set LEVI_PRODUCTION_DEPLOYMENT \
+    --repo "$repository" \
+    --body "$state_json"
+}
+
+# Non-secret host history only; never source environment files as code.
+require_matching_host_history() {
+  local deployment="$1" history_file="$2" field host_value json_field
+  for field in commit application_image migration_image; do
+    host_value="$(sed -n "s/^${field}=//p" "$history_file")" || return
+    json_field="$field"; [[ "$field" != commit ]] || json_field=commit_sha
+    [[ -n "$host_value" && "$host_value" == "$(jq -r --arg field "$json_field" '.[$field]' <<<"$deployment")" ]] || {
+      echo "Host history and ready deployment metadata disagree." >&2; return 75;
+    }
+  done
+}

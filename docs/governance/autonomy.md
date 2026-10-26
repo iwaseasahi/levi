@@ -119,12 +119,15 @@ scheduler delay. It requires a valid last successful `ready` deployment, pins
 one forward main commit, skips an already released commit, and retains all four
 protected CI checks, immutable candidate/authorization artifacts, operational
 backup, declared forward migrations, readiness and deployment history. It
-rechecks the ready state under the operator apply lock and refuses changed or
-unknown state. The unattended path stops rather than waiting for Environment
+rechecks the ready state and actual host history under the host transaction lock
+and refuses changed or unknown state. The unattended path stops rather than waiting for Environment
 review and cannot start application outside Tuesday.
 
-The executor must use the approved operator connection and credentials; this
-exception does not authorize a new runner identity, SSH key, firewall opening,
+The owner requires Mac-independent execution. Proposed ADR 0018 defines a
+VPS-local timer with a dedicated repository-only GitHub App; creating/installing
+its credential and the host bundle/timer requires the exact one-time approval
+recorded in #563. This exception does not authorize a new runner, SSH key,
+firewall opening,
 service cost, import, restore, secret/access change or standalone production-data
 operation. Sunday and all other approval boundaries remain unchanged. Activation
 of the chosen scheduler is recorded in #563; implementation or dry-run testing

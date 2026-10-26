@@ -102,7 +102,7 @@ repository ownerが次を設定します。
   - 日曜の追加承認専用であることを説明へ明記
 - repository variable `PRODUCTION_BASE_URL=https://levi-system.com`
 - repository variable `LEVI_PRODUCTION_DEPLOYMENT`
-  - operator scriptがdeploy開始時に`deploying`、成功時に`ready`を自動記録する
+  - host entrypointが共通transaction lock内でdeploy開始時に`deploying`、成功時に`ready`を自動記録する
   - 手入力で更新しない
 
 利用プランで可能なら`production-sunday`のself-reviewを禁止します。GitHubへproduction
@@ -144,7 +144,7 @@ commit tag付き旧versionを削除します。直近7日間の未deploy candida
 ため、このworkflowでは削除しません。
 
 cleanupはrepository variable `LEVI_PRODUCTION_DEPLOYMENT`が`ready`かつ厳密に妥当な場合
-だけ削除します。deploy前にoperator scriptが状態を`deploying`へ変更するため、deploy中や
+だけ削除します。deploy前にhost entrypointがtransaction lock内で状態を`deploying`へ変更するため、deploy中や
 失敗後はfail-closedで何も削除しません。手動確認ではActionsの
 `Cleanup GHCR production images`を`dry_run=true`で実行します。
 

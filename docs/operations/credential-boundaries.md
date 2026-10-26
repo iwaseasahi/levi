@@ -24,3 +24,14 @@ If exposure is suspected, stop copying the value, preserve only redacted
 evidence, notify the human security owner, identify scope from provider audit
 logs, and request an approved rotation/revocation. Secret creation, access
 changes, and rotation always require human approval.
+
+## Scheduled release identity (proposed; Issue #563)
+
+[ADR 0018](../architecture/0018-vps-scheduled-production-release.md) defines the
+VPS-local timer's repository-only GitHub App. Exact permission grant and protected
+key installation need the owner's one-time approval. Root owns the key outside
+Git; installation tokens live only in a private runtime cache/process environment.
+No human login, production SSH key or model-provider credential enters CI or a
+runner. See the [release runbook](scheduled-production-deploy.md) for permissions,
+paths, renewal, revocation and installation checks. No identity is provisioned
+by adding these files.

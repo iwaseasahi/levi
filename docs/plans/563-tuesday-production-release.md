@@ -24,8 +24,9 @@
 ## Plan
 
 1. [x] Inspect intake, governance, ADR, runbook, canonical checks and safe metadata.
-2. [ ] Confirm scheduler substrate with owner: existing Mac/Codex availability
-       versus an independent always-on trusted execution path. Question pending.
+2. [x] Owner selected Mac-independent always-on execution on 2026-10-26.
+       Design uses the existing VPS systemd timer; no additional billed host or
+       inbound SSH exposure. See proposed ADR 0018.
 3. [x] Implement platform-independent release selection/orchestration through the
        existing operator path, plus machine-readable pinned preparation output.
 4. [x] Add unattended guards: Tuesday start, no approval waiting, changed-state
@@ -52,7 +53,7 @@
   it and may not replace its checks with ad hoc production commands.
 - Do not activate or claim always-on scheduling before the substrate decision.
 
-## Verification / progress
+## Initial draft verification / progress (before executor choice)
 
 - Intake and isolated worktree/lease complete. No production mutation performed.
 - Added deterministic Bash orchestration, strict non-secret ready-state validation,
@@ -75,11 +76,74 @@
 - Review sizing: one cohesive operator-path change with shared exact-mode/state
   guards; most added code is synthetic transport fixtures and operational docs.
   No application/schema/migration/dependency version or workflow permission change.
-- Remaining: protected CI, substrate answer and scheduler activation. Keep the PR
-  draft and the schedule disabled until the execution choice is incorporated.
+- At the initial draft: protected CI, substrate answer and scheduler activation
+  remained. The later executor decision below supersedes that blocker.
 
-## Handoff
+## 2026-10-26 executor decision and revised implementation
 
-- Completed: current-flow inspection, exact requested schedule, safe deployed SHA.
-- Remaining: code/tests, policy/runbook amendment, protected merge, scheduler.
-- Decision needed: execution substrate only; no new access has been authorized.
+The owner requires execution while the Mac is stopped/asleep. The earlier
+Mac-dependent scheduler option is rejected. Prepare a VPS-local systemd timer
+and repository-only GitHub App authentication (ADR 0018). No new production
+credential, host file, sudo policy or timer has been installed or enabled.
+
+1. [x] Prepare root-owned trusted scheduler bundle, Tuesday 10:00 JST timer and
+       App token wrapper; preserve existing CI/artifact checks and use local apply.
+2. [x] Move deployment metadata writes under a shared host transaction lock before
+       checkout, reverify exact authorization at the host, and compare scheduled
+       baseline with actual host history to prevent cross-machine races/rollback.
+3. [x] Add synthetic positive/negative authorization, credential redaction, timer,
+       installer and host transaction coverage; run canonical/protected checks.
+4. [ ] Present the tested exact GitHub App permissions and host installation /
+       activation operation for the owner's one-time credential/access approval.
+5. [ ] After approval/provisioning, merge, install without running a live release,
+       verify timer next trigger and read-only preflight, then close #563.
+
+The proposed installer must leave activation separate and never call
+`systemctl start levi-release.service`. App private keys and installation tokens
+must never appear in the agent context or logs. No model runs on the host.
+
+## Always-on implementation evidence
+
+- Root-owned installed scheduler bundle and systemd timer prepared; no daemon,
+  model, new SSH user, runner or extra server. Installer never starts/enables units.
+- Both current manual and scheduled clients require host protocol 2; an older
+  host stops before applying rather than leaving release metadata unrecorded.
+- Host owns authorization revalidation, exact CI and metadata writes under one
+  lock before checkout; scheduled baseline is checked against actual host history.
+- `mise run check` passed after the transport/type changes: 587 unit tests,
+  129 component tests, existing deployment guards,23 orchestration scenarios,
+  19 host transaction scenarios and11 App-authentication tests, plus build.
+- `bash -n` passed for all seven changed/new runtime Bash scripts and libraries.
+- Ubuntu24.04/systemd255 disposable container verified both unit files and the
+  timezone expression (tzdata installed; synthetic docker.service dependency).
+- Read-only production inspection confirmed systemd255 and required tools except
+  `/usr/bin/gh`; apt candidate is `2.45.0-1ubuntu0.3`. No package was installed.
+- The production host parsed the next timer occurrence as
+  `2026-10-27 01:00 UTC`, or Tuesday10:00 Japan time. No timer was installed.
+- No production key/token was created/read/copied, no host file changed, no live
+  deploy and no timer activation. The GitHub App and host changes remain proposed.
+
+## Handoff or blocker
+
+- Intended outcome: Tuesday10:00 JST release of unreleased main commits, without
+  per-run approval and independent of the Mac.
+- Completed: common and VPS-local execution paths, host transaction cutover,
+  App token wrapper, installer/units, ADR0018/runbook, synthetic and canonical
+  verification. See PR #564 for the exact pushed head and protected CI evidence.
+- Remaining: owner approval of the exact App permission/credential and host
+  installation operation; App provisioning; finalize/merge policy and code;
+  install reviewed bundle/package and enable only the timer; verify safe dry-run
+  and next trigger; record completion in #563.
+- Blocker: governance requires explicit approval for creating/installing a
+  production credential and changing production access/host configuration. The
+  owner selected independent execution, but has not approved this exact App/key
+  or the proposed gh/bundle/timer installation.
+- Attempts: reused the existing VPS and root application path; avoided new paid
+  infrastructure, SSH identity/firewall changes, self-hosted runner and personal
+  tokens. Completed synthetic tests and unit validation without real credentials.
+- Decision needed: approve the exact operations and permissions in ADR0018 and
+  the scheduled-release runbook. This is one-time setup, not per-run approval.
+- Current branch/head: `codex/issue-563`; exact current head recorded in PR #564.
+- Resume with: verify the checkpoint/PR head and owner approval scope, acquire
+  the Issue lease, then provision through the protected channel without exposing
+  key/token values. Do not test by starting the production release service.

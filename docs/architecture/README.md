@@ -33,6 +33,8 @@ them in implementation code.
 | [0016](0016-store-slide-images-in-postgresql.md)                    | accepted   | Bounded Slide images stored in PostgreSQL                |
 | [0017](0017-versioned-slide-rich-text.md)                           | accepted   | Versioned application-owned Slide rich text              |
 
+| [0018](0018-vps-scheduled-production-release.md) | proposed | VPS-local Tuesday releases with a repository-only GitHub App |
+
 Implementation-level data rules are documented in
 [`database-conventions.md`](database-conventions.md) and the accepted
 [`data-model-dictionary.md`](data-model-dictionary.md).

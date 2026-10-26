@@ -87,6 +87,7 @@ esac`,
     "ssh",
     `
 printf 'ssh %s\\n' "$*" >> "$CALLS"
+if [[ "$*" == *--protocol-version* ]]; then if [[ "$FAKE_MODE" == oldhost ]]; then echo 1; else echo 2; fi; exit 0; fi
 if [[ "$FAKE_MODE" == remoteday && "$*" == *sudo* ]]; then
   last=""; for item in "$@"; do last="$item"; done
   guard="\${last%% && sudo*}"
@@ -265,7 +266,6 @@ fi`,
 
   for (const mode of [
     "preparefailure",
-    "applybusy",
     "changed",
     "changedatapply",
     "wrongauthorization",
@@ -289,18 +289,25 @@ fi`,
   );
   assert.doesNotMatch(already.calls, /sudo -n|gh variable set/);
 
-  const remoteDay = run("remoteday");
-  assert.notEqual(remoteDay.status, 0, remoteDay.stdout);
-  assert.match(remoteDay.calls, /"status":"deploying"/);
-  assert.doesNotMatch(remoteDay.calls, /"status":"ready"/);
+  const oldHost = run("oldhost");
+  assert.equal(oldHost.status, 69, oldHost.stderr);
+  assert.match(oldHost.stderr, /Install the reviewed host deployment protocol/);
+  assert.doesNotMatch(
+    oldHost.calls,
+    new RegExp(`levi-production-deploy '${selected}'`),
+  );
 
   const released = run("new");
   assert.equal(released.status, 0, released.stderr);
   assert.match(released.calls, new RegExp(`--field commit_sha=${selected}`));
   assert.match(released.calls, /--field release_candidate_run_id=100/);
   assert.match(released.calls, /sudo -n.*levi-production-deploy/);
-  assert.match(released.calls, /"status":"deploying"/);
-  assert.match(released.calls, /"status":"ready"/);
+  assert.doesNotMatch(
+    released.calls,
+    /gh variable set/,
+    "Host owns metadata writes",
+  );
+  assert.match(released.calls, new RegExp(previous));
   assert.match(released.stdout, /Scheduled production release completed/);
   console.log(
     `Scheduled deployment safeguards passed ${scenarios} synthetic scenarios; no real GitHub or production calls.`,
