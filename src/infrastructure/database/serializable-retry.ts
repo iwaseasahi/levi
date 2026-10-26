@@ -26,6 +26,19 @@ export async function runWithSerializableRetry<T>(
     try {
       return await operation();
     } catch (error) {
+      console.warn(
+        JSON.stringify({
+          diagnostic: "serializable-conflict",
+          attempt,
+          retryable: isRetryableSerializableConflict(error),
+          isError: error instanceof Error,
+          isPrisma: error instanceof Prisma.PrismaClientKnownRequestError,
+          code:
+            typeof error === "object" && error !== null && "code" in error
+              ? error.code
+              : null,
+        }),
+      );
       if (
         !isRetryableSerializableConflict(error) ||
         attempt === SERIALIZABLE_TRANSACTION_MAX_ATTEMPTS
