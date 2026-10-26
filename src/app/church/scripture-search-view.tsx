@@ -235,7 +235,7 @@ export function ScriptureSearchFields({
                   Reset
                 </button>
                 <button
-                  aria-label="空白と表示を切り替え"
+                  aria-label="空白⇔表示を切り替え"
                   className="search-action-blank"
                   disabled={!audienceReady}
                   onClick={() => onControl("toggle-blank")}
