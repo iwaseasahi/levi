@@ -34,9 +34,9 @@
 5. [x] Add synthetic execution tests for no-op, valid new release, invalid or
        non-ready state, non-forward commits, concurrent runs, CI/preparation
        failure, changed state and approval-required workflows.
-6. [ ] Record the narrowly scoped owner authorization in governance/ADR/runbooks,
+6. [x] Record the narrowly scoped owner authorization in governance/ADR/runbooks,
        run canonical and protected checks, and merge.
-7. [ ] Activate the chosen scheduler only after the tested code is in main;
+7. [x] Activate the chosen scheduler only after the tested code is in main;
        validate read-only preflight/schedule metadata, without a live test deploy.
 
 ## Decisions / constraints
@@ -95,7 +95,7 @@ credential, host file, sudo policy or timer has been installed or enabled.
        installer and host transaction coverage; run canonical/protected checks.
 4. [x] Owner explicitly approved the exact App permissions/key, gh package,
        trusted host bundle/entrypoint and timer activation on2026-10-26.
-5. [ ] After approval/provisioning, merge, install without running a live release,
+5. [x] After approval/provisioning, merge, install without running a live release,
        verify timer next trigger and read-only preflight, then close #563.
 
 The proposed installer must leave activation separate and never call
@@ -130,22 +130,17 @@ must never appear in the agent context or logs. No model runs on the host.
 - Completed: common and VPS-local execution paths, host transaction cutover,
   App token wrapper, installer/units, ADR0018/runbook, synthetic and canonical
   verification. See PR #564 for the exact pushed head and protected CI evidence.
-- Remaining: existing sudo authentication for protected host setup;
-  finalize/merge policy and code;
-  install reviewed bundle/package and enable only the timer; verify safe dry-run
-  and next trigger; record completion in #563.
-- Blocker: one-time approval is now granted and GitHub App setup is complete.
-  The host requires existing operator sudo password authentication, which must
-  be entered by the owner in their terminal, outside Codex.
+- Remaining: none for implementation or scheduler setup. Final documentation
+  review/checks and Issue closure are tracked in its pull request.
+- Blocker: none. Approved provisioning, installation and timer activation are
+  complete; no live release was run as a test.
 - Attempts: reused the existing VPS and root application path; avoided new paid
   infrastructure, SSH identity/firewall changes, self-hosted runner and personal
   tokens. Completed synthetic tests and unit validation without real credentials.
-- Decision needed: none for the approved exact setup. Only existing operator
-  authentication is needed; no password/key/token may be sent in chat.
-- Current branch/head: `codex/issue-563`; exact current head recorded in PR #564.
-- Resume with: verify the checkpoint/PR head and owner approval scope, acquire
-  the Issue lease, then provision through the protected channel without exposing
-  key/token values. Do not test by starting the production release service.
+- Decision needed: none.
+- Current branch/head: `codex/issue-563`; implementation merged in PR #564 at
+  `37acf87963208c1e23c40165a5861b7d35c14ab2`.
+- Resume with: N/A for setup; inspect future scheduled runs using the runbook.
 
 ## 2026-10-26 approved activation progress
 
@@ -165,3 +160,28 @@ must never appear in the agent context or logs. No model runs on the host.
   exact one-time setup command for the owner's own terminal; never ask them to
   send passwords, OTPs, key bytes or tokens in chat. Code/CI work continues.
 - No live deploy, production package/key installation or timer activation yet.
+
+## 2026-10-26 completed installation and activation
+
+The preceding progress entries describe their historical checkpoints. They are
+superseded by this completed installation record:
+
+- Owner completed existing GitHub and VPS sudo authentication personally;
+  passwords, key values and installation tokens never entered Codex or logs.
+- PR #564 merged at `37acf87963208c1e23c40165a5861b7d35c14ab2`. Exact merged
+  Quality, Database, E2E and Security passed in
+  [run40282927929](https://github.com/iwaseasahi/levi/actions/runs/40282927929).
+- Root bootstrap verified the reviewed tree, canonical main ancestry and exact
+  merged CI, App scope/repository, protected credentials and existing production
+  secret checks. It installed gh2.45.0-1ubuntu0.3 and that exact reviewed bundle;
+  `installed-commit` matches the merge SHA and the entrypoint reports protocol2.
+- Root-owned provisioning progress reached `installed-and-timer-active`.
+- Installed root launcher's `--dry-run` and calendar validation succeeded before
+  timer-only activation. Temporary workstation/operator-staging keys were removed.
+- Timer became enabled/active at2026-10-26 07:02:42 UTC (16:02:42 JST). First
+  trigger:2026-10-27 01:00:00 UTC, **Tuesday10:00 JST**. Saved timer has
+  `Persistent=false`, one-second accuracy and no randomized delay.
+- Read-only `systemctl show` verified no last trigger and service inactive/dead,
+  with no main-process start timestamp. No immediate live deployment occurred.
+- No further setup approval or authentication is needed. Future scheduled runs
+  depend on VPS/network/GitHub availability and retain every release guard.
