@@ -62,7 +62,7 @@ export function SlideController({
           Open
         </button>
         <button
-          aria-label="空白と表示を切り替え"
+          aria-label="空白⇔表示を切り替え"
           type="button"
           disabled={!ready}
           aria-pressed={projection.state?.presentation.blank ?? false}

@@ -12,6 +12,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { assertReviewedActionUses } from "./lib/github-action-pins";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const script = (name: string) => path.join(root, "scripts", name);
 const deployScript = script("production-deploy.sh");
@@ -217,22 +219,8 @@ assert.match(
 );
 assert.match(publishWorkflow, /production-release-candidate\.json/);
 assert.match(publishWorkflow, /retention-days: 1/);
-assert.match(
-  publishWorkflow,
-  /docker\/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e/,
-);
-assert.equal(
-  publishWorkflow.match(
-    /docker\/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e/g,
-  )?.length,
-  2,
-);
-assert.equal(
-  publishWorkflow.match(
-    /docker\/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a/g,
-  )?.length,
-  2,
-);
+assertReviewedActionUses(publishWorkflow, "docker/setup-buildx-action", 2);
+assertReviewedActionUses(publishWorkflow, "docker/build-push-action", 2);
 assert.match(
   publishWorkflow,
   /cache-from: type=gha,scope=levi-production-application/,
