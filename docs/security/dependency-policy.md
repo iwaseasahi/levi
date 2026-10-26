@@ -6,7 +6,10 @@
   expiry; lowering the global threshold is prohibited.
 - GitHub Actions are pinned to full commit SHAs with a version comment.
 - Dependabot updates pnpm and Actions weekly; its PRs receive the same protected
-  Quality, Database, E2E, and Security jobs as any other author.
+  Quality, Database, E2E, and Security jobs as any other author. Eligible
+  Dependabot PRs automatically squash merge only when those checks and existing
+  branch protection pass, including major updates; see
+  [`docs/ci.md`](../ci.md#dependabot-auto-merge) for scope and rollback.
 - New direct dependencies require purpose, maintenance, provenance, and license
   review. Avoid install scripts unless explicitly allowlisted.
 

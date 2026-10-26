@@ -1,0 +1,45 @@
+name: Dependabot auto-merge
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+jobs:
+  auto-merge:
+    name: Enable Dependabot auto-merge
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # This privileged workflow must never check out or execute PR code.
+      # GitHub branch protection, not this job's result, gates the actual merge.
+      - name: Request protected squash auto-merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! jq --exit-status --arg repository "$GITHUB_REPOSITORY" '
+            .pull_request |
+            .user.login == "dependabot[bot]" and
+            .user.type == "Bot" and
+            .head.repo.full_name == $repository and
+            .base.repo.full_name == $repository and
+            .base.ref == "main" and
+            .state == "open" and
+            .draft == false
+          ' "$GITHUB_EVENT_PATH" > /dev/null; then
+            echo "Pull request is not eligible for Dependabot auto-merge."
+            exit 0
+          fi
+
+          pr_number="$(jq --raw-output '.number' "$GITHUB_EVENT_PATH")"
+          head_sha="$(jq --raw-output '.pull_request.head.sha' "$GITHUB_EVENT_PATH")"
+          gh pr merge "$pr_number" --repo "$GITHUB_REPOSITORY" \
+            --match-head-commit "$head_sha" --auto --squash
