@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom/vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { SlideListResult, SlideSummary } from "@/domain/slides/list";
@@ -51,7 +51,8 @@ describe("SlideList", () => {
     ).not.toBeInTheDocument();
     unmount();
     render(<SlideList fetcher={fetcher} />);
-    expect(await screen.findByRole("alert")).toHaveFocus();
+    const alert = await screen.findByRole("alert");
+    await waitFor(() => expect(alert).toHaveFocus());
     await user.click(screen.getByRole("button", { name: "再試行" }));
     const link = await screen.findByRole("link", {
       name: "テキスト Synthetic 1",
