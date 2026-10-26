@@ -236,7 +236,7 @@ test("projects bilingual scripture and navigates across chapter and book boundar
   const previous = page.getByRole("button", { name: "前の御言葉へ" });
   const next = page.getByRole("button", { name: "次の御言葉へ" });
   const toggleBlank = page.getByRole("button", {
-    name: "空白と表示を切り替え",
+    name: "空白⇔表示を切り替え",
   });
   await expect(larger).toBeEnabled();
   await expect(smaller).toBeEnabled();
