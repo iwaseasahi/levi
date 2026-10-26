@@ -1,15 +1,25 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+umask 077
 
 readonly repository="iwaseasahi/levi"
 readonly workflow_path=".github/workflows/publish-production-images.yml"
 readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [[ $# -ne 0 ]]; then
-  echo "Usage: pnpm production:release:prepare" >&2
-  exit 64
-fi
+requested_commit=""
+output_file=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --commit)
+      [[ $# -ge 2 && -z "$requested_commit" && "${2:-}" =~ ^[a-f0-9]{40}$ ]] || { echo "Invalid pinned commit argument." >&2; exit 64; }
+      requested_commit="$2"; shift 2 ;;
+    --output)
+      [[ $# -ge 2 && -z "$output_file" && -n "${2:-}" && ! -e "${2:-}" && ! -L "${2:-}" ]] || { echo "Output must be a new file." >&2; exit 64; }
+      output_file="$2"; shift 2 ;;
+    *) echo "Usage: pnpm production:release:prepare [--commit COMMIT_SHA] [--output NEW_FILE]" >&2; exit 64 ;;
+  esac
+done
 
 for command in gh git jq; do
   command -v "$command" >/dev/null 2>&1 || {
@@ -22,7 +32,8 @@ readonly temporary_directory="$(mktemp -d "${TMPDIR:-/tmp}/levi-production-candi
 trap 'rm -rf "$temporary_directory"' EXIT
 
 git fetch --quiet origin main
-readonly commit_sha="$(git rev-parse origin/main)"
+readonly commit_sha="${requested_commit:-$(git rev-parse origin/main)}"
+git merge-base --is-ancestor "$commit_sha" origin/main || { echo "Pinned commit is not on main." >&2; exit 65; }
 [[ "$commit_sha" =~ ^[a-f0-9]{40}$ ]] || {
   echo "Unable to resolve origin/main to an exact commit." >&2
   exit 65
@@ -104,3 +115,7 @@ echo "Application: ${application_image}"
 echo "Migration: ${migration_image}"
 echo "After reviewing the exact release, run:"
 echo "mise exec -- pnpm production:release:deploy -- ${run_id}"
+
+if [[ -n "$output_file" ]]; then
+  (set -o noclobber; cat "$candidate_file" > "$output_file")
+fi

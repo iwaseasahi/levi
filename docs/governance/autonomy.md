@@ -107,6 +107,29 @@ host must both fail closed when that Sunday authorization is missing or belongs
 to another release. Sunday authorization for a deploy does not expand to data
 imports, restores, secret or access changes, OS maintenance, or reboots.
 
+### Preauthorized Tuesday production release
+
+Issue #563 records the owner's explicit request for automatic production deploys
+on Tuesday at 10:00 `Asia/Tokyo`, only when main has unreleased commits, without
+per-run human approval. That scoped standing authorization replaces the manual
+initiation requirement for this scheduled path only.
+
+The deterministic scheduled entry may start during Tuesday's 10:00 hour to allow
+scheduler delay. It requires a valid last successful `ready` deployment, pins
+one forward main commit, skips an already released commit, and retains all four
+protected CI checks, immutable candidate/authorization artifacts, operational
+backup, declared forward migrations, readiness and deployment history. It
+rechecks the ready state under the operator apply lock and refuses changed or
+unknown state. The unattended path stops rather than waiting for Environment
+review and cannot start application outside Tuesday.
+
+The executor must use the approved operator connection and credentials; this
+exception does not authorize a new runner identity, SSH key, firewall opening,
+service cost, import, restore, secret/access change or standalone production-data
+operation. Sunday and all other approval boundaries remain unchanged. Activation
+of the chosen scheduler is recorded in #563; implementation or dry-run testing
+is not approval to deploy immediately outside the scheduled window.
+
 ## Human decisions
 
 Humans retain final authority for:

@@ -488,7 +488,10 @@ esac
 }
 
 const prepareSource = readFileSync(prepareRelease, "utf8");
-assert.match(prepareSource, /\$# -ne 0/);
+assert.match(prepareSource, /--commit/);
+assert.match(prepareSource, /--output/);
+assert.match(prepareSource, /merge-base --is-ancestor/);
+assert.match(prepareSource, /set -o noclobber/);
 assert.match(prepareSource, /git rev-parse origin\/main/);
 assert.match(prepareSource, /wait-for-required-ci\.sh/);
 assert.match(prepareSource, /production:release:deploy/);
@@ -686,6 +689,7 @@ printf '%s\\n' "$*" > "$SSH_CAPTURE"
     ...process.env,
     PATH: `${authorizationFixture}:${process.env.PATH ?? ""}`,
     AUTHORIZATION_FIXTURE: record,
+    XDG_STATE_HOME: path.join(authorizationFixture, "operator-state"),
     SSH_CAPTURE: capture,
     VARIABLE_CAPTURE: variableCapture,
   };

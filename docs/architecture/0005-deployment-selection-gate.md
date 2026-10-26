@@ -46,6 +46,16 @@ host entrypoint. This keeps TCP 22 restricted to the operator's current `/32`
 while preserving CI, immutable validation, Sunday approval, and host deployment
 history.
 
+Issue #563 adds the owner's narrowly scoped Tuesday 10:00 `Asia/Tokyo` standing
+release authorization. The scheduled operator entry compares main with the last
+successful ready deployment, pins a forward unreleased commit, and reuses the
+same candidate, authorization and host path without per-run human review.
+Unattended mode stops on approval-required, unknown, changed or failed state;
+manual and scheduled applications share an operator lock in addition to the
+host's deployment lock. This does not grant GitHub a production SSH credential
+or change its network access. An independent always-on executor requires a
+separate explicit connection/credential decision before it can be enabled.
+
 Issue #81 records the product owner's acceptance of no SLA, one application and
 database failure domain, and no cross-region recovery. This ADR approves the
 architecture, not a provider contract, billed resource, production credential,

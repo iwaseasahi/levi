@@ -263,3 +263,11 @@ migrationを作成します。verified data corruptionだけは
 - [Backup, restore, and logical recovery](backup-restore.md)
 - [Production monitoring](production-monitoring.md)
 - [Administration Basic authentication](admin-basic-auth.md)
+
+## Tuesday unattended release
+
+The owner's #563 authorization permits the scheduled Tuesday 10:00 Asia/Tokyo
+path without per-run approval. It preserves the immutable workflows and host
+entrypoint described above. See [the scheduled release runbook](scheduled-production-deploy.md)
+for commit comparison, no-op behavior, concurrency, failure handling and the
+executor prerequisites. Other manual and Sunday procedures remain unchanged.

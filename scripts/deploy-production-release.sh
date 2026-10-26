@@ -6,6 +6,8 @@ readonly repository="iwaseasahi/levi"
 readonly publish_workflow_path=".github/workflows/publish-production-images.yml"
 readonly authorize_workflow_path=".github/workflows/deploy-production.yml"
 readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${script_directory}/lib/production-release-state.sh"
+require_unattended_context
 
 if [[ "${1:-}" == "--" ]]; then
   shift

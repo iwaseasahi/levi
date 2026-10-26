@@ -4,6 +4,9 @@ set -euo pipefail
 
 readonly repository="iwaseasahi/levi"
 readonly workflow_path=".github/workflows/deploy-production.yml"
+readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${script_directory}/lib/production-release-state.sh"
+require_unattended_context
 readonly ssh_host_alias="${LEVI_PRODUCTION_SSH_ALIAS:-levi-system-production}"
 
 if [[ "${1:-}" == "--" ]]; then
@@ -117,11 +120,48 @@ record_deployment_state() {
     --body "$state_json"
 }
 
+# All operator checkouts share the apply lock, including manual deploy commands.
+readonly operator_state_root="${XDG_STATE_HOME:-${HOME}/.local/state}/levi"
+mkdir -p "$operator_state_root"
+chmod 700 "$operator_state_root"
+readonly apply_lock="${operator_state_root}/production-deploy.lock"
+if ! mkdir "$apply_lock" 2>/dev/null; then
+  echo "Another operator deployment is active; no production change was started." >&2
+  exit 75
+fi
+cleanup_authorized_deploy() {
+  rmdir "$apply_lock" 2>/dev/null || true
+  rm -rf "$temporary_directory"
+}
+trap cleanup_authorized_deploy EXIT
+
+if is_unattended_deployment; then
+  [[ "$commit_sha" == "$LEVI_UNATTENDED_EXPECTED_COMMIT" && "$sunday_authorization_run_url" == "none" ]] || {
+    echo "Authorization does not match the scheduled exact commit/day." >&2
+    exit 65
+  }
+  actual_deployment="$(read_ready_production_deployment)"
+  if [[ "$(jq -r .commit_sha <<< "$actual_deployment")" == "$commit_sha" ]]; then
+    echo "Skipped: the scheduled commit has already been successfully deployed."
+    exit 0
+  fi
+  [[ "$actual_deployment" == "$LEVI_UNATTENDED_EXPECTED_DEPLOYMENT" ]] || {
+    echo "Production state changed before apply; automatic deployment stopped." >&2
+    exit 75
+  }
+  require_unattended_context
+fi
+
 echo "Authorization verified: ${repository} Actions run ${run_id}, attempt ${run_attempt}."
 record_deployment_state "deploying"
 echo "GHCR cleanup is suspended until this deploy succeeds."
 echo "Connecting through the operator's allowlisted SSH path."
-ssh -o BatchMode=yes "$ssh_host_alias" \
-  "sudo -n /usr/local/sbin/levi-production-deploy '$commit_sha' '$application_image' '$migration_image' '$authorization_run_url' '$sunday_authorization_run_url'"
+deploy_command="sudo -n /usr/local/sbin/levi-production-deploy '$commit_sha' '$application_image' '$migration_image' '$authorization_run_url' '$sunday_authorization_run_url'"
+if is_unattended_deployment; then
+  remote_command='test "$(TZ=Asia/Tokyo date +%u)" = 2 && '"$deploy_command"
+else
+  remote_command="$deploy_command"
+fi
+ssh -o BatchMode=yes "$ssh_host_alias" "$remote_command"
 record_deployment_state "ready"
 echo "Current production image digests were recorded for GHCR retention."
