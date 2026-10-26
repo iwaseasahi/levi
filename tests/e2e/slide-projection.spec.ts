@@ -103,13 +103,9 @@ test("saved slides project the complete document, acknowledge controls, reauthor
   await expect(
     controller.getByRole("button", { name: "文字を小さく" }),
   ).toHaveCount(0);
-  await controller
-    .getByRole("button", { name: "空白と表示を切り替え" })
-    .click();
+  await controller.getByRole("button", { name: "空白⇔表示を切り替え" }).click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
-  await controller
-    .getByRole("button", { name: "空白と表示を切り替え" })
-    .click();
+  await controller.getByRole("button", { name: "空白⇔表示を切り替え" }).click();
   await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   await audience.reload();
   await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
@@ -203,17 +199,17 @@ test("invalid Slide coordinates recover through Open and a closed audience can r
     await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   }
   await expect(
-    controller.getByRole("button", { name: "空白と表示を切り替え" }),
+    controller.getByRole("button", { name: "空白⇔表示を切り替え" }),
   ).toBeEnabled();
   await audience.close();
   await expect(
-    controller.getByRole("button", { name: "空白と表示を切り替え" }),
+    controller.getByRole("button", { name: "空白⇔表示を切り替え" }),
   ).toBeDisabled();
   const reopened = context.waitForEvent("page");
   await controller.getByRole("button", { name: "Open" }).click();
   audience = await reopened;
   await expect(audience.locator(".slide-rich-content")).toHaveText(slideBody);
   await expect(
-    controller.getByRole("button", { name: "空白と表示を切り替え" }),
+    controller.getByRole("button", { name: "空白⇔表示を切り替え" }),
   ).toBeEnabled();
 });
