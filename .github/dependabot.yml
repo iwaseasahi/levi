@@ -6,6 +6,8 @@ updates:
       interval: weekly
       day: monday
       timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 10
     groups:
       production-minor-patch:
@@ -21,4 +23,6 @@ updates:
       interval: weekly
       day: monday
       timezone: Asia/Tokyo
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
