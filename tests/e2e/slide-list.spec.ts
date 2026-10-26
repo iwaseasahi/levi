@@ -306,7 +306,7 @@ test("Slide sidebar shares folders and restores a Scripture bookmark in the same
     .click();
   await expect(page.getByText(/保存済み · リビジョン/)).toHaveCount(0);
   const blank = page.getByRole("button", {
-    name: "空白と表示を切り替え",
+    name: "空白⇔表示を切り替え",
   });
   const favorite = page.getByRole("button", { name: "お気に入りに追加" });
   await expect(favorite).toBeEnabled();

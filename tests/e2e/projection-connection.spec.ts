@@ -20,7 +20,7 @@ test("a reused projector follows its new controller and rejects the previous con
     Reflect.set(window, "syntheticProjector", window.open("", "projector"));
   });
   // Same coordinates plus a new generation is a fragment-only navigation.
-  await page.getByRole("button", { name: "空白と表示を切り替え" }).click();
+  await page.getByRole("button", { name: "空白⇔表示を切り替え" }).click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
   await page.getByRole("button", { name: "Open", exact: true }).click();
   await expect.poll(() => new URL(audience.url()).hash).not.toBe(originalHash);
@@ -77,6 +77,6 @@ test("a reused projector follows its new controller and rejects the previous con
   await expect(
     second.getByRole("button", { name: "次の御言葉へ" }),
   ).toBeEnabled();
-  await second.getByRole("button", { name: "空白と表示を切り替え" }).click();
+  await second.getByRole("button", { name: "空白⇔表示を切り替え" }).click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
 });

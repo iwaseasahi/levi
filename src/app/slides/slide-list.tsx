@@ -146,23 +146,16 @@ export function SlideList({
       <ul className="slide-list">
         {result?.slides.map((slide, index) => (
           <li className="slide-list-item" key={slide.id}>
-            <Link
-              className="slide-list-row"
-              href={`/slides/${slide.id}`}
-              aria-labelledby={`slide-type-${slide.id} slide-title-${slide.id}`}
-            >
+            <Link className="slide-list-row" href={`/slides/${slide.id}`}>
               <span className="slide-list-number" aria-hidden="true">
                 {(page - 1) * 20 + index + 1}
               </span>
               <span className="slide-list-content">
                 <span className="slide-list-title">
-                  <span
-                    className="slide-list-type"
-                    id={`slide-type-${slide.id}`}
-                  >
+                  <span className="slide-list-type">
                     {slide.contentType === "image" ? "画像" : "テキスト"}
-                  </span>
-                  <span id={`slide-title-${slide.id}`}>{slide.title}</span>
+                  </span>{" "}
+                  <span>{slide.title}</span>
                 </span>
               </span>
               <span className="slide-list-arrow" aria-hidden="true">
