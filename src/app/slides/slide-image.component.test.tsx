@@ -138,7 +138,7 @@ describe("image Slide UI", () => {
       screen.queryByRole("button", { name: "文字を大きく" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+      screen.getByRole("button", { name: "空白⇔表示を切り替え" }),
     ).toBeDisabled();
   });
 

@@ -472,7 +472,7 @@ describe("ScriptureSearch", () => {
     const previous = screen.getByRole("button", { name: "前の御言葉へ" });
     const next = screen.getByRole("button", { name: "次の御言葉へ" });
     const toggleBlank = screen.getByRole("button", {
-      name: "空白と表示を切り替え",
+      name: "空白⇔表示を切り替え",
     });
     expect(larger).toHaveTextContent("+");
     expect(smaller).toHaveTextContent("-");
@@ -480,6 +480,8 @@ describe("ScriptureSearch", () => {
     expect(smaller).toBeDisabled();
     expect(previous).toBeDisabled();
     expect(next).toBeDisabled();
+    expect(toggleBlank).toHaveTextContent("空白⇔表示");
+    expect(toggleBlank).toHaveAccessibleName("空白⇔表示を切り替え");
     expect(toggleBlank).toBeDisabled();
     expect(
       screen.getByRole("status", { name: "現在の文字サイズ" }),

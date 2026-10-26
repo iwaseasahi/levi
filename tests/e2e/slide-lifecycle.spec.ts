@@ -90,13 +90,9 @@ test("Slide lifecycle keeps drafts private while saved content is listed, projec
   await expect(
     controller.getByRole("button", { name: "文字を小さく" }),
   ).toHaveCount(0);
-  await controller
-    .getByRole("button", { name: "空白と表示を切り替え" })
-    .click();
+  await controller.getByRole("button", { name: "空白⇔表示を切り替え" }).click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
-  await controller
-    .getByRole("button", { name: "空白と表示を切り替え" })
-    .click();
+  await controller.getByRole("button", { name: "空白⇔表示を切り替え" }).click();
   await expect(audience.locator(".slide-rich-content")).toHaveText(original);
   await expect(audience.locator(".slide-rich-content")).toHaveAttribute(
     "data-vertical-alignment",

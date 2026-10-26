@@ -110,9 +110,7 @@ test("an image Slide is previewed, saved, projected with contain sizing, and bla
   await expect(
     controller.getByRole("button", { name: "文字を大きく" }),
   ).toHaveCount(0);
-  await controller
-    .getByRole("button", { name: "空白と表示を切り替え" })
-    .click();
+  await controller.getByRole("button", { name: "空白⇔表示を切り替え" }).click();
   await expect(audience.getByRole("main", { name: "空白投影" })).toBeVisible();
   await expect(projected).toHaveCount(0);
 });

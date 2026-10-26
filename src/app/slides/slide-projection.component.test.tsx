@@ -211,7 +211,7 @@ describe("Slide audience and controller", () => {
       target,
     );
     expect(
-      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+      screen.getByRole("button", { name: "空白⇔表示を切り替え" }),
     ).toBeEnabled();
 
     act(() => vi.advanceTimersByTime(6_000));
@@ -253,7 +253,7 @@ describe("Slide audience and controller", () => {
       target,
     );
     expect(
-      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+      screen.getByRole("button", { name: "空白⇔表示を切り替え" }),
     ).toBeDisabled();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 
@@ -261,7 +261,7 @@ describe("Slide audience and controller", () => {
     act(() => vi.advanceTimersByTime(1_000));
 
     expect(
-      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+      screen.getByRole("button", { name: "空白⇔表示を切り替え" }),
     ).toBeDisabled();
     expect(
       screen.queryByText("投映画面を閉じました。再度Openしてください。"),
@@ -284,8 +284,11 @@ describe("Slide audience and controller", () => {
     expect(screen.queryByRole("button", { name: "文字を大きく" })).toBeNull();
     expect(screen.queryByRole("button", { name: "文字を小さく" })).toBeNull();
     expect(
-      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+      screen.getByRole("button", { name: "空白⇔表示を切り替え" }),
     ).toHaveTextContent("空白⇔表示");
+    expect(
+      screen.getByRole("button", { name: "空白⇔表示を切り替え" }),
+    ).toBeDisabled();
     expect(
       screen.getByRole("button", { name: "お気に入りに追加" }),
     ).toBeDisabled();
@@ -323,7 +326,7 @@ describe("Slide audience and controller", () => {
     fireEvent.keyDown(window, { key: "ArrowDown" });
     expect(postMessage).not.toHaveBeenCalled();
     await user.click(
-      screen.getByRole("button", { name: "空白と表示を切り替え" }),
+      screen.getByRole("button", { name: "空白⇔表示を切り替え" }),
     );
     expect(postMessage.mock.calls.at(-1)![0].command).toEqual({
       action: "toggle-blank",
@@ -353,7 +356,7 @@ describe("Slide audience and controller", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("更新されました");
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "空白と表示を切り替え" }),
+        screen.getByRole("button", { name: "空白⇔表示を切り替え" }),
       ).toBeDisabled(),
     );
   });
@@ -374,7 +377,7 @@ describe("Slide audience and controller", () => {
       />,
     );
     const blank = screen.getByRole("button", {
-      name: "空白と表示を切り替え",
+      name: "空白⇔表示を切り替え",
     });
     const favorite = screen.getByRole("button", {
       name: "お気に入りに追加",

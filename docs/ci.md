@@ -102,3 +102,23 @@ all PRs, including ones manually enrolled by maintainers.
 
 See [GitHub’s Dependabot automation documentation](https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/automate-dependabot-with-actions)
 for the native auto-merge and required-status-check behavior.
+
+### Reviewing updated Action pins and generated lockfiles
+
+The CI and production-image configuration checks share the explicit reviewed
+pin registry in `scripts/lib/github-action-pins.ts`. Each checked Action must
+use one approved full SHA with its matching release comment in every expected
+job. Mixed releases, short SHAs, tags, missing steps and unreviewed SHAs fail.
+Before adding a release, resolve the official upstream tag (peeling annotated
+tags to their commit) and review compatibility. The registry permits the old
+and newly reviewed releases while their separate Dependabot PRs merge; it does
+not accept arbitrary new versions automatically.
+
+Dependabot's pnpm lockfile writer does not apply the repository's Prettier style.
+After regeneration completes, a local Codex maintenance run formats
+`pnpm-lock.yaml` with the PR's declared Prettier version, checks it with
+`prettier --debug-check`, verifies `pnpm install --frozen-lockfile`, and appends a
+format-only commit to that PR. Keep the lockfile in `pnpm format:check`; do not
+change resolved dependencies, suppress the check or execute formatting with a
+privileged workflow token. After a manual formatting commit, update the PR from
+current `main` as necessary and keep its protected checks current before merge.

@@ -245,3 +245,12 @@ deletion removes its saved references and compacts affected folders.
 Songs, PDF, soft delete, history, real legacy imports and production operations
 remain excluded. Schema expansion is required, but legacy slide data migration
 is not; the migration child records and verifies that distinction.
+
+## Visible and accessible control names
+
+Blank controls retain the visible `空白⇔表示` label and expose
+`空白⇔表示を切り替え` as their accessible name, including while disabled.
+Slide list links derive their accessible names from the visible type and title
+separated by a space; decorative row numbers and arrows remain hidden from
+assistive technology. These names support keyboard and voice navigation without
+changing projection behavior.
