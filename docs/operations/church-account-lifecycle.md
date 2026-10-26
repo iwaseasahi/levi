@@ -92,3 +92,14 @@ Record only the internal operator ID, capability, target Church/User IDs,
 outcome category, request ID, and timestamp. Never record names, email addresses,
 passwords, cookies, authorization headers, session tokens, request bodies, or
 raw exception messages in diagnostic or audit events.
+
+## 招待メールの再送
+
+管理画面の「教会一覧」で、利用中の教会の「招待中」利用者にある
+「招待メールを再送」を押す。期限切れでも利用者を削除・作り直す必要はない。
+登録済みアドレスへ新しい初回パスワード設定メールを送り、有効期限は再送から
+3日間となる。成功時は以前の設定リンクが無効になるため、最新のメールを案内する。
+
+送信中はボタンが無効になり、結果が対象行に表示される。同じ利用者への再送は
+1分に1回まで。送信失敗時は利用者と既存リンクを維持するため、時間をおいて
+再試行できる。受け入れ済み利用者は本人のパスワード再設定を利用する。

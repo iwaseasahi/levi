@@ -6,7 +6,10 @@
   expiry; lowering the global threshold is prohibited.
 - GitHub Actions are pinned to full commit SHAs with a version comment.
 - Dependabot updates pnpm and Actions weekly; its PRs receive the same protected
-  Quality, Database, E2E, and Security jobs as any other author.
+  Quality, Database, E2E, and Security jobs as any other author. Eligible
+  Dependabot PRs automatically squash merge only when those checks and existing
+  branch protection pass, including major updates; see
+  [`docs/ci.md`](../ci.md#dependabot-auto-merge) for scope and rollback.
 - New direct dependencies require purpose, maintenance, provenance, and license
   review. Avoid install scripts unless explicitly allowlisted.
 
@@ -55,3 +58,15 @@ production dependency or license expression. Registry repository, integrity,
 publication date, runtime compatibility, and available provenance attestations
 were checked before installation. The required production audit and license
 inventory remain unchanged.
+
+Issue #543 updates the existing `undici` override from 8.10.2 to 8.12.2
+and the direct `zod` pin from 4.5.2 to 4.6.6, with a matching override to update
+Better Auth’s independently locked Zod 4 dependency as well. These are the first fixed releases
+in the existing major lines for
+[GHSA-xjj6-f33q-929c](https://github.com/advisories/GHSA-xjj6-f33q-929c) and
+[GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5).
+Both retain MIT licensing, official upstream repository metadata, npm SHA-512
+integrity and SLSA provenance attestations; undici's Node >=22.19.0 requirement
+is compatible with the pinned Node 24.22.1. The override continues to cover
+the existing transitive graph and adds no direct production dependency.
+The audit threshold, license inventory and compatibility gates remain intact.
