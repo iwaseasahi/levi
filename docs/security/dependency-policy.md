@@ -5,7 +5,14 @@
   dedicated Issue with advisory, reachability, compensating control, owner, and
   expiry; lowering the global threshold is prohibited.
 - GitHub Actions are pinned to full commit SHAs with a version comment.
-- Dependabot updates pnpm and Actions weekly; its PRs receive the same protected
+- Dependabot checks pnpm and Actions weekly on Monday in `Asia/Tokyo`. Ordinary
+  version updates use `cooldown.default-days: 7` for both ecosystems: releases
+  become eligible seven days after publication and are considered on the next
+  scheduled run. This covers major, minor and patch updates without exclusions.
+  Dependabot security updates are outside this native cooldown and are not
+  delayed by it; see the
+  [GitHub cooldown reference](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown).
+  Dependabot PRs receive the same protected
   Quality, Database, E2E, and Security jobs as any other author. Eligible
   Dependabot PRs automatically squash merge only when those checks and existing
   branch protection pass, including major updates; see
