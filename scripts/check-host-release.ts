@@ -306,6 +306,9 @@ echo applied >> "$CALLS"
   assert.doesNotMatch(unapprovedSunday.log, /switch|gh variable set|applied/);
   const observedSuccess = run("success", false, true);
   assert.equal(observedSuccess.status, 0, observedSuccess.stderr);
+  assert.match(observedSuccess.log, /"status":"ready"/);
+  assert.match(observedSuccess.log, /applied/);
+  assert.match(observedSuccess.log, /observe recording_ready/);
   assert(
     observedSuccess.log.indexOf('"status":"ready"') <
       observedSuccess.log.indexOf("observe host-ready"),
