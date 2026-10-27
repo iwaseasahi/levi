@@ -4,6 +4,7 @@ umask 077
 [[ "$EUID" -eq 0 && $# -le 1 && ( $# -eq 0 || "$1" == --dry-run ) ]] || { echo "Use the root scheduled service, optionally with --dry-run." >&2; exit 64; }
 readonly state=/var/lib/levi-release
 readonly bundle=/usr/local/lib/levi-release
+source "${bundle}/scripts/lib/production-release-observation.sh"
 export PATH="${bundle}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 export GH_HOST=github.com GH_PROMPT_DISABLED=1 GIT_TERMINAL_PROMPT=0
@@ -16,6 +17,7 @@ chmod 700 "$state"
 mkdir "${state}/.launcher.lock" 2>/dev/null || { echo "A host scheduler is active." >&2; exit 75; }
 trap 'rmdir "${state}/.launcher.lock" 2>/dev/null || true' EXIT
 if [[ ! -d "${state}/repository/.git" ]]; then
+  release_observe clone
   git clone --quiet https://github.com/iwaseasahi/levi.git "${state}/repository"
 fi
 LEVI_RELEASE_REPOSITORY="${state}/repository" LEVI_RELEASE_TRANSPORT=local \

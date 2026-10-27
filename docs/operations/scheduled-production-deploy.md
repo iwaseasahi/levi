@@ -178,6 +178,15 @@ App registration UI. No permission scope was expanded by that API spelling fix.
 The private key value is never recorded here. The existing operator authenticates
 sudo for installation; no broader passwordless rule or SSH user is added.
 
+## Scheduled release notifications (Issue #566)
+
+The source now includes a private observer/outbox and an independent Slack worker.
+See [notification operations](production-release-notifications.md) and ADR0019.
+The owner selected JC Project / private #levi-deploy / 岩瀬旭. Its credential and
+host activation are separate approved operations; source merge alone does not
+enable delivery. Existing monitoring routing is unchanged. Only the host's
+confirmed application and ready state establish a successful terminal message.
+
 ## Active installation (2026-10-26)
 
 PR #564 merged as `37acf87963208c1e23c40165a5861b7d35c14ab2`.

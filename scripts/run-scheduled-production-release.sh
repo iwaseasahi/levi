@@ -9,12 +9,14 @@ readonly transport="${LEVI_RELEASE_TRANSPORT:-ssh}"
 [[ "$transport" == ssh || ("$transport" == local && "$EUID" -eq 0) ]] || { echo "Invalid release transport." >&2; exit 64; }
 # shellcheck source=lib/production-release-state.sh
 source "${script_directory}/lib/production-release-state.sh"
+source "${script_directory}/lib/production-release-observation.sh"
 
 if [[ $# -gt 1 || ($# -eq 1 && "$1" != "--dry-run") ]]; then
   echo "Usage: run-scheduled-production-release.sh [--dry-run]" >&2
   exit 64
 fi
 readonly dry_run="$(if [[ $# -eq 1 ]]; then echo true; else echo false; fi)"
+if [[ "$dry_run" == true ]]; then unset LEVI_RELEASE_OBSERVATION_ID; fi
 for command in gh git jq date ssh; do
   command -v "$command" >/dev/null 2>&1 || {
     echo "Required command is unavailable: $command" >&2
@@ -54,12 +56,14 @@ case "$origin_url" in
   *) echo "The deployment repository origin is not canonical." >&2; exit 65 ;;
 esac
 git fetch --quiet origin main
+release_observe selection
 readonly commit_sha="$(git rev-parse origin/main)"
 [[ "$commit_sha" =~ ^[a-f0-9]{40}$ ]] || { echo "Invalid main commit." >&2; exit 65; }
 deployment="$(read_ready_production_deployment)"
 readonly deployment
 readonly previous_commit="$(jq -r .commit_sha <<<"$deployment")"
 if [[ "$previous_commit" == "$commit_sha" ]]; then
+  release_observe skipped "$commit_sha"
   echo "Skipped: main is already successfully deployed at ${commit_sha}."
   exit 0
 fi
@@ -72,6 +76,8 @@ if [[ "$dry_run" == "true" ]]; then
   echo "No image workflow, authorization or production connection was started."
   exit 0
 fi
+release_observe selected "$commit_sha"
+release_observe ci
 
 # Execute only committed scripts from main after its protected checks pass.
 git diff --quiet HEAD -- scripts || { echo "Deployment scripts have local changes." >&2; exit 65; }
@@ -86,6 +92,7 @@ temporary_directory="$(mktemp -d "${TMPDIR:-/tmp}/levi-scheduled-release.XXXXXX"
 snapshot="${temporary_directory}/release"
 git worktree add --quiet --detach "$snapshot" "$commit_sha"
 readonly candidate_file="${temporary_directory}/candidate.json"
+release_observe publish
 bash "${snapshot}/scripts/prepare-production-release.sh" --commit "$commit_sha" --output "$candidate_file"
 jq -e --arg commit_sha "$commit_sha" '.commit_sha == $commit_sha and (.run_id | type == "number")' "$candidate_file" >/dev/null
 readonly candidate_run_id="$(jq -r .run_id "$candidate_file")"
@@ -97,6 +104,7 @@ export LEVI_UNATTENDED_EXPECTED_DEPLOYMENT="$deployment"
 require_unattended_context
 latest_deployment="$(read_ready_production_deployment)"
 if [[ "$(jq -r .commit_sha <<< "$latest_deployment")" == "$commit_sha" ]]; then
+  release_observe skipped "$commit_sha"
   echo "Skipped: the candidate was successfully deployed while images were prepared."
   exit 0
 fi

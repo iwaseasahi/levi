@@ -6,6 +6,7 @@ umask 077
 readonly repository="iwaseasahi/levi"
 readonly workflow_path=".github/workflows/publish-production-images.yml"
 readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${script_directory}/lib/production-release-observation.sh"
 
 requested_commit=""
 output_file=""
@@ -39,7 +40,9 @@ git merge-base --is-ancestor "$commit_sha" origin/main || { echo "Pinned commit 
   exit 65
 }
 
+release_observe ci
 GITHUB_REPOSITORY="$repository" bash "${script_directory}/wait-for-required-ci.sh" "$commit_sha"
+release_observe publish
 
 readonly dispatched_after="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 readonly expected_title="Prepare production candidate for ${commit_sha}"
@@ -70,6 +73,7 @@ done
   exit 66
 }
 readonly run_id
+release_observe publish-run "$run_id"
 
 echo "Pinned origin/main at ${commit_sha}."
 echo "Waiting for immutable images: https://github.com/${repository}/actions/runs/${run_id}"

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
   chmodSync,
+  cpSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -15,6 +16,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const scripts = path.join(root, "scripts");
 const fixture = mkdtempSync(path.join(tmpdir(), "levi-scheduled-deployment."));
+const observedScripts = path.join(fixture, "observed-scripts");
 const previous = "a".repeat(40);
 const selected = "b".repeat(40);
 const changed = "c".repeat(40);
@@ -56,6 +58,47 @@ function executable(name: string, source: string) {
 }
 
 try {
+  cpSync(scripts, observedScripts, { recursive: true });
+  const observer = path.join(fixture, "observer.py");
+  writeFileSync(
+    observer,
+    `import os, sys
+with open(os.environ['CALLS'], 'a') as output:
+    output.write('observe ' + ' '.join(sys.argv[3:]) + '\\n')
+if os.environ['FAKE_MODE'] == 'observerfailure':
+    raise RuntimeError('synthetic-private-observer-marker')
+`,
+  );
+  const observationLibrary = path.join(
+    observedScripts,
+    "lib/production-release-observation.sh",
+  );
+  writeFileSync(
+    observationLibrary,
+    readFileSync(observationLibrary, "utf8")
+      .replace('"$EUID" -eq 0', "1 -eq 1")
+      .replace(
+        "/usr/local/lib/levi-release/scripts/production-release-notifications.py",
+        observer,
+      ),
+  );
+  const localHost = path.join(fixture, "local-host");
+  executable(
+    "local-host",
+    `if [[ "$1" == --protocol-version ]]; then echo 2; else echo 'host applied' >> "$CALLS"; fi`,
+  );
+  for (const name of [
+    "run-scheduled-production-release.sh",
+    "run-authorized-production-deploy.sh",
+  ]) {
+    const target = path.join(observedScripts, name);
+    writeFileSync(
+      target,
+      readFileSync(target, "utf8")
+        .replaceAll('"$EUID" -eq 0', "1 -eq 1")
+        .replaceAll("/usr/local/sbin/levi-production-deploy", localHost),
+    );
+  }
   executable(
     "date",
     `
@@ -156,7 +199,12 @@ fi`,
   }
 
   let scenarios = 0;
-  function run(mode: string, state: unknown = ready, args: string[] = []) {
+  function run(
+    mode: string,
+    state: unknown = ready,
+    args: string[] = [],
+    observe = false,
+  ) {
     const directory = path.join(fixture, `case-${scenarios++}`);
     mkdirSync(directory);
     const common = path.join(directory, "common");
@@ -194,7 +242,13 @@ fi`,
     writeFileSync(calls, "");
     const result = spawnSync(
       "bash",
-      [path.join(scripts, "run-scheduled-production-release.sh"), ...args],
+      [
+        path.join(
+          observe ? observedScripts : scripts,
+          "run-scheduled-production-release.sh",
+        ),
+        ...args,
+      ],
       {
         cwd: root,
         encoding: "utf8",
@@ -203,7 +257,9 @@ fi`,
           ...process.env,
           PATH: `${fixture}:${process.env.PATH ?? ""}`,
           FAKE_MODE: mode,
-          ACTUAL_SCRIPTS: scripts,
+          ACTUAL_SCRIPTS: observe ? observedScripts : scripts,
+          LEVI_RELEASE_TRANSPORT: observe ? "local" : "ssh",
+          LEVI_RELEASE_OBSERVATION_ID: "f".repeat(32),
           COMMON: common,
           XDG_STATE_HOME: path.join(directory, "operator-state"),
           STATE: stateFile,
@@ -309,6 +365,40 @@ fi`,
   );
   assert.match(released.calls, new RegExp(previous));
   assert.match(released.stdout, /Scheduled production release completed/);
+  const observed = run("new", ready, [], true);
+  assert.equal(observed.status, 0, observed.stderr);
+  assert(
+    observed.calls.indexOf(`observe selected ${selected}`) <
+      observed.calls.indexOf("gh workflow run"),
+  );
+  assert.match(observed.calls, /observe publish-run 100/);
+  assert.match(observed.calls, /observe authorization-run 200/);
+  assert.match(observed.calls, /host applied/);
+  assert.doesNotMatch(
+    observed.calls,
+    /observe host-ready/,
+    "Only the authoritative host transaction can witness success",
+  );
+  const noChange = run("same", { ...ready, commit_sha: selected }, [], true);
+  assert.equal(noChange.status, 0, noChange.stderr);
+  assert.match(noChange.calls, /observe skipped/);
+  assert.doesNotMatch(noChange.calls, /observe selected|gh workflow run/);
+  for (const [mode, state, args] of [
+    ["new", ready, ["--dry-run"]],
+    ["same", { ...ready, commit_sha: selected }, ["--dry-run"]],
+    ["outside", ready, []],
+  ] as const) {
+    const silent = run(mode, state, [...args], true);
+    assert.equal(silent.status, 0, silent.stderr);
+    assert.doesNotMatch(silent.calls, /observe /);
+  }
+  const observationFailure = run("observerfailure", ready, [], true);
+  assert.equal(observationFailure.status, 0, observationFailure.stderr);
+  assert.match(observationFailure.calls, /host applied/);
+  assert.doesNotMatch(
+    observationFailure.stderr,
+    /synthetic-private-observer-marker/,
+  );
   console.log(
     `Scheduled deployment safeguards passed ${scenarios} synthetic scenarios; no real GitHub or production calls.`,
   );

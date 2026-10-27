@@ -4,6 +4,7 @@ set -euo pipefail
 readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${script_directory}/lib/production-release-state.sh"
 source "${script_directory}/lib/production-authorization.sh"
+source "${script_directory}/lib/production-release-observation.sh"
 require_unattended_context
 readonly transport="${LEVI_RELEASE_TRANSPORT:-ssh}"
 case "$transport" in
@@ -34,6 +35,7 @@ if is_unattended_deployment; then
   }
   actual_deployment="$(read_ready_production_deployment)"
   if [[ "$(jq -r .commit_sha <<<"$actual_deployment")" == "$commit_sha" ]]; then
+    release_observe skipped "$commit_sha"
     echo "Skipped: the scheduled commit has already been successfully deployed."; exit 0
   fi
   [[ "$actual_deployment" == "$LEVI_UNATTENDED_EXPECTED_DEPLOYMENT" ]] || {
@@ -44,6 +46,7 @@ if is_unattended_deployment; then
   require_unattended_context
 fi
 # The host re-verifies the artifact and owns all metadata writes under its lock.
+release_observe host_validation
 if [[ "$transport" == local ]]; then
   [[ "$(/usr/local/sbin/levi-production-deploy --protocol-version)" == 2 ]] || { echo "Host deployment protocol is not installed." >&2; exit 69; }
   /usr/local/sbin/levi-production-deploy "$commit_sha" "$application_image" "$migration_image" "$authorization_run_url" none "$previous_commit" "$previous_state_hash"
