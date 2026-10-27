@@ -463,6 +463,11 @@ class ReleaseNotifications(unittest.TestCase):
         with patch.object(Path, 'read_text', read):
             self.assertEqual(REAL_IDENTITY(123), {'pid': 123, 'ticks': '12345', 'boot': '00000000-0000-0000-0000-000000000001'})
 
+    def test_zombie_process_does_not_block_recovery(self):
+        text = '123 (dead process) ' + ' '.join(['Z'] + ['0'] * 18 + ['12345'])
+        with patch.object(Path, 'read_text', return_value=text):
+            self.assertIsNone(REAL_IDENTITY(123))
+
     def test_runner_preserves_exit_code_and_binds_child_observations(self):
         child = MagicMock(pid=123)
         selected_id = []

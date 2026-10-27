@@ -108,7 +108,10 @@ def integer(value, minimum=0, maximum=10**12):
 def process_identity(pid):
     try:
         text = Path(f'/proc/{pid}/stat').read_text()
-        ticks = text[text.rindex(')') + 2:].split()[19]
+        fields = text[text.rindex(')') + 2:].split()
+        if fields[0] in {'Z', 'X'}:
+            return None  # A reparented zombie is not a live release/child process.
+        ticks = fields[19]
         boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
         return {'pid': pid, 'ticks': ticks, 'boot': boot}
     except (OSError, ValueError, IndexError):
