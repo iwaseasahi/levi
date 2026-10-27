@@ -6,7 +6,8 @@
 - Base `a9eddac0efb6417fdc800ef68df5db3ac68643cd`.
 - Owner accepted the Issue design on2026-10-27 and requested implementation.
 - Owner selected workspace **JC Project**, private **#levi-deploy**, operator
-  **岩瀬旭**. Workspace/channel IDs and the existing Slack App remain to inspect.
+  **岩瀬旭**. Confirmed workspace `T5V5BH4AF`, channel `C0CCB7UGHJS` and existing
+  notification-bot; the new private channel has the operator as its only human member.
 - Report start, actual successful application, failure/interruption/unknown and
   no-change outcomes without changing any deployment safety gate or outcome.
 
@@ -28,9 +29,9 @@
 2. [x] Create isolated worktree/branch and writer lease; resolve workspace/operator.
 3. [x] Record the durable notification architecture and implement private event
        state, delivery, bounded retries and privacy guards with synthetic tests.
-4. [ ] Integrate fixed observation hooks with the scheduled runner and authoritative
+4. [x] Integrate fixed observation hooks with the scheduled runner and authoritative
        host success; handle normal exit, signal, process death and restart recovery.
-5. [ ] Add dormant systemd units and reviewed installer integration, preserving
+5. [x] Add dormant systemd units and reviewed installer integration, preserving
        explicit activation and existing manual/deployment checks.
 6. [ ] Run focused/canonical/exact-head protected checks; review and prepare PR.
 7. [ ] Inspect non-secret Slack target IDs, prepare concrete protected setup and
@@ -56,6 +57,19 @@
   origin/redirect rejection, queue locking, duplicate suppression and fixed test.
 - 2026-10-27 — Read-only Slack inspection confirmed JC Project `T5V5BH4AF`,
   existing #monitoring `C015A32HDM4` and notification-bot. Its route is unchanged.
+- 2026-10-27 — Foundation PR #567 merged as
+  `2676c333296d4fc531ac918f47819b0226f4c829` after exact-head four protected jobs
+  passed in run40441707393. Core now has51 synthetic cases including zombie recovery.
+- 2026-10-27 — Integration safeguards passed29 orchestration cases,23 host
+  transactions,11 existing App authentication tests and3 installation/hook tests.
+  `mise run check` passed (587 unit,129 component, all config guards and build).
+- 2026-10-27 — Real CLI/kernel checks passed in isolated Linux: success, exit17
+  failure, skip, live-owner protection, SIGKILL/zombie recovery, repeated recovery
+  and PID reuse. Ubuntu24.04/Python3.12 verified all four systemd255 units and
+  the next Tuesday10:00 JST calendar. No real Slack/deployment call occurred.
+- 2026-10-27 — Created the approved private #levi-deploy `C0CCB7UGHJS` in
+  JC Project. Only the operator participates; description marks setup pending.
+  No Webhook, credential, host change or outbound notification has occurred.
 
 ## Verification
 

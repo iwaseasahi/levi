@@ -513,6 +513,7 @@ class ReleaseNotifications(unittest.TestCase):
 
     def test_signal_is_forwarded_and_lost_apply_result_is_unknown(self):
         child = MagicMock(pid=123)
+        child.poll.return_value = None
         handlers = {}
         selected_id = []
         def spawn(*args, **kwargs):
@@ -531,6 +532,15 @@ class ReleaseNotifications(unittest.TestCase):
             self.assertEqual(notify.run_release([]), 143)
         kill.assert_called_once_with(123, notify.signal.SIGTERM)
         self.assertEqual(self.store.load(selected_id[0])['events'][-1]['kind'], 'unknown')
+
+    def test_observer_clock_failure_falls_back_to_existing_launcher_guard(self):
+        clock = MagicMock()
+        clock.datetime.now.side_effect = ValueError('synthetic-private-clock-marker')
+        with patch.object(notify, 'datetime', clock), patch.object(notify.os, 'execve', side_effect=SystemExit(0)) as execute, contextlib.redirect_stderr(io.StringIO()) as output:
+            with self.assertRaises(SystemExit):
+                notify.run_release([])
+        self.assertEqual(execute.call_args.args[1], ['/bin/bash', str(notify.LAUNCHER)])
+        self.assertNotIn('synthetic-private-clock-marker', output.getvalue())
 
     def test_fixed_test_entrypoint_never_claims_or_runs_production_deploy(self):
         with patch.object(notify, 'run_release') as deploy:

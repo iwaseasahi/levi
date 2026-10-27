@@ -39,6 +39,13 @@ fi
 # Fixed installed helpers and a cleared GitHub environment: never trust caller code/auth.
 source "${bundle}/scripts/lib/production-authorization.sh"
 source "${bundle}/scripts/lib/production-release-state.sh"
+source "${bundle}/scripts/lib/production-release-observation.sh"
+if [[ "$#" -eq 7 && -z "${SUDO_USER:-}" ]]; then
+  export LEVI_RELEASE_TRANSPORT=local
+else
+  unset LEVI_RELEASE_OBSERVATION_ID
+fi
+release_observe host_validation
 gh() { /usr/bin/env -i HOME=/root PATH="$safe_path" "${bundle}/bin/gh" "$@"; }
 safe_git() { /usr/bin/env -i HOME=/root PATH="$safe_path" /usr/bin/git "$@"; }
 readonly deployment_root="/var/lib/levi-deploy"
@@ -79,11 +86,15 @@ fi
 safe_git -C "$repository_path" switch --detach "$deploy_commit"
 [[ -x "$deploy_script" ]] || { echo "Production deployment script is unavailable." >&2; exit 1; }
 readonly commit_sha="$deploy_commit" authorization_run_url="$approval_reference"
+release_observe deploying
 record_deployment_state deploying
 /usr/bin/env -i HOME=/root PATH="$safe_path" \
   LEVI_DEPLOY_APPROVAL_REFERENCE="$approval_reference" LEVI_DEPLOY_COMMIT="$deploy_commit" \
   LEVI_DEPLOY_REPOSITORY="$repository_path" LEVI_IMAGE="$application_image" LEVI_MIGRATION_IMAGE="$migration_image" \
+  LEVI_RELEASE_TRANSPORT="${LEVI_RELEASE_TRANSPORT:-ssh}" LEVI_RELEASE_OBSERVATION_ID="${LEVI_RELEASE_OBSERVATION_ID:-}" \
   LEVI_SUNDAY_DEPLOY_APPROVAL_REFERENCE="$(if [[ "$sunday_approval_argument" != none ]]; then echo "$sunday_approval_argument"; fi)" \
   "$deploy_script"
+release_observe recording_ready
 record_deployment_state ready
+release_observe host-ready "$deploy_commit"
 echo "Host deployment transaction completed at ${deploy_commit}."

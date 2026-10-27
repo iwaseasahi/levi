@@ -11,6 +11,7 @@ readonly repository="${LEVI_DEPLOY_REPOSITORY:-/opt/levi}"
 readonly compose_file="${LEVI_COMPOSE_FILE:-/opt/levi/deploy/production/compose.yaml}"
 readonly environment_file="${LEVI_ENV_FILE:-/etc/levi/production.env}"
 readonly deployment_root="${LEVI_DEPLOYMENT_ROOT:-/var/lib/levi-deploy}"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/production-release-observation.sh"
 
 if [[ "${EUID}" -ne 0 && "${LEVI_ALLOW_NON_ROOT_FOR_REHEARSAL:-false}" != "true" ]]; then
   echo "Production deployment must run as root." >&2
@@ -80,6 +81,7 @@ compose() {
 }
 
 echo "Pulling approved application and migration images in parallel."
+release_observe pull
 docker pull "$application_image" &
 readonly application_pull_pid=$!
 docker pull "$migration_image" &
@@ -106,8 +108,11 @@ for image in "$application_image" "$migration_image"; do
 done
 
 compose config --quiet
+release_observe backup
 "${repository}/scripts/production-backup.sh" operational
+release_observe migration
 compose --profile migration run --rm migrate
+release_observe readiness
 compose up --detach --wait postgres app proxy
 
 readonly deployed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -127,9 +132,11 @@ chmod 600 "$deployment_record"
 cp "$deployment_record" "${deployment_root}/current.env"
 chmod 600 "${deployment_root}/current.env"
 
+release_observe cleanup
 if ! "${repository}/scripts/cleanup-production-images.sh" \
   "$application_image" "$migration_image"; then
   echo "WARNING: Production is ready, but obsolete Docker image cleanup failed." >&2
+  release_observe cleanup-warning
 fi
 
 echo "Production deployment is ready: commit=${deploy_commit} application_image=${application_image}"

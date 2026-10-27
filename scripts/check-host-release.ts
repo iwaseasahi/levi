@@ -31,6 +31,29 @@ try {
   cpSync(path.join(root, "scripts"), path.join(bundle, "scripts"), {
     recursive: true,
   });
+  const observation = path.join(fixture, "observation.py");
+  writeFileSync(
+    observation,
+    `import os, sys
+with open(os.environ['CALLS'], 'a') as output:
+    output.write('observe ' + ' '.join(sys.argv[3:]) + '\\n')
+if os.environ['MODE'] == 'observerfailure':
+    raise RuntimeError('synthetic-private-observer-marker')
+`,
+  );
+  const observerLibrary = path.join(
+    bundle,
+    "scripts/lib/production-release-observation.sh",
+  );
+  writeFileSync(
+    observerLibrary,
+    readFileSync(observerLibrary, "utf8")
+      .replace('"$EUID" -eq 0', "1 -eq 1")
+      .replace(
+        "/usr/local/lib/levi-release/scripts/production-release-notifications.py",
+        observation,
+      ),
+  );
   // Only a disposable copy changes UID/path constants; production has no test override.
   const source = readFileSync(
     path.join(root, "scripts/production-deploy-entrypoint.sh"),
@@ -105,7 +128,7 @@ else exit 70; fi`;
   executable(path.join(bundle, "bin/gh"), fakeGh);
   executable(path.join(fixture, "gh"), fakeGh);
   let scenarios = 0;
-  function run(mode: string, manual = false) {
+  function run(mode: string, manual = false, scheduledRoot = false) {
     const state = path.join(fixture, `case-${scenarios++}`),
       repo = path.join(state, "repo");
     mkdirSync(path.join(repo, "scripts"), { recursive: true });
@@ -182,7 +205,12 @@ echo applied >> "$CALLS"
       timeout: 30000,
       env: {
         ...process.env,
-        SUDO_USER: mode === "untrusted" ? "other" : "levi-system-operator",
+        SUDO_USER: scheduledRoot
+          ? ""
+          : mode === "untrusted"
+            ? "other"
+            : "levi-system-operator",
+        LEVI_RELEASE_OBSERVATION_ID: "f".repeat(32),
         FIXTURE_STATE: state,
         FIXTURE_REPOSITORY: repo,
         MODE: mode,
@@ -276,6 +304,37 @@ echo applied >> "$CALLS"
     /Sunday requires exact Sunday authorization/,
   );
   assert.doesNotMatch(unapprovedSunday.log, /switch|gh variable set|applied/);
+  const observedSuccess = run("success", false, true);
+  assert.equal(observedSuccess.status, 0, observedSuccess.stderr);
+  assert(
+    observedSuccess.log.indexOf('"status":"ready"') <
+      observedSuccess.log.indexOf("observe host-ready"),
+  );
+  assert(
+    observedSuccess.log.indexOf("applied") <
+      observedSuccess.log.indexOf("observe recording_ready"),
+  );
+  assert.match(
+    observedSuccess.log,
+    new RegExp(`observe host-ready ${selected}`),
+  );
+  const observedFailure = run("applyfailure", false, true);
+  assert.notEqual(observedFailure.status, 0);
+  assert.doesNotMatch(
+    observedFailure.log,
+    /observe host-ready|"status":"ready"/,
+  );
+  const brokenObserver = run("observerfailure", false, true);
+  assert.equal(brokenObserver.status, 0, brokenObserver.stderr);
+  assert.match(brokenObserver.log, /applied/);
+  assert.match(brokenObserver.log, /"status":"ready"/);
+  assert.doesNotMatch(
+    brokenObserver.stderr,
+    /synthetic-private-observer-marker/,
+  );
+  const manualObserver = run("success", true);
+  assert.equal(manualObserver.status, 0, manualObserver.stderr);
+  assert.doesNotMatch(manualObserver.log, /observe /);
   const timer = readFileSync(
     path.join(root, "deploy/production/systemd/levi-release.timer"),
     "utf8",

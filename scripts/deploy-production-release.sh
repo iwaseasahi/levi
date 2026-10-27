@@ -7,7 +7,9 @@ readonly publish_workflow_path=".github/workflows/publish-production-images.yml"
 readonly authorize_workflow_path=".github/workflows/deploy-production.yml"
 readonly script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${script_directory}/lib/production-release-state.sh"
+source "${script_directory}/lib/production-release-observation.sh"
 require_unattended_context
+release_observe authorization
 
 if [[ "${1:-}" == "--" ]]; then
   shift
@@ -109,6 +111,7 @@ done
 }
 
 echo "Exact candidate verified: commit=${commit_sha} application=${application_image} migration=${migration_image}"
+release_observe authorization-run "$authorization_run_id"
 bash "${script_directory}/wait-for-production-authorization.sh" "$authorization_run_id"
 
 bash "${script_directory}/run-authorized-production-deploy.sh" "$authorization_run_id"

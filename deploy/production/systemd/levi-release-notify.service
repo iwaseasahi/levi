@@ -1,0 +1,20 @@
+[Unit]
+Description=Deliver private Levi release notifications independently of deployment
+Wants=network-online.target
+After=network-online.target time-sync.target
+ConditionPathExists=/etc/levi/release-slack-webhook.url
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+UMask=0077
+LoadCredential=slack-webhook.url:/etc/levi/release-slack-webhook.url
+ExecStart=/usr/bin/python3 /usr/local/lib/levi-release/scripts/production-release-notifications.py drain
+StateDirectory=levi-release-notifications
+StateDirectoryMode=0700
+PrivateTmp=true
+ProtectSystem=full
+NoNewPrivileges=true
+TimeoutStartSec=90
+Restart=no

@@ -388,7 +388,12 @@ def recover(store):
 def run_release(args):
     if args not in ([], ['--dry-run']):
         raise ValueError('Invalid release runner arguments')
-    if args or datetime.datetime.now(ZoneInfo('Asia/Tokyo')).strftime('%u:%H') != '2:10':
+    try:
+        in_window = datetime.datetime.now(ZoneInfo('Asia/Tokyo')).strftime('%u:%H') == '2:10'
+    except Exception:
+        in_window = False  # Let the unchanged Bash launcher enforce its own window.
+        print('Release observation clock unavailable; the launcher retains its time guard.', file=sys.stderr)
+    if args or not in_window:
         environment = os.environ.copy()
         environment.pop('LEVI_RELEASE_OBSERVATION_ID', None)
         os.execve('/bin/bash', ['/bin/bash', str(LAUNCHER), *args], environment)
@@ -408,7 +413,7 @@ def run_release(args):
     def forward(signum, frame):
         nonlocal interrupted
         interrupted = True
-        if child is not None:
+        if child is not None and child.poll() is None:
             try:
                 os.killpg(child.pid, signum)
             except ProcessLookupError:
