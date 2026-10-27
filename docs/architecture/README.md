@@ -34,6 +34,7 @@ them in implementation code.
 | [0017](0017-versioned-slide-rich-text.md)                           | accepted   | Versioned application-owned Slide rich text              |
 
 | [0018](0018-vps-scheduled-production-release.md) | accepted | VPS-local Tuesday releases with a repository-only GitHub App |
+| [0019](0019-production-release-notifications.md) | accepted | Private release observations and independent Slack delivery |
 
 Implementation-level data rules are documented in
 [`database-conventions.md`](database-conventions.md) and the accepted
