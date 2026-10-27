@@ -33,10 +33,51 @@ root-owned0600 regular file at `/etc/levi/release-slack-webhook.url`.
   JST that morning; no deployment was started during notification activation.
 
 The scheduled start/success/failure/skip paths have regression evidence in #567
-and #568. The first real scheduled notification occurs on the next normal timer
-run; no live deployment/outage was used to test this feature. The existing App
+and #568. Initial activation used only the fixed test; the separately requested
+real-release check is recorded below. The first timer-triggered notification
+remains the next normal timer run. The existing App
 permissions outside the channel Webhook, GitHub grants and monitoring route were
 not changed. A protected copy of the previous scheduler was preserved for recovery.
+
+## Owner-requested real release check (2026-10-27)
+
+In [Issue #570](https://github.com/iwaseasahi/levi/issues/570), the owner explicitly
+requested one real production deploy to verify the messages. After the owner
+authenticated the existing operator sudo path, a hash-verified, expiring,
+single-use root helper invoked the unchanged host entrypoint and existing
+observer/outbox. This was an owner-triggered operation, not a timer firing.
+The fixed message's `scheduled` label identifies the shared root release path;
+it does not establish that the timer ran. No general manual-notification mode
+or standing authority outside the normal window was added.
+
+- Release: `7874727567c8e7f6de371f4f139ca62af73b4efe`, forward from a9eddac.
+  All four protected jobs passed in
+  [CI run40450839883](https://github.com/iwaseasahi/levi/actions/runs/40450839883).
+- Immutable [candidate40451607643](https://github.com/iwaseasahi/levi/actions/runs/40451607643)
+  and [authorization40452087072](https://github.com/iwaseasahi/levi/actions/runs/40452087072),
+  both attempt1, were verified again on the host.
+- Application: `ghcr.io/iwaseasahi/levi@sha256:29ed32f7a83830b7d0cef2791f90bd272ac42d1567d93fd9237890a8c4bef82e`.
+  Migration: `ghcr.io/iwaseasahi/levi-migrate@sha256:26ec26b09b72f8754cd4417756c9c3aeaf17c42ec7d3530384077aac84caa0ae`.
+  No schema/migration additions existed in this release. The ordinary encrypted
+  backup, forward-migration check, readiness and cleanup still ran.
+- Start: **14:21:02 JST**. Success: **14:21:42 JST**, elapsed **40seconds**.
+  Release ID: `52142a5ee4614202a141cb8ecd31ec7f`. The `:started` and `:succeeded`
+  events were each delivered on attempt1, and both were observed in the actual
+  private #levi-deploy channel from notification-bot.
+- The fixed host's post-ready witness was positive; the operation exited0 with
+  no warning. GitHub ready metadata matched the exact commit, both digests and
+  authorization, recorded at05:21:41 UTC. Public `/api/ready` returned ready with
+  database ok. This verifies real host completion, not only Actions success.
+- The installed scheduler bundle remains7124e8f. The release and notification
+  timers remain active; the next normal release is **2026-11-03 10:00 JST**.
+  No timer, clock, start-window guard, permission or credential was changed.
+
+The first one-time invocation stopped before observation/application because its
+preparation clone used `--no-checkout` before an index-clean check. That helper
+defect was reproduced and corrected with six disposable Git preflight cases;
+the original production state was unchanged. The corrected invocation was the
+only actual deployment. Its attempt marker prevents another application; do not
+rerun a deployment to retry notification delivery.
 
 ## Meaning of the messages
 
