@@ -3,10 +3,40 @@
 Issue #566 / [ADR0019](../architecture/0019-production-release-notifications.md).
 The owner approved the design and selected **JC Project** (`T5V5BH4AF`), private
 **#levi-deploy** (`C0CCB7UGHJS`), operator **岩瀬旭**. The private channel was
-created on2026-10-27 with the operator as its only human member. Its approved
-channel-specific Incoming Webhook still needs provisioning. Existing **#monitoring**
-(`C015A32HDM4`) and its `notification-bot` integration remain unchanged.
-Source implementation does not provision a secret or activate a host unit.
+created on2026-10-27 with the operator as its only human member. The owner added
+a channel-specific Incoming Webhook to the existing **notification-bot** App
+(`A015P0E6KC4`) and completed protected host setup on the same day. Existing
+**#monitoring** (`C015A32HDM4`) and its notification route remain unchanged.
+Future source merges still require explicit reviewed host installation.
+
+## Active installation (2026-10-27)
+
+The owner selected the existing App in response to the exact activation request,
+created the channel Webhook, and executed the hash-verified setup through the
+existing operator sudo path. The credential was entered at a hidden VPS TTY,
+never in a chat, command argument or development file. The setup validated its
+root-owned0600 regular file at `/etc/levi/release-slack-webhook.url`.
+
+- Installed bundle: `7124e8f93538dc8744b265a8361b81aba7a48cce` (#568),
+  protocol2. All four protected checks passed on its merged source in
+  [CI run40443858447](https://github.com/iwaseasahi/levi/actions/runs/40443858447).
+- Activation completed at **2026-10-27 13:27:07 JST**. Both `levi-release.timer`
+  and `levi-release-notify.timer` are enabled and active. The next deployment
+  trigger is **2026-11-03 10:00 JST**; notification fallback runs every minute.
+- Exactly one fixed test was delivered at **13:27:04 JST** by notification-bot
+  to #levi-deploy. The same message/event was verified in the Slack channel:
+  `01c04cbf27c14accae0581c5d15aebe1:test`. Private status reported
+  `unfinished=0, pending=0, sent=1, dead=0, suppressed=0`.
+- Application release remained `a9eddac0efb6417fdc800ef68df5db3ac68643cd`;
+  host history and GitHub ready metadata were unchanged. Public `/api/ready`
+  returned ready with database ok. The release service last ran at10:00–10:04:37
+  JST that morning; no deployment was started during notification activation.
+
+The scheduled start/success/failure/skip paths have regression evidence in #567
+and #568. The first real scheduled notification occurs on the next normal timer
+run; no live deployment/outage was used to test this feature. The existing App
+permissions outside the channel Webhook, GitHub grants and monitoring route were
+not changed. A protected copy of the previous scheduler was preserved for recovery.
 
 ## Meaning of the messages
 
