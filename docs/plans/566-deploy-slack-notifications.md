@@ -139,9 +139,11 @@
 
 - Completed: implementation PRs #567/#568, exact-head source CI, protected owner
   setup, installed bundle7124e8f, active timers and actual fixed-test receipt.
-- Remaining: merge the documentation evidence PR after its four protected checks.
+- Remaining: none for implementation or production activation. The final
+  documentation record is subject to the normal protected PR merge gate.
 - Blocker: none. No further production action or test send is required.
-- Resume with: verify the documentation PR exact head and merge; close #566.
+- Resume with: N/A after the documentation PR merges and #566 closes. Normal
+  Tuesday execution is independent of this agent session.
 
 ## Result
 
