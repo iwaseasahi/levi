@@ -71,18 +71,31 @@
   JC Project. Only the operator participates; description marks setup pending.
   No Webhook, credential, host change or outbound notification has occurred.
 
+- 2026-10-27 — Final integration review checked host-ready ordering, manual nonce
+  clearing, bounded delivery, secret separation and additive installer behavior.
+  Added explicit ready/apply evidence assertions. The observer clock failure
+  falls back to the original Bash time guard. Focused core now52 cases.
+- 2026-10-27 — Standalone typecheck initially lacked synthetic DATABASE_URL;
+  rerun with the same synthetic values as mise check passed. No real credential
+  was used. Format, lint and focused deployment configuration checks also passed.
+
 ## Verification
 
-- [ ] Synthetic state/transport/permission/timeout/retry/redaction cases.
-- [ ] Real Bash orchestration fixtures, including notification failures and no-op.
-- [ ] Existing deployment/monitoring configuration guards and unit syntax.
+- [x] Synthetic state/transport/permission/timeout/retry/redaction cases (52).
+- [x] Real Bash orchestration fixtures, including notification failures and no-op.
+- [x] Existing deployment/monitoring configuration guards and unit syntax.
 - [ ] Canonical `pnpm check`, applicable integration/E2E/security and exact CI.
 - [ ] Final scope/security/concurrency review and approved activation evidence.
 
 ## Handoff or blocker
 
-- Completed: intake, isolated writer, approved design and named Slack target.
-- Remaining: implementation, verification, reviewed merge and exact activation.
+- Completed: foundation PR #567 merged; integration PR #568 implements hooks,
+  units, installer and runbook. Named private Slack target and operator confirmed.
+  Local canonical checks and focused Linux/permission/recovery checks passed.
+- Remaining: four exact-head protected CI jobs and integration source merge, then
+  protected Webhook provisioning, reviewed host installation and one fixed test
+  notification under exact activation approval.
 - Blocker: none for code. Do not expose any credential or post to Slack during tests.
 - Decision needed: exact protected production setup approval after reviewable PR.
-- Resume with: implement and test the event store/worker, then integration.
+- Resume with: inspect PR #568 checks, complete review/merge, then prepare the
+  exact production activation request. No immediate deployment is permitted.
