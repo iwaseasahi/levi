@@ -65,8 +65,9 @@ jobs:
           commit_sha="$(jq -r '.commit_sha' "$candidate")"
           git fetch --quiet origin main
           git merge-base --is-ancestor "$commit_sha" origin/main
+          checks_json="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${commit_sha}/check-runs?per_page=100" --paginate | jq -s '{check_runs: [.[].check_runs[]]}')"
           for required in Quality Database E2E Security; do
-            result="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${commit_sha}/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$required\")] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv")"
+            result="$(jq -r --arg required "$required" '[.check_runs[] | select(.name == $required)] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv' <<< "$checks_json")"
             [[ "$result" == $'completed\tsuccess' ]] || { echo "Latest ${required} check is not successful for ${commit_sha}" >&2; exit 1; }
           done
           {

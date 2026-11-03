@@ -33,7 +33,8 @@ fi
 
 readonly required_checks=(Quality Database E2E Security)
 for ((attempt = 1; attempt <= max_attempts; attempt += 1)); do
-  checks_json="$(gh api "repos/${repository}/commits/${commit_sha}/check-runs?per_page=100")"
+  # gh emits one JSON object per page; aggregate before selecting the latest result.
+  checks_json="$(gh api "repos/${repository}/commits/${commit_sha}/check-runs?per_page=100" --paginate | jq -s '{check_runs: [.[].check_runs[]]}')"
   pending=()
 
   for required in "${required_checks[@]}"; do
