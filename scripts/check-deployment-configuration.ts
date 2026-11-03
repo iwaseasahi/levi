@@ -12,6 +12,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import "./check-required-ci-pagination";
+
 import { assertReviewedActionUses } from "./lib/github-action-pins";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
