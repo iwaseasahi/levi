@@ -31,8 +31,8 @@ Action registry; these failures need the existing maintenance process.
        create the issue-scoped worktree and acquire the single-writer lease.
 2. [x] Add only the verified pnpm/setup v3.1.2 SHA to the registry. Existing
        table-driven tests cover the new release and rejection boundaries.
-3. [ ] Run pin regressions, local configuration checks with old/new pins,
-       canonical checks and diff review; merge the prerequisite through CI.
+3. [x] Run pin regressions, local configuration checks with old/new pins,
+       canonical checks and diff review; prerequisite CI is running in #579.
 4. [ ] Refresh #572 and verify its exact-head protected checks and merge.
 5. [ ] Sequentially refresh and format #573/#574/#575 in separate maintenance
        worktrees, verify debug-check and frozen installs, then exact-head CI.
@@ -60,11 +60,12 @@ Action registry; these failures need the existing maintenance process.
 
 ## Verification
 
-- [ ] `pnpm install --frozen-lockfile`
-- [ ] Focused `src/operations/github-action-pins.test.ts`
-- [ ] `pnpm local:config:check` with old and verified new pins
-- [ ] `mise run check` (canonical `pnpm check` with synthetic build configuration)
-- [ ] `git diff --check` and separate final diff review
+- [x] `pnpm install --frozen-lockfile` (via `mise exec -- corepack`)
+- [x] Focused `src/operations/github-action-pins.test.ts` — 19 passed
+- [x] `pnpm local:config:check` with old and verified new pins
+- [x] `mise run check` — passed: formatting, lint, typecheck, 588 unit /
+      129 component tests, configuration guards and production build
+- [x] `git diff --check` and separate final diff review
 - [ ] Exact-head Quality / Database / E2E / Security for prerequisite and bot PRs
 
 ## Progress
@@ -75,6 +76,10 @@ Action registry; these failures need the existing maintenance process.
 ## Handoff or blockers
 
 - Completed: intake, failure diagnosis, upstream review, isolated registry repair.
-- Remaining: local/CI verification, protected merge and sequential bot PR repairs.
+- Remaining: protected merge and sequential bot PR repairs.
 - Blocker: none.
-- Resume with: frozen install and focused pin regression tests.
+- Resume with: verify #579 protected CI, merge, then refresh the bot PRs.
+
+- 2026-11-04 JST — Local verification passed. Direct `pnpm` initially selected
+  globally installed 11.25.0 and correctly failed the engine guard; all checks
+  then used the repository-prescribed `corepack pnpm` 11.19.0 through mise.
