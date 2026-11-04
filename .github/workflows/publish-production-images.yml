@@ -33,8 +33,9 @@ jobs:
           [[ "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
           git fetch --quiet origin main
           git merge-base --is-ancestor "$COMMIT_SHA" origin/main
+          checks_json="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT_SHA}/check-runs?per_page=100" --paginate | jq -s '{check_runs: [.[].check_runs[]]}')"
           for required in Quality Database E2E Security; do
-            result="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${COMMIT_SHA}/check-runs?per_page=100" --jq "[.check_runs[] | select(.name == \"$required\")] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv")"
+            result="$(jq -r --arg required "$required" '[.check_runs[] | select(.name == $required)] | sort_by(.started_at) | last | [.status, .conclusion] | @tsv' <<< "$checks_json")"
             [[ "$result" == $'completed\tsuccess' ]] || { echo "Latest ${required} check is not successful for ${COMMIT_SHA}" >&2; exit 1; }
           done
 

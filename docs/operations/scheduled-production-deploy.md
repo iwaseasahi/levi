@@ -145,6 +145,29 @@ Installer source and installed files are committed/reviewed; root-owned installe
 code is updated explicitly with the same installation procedure when relevant
 scripts change. No runtime self-modification or package auto-install is added.
 
+### Required CI pagination correction (Issue #576)
+
+The November 3 release stopped during CI confirmation before image preparation
+or production application. Hourly readiness checks on unchanged main filled the
+first 100 Checks API results, hiding the four successful required checks on a
+later page. The wait script and both image/authorization workflow gates now
+collect every page before selecting each required check's latest result. A
+failed page request still fails the gate, even if earlier pages contain success.
+`gh api --paginate` plus external `jq -s` retains compatibility with the installed
+gh2.45.0; it does not require the newer `--slurp` CLI flag. Synthetic subprocess
+regressions execute all three gate bodies through `pnpm deployment:config:check`.
+
+This repository correction alone does **not** replace the installed VPS bundle
+(`7124e8f93538dc8744b265a8361b81aba7a48cce` at diagnosis). After merge and exact-main
+protected CI, an approved host update must use the reviewed installation and
+activation procedure above with that exact merged SHA: preserve the prior
+installed SHA, stop the release/notification timers and confirm their services
+are inactive, install the bundle, run `--dry-run`, verify unchanged ready/history
+and restore both timers. Do not start the release service as a test or retry a
+deployment to verify this fix. Record the installed SHA, preflight and next
+trigger after the separately approved host update. Until then, scheduled
+releases still use the previous gate; no host update is claimed by this change.
+
 ## Failure, disable and recovery
 
 Inspect `systemctl status levi-release.service` and `journalctl -u

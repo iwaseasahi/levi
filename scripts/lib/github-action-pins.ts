@@ -5,6 +5,7 @@ export const reviewedActionPins = {
   "pnpm/setup": {
     "v2.1.0": "703c52620218391530e48b9e8870d5c0082e1b9b",
     "v3.1.1": "a0881977cd8ea73b1ed212236c99ca10dcc80cf4",
+    "v3.1.2": "fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e",
   },
   "docker/setup-buildx-action": {
     "v4.3.0": "37fe631027851001ddb9b187196cc803df7f5f0e",
