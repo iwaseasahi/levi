@@ -33,11 +33,12 @@ Action registry; these failures need the existing maintenance process.
        table-driven tests cover the new release and rejection boundaries.
 3. [x] Run pin regressions, local configuration checks with old/new pins,
        canonical checks and diff review; prerequisite CI is running in #579.
-4. [ ] Refresh #572 and verify its exact-head protected checks and merge.
-5. [ ] Sequentially refresh and format #573/#574/#575 in separate maintenance
-       worktrees, verify debug-check and frozen installs, then exact-head CI.
-6. [ ] Record final merged states and remaining risks, release the lease and
-       synchronize main.
+4. [x] Refresh #572 and verify its exact-head protected checks and merge.
+5. [x] Sequentially refresh and format #573/#574/#575 in separate maintenance
+       worktrees; verify debug-check, parsed YAML equality and frozen installs.
+6. Final completion gate: verify #575 exact-head protected CI, then record all
+   merged states, release the lease and synchronize main. Final gate results
+   and the current completion checklist are maintained in Issue #578.
 
 ## Decisions and evidence
 
@@ -66,20 +67,44 @@ Action registry; these failures need the existing maintenance process.
 - [x] `mise run check` — passed: formatting, lint, typecheck, 588 unit /
       129 component tests, configuration guards and production build
 - [x] `git diff --check` and separate final diff review
-- [ ] Exact-head Quality / Database / E2E / Security for prerequisite and bot PRs
+- [x] Exact-head Quality / Database / E2E / Security for #579/#572/#573/#574
+- Final #575 verification is recorded in Issue #578 after this commit passes CI.
 
 ## Progress
 
 - 2026-11-04 JST — Failure causes confirmed from CI logs, upstream tag/changes
   reviewed, lease acquired, explicit registry entry implemented.
 
-## Handoff or blockers
+## Progress and current handoff
 
-- Completed: intake, failure diagnosis, upstream review, isolated registry repair.
-- Remaining: protected merge and sequential bot PR repairs.
-- Blocker: none.
-- Resume with: verify #579 protected CI, merge, then refresh the bot PRs.
+- 2026-11-04 JST — #579 merged as `49f7f2a`; all four required checks passed
+  on `537d5e9` (CI run 41752922184).
+- #572 merged as `e6b561a`; all four passed on `bd91f2e` (41753533802).
+- #573 merged as `c5f4604`; all four passed on `7e63a55` (41754085901).
+- #574 merged as `512917a`; all four passed on `6844a67` (41754611509).
+- All npm repairs used declared Prettier 3.9.10, debug-check, a deep comparison
+  of parsed YAML before/after formatting and frozen installations. No dependency
+  resolution or integrity value was changed by formatting. Full format checks
+  also passed after integrating preceding main changes.
+- While earlier PRs were merging, Dependabot regenerated #575 as `0fef0a4`,
+  advancing Better Auth and its adapter to 1.7.14. The attempted push correctly
+  rejected the stale local history. Preserved it in the local maintenance branch
+  and started from the new bot head without force pushing. Reapplied and verified
+  formatting, then merged current main. Upstream 1.7.14 release notes cover TOTP
+  imported-secret and Kakao login-hint fixes, neither enabled in Levi.
+- The earlier #575 version passed local `mise run check` (587 unit and 129
+  component tests plus configuration/build). The regenerated version must pass
+  fresh canonical verification and all protected checks; earlier evidence does
+  not substitute for its final head.
+- Direct global pnpm initially selected 11.25.0 and correctly failed the engine
+  guard; subsequent checks use repository-prescribed `corepack pnpm` 11.19.0
+  through mise.
 
-- 2026-11-04 JST — Local verification passed. Direct `pnpm` initially selected
-  globally installed 11.25.0 and correctly failed the engine guard; all checks
-  then used the repository-prescribed `corepack pnpm` 11.19.0 through mise.
+- Intended outcome: all four bot PRs repaired and merged through protected CI.
+- Completed: prerequisite, #572/#573/#574 merges and all lockfile repairs.
+- Remaining: regenerated #575 final verification/merge and closing evidence.
+- Blocker: none; final protected CI is the completion gate.
+- Current branch: `codex/issue-578-pr575-current` (bot PR maintenance worktree).
+- Resume with: inspect #575 required checks; after all succeed and merge, record
+  exact heads/runs/merge SHAs in Issue #578, release the lease and synchronize main.
+- Final outcome and completion status: <https://github.com/iwaseasahi/levi/issues/578>.
