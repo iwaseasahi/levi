@@ -66,7 +66,7 @@ describe("SlideList", () => {
       screen.queryByRole("button", { name: "前の20件" }),
     ).not.toBeInTheDocument();
   });
-  it("holds cursors for Back and disables page boundaries", async () => {
+  it("holds cursors and keyboard focus at unavailable page boundaries", async () => {
     const first: SlideListResult = {
       slides: Array.from({ length: 20 }, (_, i) => summary(i)),
       nextCursor: "cursor-1",
@@ -83,10 +83,15 @@ describe("SlideList", () => {
     render(<SlideList fetcher={fetcher} />);
     await screen.findByText(/1ページ目 · 20件/);
     const previous = screen.getByRole("button", { name: "前の20件" });
-    expect(previous).toBeDisabled();
-    await user.click(screen.getByRole("button", { name: "次の20件" }));
+    const next = screen.getByRole("button", { name: "次の20件" });
+    expect(previous).toHaveAttribute("aria-disabled", "true");
+    expect(previous).toHaveAttribute("tabindex", "-1");
+    await user.click(next);
     await screen.findByText(/2ページ目 · 1件/);
-    expect(screen.getByRole("button", { name: "次の20件" })).toBeDisabled();
+    expect(next).toHaveAttribute("aria-disabled", "true");
+    expect(next).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(fetcher).toHaveBeenCalledTimes(2);
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getByRole("listitem")).toHaveTextContent("21");
     expect(fetcher.mock.calls[1]![0]).toBe(
@@ -94,7 +99,10 @@ describe("SlideList", () => {
     );
     await user.click(previous);
     await screen.findByText(/1ページ目 · 20件/);
+    expect(previous).toHaveAttribute("aria-disabled", "true");
     expect(previous).toHaveFocus();
+    await user.keyboard(" ");
+    expect(fetcher).toHaveBeenCalledTimes(3);
     expect(fetcher.mock.calls.at(-1)![0]).toBe("/api/church/slides");
   });
   it("adds a row to the selected folder and reports mutation failures", async () => {

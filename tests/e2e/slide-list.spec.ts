@@ -117,7 +117,10 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
         fullPage: true,
       });
     }
-    await page.getByRole("button", { name: "次の20件" }).click();
+    const next = page.getByRole("button", { name: "次の20件" });
+    const previous = page.getByRole("button", { name: "前の20件" });
+    await next.focus();
+    await page.keyboard.press("Enter");
     await expect(list.getByRole("listitem")).toHaveCount(5);
     const second = await list
       .getByRole("link")
@@ -129,9 +132,13 @@ test("Slide list shows clear tenant-scoped rows and cursor pagination", async ({
         .map((slide) => `/slides/${slide.id}`),
     );
     expect(new Set([...first, ...second]).size).toBe(25);
-    await expect(page.getByRole("button", { name: "次の20件" })).toBeDisabled();
-    await page.getByRole("button", { name: "前の20件" }).click();
+    await expect(next).toBeDisabled();
+    await expect(next).toBeFocused();
+    await previous.focus();
+    await page.keyboard.press("Enter");
     await expect(list.getByRole("listitem")).toHaveCount(20);
+    await expect(previous).toBeDisabled();
+    await expect(previous).toBeFocused();
     expect(
       await list
         .getByRole("link")
