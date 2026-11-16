@@ -69,6 +69,9 @@ export function SlideList({
   const active = loaded?.selection === selection ? loaded : null;
   const result = active?.result;
   const page = selection.cursors.length;
+  const nextCursor = result?.nextCursor;
+  const previousDisabled = !result || page === 1 || deletingId !== null;
+  const nextDisabled = !nextCursor || deletingId !== null;
   const showPages =
     page > 1 ||
     (loaded?.selection.cursors.length ?? 1) > 1 ||
@@ -194,21 +197,23 @@ export function SlideList({
         <div className="slide-actions">
           <button
             type="button"
-            disabled={!result || page === 1 || deletingId !== null}
-            onClick={() =>
-              setSelection({ cursors: selection.cursors.slice(0, -1) })
-            }
+            aria-disabled={previousDisabled}
+            tabIndex={previousDisabled ? -1 : undefined}
+            onClick={() => {
+              if (previousDisabled) return;
+              setSelection({ cursors: selection.cursors.slice(0, -1) });
+            }}
           >
             前の20件
           </button>
           <button
             type="button"
-            disabled={!result?.nextCursor || deletingId !== null}
-            onClick={() =>
-              setSelection({
-                cursors: [...selection.cursors, result?.nextCursor ?? null],
-              })
-            }
+            aria-disabled={nextDisabled}
+            tabIndex={nextDisabled ? -1 : undefined}
+            onClick={() => {
+              if (!nextCursor || deletingId !== null) return;
+              setSelection({ cursors: [...selection.cursors, nextCursor] });
+            }}
           >
             次の20件
           </button>

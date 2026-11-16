@@ -92,7 +92,8 @@
   background: var(--accent);
   color: var(--accent-ink);
 }
-.slide-page button:disabled {
+.slide-page button:disabled,
+.slide-actions button[aria-disabled="true"] {
   opacity: 0.5;
   cursor: default;
 }
