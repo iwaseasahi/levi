@@ -22,7 +22,7 @@ async function clear() {
   });
 }
 
-async function createMember(email: string) {
+async function createMember(email: string, emailVerified = false) {
   const userId = randomUUID();
   const church = await prisma.church.create({
     data: { name: `${prefix}${randomUUID()}` },
@@ -32,6 +32,7 @@ async function createMember(email: string) {
       actorState: "ACTIVE",
       churchMembership: { create: { churchId: church.id } },
       email,
+      emailVerified,
       id: userId,
       name: "Synthetic Email Change User",
     },
@@ -78,81 +79,130 @@ afterAll(async () => {
 });
 
 describe("church email change", () => {
-  it("keeps the old identity until verified, then moves login to the new address", async () => {
+  it.each([true, false])(
+    "moves login to the confirmed address and preserves emailVerified=%s",
+    async (emailVerified) => {
+      const currentEmail = `${prefix}${randomUUID()}@example.invalid`;
+      const newEmail = `${prefix}${randomUUID()}@example.invalid`;
+      const usedEmail = `${prefix}${randomUUID()}@example.invalid`;
+      const userId = await createMember(currentEmail, emailVerified);
+      await createMember(usedEmail);
+      const cookie = await signIn(currentEmail);
+
+      expect(
+        (
+          await changeRequest(cookie, {
+            confirmation: newEmail,
+            currentPassword: "wrong-password",
+            newEmail,
+          })
+        ).status,
+      ).toBe(409);
+      expect(
+        (
+          await changeRequest(cookie, {
+            confirmation: usedEmail,
+            currentPassword: password,
+            newEmail: usedEmail,
+          })
+        ).status,
+      ).toBe(409);
+      expect(
+        (
+          await changeRequest(cookie, {
+            confirmation: newEmail.toUpperCase(),
+            currentPassword: password,
+            newEmail,
+          })
+        ).status,
+      ).toBe(202);
+
+      await expect(
+        prisma.user.findUniqueOrThrow({ where: { id: userId } }),
+      ).resolves.toMatchObject({ email: currentEmail, emailVerified });
+      await expect(signIn(currentEmail)).resolves.not.toBe("");
+
+      const token = await createEmailVerificationToken(
+        getAuthRuntimeConfig().secret,
+        currentEmail,
+        newEmail,
+        EMAIL_CHANGE_EXPIRES_IN_SECONDS,
+        { requestType: "change-email-verification", userId },
+      );
+      const verificationUrl = new URL(`${origin}/api/auth/verify-email`);
+      verificationUrl.searchParams.set("token", token);
+      verificationUrl.searchParams.set(
+        "callbackURL",
+        "/account/change-email?completed=1",
+      );
+      const otherCookie = await signIn(usedEmail);
+      const deniedResponse = await verifyEmail(
+        new Request(verificationUrl, { headers: { cookie: otherCookie } }),
+      );
+      expect(deniedResponse.status).toBe(302);
+      expect(deniedResponse.headers.get("location")).toContain(
+        "error=INVALID_USER",
+      );
+      await expect(
+        prisma.user.findUniqueOrThrow({ where: { id: userId } }),
+      ).resolves.toMatchObject({ email: currentEmail, emailVerified });
+
+      const verificationResponse = await verifyEmail(
+        new Request(verificationUrl, { headers: { cookie } }),
+      );
+      expect(verificationResponse.status).toBe(302);
+      expect(verificationResponse.headers.get("location")).toBe(
+        "/account/change-email?completed=1",
+      );
+      await expect(
+        prisma.user.findUniqueOrThrow({ where: { id: userId } }),
+      ).resolves.toMatchObject({ email: newEmail, emailVerified });
+      await expect(signIn(currentEmail)).rejects.toThrow();
+      await expect(signIn(newEmail)).resolves.not.toBe("");
+
+      const replayResponse = await verifyEmail(
+        new Request(verificationUrl, { headers: { cookie } }),
+      );
+      expect(replayResponse.status).toBe(302);
+      expect(replayResponse.headers.get("location")).toContain("error=");
+      await expect(
+        prisma.user.findUniqueOrThrow({ where: { id: userId } }),
+      ).resolves.toMatchObject({ email: newEmail, emailVerified });
+    },
+  );
+
+  it("rejects a stale link after the old address is assigned to another account", async () => {
     const currentEmail = `${prefix}${randomUUID()}@example.invalid`;
+    const releasedEmail = `${prefix}${randomUUID()}@example.invalid`;
     const newEmail = `${prefix}${randomUUID()}@example.invalid`;
-    const usedEmail = `${prefix}${randomUUID()}@example.invalid`;
-    const userId = await createMember(currentEmail);
-    await createMember(usedEmail);
-    const cookie = await signIn(currentEmail);
-
-    expect(
-      (
-        await changeRequest(cookie, {
-          confirmation: newEmail,
-          currentPassword: "wrong-password",
-          newEmail,
-        })
-      ).status,
-    ).toBe(409);
-    expect(
-      (
-        await changeRequest(cookie, {
-          confirmation: usedEmail,
-          currentPassword: password,
-          newEmail: usedEmail,
-        })
-      ).status,
-    ).toBe(409);
-    expect(
-      (
-        await changeRequest(cookie, {
-          confirmation: newEmail.toUpperCase(),
-          currentPassword: password,
-          newEmail,
-        })
-      ).status,
-    ).toBe(202);
-
-    await expect(
-      prisma.user.findUniqueOrThrow({ where: { id: userId } }),
-    ).resolves.toMatchObject({ email: currentEmail, emailVerified: false });
-    await expect(signIn(currentEmail)).resolves.not.toBe("");
-
+    const userId = await createMember(releasedEmail);
     const token = await createEmailVerificationToken(
       getAuthRuntimeConfig().secret,
-      currentEmail,
+      releasedEmail,
       newEmail,
       EMAIL_CHANGE_EXPIRES_IN_SECONDS,
-      { requestType: "change-email-verification" },
+      { requestType: "change-email-verification", userId },
     );
-    const verificationUrl = new URL(`${origin}/api/auth/verify-email`);
-    verificationUrl.searchParams.set("token", token);
-    verificationUrl.searchParams.set(
-      "callbackURL",
-      "/account/change-email?completed=1",
-    );
-    const verificationResponse = await verifyEmail(
-      new Request(verificationUrl, { headers: { cookie } }),
-    );
-    expect(verificationResponse.status).toBe(302);
-    expect(verificationResponse.headers.get("location")).toBe(
-      "/account/change-email?completed=1",
-    );
-    await expect(
-      prisma.user.findUniqueOrThrow({ where: { id: userId } }),
-    ).resolves.toMatchObject({ email: newEmail, emailVerified: true });
-    await expect(signIn(currentEmail)).rejects.toThrow();
-    await expect(signIn(newEmail)).resolves.not.toBe("");
+    await prisma.user.update({
+      where: { id: userId },
+      data: { email: currentEmail },
+    });
+    const nextOwnerId = await createMember(releasedEmail);
+    const url = new URL(`${origin}/api/auth/verify-email`);
+    url.searchParams.set("token", token);
+    url.searchParams.set("callbackURL", "/account/change-email");
 
-    const replayResponse = await verifyEmail(
-      new Request(verificationUrl, { headers: { cookie } }),
-    );
-    expect(replayResponse.status).toBe(302);
-    expect(replayResponse.headers.get("location")).toContain("error=");
+    const response = await verifyEmail(new Request(url));
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toContain("error=INVALID_TOKEN");
+    expect(response.headers.has("set-cookie")).toBe(false);
     await expect(
       prisma.user.findUniqueOrThrow({ where: { id: userId } }),
-    ).resolves.toMatchObject({ email: newEmail, emailVerified: true });
+    ).resolves.toMatchObject({ email: currentEmail });
+    await expect(
+      prisma.user.findUniqueOrThrow({ where: { id: nextOwnerId } }),
+    ).resolves.toMatchObject({ email: releasedEmail });
   });
 
   it("rejects an expired confirmation token without changing the address", async () => {
@@ -165,7 +215,7 @@ describe("church email change", () => {
       currentEmail,
       newEmail,
       -1,
-      { requestType: "change-email-verification" },
+      { requestType: "change-email-verification", userId },
     );
     const url = new URL(`${origin}/api/auth/verify-email`);
     url.searchParams.set("token", token);

@@ -13,6 +13,7 @@ export interface EmailChangeDependencies {
   createVerificationUrl(input: {
     currentEmail: string;
     newEmail: string;
+    userId: string;
   }): Promise<string>;
   findCredential(userId: string): Promise<{
     email: string;
@@ -86,6 +87,7 @@ export function createEmailChangeService(
         const verificationUrl = await dependencies.createVerificationUrl({
           currentEmail: credential.email,
           newEmail: parsed.newEmail,
+          userId: input.userId,
         });
         await dependencies.sendVerificationMail({
           name: credential.name,
