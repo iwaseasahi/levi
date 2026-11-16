@@ -10,14 +10,14 @@ import { consumeEmailChangeRequest } from "./email-change-rate-limit";
 
 export const emailChangeService = createEmailChangeService({
   consumeRequest: consumeEmailChangeRequest,
-  async createVerificationUrl({ currentEmail, newEmail }) {
+  async createVerificationUrl({ currentEmail, newEmail, userId }) {
     const config = getAuthRuntimeConfig();
     const token = await createEmailVerificationToken(
       config.secret,
       currentEmail,
       newEmail,
       EMAIL_CHANGE_EXPIRES_IN_SECONDS,
-      { requestType: "change-email-verification" },
+      { requestType: "change-email-verification", userId },
     );
     const url = new URL("/api/auth/verify-email", config.baseURL);
     url.searchParams.set("token", token);

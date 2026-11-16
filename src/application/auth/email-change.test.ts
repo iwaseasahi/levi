@@ -54,6 +54,7 @@ describe("email change service", () => {
     expect(dependencies.createVerificationUrl).toHaveBeenCalledWith({
       currentEmail: "current@example.invalid",
       newEmail: "new@example.invalid",
+      userId: "user-id",
     });
     expect(dependencies.sendVerificationMail).toHaveBeenCalledExactlyOnceWith({
       name: "Synthetic User",
