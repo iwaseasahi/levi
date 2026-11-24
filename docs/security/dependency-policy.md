@@ -77,3 +77,14 @@ integrity and SLSA provenance attestations; undici's Node >=22.19.0 requirement
 is compatible with the pinned Node 24.22.1. The override continues to cover
 the existing transitive graph and adds no direct production dependency.
 The audit threshold, license inventory and compatibility gates remain intact.
+
+Issue #592 exact-pins the existing transitive `effect` dependency to 3.22.1
+(MIT), the first fixed release in its current major for
+[GHSA-7589-6fvf-x4pw](https://github.com/Effect-TS/effect/security/advisories/GHSA-7589-6fvf-x4pw).
+Prisma 7.10.1 already brings it through `@prisma/config`; the override adds no
+direct production dependency. The official Effect repository metadata, npm
+SHA-512 integrity and SLSA provenance were reviewed. The release declares no
+additional Node engine restriction and remains compatible with Node 24.22.1.
+Although the advisory summary says Moderate, the production OSV report scores
+the affected version at 8.7; the existing stricter audit gate is retained.
+The override removes that finding rather than accepting or suppressing it.
