@@ -54,37 +54,43 @@ describe("checkpoint", () => {
 
   it("includes untracked source files but respects ignored local agent state", async () => {
     const workspace = await mkdtemp(path.join(tmpdir(), "levi-workspace-"));
-    await execFile("git", ["init"], { cwd: workspace });
-    await execFile("git", ["config", "user.email", "test@example.invalid"], {
+    // One baseline is enough; avoid serial Git config writes and a second
+    // commit consuming the test's unchanged timeout on slow runners.
+    await Promise.all([
+      execFile("git", ["init"], { cwd: workspace }),
+      writeFile(path.join(workspace, "tracked.ts"), "export const old = 1;\n"),
+      writeFile(path.join(workspace, ".gitignore"), ".agent-runs/\n"),
+      mkdir(path.join(workspace, "src")),
+      mkdir(path.join(workspace, ".agent-runs")),
+    ]);
+    await execFile("git", ["add", "tracked.ts", ".gitignore"], {
       cwd: workspace,
     });
-    await execFile("git", ["config", "user.name", "Test"], { cwd: workspace });
-    await writeFile(
-      path.join(workspace, "tracked.ts"),
-      "export const old = 1;\n",
+    await execFile(
+      "git",
+      [
+        "-c",
+        "user.email=test@example.invalid",
+        "-c",
+        "user.name=Test",
+        "commit",
+        "-m",
+        "base",
+      ],
+      { cwd: workspace },
     );
-    await execFile("git", ["add", "tracked.ts"], { cwd: workspace });
-    await execFile("git", ["commit", "-m", "base"], { cwd: workspace });
 
-    await writeFile(
-      path.join(workspace, "tracked.ts"),
-      "export const old = 2;\n",
-    );
-    await mkdir(path.join(workspace, "src"));
-    await writeFile(
-      path.join(workspace, "src/new.ts"),
-      "export const added = 1;\n",
-    );
-    await writeFile(path.join(workspace, ".gitignore"), ".agent-runs/\n");
-    await execFile("git", ["add", ".gitignore"], { cwd: workspace });
-    await execFile("git", ["commit", "-m", "ignore runtime state"], {
-      cwd: workspace,
-    });
-    await mkdir(path.join(workspace, ".agent-runs"));
-    await writeFile(
-      path.join(workspace, ".agent-runs/provider-output.json"),
-      '{"secret":"must-not-be-checkpointed"}\n',
-    );
+    await Promise.all([
+      writeFile(path.join(workspace, "tracked.ts"), "export const old = 2;\n"),
+      writeFile(
+        path.join(workspace, "src/new.ts"),
+        "export const added = 1;\n",
+      ),
+      writeFile(
+        path.join(workspace, ".agent-runs/provider-output.json"),
+        '{"secret":"must-not-be-checkpointed"}\n',
+      ),
+    ]);
 
     const result = await createWorkspacePatch(workspace);
 
